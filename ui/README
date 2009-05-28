@@ -1,0 +1,82 @@
+===============================
+Whisker tracking user interface
+===============================
+
+Usage: ui2.py [options] moviefile [dataprefix]
+
+Options:
+  -h, --help            show this help message and exit
+  -t, -T, --transpose   transpose images [default: False]
+  --frame=N             Start browsing at the N'th frame [default: 0]
+  -c CURSOR_SIZE, --cursorsize=CURSOR_SIZE
+                        Initial cursor radius in pixels [default: 10 px]
+  --cursorpos           Show cursor's center coordinates [default: False]
+  --adjuststripes       Adjust odd-scanline bias [default: True]
+  --noadjuststripes     Prevent adjust odd-scanline bias [default: False]
+  --fps                 Display rendering speed [default: False]
+
+Examples:
+
+  python ui2.py S0.tif 
+  python ui2.py S0.tif S0
+
+If no data_files_prefix is given, a default set will be created.  The
+prefix will be used to load the appropriate .whisker and .trajectory
+file.
+
+-----------------
+Keyboard Controls
+-----------------
+
+key       function
+---       --------
+< (,)     Jump to the beginning of the movie
+> (.)     Jump to the end of the movie
+Up        Increment current whisker id
+Down      Decrement current whisker id
+Left      Rewind one frame
+Right     Advance one frame
+Shift     ( Modifies arrow keys ) speed up 10x | 
+Ctrl      ( Modifies arrow keys ) speed up 10x | Effects multiply
+Alt       ( Modifies arrow keys ) speed up 10x |
+Delete    Delete whisker in currently displayed frame
+Space     Turn auto mode on and off
+d         Change draw mode
+Shift-d   Enter debug console
+Shift-s   Save
+ESC       Save and Quit
+=         Increment search radius
+-         Decrement search radius
+
+--------------
+Mouse Controls
+--------------
+
+Action            function
+------            --------
+Right click       Mark seed for whisker tracking.
+                  Attempt backbone tracing.
+                  Draw traced whisker backbone.
+                  Advance 1 frame.
+Left click        Add nearest segment within cursor to 
+                    current whisker   
+                  If no segment found in cursor, clear
+                    any segments in that frame assigned to the
+                    whisker    
+                  Advance 1 frame
+Mouse wheel up    Advance 1 frame
+Mouse wheel down  Rewind 1 frame
+
+-----
+Notes
+-----
+
+If no output data file is specified, the default 'whiskers.csv' will be used.
+
+If an existing data file is found, the whisker data will be loaded.
+
+Normally the left and right arrow keys advance or rewind by one frame.  Holding
+down shift, ctrl, and/or alt keys will increase the step size by 10x each.
+Hence, holding shift and ctrl (or ctrl and alt, etc...) results in a 100 frame
+step.  Holding shift ctrl and alt and pressing left or right, jumps 1000
+frames.

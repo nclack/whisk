@@ -1,0 +1,32 @@
+Install
+-------
+
+This package isn't really designed to be installed in the Python site packages.
+Instead, use this package locally with your source.  For example, if you have
+the python file (example.py) you're working on in a directory called 'src',
+copy the genetiff directory like so
+
+src/
+  example.py 
+  genetiff/
+    ...
+
+Building
+--------
+
+From the source directory, run:
+
+  make
+
+Testing
+-------
+
+To run the examples:
+
+  python __init__.py 
+
+The tests are written using the docutils framework.  
+
+If everything is ok, no strange messages will appear and a file, test.tif,
+should appear.  The file should be a single image of a diagonal line.
+

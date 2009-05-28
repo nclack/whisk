@@ -1,0 +1,10 @@
+README
+__init__.py
+itiff.i
+setup.py
+tiff_image.c
+tiff_image.h
+tiff_io.c
+tiff_io.h
+utilities.c
+utilities.h

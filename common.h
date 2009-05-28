@@ -1,0 +1,35 @@
+#ifndef _H_COMMON
+#define _H_COMMON
+
+// #include <vld.h> // for VC++: Visual Leak Detector (v1.9b) 
+                    // - comment out if this causes problems
+                    // - comment in  to check for memory leaks in an
+                    //   configured Visual Studio.
+
+#ifndef MAX
+#define MAX(a,b) ( (a<b)?b:a )
+#endif
+#ifndef MIN
+#define MIN(a,b) ( (a<b)?a:b )
+#endif
+#ifndef SWAP
+#define SWAP(a,b) (( (a)==(b) ) || ( ((a) ^= (b)), ((b) ^= (a)), ((a) ^=(b) ))  )
+#endif
+
+#define CLAMP_UINT8(v) ( (v>255) ? 255:( (v<0)? 0:v ) )
+
+#define WRAP_ANGLE_HALF_PLANE(th) \
+  while( (th)    < M_PI/2.0 )     \
+    (th)    +=   M_PI;            \
+  while( (th)    >= M_PI/2.0 )    \
+    (th)    -=   M_PI;
+#define WRAP_ANGLE_2PI(th)        \
+  while( (th)    < -M_PI )        \
+    (th)    +=   2*M_PI;          \
+  while( (th)    >= M_PI )        \
+    (th)    -=   2*M_PI;
+
+void *request_storage( void *buffer, int *maxlen, int nbytes, int minindex, char *msg );
+
+#endif //_H_COMMON
+
