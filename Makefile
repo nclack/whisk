@@ -1,6 +1,6 @@
 CC = gcc
 LDFLAGS = -lm #-lSaturn
-CFLAGS = -g -O3 #-Wall  #-finstrument-functions
+CFLAGS = -g -O3 -ftree-vectorize #-Wall  #-finstrument-functions
 pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contour_lib.o\
 					 water_shed.o
 cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o distance.o dag.o\

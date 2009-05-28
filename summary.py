@@ -185,18 +185,17 @@ def plot_summary(wvd,traj,side=0):
   mask = trajmask(traj[0])
 
   ax = subplot(211)
-  vmin,vmax = -90,90
-  ax.broken_barh( [(i-0.5,1) for i,e in enumerate(mask) if not e], (vmin,vmax-vmin),edgecolor='none',facecolor='k' )
+  vmin1,vmax1 = -90,90
+  ax.broken_barh( [(i-0.5,1) for i,e in enumerate(mask) if not e], (vmin1,vmax1-vmin1) ,edgecolors=[(0,0,0,0)],facecolors=[(0,0,0,0.5)] )
   xlabel('Time (frames)')
   ylabel('Angle at root (deg)')
-  axis((0,tmax,vmin,vmax))
+  ax = subplot(211)
   
   ax = subplot(212)
-  vmin,vmax = -0.008,0.008
-  ax.broken_barh( [(i-0.5,1) for i,e in enumerate(mask) if not e], (vmin,vmax-vmin),edgecolor='none',facecolor='k' )
+  vmin2,vmax2 = -0.008,0.008
+  ax.broken_barh( [(i-0.5,1) for i,e in enumerate(mask) if not e], (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
   xlabel('Time (frames)')
   ylabel('Curvature at root (1/px)')
-  axis((0,tmax,vmin,vmax))
 
   for e in ts:
     tt = array([ time(w)                          for w in e])
@@ -207,3 +206,46 @@ def plot_summary(wvd,traj,side=0):
     plot(tt,th)
     subplot(212)
     plot(tt,k )
+
+  ax = subplot(211)
+  axis((0,tmax,vmin1,vmax1))
+  ax = subplot(212)
+  axis((0,tmax,vmin2,vmax2))
+
+def plot_distributions_by_trajectory(w,traj,cmap = cm.jet):
+  clf()
+  ts = organize_by_trajectories(w,traj)
+
+  subplot(311)
+  vmax = 0
+  v = {}
+  for i,tse in enumerate(ts):
+    v[i] = array([ integrate_path_length(e) for e in tse ])
+    vmax = max( vmax, v[i].max() )
+  for i,ve in v.iteritems():
+    hist(ve,arange(ceil(vmax)),ec='none',width=1,fc=cmap(i/float(len(v))),alpha = 0.5,normed=1);
+  xlabel('Segment length (px)')
+  ylabel('Density')
+
+  subplot(312)
+  vmax = 0
+  v = {}
+  for i,tse in enumerate(ts):
+    v[i] = array([ median_score(e) for e in tse ])
+    vmax = max( vmax, v[i].max() )
+  for i,ve in v.iteritems():
+    hist(ve,arange(ceil(vmax)),ec='none',width=1,fc=cmap(i/float(len(v))),alpha = 0.5,normed=1);
+  xlabel('Median Score')
+  ylabel('Density')
+
+  subplot(313)
+  vmax = 0
+  v = {}
+  for i,tse in enumerate(ts):
+    v[i] = array([ median_thick(e) for e in tse ])
+    vmax = max( vmax, v[i].max() )
+  for i,ve in v.iteritems():
+    hist(ve,arange(0,ceil(vmax),0.5),ec='none',width=1,fc=cmap(i/float(len(v))),alpha = 0.5,normed=1);
+  xlabel('Median Thickness')
+  ylabel('Density')
+

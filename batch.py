@@ -40,6 +40,7 @@ from processing import Pool
 import subprocess
 from glob import glob
 import os,sys
+import datetime
 
 import datetime
 import time
@@ -47,10 +48,18 @@ from pprint import pprint
 
 import optparse
 
+if sys.platform == 'win32':
+  _timer = time.clock
+else:
+  _timer = time.time
+
 def run(args):
   print "Got job: "+' '.join(args)
   #return args
-  retcode = subprocess.call(args)
+  try:
+    retcode = subprocess.call(args)
+  except KeyboardInterrupt:
+    return args, 1 # return failure
   return args,retcode
 
 def doit(path, 
@@ -61,6 +70,12 @@ def doit(path,
          outdir  = '',
          nproc   = None):                # if nproc is none, will use cpu count
   files = glob(os.path.join(path,filter))
+  
+  toprefix = lambda x:  os.path.splitext(name)[0]
+  if label:
+    toprefix = lambda x:  os.path.splitext(name)[0] + "[%s]"%label
+
+  jobs = [ [exe,name, toprefix(name) ] for name in files ]
   if not outdir:
     outdir = path
   getfilename = lambda nm: os.path.split( os.path.splitext(nm)[0])[1]
@@ -74,9 +89,13 @@ def doit(path,
   assert len(files) > 0, "No %s files found in %s"%(filter,path)
 
   P = Pool( processes = nproc )
-  time.clock()
-  result = P.map(run, jobs[:3])
-  elapsed = time.clock()
+  t = _timer()
+  try:
+    result = P.map(run, jobs)
+  except KeyboardInterrupt:
+    print "Control-C Pressed.  Aborting."
+    P.terminate()
+    return
 
   #
   # REPORT
@@ -91,6 +110,7 @@ def doit(path,
         print args[1].rjust(maxlen+1), "[ ] Success"
       else:
         print args[1].rjust(maxlen+1), "[X] FAILED"
+    elapsed = _timer() - t
     print "Processed %d jobs in a total of %5.3f seconds (%5.3f sec/job)"%(len(jobs),elapsed,elapsed/float(len(jobs)))
 
 if __name__ == '__main__':
@@ -132,11 +152,11 @@ multi-core PC.
                     type    = "string",
                     default = "--no-bar")
   parser.add_option("--label",
-                    help    = "An optional label to add to output file names. Set to empty quotes for no label. [default: %default]",
+                    help    = "An optional label to add to output file names. Set to empty quotes for no label. Set to `date` to use the current date. [default: %default]",
                     dest    = "label",
                     action  = "store",
                     type    = "string",
-                    default = datetime.datetime.now().strftime("%Y-%m-%d"))
+                    default = "") 
   parser.add_option("-o","--output",
                     help    = "The directory to which output will be saved [default: input directory]",
                     dest    = "outdir",
@@ -151,6 +171,11 @@ multi-core PC.
     parser.error("Path to movie files required")
 
   assert( os.path.isdir( args[0] ) )
+  if options.outdir:
+    assert( os.path.isdir( options.outdir ) )
+  if options.label:
+    if options.label.lower() in ('date','`date`'):
+      options.label = datetime.datetime.now().strftime("%Y-%m-%d")
 
   doit(args[0], **options.__dict__ )
 
