@@ -15,8 +15,10 @@ credit is given to the author.  All other rights reserved.
 """
 from numpy import *
 from pylab import *
+from scipy.integrate import quad
 import os
 import pdb
+import warnings
 
 def load(moviename, whiskersname):
   from ui.whiskerdata import load_whiskers, load_trajectories
@@ -33,7 +35,7 @@ def check_side(w,side):
 def integrate_path_length(w):
   return sqrt( diff(w.x)**2 + diff(w.y)**2 ).sum()
 def cumulative_path_length(w):
-  return sqrt( diff(w.x)**2 + diff(w.y)**2 ).cumsum()
+  return concatenate(([0],sqrt( diff(w.x)**2 + diff(w.y)**2 ).cumsum() ))
 def median_score(w):
   return median(w.scores)
 def median_thick(w):
@@ -46,7 +48,7 @@ def root_angle(w, side, n=16):
     return arctan2( dx*diff(w.y[(-2*n):-n]), dx*diff(w.x[(-2*n):-n]) ).mean()
 def root_curvature(w,side,n=16):
   side,dx = check_side(w,side)
-  L = concatenate(([0],cumulative_path_length(w)))
+  L = cumulative_path_length(w)
   tt = L/L.max()
   teval = tt[n] if side==0 else tt[-n]
   px = polyfit(tt[n:-n],w.x[n:-n],2)
@@ -59,6 +61,21 @@ def root_curvature(w,side,n=16):
   pd = polyadd( polymul( xp, xp ) , polymul( yp, yp ) ) #denominator
   kappa = lambda t:  polyval( pn, t )/( polyval( pd, t )**(1.5)) # d Tangent angle/ds 
   return dx*kappa(teval)
+def mean_curvature(w,side,n=16):
+  side,dx = check_side(w,side)
+  L = cumulative_path_length(w)
+  tt = L/L.max()
+  teval = tt[n] if side==0 else tt[-n]
+  px = polyfit(tt[n:-n],w.x[n:-n],2)
+  py = polyfit(tt[n:-n],w.y[n:-n],2)
+  xp  = polyder( px, 1 )
+  xpp = polyder( px, 2 )
+  yp  = polyder( py, 1 )
+  ypp = polyder( py, 2 )
+  pn = polyadd( polymul( xp, ypp ), polymul( yp, xpp )) #numerator
+  pd = polyadd( polymul( xp, xp ) , polymul( yp, yp ) ) #denominator
+  kappa = lambda t:  dx*polyval( pn, t )/( polyval( pd, t )**(1.5)) # d Tangent angle/ds * ds/dt 
+  return quad(kappa,0,1,epsrel=1e-3)[0]
 def time(w):
   return w.time
 def trajmask(t):
@@ -79,9 +96,14 @@ def hist_length(wvd):
 
 
 def features(wvd):
+  warnings.simplefilter("ignore")
   for fid,wv in wvd.iteritems():
     for wid,w in wv.iteritems():
-      yield 0,fid,wid,integrate_path_length(w), median_score(w)
+      try:  # 0  1   2              3                     4                5                6             7        8       9        10
+        yield 0,fid,wid,integrate_path_length(w), median_score(w), root_angle(w,0), mean_curvature(w,0), w.x[0], w.y[0], w.x[-1], w.y[-1]
+      except TypeError:
+        pass
+  warnings.resetwarnings()
 
 def pca(wvd):
   data = array(list(features(wvd)))[3:]
@@ -146,7 +168,7 @@ def make_trajectories( wvd, datadict, side, n ):
   return T
 
 def plot_whiskers_by_trajectory(movie, wvd, traj, iframe):
-  ioff()
+  #ioff()
   cla()
   imshow(movie[iframe],hold=0, cmap=cm.gray);
   colors = cm.prism([x/float(len(traj)) for x in xrange(len(traj))])
@@ -162,7 +184,7 @@ def plot_whiskers_by_trajectory(movie, wvd, traj, iframe):
 
   map(axis,["image","off"])
   subplots_adjust(0,0,1,1,0,0)
-  ion()
+  #ion()
   show()
 
 def render_trajectories(path,movie,wvd,traj):
@@ -171,11 +193,21 @@ def render_trajectories(path,movie,wvd,traj):
     plot_whiskers_by_trajectory(movie,wvd,traj,iframe)
     savefig(os.path.join(path,"render%04d.png"%iframe))
 
-
 def organize_by_trajectories(wvd,traj):
   """ For each trajectory returns a list of whisker segments """
   xform = lambda i: [ wvd[fid][wid] for fid,wid in traj[i].iteritems()]
   return map( xform, traj.keys() )
+
+def organize_data_by_traj(data,traj):
+  def itertrajinv(traj):
+    for tid,v in traj.iteritems():
+      for fid,wid in v.iteritems():
+        yield (fid,wid),tid
+  invtraj = dict( [p for p in itertrajinv(traj) ] )
+  index = ones( (data.shape[0],1) ) * -1 
+  for i,row in enumerate(data):
+    index[i] = invtraj.get( (int(row[1]), int(row[2])) , -1 )
+  return [ data[ where(index==it)[0],: ] for it in traj.iterkeys() ]
 
 def plot_summary(wvd,traj,side=0):
   clf()
@@ -195,24 +227,30 @@ def plot_summary(wvd,traj,side=0):
   vmin2,vmax2 = -0.008,0.008
   ax.broken_barh( [(i-0.5,1) for i,e in enumerate(mask) if not e], (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
   xlabel('Time (frames)')
-  ylabel('Curvature at root (1/px)')
+  ylabel('Mean Curvature (1/px)')
 
+  #warnings.simplefilter("ignore")
   for e in ts:
     tt = array([ time(w)                          for w in e])
     tmax = max(tmax, tt.max())
     th = array([ root_angle(w,side)*180.0/pi      for w in e])
-    k  = array([ root_curvature(w,side)           for w in e]) 
+    k  = array([ mean_curvature(w,side)           for w in e]) 
     subplot(211)
     plot(tt,th)
     subplot(212)
     plot(tt,k )
+  #warnings.resetwarnings()
 
   ax = subplot(211)
   axis((0,tmax,vmin1,vmax1))
   ax = subplot(212)
   axis((0,tmax,vmin2,vmax2))
 
-def plot_distributions_by_trajectory(w,traj,cmap = cm.jet):
+
+def plot_distributions_by_trajectory(data,traj,cmap = cm.jet):
+  clf()
+
+def plot_distributions_by_trajectory_nodata(w,traj,cmap = cm.jet):
   clf()
   ts = organize_by_trajectories(w,traj)
 

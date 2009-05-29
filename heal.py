@@ -21,11 +21,11 @@ Copyright (c) 2009 HHMI. Free downloads and distribution are allowed as long as 
 credit is given to the author.  All other rights reserved.
 
 """
-from trace import bipartite_matching
 from ui.whiskerdata.trace import Whisker_Seg
 from ui.whiskerdata import save_whiskers
 from numpy import *
 from warnings import warn
+import os
 import pdb
 
 def load(moviename, whiskersname):
@@ -35,19 +35,27 @@ def load(moviename, whiskersname):
   w,wid = load_whiskers(whiskersname)
   return w,movie
 
+def fix_overlaps_in_frame( wv, shape, scale ):
+  last = 0
+  while (len(wv) - last) != 0:
+    last = len(wv)
+    table = CollisionTable(wv, shape, scale )
+    r = set( resolution( table, wv ) )
+    wv = dict( [ p for p in enumerate(r) ] )
+  return wv
+
 def fix(wvd,movie,scale=2, signal_per_pixel = 0, max_dist = 60, max_angle = 20.*pi/180.):
   shape = movie[0].shape
   nframes = max( wvd.keys() )
   for fid,wv in wvd.items():
     print "Frame %5d of %5d"%(fid,nframes)
-    table = CollisionTable( wv, shape, scale )
-    r = set( resolution( table, wv ) )
+    wv = fix_overlaps_in_frame( wv, shape, scale )
+    wvd[fid] = wv
 #   for j,l in choose_gaps(movie[fid],r,signal_per_pixel,max_dist,max_angle):
 #     e = reduce( Whisker_Seg.join, j )
 #     r.discard( j[0] )
 #     r.discard( j[-1] )
 #     r.add(e)
-    wvd[fid] = dict( [ p for p in enumerate(r) ] )
   return wvd
     
 def compute_join_length( px, py, tlow = 0.0, thigh = 1.0 ):
@@ -370,11 +378,12 @@ def choose_gaps(im,wv, signal_per_pixel = 0.0, max_dist=60, max_angle = pi/4., m
           hit = 1
           candidates[i,j] = l
   if hit:
-    assignment,cost = bipartite_matching( exp(-candidates) ) 
-    print assignment
-    for i,j in assignment.iteritems():
-      a = left[i]
-      b = right[j]
+    warn('BROKEN this part not complete')
+    #assignment,cost = bipartite_matching( exp(-candidates) ) 
+    #print assignment
+    #for i,j in assignment.iteritems():
+    #  a = left[i]
+    #  b = right[j]
       #pdb.set_trace()
       #px,py = solve_polynomial_join( b, a )
       #c = compute_join_curvature(px,py) 
@@ -389,8 +398,8 @@ def choose_gaps(im,wv, signal_per_pixel = 0.0, max_dist=60, max_angle = pi/4., m
       #print "\t                Max Curvature      : %g"%( compute_join_max_curvature(px,py)  )
       #print "\t                Curvature Variation: %g"%( compute_join_curvature_variation(px,py,c)  )
       #print "\t                Abs Curvature      : %g"%( compute_join_abs_curvature( px, py ) )
-      e = make_joining_whisker(px,py,d,b.thick[-1],b.scores[-1],a.thick[ 0],a.scores[ 0])
-      yield (b,e,a),l
+    #  e = make_joining_whisker(px,py,d,b.thick[-1],b.scores[-1],a.thick[ 0],a.scores[ 0])
+    #  yield (b,e,a),l
 
 def gap_measures(im,wv):
   pmetric = lambda p: sqrt(dot(p[:-1],p[:-1]))
@@ -557,12 +566,14 @@ def resolution(table, wvd):
   for a in rest:
     yield a
 
-def pairwise_merge( match ):
-  overhang = 8
+def pairwise_merge( match, thresh = 0.8 ):
+  """  Will declare the pair as overlapping if the common interval is 
+  greater than `thresh` * length """
+
   wa = match[0][0]
   wb = match[1][0]
   bnda, bndb = trace_overlap(*match)
-  iscomplete = lambda bnd,w:  bnd[0] < overhang and bnd[1] >= len(w)-overhang
+  iscomplete = lambda bnd,w:  (bnd[1] - bnd[0]) >= len(w)*thresh
   if iscomplete(bnda,wa) or iscomplete(bndb,wb):
     sa = wa.scores.sum()
     sb = wb.scores.sum()
@@ -674,13 +685,26 @@ class CollisionTable(object):
 if 1:
   import optparse
   if __name__ == '__main__':
-    usage = "usage: $prog [options] moviefile source_whiskers dest_whiskers"
+    usage = "usage: $prog [options] moviefile [source_whiskers [dest_whiskers]]"
     description = \
   """
   This utility takes a collection of whisker traces and performs two
-  transformations to try to merge segments that appear to be traces from the same
-  whisker.  First, overlaping segments are merged.  Second, gaps between seperate
-  segments that appear to be from the same whisker are filled.
+  transformations to try to merge segments that appear to be traces from the
+  same whisker.  First, overlaping segments are merged.  Second, gaps between
+  seperate segments that appear to be from the same whisker are filled.
+
+  If source and destination file names are not supplied, they are guessed
+  according to a set of rules.
+
+  If only the movie name is supplied, the extension is replaced and the
+  `srcdest` and `destlabel` options are used to resolve the filename.
+
+  If both the movie and source whisker file names are provided, the destination
+  filename is based on the source file name and incorporates the label
+  specified in `destlabel`.
+
+  If it's confusing to you, it's confusing to me too.  Mostly this was done to
+  hack compatibility with batch.py.
   """
     parser = optparse.OptionParser( usage = usage,
                                     description = description )
@@ -708,12 +732,49 @@ if 1:
                       type = "float",
                       default = 20,
                       help = "Maximum angle change for a gap crossing in degrees[default: %default]");
+    parser.add_option("--srclabel",
+                    help    = "This is used when guessing source whisker file names. [default: %default]",
+                    dest    = "srclabel",
+                    action  = "store",
+                    type    = "string",
+                    default = "") 
+    parser.add_option("--destlabel",
+                    help    = "This is used when guessing destination whisker file names. [default: %default]",
+                    dest    = "destlabel",
+                    action  = "store",
+                    type    = "string",
+                    default = "heal") 
     options, args = parser.parse_args()
     
     options.max_angle *= pi/180.0 # convert from degrees to radians
 
+    # try to be friendly about args
+    assert( os.path.isfile(args[0]) ) # "Could not find %s"%args[0] )
+    moviename = args[0]
+    srcname = None
+    dstname = None
+
+    getroot = lambda nm: os.path.splitext( nm )[0]
+    gettail = lambda lbl,ext: '[%s]%s'%(lbl,ext) if lbl else ext
+    if len(args)==1: #guess source and dest name based on movie name
+      root = getroot( moviename )
+      srcname = root + gettail(options.srclabel,'.whiskers') 
+      dstname = root + gettail(options.destlabel,'.whiskers')  
+      assert( os.path.isfile( srcname  ) ) #, "Could not find %s."%srcname )
+    if len(args)==2: #guess dest name based on source name
+      srcname =args[1]
+      if os.path.splitext(srcname)[1] != '.whiskers':
+        srcname += '.whiskers'
+      assert( os.path.isfile( srcname  ) ) #, "Could not find %s."%srcname )
+      root = getroot( srcname )
+      dstname = root + gettail(options.destlabel,'.whiskers')  
+
+
     print "Loading..."
-    w,movie = load(args[0],args[1])
+    w,movie = load(moviename,srcname)
+    # need to remove srclabel and destlabel
+    options.__dict__.pop('srclabel')
+    options.__dict__.pop('destlabel')
     fix(w,movie, **options.__dict__)
-    save_whiskers(args[2],w)
+    save_whiskers(dstname,w)
 
