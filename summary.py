@@ -3,10 +3,16 @@
 Example:
 
 >>> w,movie = load("data/seq/whisker_data_0140.seq","seq-heal.whiskers")
->>> data = classify(w)
+>>> data = classify(w,1500,100)
 >>> res = transform_classification_data(data)
 >>> traj = make_trajectories( w, res, 0, 4 )
+>>> plot_summary_data(w,traj,data)
 
+or 
+
+>>> w,movie = load("data/seq/whisker_data_0140.seq","seq-heal.whiskers")
+>>> traj,data = autotraj(movie,w)
+>>> plot_summary_data(w,traj,data)
 
 Author: Nathan Clack
 Date: 2009-05-26
@@ -15,7 +21,7 @@ credit is given to the author.  All other rights reserved.
 """
 from numpy import *
 from pylab import *
-from scipy.integrate import quad
+from features import *
 import os
 import pdb
 import warnings
@@ -27,58 +33,7 @@ def load(moviename, whiskersname):
   w,wid = load_whiskers(whiskersname)
   return w,movie
 
-def check_side(w,side):
-  if side == 0:
-    return (0,1) if w.x[0] < w.x[-1] else (-1,-1)
-  else:
-    return (-1,1) if w.x[0] < w.x[-1] else (0,-1)
-def integrate_path_length(w):
-  return sqrt( diff(w.x)**2 + diff(w.y)**2 ).sum()
-def cumulative_path_length(w):
-  return concatenate(([0],sqrt( diff(w.x)**2 + diff(w.y)**2 ).cumsum() ))
-def median_score(w):
-  return median(w.scores)
-def median_thick(w):
-  return median(w.thick)
-def root_angle(w, side, n=16):
-  side,dx = check_side(w,side)
-  if side == 0:
-    return arctan2( dx*diff(w.y[n:(2*n)]), dx*diff(w.x[n:(2*n)]) ).mean()
-  elif side == -1:
-    return arctan2( dx*diff(w.y[(-2*n):-n]), dx*diff(w.x[(-2*n):-n]) ).mean()
-def root_curvature(w,side,n=16):
-  side,dx = check_side(w,side)
-  L = cumulative_path_length(w)
-  tt = L/L.max()
-  teval = tt[n] if side==0 else tt[-n]
-  px = polyfit(tt[n:-n],w.x[n:-n],2)
-  py = polyfit(tt[n:-n],w.y[n:-n],2)
-  xp  = polyder( px, 1 )
-  xpp = polyder( px, 2 )
-  yp  = polyder( py, 1 )
-  ypp = polyder( py, 2 )
-  pn = polyadd( polymul( xp, ypp ), polymul( yp, xpp )) #numerator
-  pd = polyadd( polymul( xp, xp ) , polymul( yp, yp ) ) #denominator
-  kappa = lambda t:  polyval( pn, t )/( polyval( pd, t )**(1.5)) # d Tangent angle/ds 
-  return dx*kappa(teval)
-def mean_curvature(w,side,n=16):
-  side,dx = check_side(w,side)
-  L = cumulative_path_length(w)
-  tt = L/L.max()
-  teval = tt[n] if side==0 else tt[-n]
-  px = polyfit(tt[n:-n],w.x[n:-n],2)
-  py = polyfit(tt[n:-n],w.y[n:-n],2)
-  xp  = polyder( px, 1 )
-  xpp = polyder( px, 2 )
-  yp  = polyder( py, 1 )
-  ypp = polyder( py, 2 )
-  pn = polyadd( polymul( xp, ypp ), polymul( yp, xpp )) #numerator
-  pd = polyadd( polymul( xp, xp ) , polymul( yp, yp ) ) #denominator
-  kappa = lambda t:  dx*polyval( pn, t )/( polyval( pd, t )**(1.5)) # d Tangent angle/ds * ds/dt 
-  return quad(kappa,0,1,epsrel=1e-3)[0]
-def time(w):
-  return w.time
-def trajmask(t):
+def trajmask(t):  # returns a mask over frames of the movie - true means trajectory labels were applied there
   mask = zeros( max(t.keys())+1 )
   mask[ t.keys() ] = 1
   return mask
@@ -94,13 +49,12 @@ def hist_length(wvd):
   ylabel('Counts')
   xlabel('Path length (px)')
 
-
 def features(wvd):
   warnings.simplefilter("ignore")
   for fid,wv in wvd.iteritems():
     for wid,w in wv.iteritems():
       try:  # 0  1   2              3                     4                5                6             7        8       9        10
-        yield 0,fid,wid,integrate_path_length(w), median_score(w), root_angle(w,0), mean_curvature(w,0), w.x[0], w.y[0], w.x[-1], w.y[-1]
+        yield 0,fid,wid,integrate_path_length(w), median_score(w), root_angle_rad(w,0), mean_curvature(w,0), w.x[0], w.y[0], w.x[-1], w.y[-1]
       except TypeError:
         pass
   warnings.resetwarnings()
@@ -137,6 +91,13 @@ def transform_classification_data(data):
     res.setdefault( fid, {} )[wid] = ( int(row[0]), row[3], row[4] )
   return res
 
+def estimate_number_of_trajectories(datadict):
+  acc = 0
+  for v in datadict.itervalues():
+    e = [ row[0] for row in v.itervalues() ]
+    acc  += sum(e)
+  return acc/float(len(datadict))
+
 def plot_frame_by_class(movie, wvd, datadict, iframe):
   ioff()
   cla()
@@ -157,7 +118,9 @@ def render_classes(path,movie,wvd,datadict):
     plot_frame_by_class(movie,wvd,datadict,iframe)
     savefig(os.path.join(path,"render%04d.png"%iframe))
 
-def make_trajectories( wvd, datadict, side, n ):
+def make_trajectories( wvd, datadict, side, n=None ):
+  if n is None:
+    n = round( estimate_number_of_trajectories( datadict ))
   T = {}
   for fid, v in datadict.iteritems():
     good = [ wid for wid,datarow in v.iteritems() if datarow[0] == 1 ] # filter for whiskers in frame that are in the good class
@@ -167,11 +130,30 @@ def make_trajectories( wvd, datadict, side, n ):
         T.setdefault(i,{})[fid] = good[idx]
   return T
 
+def autotraj(movie,wvd,side=0, data=None):
+  import scipy.cluster.vq as vq
+  if data == None:
+    data = array(list(features(wvd)));
+  ilength = 3
+  iscore  = 4
+  obs = vq.whiten( data[:,[ilength, iscore]] )
+  codebook,distortion = vq.kmeans( obs, 2 )
+  idx = None
+  if codebook[0,1] > codebook[1,1]:
+    idx = 0
+  else:
+    idx = 1
+  code, errs = vq.vq( obs, codebook )
+  data[:,0] = (code==idx)
+  res = transform_classification_data( data )
+  traj = make_trajectories(wvd,res,side)
+  return traj, data
+
 def plot_whiskers_by_trajectory(movie, wvd, traj, iframe):
   #ioff()
   cla()
   imshow(movie[iframe],hold=0, cmap=cm.gray);
-  colors = cm.prism([x/float(len(traj)) for x in xrange(len(traj))])
+  colors = cm.jet([x/float(len(traj)) for x in xrange(len(traj))])
   for wid,w in wvd[iframe].iteritems():
     hit = 0
     for i,t in traj.iteritems():
@@ -187,11 +169,18 @@ def plot_whiskers_by_trajectory(movie, wvd, traj, iframe):
   #ion()
   show()
 
-def render_trajectories(path,movie,wvd,traj):
-  for iframe in range(len(movie)):
+def _render_trajectories_single_frame( path, movie, wvd, traj, iframe ):
+  try:
     print "%4d of %d"%(iframe, len(movie))
     plot_whiskers_by_trajectory(movie,wvd,traj,iframe)
     savefig(os.path.join(path,"render%04d.png"%iframe))
+  except Exception, e:
+    print e
+
+def render_trajectories(path,movie,wvd,traj):
+  for iframe in range(len(movie)):
+    _render_trajectories_single_frame( path, movie, wvd, traj, iframe )
+
 
 def organize_by_trajectories(wvd,traj):
   """ For each trajectory returns a list of whisker segments """
@@ -208,6 +197,44 @@ def organize_data_by_traj(data,traj):
   for i,row in enumerate(data):
     index[i] = invtraj.get( (int(row[1]), int(row[2])) , -1 )
   return [ data[ where(index==it)[0],: ] for it in traj.iterkeys() ]
+
+def plot_summary_data(wvd,traj,data):
+  clf()
+  tsd = organize_data_by_traj( data,traj )
+  tmax = 0
+  
+  mask = trajmask(traj[0])
+
+  ax = subplot(211)
+  vmin1,vmax1 = -90,90
+  ax.broken_barh( [(i-0.5,1) for i,e in enumerate(mask) if not e], (vmin1,vmax1-vmin1) ,edgecolors=[(0,0,0,0)],facecolors=[(0,0,0,0.5)] )
+  xlabel('Time (frames)')
+  ylabel('Angle at root (deg)')
+  ax = subplot(211)
+  
+  ax = subplot(212)
+  vmin2,vmax2 = -0.008,0.008
+  ax.broken_barh( [(i-0.5,1) for i,e in enumerate(mask) if not e], (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
+  xlabel('Time (frames)')
+  ylabel('Mean Curvature (1/px)')
+
+  #warnings.simplefilter("ignore")
+  for tdata in tsd:
+    tt = tdata[:,1] # frame id == time
+    tmax = max(tmax, tt.max())
+    th = tdata[:,5]*180.0/pi #array([ root_angle(w,side)*180.0/pi      for w in e])
+    k  = tdata[:,6] #array([ mean_curvature(w,side)           for w in e]) 
+    subplot(211)
+    plot(tt,th)
+    subplot(212)
+    plot(tt,k )
+  #warnings.resetwarnings()
+
+  ax = subplot(211)
+  axis((0,tmax,vmin1,vmax1))
+  ax = subplot(212)
+  axis((0,tmax,vmin2,vmax2))
+
 
 def plot_summary(wvd,traj,side=0):
   clf()
@@ -233,7 +260,7 @@ def plot_summary(wvd,traj,side=0):
   for e in ts:
     tt = array([ time(w)                          for w in e])
     tmax = max(tmax, tt.max())
-    th = array([ root_angle(w,side)*180.0/pi      for w in e])
+    th = array([ root_angle_rad(w,side)*180.0/pi      for w in e])
     k  = array([ mean_curvature(w,side)           for w in e]) 
     subplot(211)
     plot(tt,th)
@@ -246,6 +273,20 @@ def plot_summary(wvd,traj,side=0):
   ax = subplot(212)
   axis((0,tmax,vmin2,vmax2))
 
+def plot_distributions_by_class(data):
+  nfeat = data.shape[1] - 3 # first 3 columns are class_id, frame_id, and segment_id
+  clf()
+  mask = data[:,0]==0
+
+  for i in xrange(nfeat):
+    ic = 3+i
+    subplot(nfeat,1,i)
+    avg = data[:,ic].mean()
+    wid = 3.0*data[:,ic].std()
+    bins = linspace( max( avg-wid, data[:,ic].min() ), min(avg+wid,data[:,ic].max()), 100 )
+    #bins = linspace( data[:,ic].min(), data[:,ic].max(), 100 )
+    hist( data[mask,ic], bins, ec='none', fc = 'r',alpha=0.5, normed=1 )
+    hist( data[~mask,ic], bins, ec='none', fc = 'g',alpha=0.5, normed=1 )
 
 def plot_distributions_by_trajectory(data,traj,cmap = cm.jet):
   clf()
