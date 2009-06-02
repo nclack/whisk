@@ -15,7 +15,7 @@ Date  : 25 January 2009
 """
 import sys,os
 from ctypes import *
-from numpy import zeros, float32, uint8, array, hypot, arctan2, pi, concatenate
+from numpy import zeros, float32, uint8, array, hypot, arctan2, pi, concatenate, float64, ndarray, int32
 from warnings import warn
 
 
@@ -652,3 +652,67 @@ def Trace_Whisker( seed, image ):
     return ws
   else:
     return None
+
+#
+# HMM's 
+#
+# It'd probably be best to move this stuff to another module since it has
+# little to do with tracing and more with correspondance.  On the other hand,
+# it's convenient to have everything in one place...
+#
+
+class cViterbiResult(Structure):
+  _fields_ = [ ( "total"    ,          c_double  ),   ## Probability of observation given model                                  
+               ( "prob"     ,          c_double  ),   ## Probability of most likely state sequence given model and observations  
+               ( "n"        ,          c_int     ),   ## Most likely state sequence - size
+               ( "sequence" , POINTER( c_int )   )]   ## Most likely state sequence 
+  def asarray(self): # this is a copy
+    s = zeros( self.n, dtype = int32 )
+    for i in xrange( self.n ):
+      s[i] = self.sequence[i]
+    return s
+  def get(self):
+    return self.total, self.prob, self.asarray()
+
+cWhisk.Free_Viterbi_Result.restype = None
+cWhisk.Free_Viterbi_Result.argtypes = [ POINTER( cViterbiResult ) ]
+
+cWhisk.Forward_Viterbi_Log2.restype = POINTER( cViterbiResult )
+cWhisk.Forward_Viterbi_Log2.argtypes = [
+  POINTER( c_int    ),          ## sequence,         // size: nseq
+           c_int     ,          ## nseq,             // number of observations (size of seqeunce)                           
+  POINTER( c_double ),          ## start_prob,       // size: nstates (log probs)                                           
+  POINTER( c_double ),          ## transition_prob,  // size: nstates*nstates, destintion state-major order (log probs)     
+  POINTER( c_double ),          ## emmission_prob,   // size: nstates * nobs, state-major order (stride is nobs) (log probs)
+           c_int     ,          ## nobs,             // the size of the set of observables ( need for stride )            
+           c_int     ]          ## nstates           // number of states (size of state alphabet)
+
+def viterbi_log2(sequence, start, transitions, emmissions, do_checks=True):
+  if do_checks:
+    #check types
+    assert( transitions.dtype == float64 )
+    assert( transitions.dtype == float64 )
+
+    # try to coerce sequence
+    if not isinstance( sequence, ndarray ):
+      sequence = array( sequence, dtype = int32 )
+    if sequence.dtype != int32:
+      sequence = sequence.astpye(int32)
+
+    #check sizes
+    nstates = start.shape[0]
+    nobs    = emmissions.shape[1]
+    assert( transitions.shape[0] == nstates and transitions.shape[1] == nstates )
+    assert( emmissions.shape[0] == nstates )
+
+  res = cWhisk.Forward_Viterbi_Log2( sequence.ctypes.data_as( POINTER( c_int32 ) ),
+                                     c_int( len(sequence) ),
+                                     start.ctypes.data_as(       POINTER( c_double ) ),
+                                     transitions.ctypes.data_as( POINTER( c_double ) ),
+                                     emmissions.ctypes.data_as(   POINTER( c_double ) ),
+                                     c_int( nobs ),
+                                     c_int( nstates ) )
+  ret = res.contents.get()
+  cWhisk.Free_Viterbi_Result(res)
+  return ret
+

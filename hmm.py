@@ -1,5 +1,5 @@
 import features
-from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor
+from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff
 
 class EmmissionDistributions(object):
   """
@@ -21,7 +21,29 @@ class EmmissionDistributions(object):
       Whisker segments involved in some trajectory
 
   """
-  def __init__(self, wvd=None, traj=None):
+  def __init__(self, states, classifier, wvd=None, traj=None, data = None):
+    """
+    Parameters:
+    
+    `states`: A list of state names.
+              e.g. ["junk","whiskers"]
+
+    `classifier`: A function mapping wvd,traj,fid,wid to an index in states.
+                  e.g: lambda wvd,traj,fid,wid: (fid,wid) in invtraj(traj)
+
+    `wvd`: [optional] If specified, `traj` must also be specified.
+           A whiskers dictionary.  Will be used to call
+           `EmmissionDistributions.estimate.`
+
+    `traj`: [optional] If specified, `wvd` must also be specified. 
+            A trajectories dictionary.  Will be used to call
+            `EmmissionDistributions.estimate.` 
+
+    `data`: [optional] A table supplied as a 2d ndarray to use as a set
+            of feature vectors.  This must conform to the format expected
+            internally.  
+            
+    """
     object.__init__(self)
     self._features = (( "Length(px)"               , features.integrate_path_length ), # Each function maps
                       ( "Median score"             , features.median_score          ), #   whisker segment --> real
@@ -33,9 +55,11 @@ class EmmissionDistributions(object):
     self._feature_bin_deltas = zeros( len(self._features) )
     self._feature_bin_mins   = zeros( len(self._features) )
 
-    self._distributions  =  {"whisker":[], "junk": []} # stored as log2( probability density )
+    self._states = states
+    self._distributions  =  dict([(s,[]) for s in states]) # stored as log2( probability density )
+    self._classifier = classifier
     if not (wvd is None or traj is None):
-      self.estimate(wvd,traj)
+      self.estimate(wvd,traj,data)
 
   def feature(self, seg ):
     return array([ f(seg) for name,f in self._features ])  
@@ -53,13 +77,8 @@ class EmmissionDistributions(object):
       for fid,v in wvd.iteritems():
         for wid,w in v.iteritems():
           yield fid,wid,self.feature(w)
-    def itertraj():
-      for tid,v in traj.iteritems():
-        for fid,wid in v.iteritems():
-          yield fid,wid
-    labelled = set( list(itertraj()) )
     for i,(fid,wid,fv) in enumerate(iter()):
-      data[i,0] = (fid,wid) in labelled  
+      data[i,0] = self._classifier(wvd,traj,fid,wid)
       data[i,1] = fid
       data[i,2] = wid
       data[i,3:] = fv
@@ -68,29 +87,30 @@ class EmmissionDistributions(object):
   def estimate(self, wvd, traj, data = None):
     if data is None:
       data = self._all_features(wvd,traj)
-    mask = data[:,0]==0
+    else:
+      # need to update classification even if data supplied
+      for row in data:
+        row[0] = self._classifier(wvd,traj,row[1],row[2])
+
     nfeat = len(self._features)
 
     for i in xrange(nfeat):
       ic = 3+i
       v = data[:,ic]     # Determine bins to compute histograms over for each feature
-      avg = v.mean()     # Bounds are limited to 3 times the standard deviation 
-      wid = 3.0*v.std()  #  or the max/min; whichever gives the smaller interval.
+      #avg = v.mean()     # Bounds are limited to 3 times the standard deviation 
+      #wid = 3.0*v.std()  #  or the max/min; whichever gives the smaller interval.
       mn  = v.min()      #
       mx  = v.max()      #
-      b = linspace( max( avg-wid, mn ), min(avg+wid,mx), 32 )
-
-      counts,b = histogram( v[mask], bins   = b )
-      counts = counts.astype(float64) + 1.0 #add one to each bin...gets rid of zeros
-      counts /= counts.sum()
+      b = linspace( mn, mx , 64 )
       self._feature_bin_deltas[i] = b[1] - b[0]
       self._feature_bin_mins[i]   = b[0]
-      self._distributions["junk"].append( log2(counts) ) # all counts>0
-      
-      counts,b = histogram( v[~mask], bins   = b )
-      counts = counts.astype(float64) + 1.0 #add one to each bin...gets rid of zeros
-      counts /= counts.sum()
-      self._distributions["whisker"].append( log2(counts) ) # all counts>0
+
+      for i,state in enumerate(self._states):
+        mask = data[:,0]==i
+        counts,bb = histogram( v[mask], bins   = b )
+        counts = counts.astype(float64) + 1.0 #add one to each bin...gets rid of zeros
+        counts /= counts.sum()                #  FIXME: (line above) better way? what's the upper bound on the prob of a bin w 0
+        self._distributions[state].append( log2(counts) ) # all counts>0
     
   def _discritize(self, fv): 
     #FIXME: there's a problem here with out of bounds values
@@ -101,41 +121,130 @@ class EmmissionDistributions(object):
   def evaluate(self, seg, state ):
     data = self.feature(seg)
     idx = self._discritize( data )
-    logp = [ self._distributions[state][i][j] for i,j in enumerate(idx) if j > 0]
+    logp = [ self._distributions[state][i][j] for i,j in enumerate(idx)]
     return sum(logp)
 
-class Model(object):
-  def __init__(self, nwhiskers):
+class EDTwoState(EmmissionDistributions):
+  def __init__(self, wvd, traj, data = None, do_estimate = True):
+    classifier = self._make_classifer(traj)
+    if do_estimate:
+      EmmissionDistributions.__init__(self, ["junk","whiskers"], classifier, wvd, traj, data )
+    else:
+      EmmissionDistributions.__init__(self, ["junk","whiskers"], classifier)
+
+  @staticmethod
+  def _itertraj(traj):
+    for tid,v in traj.iteritems():
+      for fid,wid in v.iteritems():
+        yield fid,wid
+
+  @staticmethod
+  def _make_classifer(traj):
+    frames = set()
+    for v in traj.values():
+      frames.update( v.keys() )
+    labelled = set( list( EDTwoState._itertraj(traj) ) )
+    def classifier(wvd,traj,wid,fid):
+      return int( (wid,fid) in labelled ) if fid in frames else -1
+    return classifier
+
+  def estimate(self, wvd, traj, data = None):
+    self._classifier = self._make_classifer(traj)
+    EmmissionDistributions.estimate( self, wvd, traj, data )
+
+def iterstates(n):
+  yield "start"
+  for i in xrange(n):
+    yield "junk%d"%i
+    yield "whisker%d"%i
+  yield "end"
+
+def wcmp(a,b):
+  """ A strict ordering whisker segments in a frame """
+  return cmp( a.y[0], b.y[0] )
+
+class EDMultiState(EmmissionDistributions):
+  def __init__(self, wvd, traj, data = None, do_estimate = True):
+    classifier = self._make_classifer( wvd, traj )
+    if do_estimate:
+      EmmissionDistributions.__init__( self,  self._states, classifier, wvd, traj, data )
+    else:
+      EmmissionDistributions.__init__( self,  self._states, classifier)
+
+  @staticmethod
+  def _itertraj(traj):
+    for tid,v in traj.iteritems():
+      for fid,wid in v.iteritems():
+        yield fid,wid
+
+  def _make_classifer(self, wvd,traj):
+    """ 
+    Generates the classifier function used in training.
+    Also generates the states.
+    """
+    labelled = set( list( self._itertraj(traj) ) )
+    frames = set()
+    for v in traj.values():
+      frames.update( v.keys() )
+
+    self._nsteps = 0
+
+    names = "junk%d","whisker%d"
+    wrowcmp = lambda a,b: wcmp(a[1],b[1])
+    classmap = {}
+    states   = set()
+    for fid,wv in wvd.iteritems():
+      t = 0
+      for wid,w in sorted( wv.items(), cmp = wrowcmp ):
+        if (fid,wid) in labelled: #whisker
+          name = names[1]%t
+          t+=1
+        else: #junk
+          name = names[0]%t
+        classmap[ (fid,wid) ] = name
+        states.add(name)
+      self._nsteps = max(self._nsteps,t)
+    self._states = list(states)
+    statemap = dict( [(n,i) for i,n in enumerate(self._states) ] )
+    def classifier(wvd,traj,fid,wid):
+      return statemap[ classmap[(fid,wid)] ] if fid in frames else -1
+    return classifier
+
+  def estimate(self, wvd, traj, data = None):
+    self._classifier = self._make_classifer(wvd,traj)
+    EmmissionDistributions.estimate( self, wvd, traj, data )
+  
+    
+class LeftRightModel(object):
+  def __init__(self):
     object.__init__(self)
-    def iterstates(n):
-      yield "start"
-      for i in xrange(n):
-        yield "junk%d"%i
-        yield "whisker%d"%i
-      yield "end"
-    self._nwhiskers = nwhiskers
-    self.states = list(iterstates(nwhiskers))
+    self.states = None
+    self._statemodel = None
+    self._startprob   = {} # map dest   -> log2 prob
     self._transitions = {} # map source -> ( map destination -> log2 prob )
 
-  def get_transition_matrix(self, aslog2 = True):
+  def transition_matrix(self):
     n = len(self.states)
     T = zeros( (n,n) )
-    if aslog2:
-      for isrc,src in enumerate(self.states):
-        for idst,dst in enumerate(self.states):
-          try:
-            T[isrc,idst] = self._transitions[ src ][ dst ]
-          except KeyError:
-            pass
-    else:
-      for isrc,src in enumerate(self.states):
-        for idst,dst in enumerate(self.states):
-          try:
-            T[isrc,idst] = 2**self._transitions[ src ][ dst ]
-          except KeyError:
-            pass
+    for isrc,src in enumerate(self.states):
+      for idst,dst in enumerate(self.states):
+        try:
+          T[isrc,idst] = self._transitions[ src ][ dst ]
+        except KeyError:
+          pass
     return T
 
+  def start_matrix(self):
+    pass
+
+  def emmissions_matrix(self, whiskers):
+    pass
+
+  def viterbi(self, sequence):
+    S = self.start_matrix()
+    E = self.emmissions_matrix(sequence)
+    T = self.transition_matrix()
+    pass
 
   @staticmethod
   def _itertrajinv(traj):
@@ -143,39 +252,58 @@ class Model(object):
       for fid,wid in v.iteritems():
         yield (fid,wid),tid
 
-  def train_time_independent(self, wvd,traj):
-    T = zeros( (4,4),  dtype=float64 ) #four states start, whisker, junk, end (0,1,2,3 respectively)
-    invtraj = dict( [p for p in self._itertrajinv(traj) ] )
-    classify = lambda fid,wid: 1 if invtraj.has_key((fid,wid)) else 2 
-    for fid,wv in wvd.iteritems():
-      state = 0
-      for wid in wv.iterkeys():
-        next = classify(fid,wid)
-        T[state, next] += 1
-        state = next
-      T[state,3] += 1
+  def train_emmissions(self,wvd,traj,data=None):
+    self._statemodel.estimate(wvd,traj,data)
 
-    #normalize to make T a stochastic matrix
+  def train_time_independent(self, wvd,traj):
+    S = zeros( 2, dtype = float64 )    #start probabilities
+    T = zeros( (2,2),  dtype=float64 ) #transitions: two states - whisker, junk (0 and 1 resp)
+    E = zeros( 2, dtype = float64 )    #end probabilities
+
+    simplestates = EDTwoState( wvd, traj, do_estimate = False ) #builds the state space and classifier
+    classify = simplestates._classifier
+    for fid,wv in wvd.iteritems():
+      wids = wvd.keys()
+      prev = classify(wvd,traj,fid,wids[0])
+      if prev == -1: #frame absent
+        continue
+      S[prev]++;
+      for wid in wids[1:]:
+        next = classify(wvd,traj,fid,wid)
+        T[prev,next] ++;
+        prev = next;
+      E[prev]++;
+
+    #normalize to make stochastic matrix/vector
+    S /= S.sum()
+    E /= E.sum()
     for row in T:
       row /= row.sum()
+    S,E,T = map( log2, (S,E,T) )
+
+    self._simple_model = S,T,E,simplestates # just saved for debug/inspection
 
     #
-    # map to the "real" model
+    # map to the left-right model
     #
-    names = {0:"start",1:"whisker%d",2:"junk%d",3:"end"}
+    lrstates = EDMultiState( wvd, traj, do_estimate = False )
+    self._statemodel = lrstates
+    self.states = lrstates._states
+    classify = lrstates._classifier
+
+    names = {0:"whisker%d",1:"junk%d"}
     def map_state(state,time):
       n = names[state]
       if state in (1,2):
         n = n%time
       return n
     # start
-    for i,logp in enumerate(T[0]):                #src                  #dst
-      self._transitions.setdefault( map_state(0,-1), {} )[map_state(i,0)] = logp
+    for dst,logp in enumerate(S):     
+      self._startprob[map_state(dst,0)] = logp
     #middle to end
-    for i,row in enumerate(T[1:-1]): # no start as source state or end state
-      src = i+1
+    for src,row in enumerate(T): # no start as source state or end state
       for dst,logp in enumerate(row):
-        for time in xrange( self._nwhiskers ):
+        for time in xrange( lrmodel._nsteps ):
           self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time)] = logp
 
 

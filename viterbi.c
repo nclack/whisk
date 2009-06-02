@@ -474,7 +474,7 @@ int main( int argc, char* argv[] )
   }
   Free_Viterbi_Result( res );
 
-  printf("\nTest: Viterbi LogP\n");
+  printf("\nTest: Viterbi Log2\n");
   { int j,i=0;
     for(;i<NSTATE;i++)
     { sprob[i] = log2(sprob[i]);

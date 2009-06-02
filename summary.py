@@ -54,7 +54,7 @@ def features(wvd):
   for fid,wv in wvd.iteritems():
     for wid,w in wv.iteritems():
       try:  # 0  1   2              3                     4                5                6             7        8       9        10
-        yield 0,fid,wid,integrate_path_length(w), median_score(w), root_angle_rad(w,0), mean_curvature(w,0), w.x[0], w.y[0], w.x[-1], w.y[-1]
+        yield 0,fid,wid,integrate_path_length(w), median_score(w), root_angle_deg(w,0), mean_curvature(w,0), w.x[0], w.y[0], w.x[-1], w.y[-1]
       except TypeError:
         pass
   warnings.resetwarnings()
@@ -222,7 +222,7 @@ def plot_summary_data(wvd,traj,data):
   for tdata in tsd:
     tt = tdata[:,1] # frame id == time
     tmax = max(tmax, tt.max())
-    th = tdata[:,5]*180.0/pi #array([ root_angle(w,side)*180.0/pi      for w in e])
+    th = tdata[:,5]          #array([ root_angle(w,side)*180.0/pi      for w in e])
     k  = tdata[:,6] #array([ mean_curvature(w,side)           for w in e]) 
     subplot(211)
     plot(tt,th)
@@ -260,7 +260,7 @@ def plot_summary(wvd,traj,side=0):
   for e in ts:
     tt = array([ time(w)                          for w in e])
     tmax = max(tmax, tt.max())
-    th = array([ root_angle_rad(w,side)*180.0/pi      for w in e])
+    th = array([ root_angle_deg(w,side)           for w in e])
     k  = array([ mean_curvature(w,side)           for w in e]) 
     subplot(211)
     plot(tt,th)
