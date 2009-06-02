@@ -1,5 +1,5 @@
 import features
-from numpy import zeros,array,histogram,linspace, float32, float64, log2
+from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor
 
 class EmmissionDistributions(object):
   """
@@ -65,8 +65,9 @@ class EmmissionDistributions(object):
       data[i,3:] = fv
     return data
 
-  def estimate(self, wvd, traj):
-    data = self._all_features(wvd,traj)
+  def estimate(self, wvd, traj, data = None):
+    if data is None:
+      data = self._all_features(wvd,traj)
     mask = data[:,0]==0
     nfeat = len(self._features)
 
@@ -91,7 +92,8 @@ class EmmissionDistributions(object):
       counts /= counts.sum()
       self._distributions["whisker"].append( log2(counts) ) # all counts>0
     
-  def _discritize(self, fv):
+  def _discritize(self, fv): 
+    #FIXME: there's a problem here with out of bounds values
     return array( [ floor((val-bmin)/db) for val,db,bmin in zip(fv, \
                                                                 self._feature_bin_deltas, \
                                                                 self._feature_bin_mins) ] )
@@ -99,7 +101,7 @@ class EmmissionDistributions(object):
   def evaluate(self, seg, state ):
     data = self.feature(seg)
     idx = self._discritize( data )
-    logp = [ self._distributions[state][i][j] for i,j in enumerate(idx) ]
+    logp = [ self._distributions[state][i][j] for i,j in enumerate(idx) if j > 0]
     return sum(logp)
 
 class Model(object):
@@ -115,16 +117,36 @@ class Model(object):
     self.states = list(iterstates(nwhiskers))
     self._transitions = {} # map source -> ( map destination -> log2 prob )
 
+  def get_transition_matrix(self, aslog2 = True):
+    n = len(self.states)
+    T = zeros( (n,n) )
+    if aslog2:
+      for isrc,src in enumerate(self.states):
+        for idst,dst in enumerate(self.states):
+          try:
+            T[isrc,idst] = self._transitions[ src ][ dst ]
+          except KeyError:
+            pass
+    else:
+      for isrc,src in enumerate(self.states):
+        for idst,dst in enumerate(self.states):
+          try:
+            T[isrc,idst] = 2**self._transitions[ src ][ dst ]
+          except KeyError:
+            pass
+    return T
+
+
   @staticmethod
   def _itertrajinv(traj):
     for tid,v in traj.iteritems():
       for fid,wid in v.iteritems():
         yield (fid,wid),tid
 
-  def train_time_independent(wvd,traj):
-    T = zeros( (4,4), astype=float64 ) #four states start, whisker, junk, end (0,1,2,3 respectively)
+  def train_time_independent(self, wvd,traj):
+    T = zeros( (4,4),  dtype=float64 ) #four states start, whisker, junk, end (0,1,2,3 respectively)
     invtraj = dict( [p for p in self._itertrajinv(traj) ] )
-    classify = lambda fid,wid: 1 if invtraj.has((fid,wid)) else 2 
+    classify = lambda fid,wid: 1 if invtraj.has_key((fid,wid)) else 2 
     for fid,wv in wvd.iteritems():
       state = 0
       for wid in wv.iterkeys():
@@ -147,7 +169,7 @@ class Model(object):
         n = n%time
       return n
     # start
-    for i,logp in T[0]:                #src                  #dst
+    for i,logp in enumerate(T[0]):                #src                  #dst
       self._transitions.setdefault( map_state(0,-1), {} )[map_state(i,0)] = logp
     #middle to end
     for i,row in enumerate(T[1:-1]): # no start as source state or end state

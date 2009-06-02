@@ -5,9 +5,9 @@ pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contou
 					 water_shed.o
 cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o distance.o dag.o\
 					 trajectory.o match.o bar.o image_adapt.o error.o adjust_scan_bias.o\
-					 seed.o whisker_io.o whisker_io_whisker1.o whisker_io_whiskbin1.o
+					 seed.o whisker_io.o whisker_io_whisker1.o whisker_io_whiskbin1.o viterbi.o
 modules = $(pmodules) $(cmodules)
-TESTS = test_whisker_io evaltest aiptest
+TESTS = test_whisker_io evaltest aiptest viterbi_test
 APPS  = whisk whisker_convert
 LIBS  = libwhisk.so
 
@@ -108,6 +108,10 @@ aiptest: aip.c
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_AIP -DTEST_AIP_7 $< -o $@
 	./$@
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_AIP -DTEST_AIP_8 $< -o $@
+	./$@
+
+viterbi_test: viterbi.c $(filter-out viterbi.o, $(modules))
+	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_VITERBI $+ -o $@
 	./$@
 
 .PHONY: clean

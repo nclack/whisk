@@ -29,6 +29,17 @@
   while( (th)    >= M_PI )        \
     (th)    -=   2*M_PI;
 
+/************************************************************************
+ * Example
+ *
+  {
+    static char *deleted;
+    static int maxlen = 0;
+
+    deleted = (char*) request_storage( deleted, &maxlen, sizeof(char), *n, "remove duplicate segments" );
+    ...
+  }
+*/
 void *request_storage( void *buffer, int *maxlen, int nbytes, int minindex, char *msg );
 
 #endif //_H_COMMON
