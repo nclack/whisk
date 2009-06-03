@@ -1,3 +1,7 @@
+# TODO: Refactor so the names make more sense given their jobs
+#       e.g. 'train' should be something else
+#       e.g. EmmissionDistributions should be StateModel or some such
+
 import features
 from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff, int32, ones
 import trace
@@ -225,7 +229,7 @@ class LeftRightModel(object):
     self._transitions = {} # map source -> ( map destination -> log2 prob )
     self._lowlogp = -100 #log2
 
-  def transition_matrix(self):
+  def make_transition_matrix(self):
     n = len(self.states)
     T = ones( (n,n) ) * self._lowlogp 
     for isrc,src in enumerate(self.states):
@@ -236,7 +240,7 @@ class LeftRightModel(object):
           pass
     return T
 
-  def start_matrix(self):
+  def make_start_matrix(self):
     n = len(self.states)
     S = ones ( n ) * self._lowlogp
     for isrc,src in enumerate(self.states):
@@ -246,7 +250,7 @@ class LeftRightModel(object):
         pass
     return S
 
-  def emmissions_matrix(self, whiskers):
+  def make_emmissions_matrix(self, whiskers):
     E = ones ( (len(self.states),len(whiskers)) ) * self._lowlogp
     for istate,state in enumerate(self.states):
       for iw,w in enumerate(whiskers):
@@ -254,9 +258,9 @@ class LeftRightModel(object):
     return E
 
   def viterbi(self, sequence):
-    S = self.start_matrix()
+    S = self._S
     E = self.emmissions_matrix(sequence)
-    T = self.transition_matrix()
+    T = self._T
     seq = array( range(len(sequence)), dtype=int32)
     p,vp,s = trace.viterbi_log2( seq, S, T, E )
     return map( lambda i: self.states[i], s ), p, vp
@@ -324,8 +328,30 @@ class LeftRightModel(object):
             self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time  )] = logp
           else: #whisker
             self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time+1)] = logp
-
+    self._T = self.make_transition_matrix()
+    self._S = self.make_start_matrix()
 
   def train_time_dependent(wvd,traj):
     pass
 
+def apply_model(wvd,model):
+  logp = zeros( max(wvd.keys()) )
+  vlogp = zeros( max(wvd.keys()) )
+  statemap = dict( [ ('whisker%d'%i,i) for i in xrange(model._statemodel._nsteps) ] ) #TODO: there's got to be a better way
+  traj = {}
+  wrowcmp = lambda a,b: wcmp(a[1],b[1])
+  for fid, wv in wvd.iteritems():
+    print fid
+    swv = sorted( wv.items(), cmp=wrowcmp )
+    seq  = [e for t,e in swv]
+    wids = [e for e,t in swv]
+    labels,p,vp = model.viterbi(seq)  
+    logp[fid] = p
+    vlogp[fid] = vp
+
+    for name,wid in zip(labels,wids):
+      tid = statemap.get(name)
+      if tid:
+        traj.setdefault(tid,{})[fid] = wid
+
+  return traj,prob,vprob
