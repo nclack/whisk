@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 """
+This is compatible with batch.py.  Calling:
+
+    batch.py --exe="summary.py" -f *.whiskers path/to/data
+
+will call this as:
+
+    summary.py path/to/data/somefile.whiskers path/to/data/somefile
+
+A more complicated example:
+
+    ./batch.py --exe="./summary.py" -f *.whiskers data/seq/ --args="--imagedir=temp"
+
+will put all the rendered images into ./temp.
 
 Example:
 
@@ -358,14 +371,6 @@ can be saved to a .trajectories file (the filename is determined by the whisker 
 The `destination_image` argument may be a filename with or without the extension.  If no extension is specified
 the file will be saved as a .png file.  The extension is used to determine the file format to save.
 Available formats are pdf, ps, eps, and svg.
-
-This is compatible with batch.py.  Calling:
-
-    batch.py --exe="summary.py" -f *.whiskers path/to/data
-
-will call this as:
-
-    summary.py path/to/data/somefile.whiskers path/to/data/somefile
 
 
 """
