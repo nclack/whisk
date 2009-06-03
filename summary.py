@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 
 Example:
@@ -11,7 +12,7 @@ Example:
 or 
 
 >>> w,movie = load("data/seq/whisker_data_0140.seq","seq-heal.whiskers")
->>> traj,data = autotraj(movie,w)
+>>> traj,data = autotraj(w)
 >>> plot_summary_data(w,traj,data)
 
 Author: Nathan Clack
@@ -25,6 +26,7 @@ from features import *
 import os
 import pdb
 import warnings
+from warnings import warn
 
 def load(moviename, whiskersname):
   from ui.whiskerdata import load_whiskers, load_trajectories
@@ -130,7 +132,7 @@ def make_trajectories( wvd, datadict, side, n=None ):
         T.setdefault(i,{})[fid] = good[idx]
   return T
 
-def autotraj(movie,wvd,side=0, data=None):
+def autotraj(wvd,side=0, data=None):
   import scipy.cluster.vq as vq
   if data == None:
     data = array(list(features(wvd)));
@@ -328,3 +330,98 @@ def plot_distributions_by_trajectory_nodata(w,traj,cmap = cm.jet):
   xlabel('Median Thickness')
   ylabel('Density')
 
+def render_summary_to_file(whiskername,figurename):
+  from trace import Load_Whiskers
+  assert( os.path.exists(whiskername) )
+  w = Load_Whiskers(whiskername)
+  traj,data = autotraj(w)
+  f = figure()
+  title(os.path.split(whiskername[1]))
+  plot_summary_data(w,traj,data)
+  savefig(figurename)
+  close(f)
+  return w,traj,data
+
+if 1:
+  import optparse
+  if __name__ == '__main__':
+    usage = "usage: summary.py [options] whiskerfile [destination_image]"
+    description = \
+"""
+This utility makes trajectories from whisker segments and renders a plot of whisker curvature and angle.
+The plot is saved to the file name specified by the optional `destination_image` argument.  If this 
+argument isn't supplied the filename is automatically determined based on the whisker file name.
+
+The resulting trajectories are not, by default, saved.  However, by specifying the appropriate option they
+can be saved to a .trajectories file (the filename is determined by the whisker file name).
+
+The `destination_image` argument may be a filename with or without the extension.  If no extension is specified
+the file will be saved as a .png file.  The extension is used to determine the file format to save.
+Available formats are pdf, ps, eps, and svg.
+
+This is compatible with batch.py.  Calling:
+
+    batch.py --exe="summary.py" -f *.whiskers path/to/data
+
+will call this as:
+
+    summary.py path/to/data/somefile.whiskers path/to/data/somefile
+
+
+"""
+    parser = optparse.OptionParser( usage = usage,
+                                    description = description )
+    parser.add_option('-s','--save-trajectories',
+                        dest = "savetraj",
+                        action = "store_true",
+                        default = False,
+                        help = "Causes computed trajectories to be written to file.")
+    parser.add_option("--label",
+                    help    = "This is used when determining the destination image file name. [default: %default]",
+                    dest    = "label",
+                    action  = "store",
+                    type    = "string",
+                    default = "") 
+    parser.add_option("--imagedir",
+                    help    = "This is used when determining where to save images  [default: %default]",
+                    dest    = "imagedir",
+                    action  = "store",
+                    type    = "string",
+                    default = "") 
+    options, args = parser.parse_args()
+    
+    whiskername = args[0]
+    trajname = os.path.splitext(whiskername)[0] + '.trajectories'
+
+    destname = None
+    if len(args)>1: #if the destination image file name was provided (or some variant thereof)
+      beginning,ending = os.path.split( args[1] )
+      middle,ending    = os.path.splitext( ending )
+      if options.imagedir:
+        if beginning:
+          warn("The destination image file name was specified with a path.  Going with the --imagedir option.");
+        destname = os.path.join( options.imagedir, middle )
+      if not ending:
+        destname += '.png'
+      else:
+        destname += ending
+    else: #derive destination file name from whisker filename and options
+      beginning,ending = os.path.split( whiskername )
+      middle,ending    = os.path.splitext( ending )
+      lblpart = ''
+      if options.label:
+        lblpart = '[%s]'%options.label
+      if options.imagedir:
+        beginning = options.imagedir
+      destname = os.path.join( beginning, middle + lblpart + '.png' )
+
+    destdir = os.path.split(destname)[0]
+    if destdir: #not working directory
+      assert( os.path.isdir(destdir) )
+
+    w,traj,data = render_summary_to_file(whiskername,destname)
+    if options.savetraj:
+      from ui.whiskerdata import save_trajectories
+      save_trajectories( trajname, traj )
+  
+    

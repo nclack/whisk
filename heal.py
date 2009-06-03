@@ -685,7 +685,7 @@ class CollisionTable(object):
 if 1:
   import optparse
   if __name__ == '__main__':
-    usage = "usage: $prog [options] moviefile [source_whiskers [dest_whiskers]]"
+    usage = "usage: heal.py [options] moviefile [source_whiskers [dest_whiskers]]"
     description = \
   """
   This utility takes a collection of whisker traces and performs two
