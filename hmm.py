@@ -1,5 +1,6 @@
 import features
-from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff
+from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff, int32, ones
+import trace
 
 class EmmissionDistributions(object):
   """
@@ -128,9 +129,9 @@ class EDTwoState(EmmissionDistributions):
   def __init__(self, wvd, traj, data = None, do_estimate = True):
     classifier = self._make_classifer(traj)
     if do_estimate:
-      EmmissionDistributions.__init__(self, ["junk","whiskers"], classifier, wvd, traj, data )
+      EmmissionDistributions.__init__(self, ["junk","whisker"], classifier, wvd, traj, data )
     else:
-      EmmissionDistributions.__init__(self, ["junk","whiskers"], classifier)
+      EmmissionDistributions.__init__(self, ["junk","whisker"], classifier)
 
   @staticmethod
   def _itertraj(traj):
@@ -152,12 +153,12 @@ class EDTwoState(EmmissionDistributions):
     self._classifier = self._make_classifer(traj)
     EmmissionDistributions.estimate( self, wvd, traj, data )
 
-def iterstates(n):
-  yield "start"
-  for i in xrange(n):
-    yield "junk%d"%i
-    yield "whisker%d"%i
-  yield "end"
+# def iterstates(n):
+#   yield "start"
+#   for i in xrange(n):
+#     yield "junk%d"%i
+#     yield "whisker%d"%i
+#   yield "end"
 
 def wcmp(a,b):
   """ A strict ordering whisker segments in a frame """
@@ -222,10 +223,11 @@ class LeftRightModel(object):
     self._statemodel = None
     self._startprob   = {} # map dest   -> log2 prob
     self._transitions = {} # map source -> ( map destination -> log2 prob )
+    self._lowlogp = -100 #log2
 
   def transition_matrix(self):
     n = len(self.states)
-    T = zeros( (n,n) )
+    T = ones( (n,n) ) * self._lowlogp 
     for isrc,src in enumerate(self.states):
       for idst,dst in enumerate(self.states):
         try:
@@ -235,16 +237,30 @@ class LeftRightModel(object):
     return T
 
   def start_matrix(self):
-    pass
+    n = len(self.states)
+    S = ones ( n ) * self._lowlogp
+    for isrc,src in enumerate(self.states):
+      try:
+        S[isrc] = self._startprob[src]
+      except KeyError:
+        pass
+    return S
 
   def emmissions_matrix(self, whiskers):
-    pass
+    E = ones ( (len(self.states),len(whiskers)) ) * self._lowlogp
+    for istate,state in enumerate(self.states):
+      for iw,w in enumerate(whiskers):
+        E[istate,iw] = self._statemodel.evaluate(w,state)
+    return E
 
   def viterbi(self, sequence):
     S = self.start_matrix()
     E = self.emmissions_matrix(sequence)
     T = self.transition_matrix()
-    pass
+    seq = array( range(len(sequence)), dtype=int32)
+    p,vp,s = trace.viterbi_log2( seq, S, T, E )
+    return map( lambda i: self.states[i], s ), p, vp
+
 
   @staticmethod
   def _itertrajinv(traj):
@@ -267,12 +283,12 @@ class LeftRightModel(object):
       prev = classify(wvd,traj,fid,wids[0])
       if prev == -1: #frame absent
         continue
-      S[prev]++;
+      S[prev]+=1;
       for wid in wids[1:]:
         next = classify(wvd,traj,fid,wid)
-        T[prev,next] ++;
+        T[prev,next] +=1;
         prev = next;
-      E[prev]++;
+      E[prev]+=1;
 
     #normalize to make stochastic matrix/vector
     S /= S.sum()
@@ -291,10 +307,10 @@ class LeftRightModel(object):
     self.states = lrstates._states
     classify = lrstates._classifier
 
-    names = {0:"whisker%d",1:"junk%d"}
+    names = dict( [ (k,v+"%d") for k,v in enumerate( simplestates._states ) ] )
     def map_state(state,time):
       n = names[state]
-      if state in (1,2):
+      if state in (0,1):
         n = n%time
       return n
     # start
@@ -303,8 +319,11 @@ class LeftRightModel(object):
     #middle to end
     for src,row in enumerate(T): # no start as source state or end state
       for dst,logp in enumerate(row):
-        for time in xrange( lrmodel._nsteps ):
-          self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time)] = logp
+        for time in xrange( lrstates._nsteps+1 ):
+          if src == 0: #junk
+            self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time  )] = logp
+          else: #whisker
+            self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time+1)] = logp
 
 
   def train_time_dependent(wvd,traj):
