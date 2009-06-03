@@ -1,6 +1,7 @@
 # TODO: Refactor so the names make more sense given their jobs
 #       e.g. 'train' should be something else
-#       e.g. EmmissionDistributions should be StateModel or some such
+#            EmmissionDistributions should be StateModel or some such
+#            `data` to feature_table
 
 import features
 from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff, int32, ones
@@ -89,6 +90,12 @@ class EmmissionDistributions(object):
       data[i,3:] = fv
     return data
 
+  def _update_feature_table(self,data):
+    self._feature_table = data #used in evaluate_by_lookup
+    self._feature_table_index = {}
+    for i,row in enumerate(data):
+      self._feature_table_index[ ( int(row[1]), int(row[2]) ) ] = i
+
   def estimate(self, wvd, traj, data = None):
     if data is None:
       data = self._all_features(wvd,traj)
@@ -96,6 +103,7 @@ class EmmissionDistributions(object):
       # need to update classification even if data supplied
       for row in data:
         row[0] = self._classifier(wvd,traj,row[1],row[2])
+    self._update_feature_table(data)
 
     nfeat = len(self._features)
 
@@ -106,7 +114,7 @@ class EmmissionDistributions(object):
       #wid = 3.0*v.std()  #  or the max/min; whichever gives the smaller interval.
       mn  = v.min()      #
       mx  = v.max()      #
-      b = linspace( mn, mx , 64 )
+      b = linspace( mn, mx + (mx-mn)/64.0 , 65 )
       self._feature_bin_deltas[i] = b[1] - b[0]
       self._feature_bin_mins[i]   = b[0]
 
@@ -127,6 +135,12 @@ class EmmissionDistributions(object):
     data = self.feature(seg)
     idx = self._discritize( data )
     logp = [ self._distributions[state][i][j] for i,j in enumerate(idx)]
+    return sum(logp)
+  
+  def evaluate_by_lookup(self, fidwid, state ):
+    data = self._feature_table[ self._feature_table_index[fidwid], 3: ]
+    idx = self._discritize( data )
+    logp = [ self._distributions[state][i][j] for i,j in enumerate(idx) ]
     return sum(logp)
 
 class EDTwoState(EmmissionDistributions):
@@ -256,15 +270,29 @@ class LeftRightModel(object):
       for iw,w in enumerate(whiskers):
         E[istate,iw] = self._statemodel.evaluate(w,state)
     return E
+  
+  def make_emmissions_matrix_by_lookup(self, whisker_keys):
+    E = ones ( (len(self.states),len(whisker_keys)) ) * self._lowlogp
+    for istate,state in enumerate(self.states):
+      for iw,fidwid in enumerate(whisker_keys):
+        E[istate,iw] = self._statemodel.evaluate_by_lookup(fidwid,state)
+    return E
 
   def viterbi(self, sequence):
     S = self._S
-    E = self.emmissions_matrix(sequence)
+    E = self.make_emmissions_matrix(sequence)
     T = self._T
     seq = array( range(len(sequence)), dtype=int32)
     p,vp,s = trace.viterbi_log2( seq, S, T, E )
     return map( lambda i: self.states[i], s ), p, vp
 
+  def viterbi_by_lookup(self, fid, widseq):
+    S = self._S
+    E = self.make_emmissions_matrix_by_lookup([(fid,wid) for wid in widseq])
+    T = self._T
+    seq = array( range(len(widseq)), dtype=int32)
+    p,vp,s = trace.viterbi_log2( seq, S, T, E )
+    return map( lambda i: self.states[i], s ), p, vp
 
   @staticmethod
   def _itertrajinv(traj):
@@ -272,8 +300,14 @@ class LeftRightModel(object):
       for fid,wid in v.iteritems():
         yield (fid,wid),tid
 
+  def train(self,wvd,traj, data=None):
+    self.train_time_independent(wvd,traj)
+    self.train_emmissions(wvd,traj,data)
+    return self
+
   def train_emmissions(self,wvd,traj,data=None):
     self._statemodel.estimate(wvd,traj,data)
+    return self
 
   def train_time_independent(self, wvd,traj):
     S = zeros( 2, dtype = float64 )    #start probabilities
@@ -330,28 +364,31 @@ class LeftRightModel(object):
             self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time+1)] = logp
     self._T = self.make_transition_matrix()
     self._S = self.make_start_matrix()
+    return self
 
   def train_time_dependent(wvd,traj):
     pass
 
+def wid_sequence_from_frame( wv ):
+  wrowcmp = lambda a,b: wcmp(a[1],b[1])
+  return [wid for wid,seg in sorted( wv.items(), cmp=wrowcmp )]
+
 def apply_model(wvd,model):
-  logp = zeros( max(wvd.keys()) )
-  vlogp = zeros( max(wvd.keys()) )
+  logp = zeros( max(wvd.keys())+1 )
+  vlogp = zeros( max(wvd.keys())+1 )
   statemap = dict( [ ('whisker%d'%i,i) for i in xrange(model._statemodel._nsteps) ] ) #TODO: there's got to be a better way
   traj = {}
   wrowcmp = lambda a,b: wcmp(a[1],b[1])
   for fid, wv in wvd.iteritems():
     print fid
-    swv = sorted( wv.items(), cmp=wrowcmp )
-    seq  = [e for t,e in swv]
-    wids = [e for e,t in swv]
-    labels,p,vp = model.viterbi(seq)  
+    seq = wid_sequence_from_frame( wv ) #ordered wid's
+    labels,p,vp = model.viterbi_by_lookup(fid, seq )  
+    tids = map( statemap.get, labels )
     logp[fid] = p
     vlogp[fid] = vp
 
-    for name,wid in zip(labels,wids):
-      tid = statemap.get(name)
-      if tid:
+    for tid,wid in zip(tids, seq):
+      if not tid is None:
         traj.setdefault(tid,{})[fid] = wid
 
-  return traj,prob,vprob
+  return traj,logp,vlogp
