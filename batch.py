@@ -49,16 +49,22 @@ from pprint import pprint
 import optparse
 
 if sys.platform == 'win32':
+  _launcher = ["cmd.exe","/C"]
   _timer = time.clock
 else:
   _timer = time.time
+  _launcher = []
 
 def run(args):
   print "Got job: "+' '.join(args)
-  #return args
+  #print args
+  #print "\tCWD: "+os.getcwd()
+  #print
+
   try:
-    retcode = subprocess.call(args)
-  except KeyboardInterrupt:
+    retcode = subprocess.call(args, env = os.environ)
+  except Exception,e:
+    print e
     return args, 1 # return failure
   return args,retcode
 
@@ -75,14 +81,14 @@ def doit(path,
   if label:
     toprefix = lambda x:  os.path.splitext(name)[0] + "[%s]"%label
 
-  jobs = [ [exe,name, toprefix(name) ] for name in files ]
+  jobs = [ _launcher + [exe,name, toprefix(name) ] for name in files ]
   if not outdir:
     outdir = path
   getfilename = lambda nm: os.path.split( os.path.splitext(nm)[0])[1]
   prefix = lambda nm: os.path.join( outdir, getfilename(nm) )
   if label:
       prefix = lambda nm: os.path.join(outdir, getfilename(nm)+"[%s]"%label)
-  jobs = [ [exe,name, prefix(name)] for name in files ]
+  jobs = [ _launcher+[exe,name, prefix(name)] for name in files ]
   for j in jobs:
     j.extend(args)
 
@@ -107,9 +113,9 @@ def doit(path,
   if jobs:
     for args,code in result:
       if code == 0:
-        print args[1].rjust(maxlen+1), "[ ] Success"
+        print args[len(_launcher)+1].rjust(maxlen+1), "[ ] Success"
       else:
-        print args[1].rjust(maxlen+1), "[X] FAILED"
+        print args[len(_launcher)+1].rjust(maxlen+1), "[X] FAILED"
     elapsed = _timer() - t
     print "Processed %d jobs in a total of %5.3f seconds (%5.3f sec/job)"%(len(jobs),elapsed,elapsed/float(len(jobs)))
 
