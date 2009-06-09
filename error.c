@@ -12,6 +12,16 @@ void error(char *str, ... )
   fflush(NULL);
 }
 
+void warning(char *str, ... )
+{
+  va_list argList;
+  va_start( argList, str );
+  fprintf(stderr, "--- Warning: ");
+  vfprintf(stderr, str, argList);
+  va_end( argList );
+  fflush(NULL);
+}
+
 void debug(char *str, ... )
 {
   va_list argList;
