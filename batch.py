@@ -156,7 +156,7 @@ multi-core PC.
                     dest    = "args",
                     action  = "store",
                     type    = "string",
-                    default = "--no-bar")
+                    default = "")
   parser.add_option("--label",
                     help    = "An optional label to add to output file names. Set to empty quotes for no label. Set to `date` to use the current date. [default: %default]",
                     dest    = "label",

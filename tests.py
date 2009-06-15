@@ -71,7 +71,7 @@ def wvdsort_get_keys(wvd):
 def plot_whiskers( wv, *args, **kwargs ):
   #xform = lambda a: 2*((a/2).round().astype(int))
   texcludes = ['marker','linestyle','markersize','linewidth']
-  tkwargs = {}
+  tkwargs = {} #'backgroundcolor':'w'}
   for k,v in kwargs.iteritems():
     if not k in texcludes:
       tkwargs[k] = v

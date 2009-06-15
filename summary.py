@@ -34,6 +34,7 @@ Copyright (c) 2009 HHMI. Free downloads and distribution are allowed as long as 
 credit is given to the author.  All other rights reserved.
 """
 from numpy import *
+import numpy
 from pylab import *
 from features import *
 import os
@@ -146,6 +147,32 @@ def make_trajectories( wvd, datadict, side, n=None ):
   return T
 
 def autotraj(wvd,side=0, data=None):
+  """ 
+  Uses kmeans to partition whisker segments into two sets: 
+  
+  class 1. high scoring and long
+  class 2. low scoring and short
+
+  The median number of class 1 segments in a frame is expected to correspond
+  with the number of interesting whiskers; that is, the trajectories worth
+  following.
+
+  Following classification, a simple scheme is used to label segments in frames
+  with the correct number of class 1 segments.
+
+  Returns: traj,data
+
+    'traj': a trajectories dictionary (see ui.whiskerdata.load_trajectories)
+    'data': a table of shape measurements for each whisker segment
+
+  Example:
+
+    >>> import summary
+    >>> w,movie = summary.load('data/my_movie.seq', 'data/my_movie[heal].whiskers')
+    >>> traj,data = summary.autotraj(w)
+    >>> summary.plot_summary_data(w,traj,data)
+
+  """
   import scipy.cluster.vq as vq
   if data == None:
     data = array(list(features(wvd)));
@@ -163,6 +190,16 @@ def autotraj(wvd,side=0, data=None):
   res = transform_classification_data( data )
   traj = make_trajectories(wvd,res,side)
   return traj, data
+
+def commit_traj_to_data_table( traj, data ):
+  index = {}
+  for i,row in enumerate(data):
+    index[ ( row[1], row[2] ) ] = i;
+
+  data[:,0] = -1 #null tid
+  for tid, t in traj.iteritems():
+    for fid, wid in t.iteritems():
+      data[ index[ (fid,wid) ], 0 ] = tid
 
 def plot_whiskers_by_trajectory(movie, wvd, traj, iframe):
   #ioff()
@@ -402,6 +439,7 @@ Available formats are pdf, ps, eps, and svg.
     if len(args)>1: #if the destination image file name was provided (or some variant thereof)
       beginning,ending = os.path.split( args[1] )
       middle,ending    = os.path.splitext( ending )
+      destname = args[1]
       if options.imagedir:
         if beginning:
           warn("The destination image file name was specified with a path.  Going with the --imagedir option.");
@@ -425,6 +463,7 @@ Available formats are pdf, ps, eps, and svg.
       assert( os.path.isdir(destdir) )
 
     w,traj,data = render_summary_to_file(whiskername,destname)
+    numpy.save( os.path.splitext(destname)[0] + '.npy', data );
     if options.savetraj:
       from ui.whiskerdata import save_trajectories
       save_trajectories( trajname, traj )

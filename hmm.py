@@ -4,7 +4,7 @@
 #            `data` to feature_table
 
 import features
-from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff, int32, ones
+from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff, int32, ones, argmax
 import trace
 
 class EmmissionDistributions(object):
@@ -142,6 +142,14 @@ class EmmissionDistributions(object):
     idx = self._discritize( data )
     logp = [ self._distributions[state][i][j] for i,j in enumerate(idx) ]
     return sum(logp)
+
+  def assign_state( self, fidwid ):
+    """ Returns state, log2 probability """
+    states = self._distributions.keys()
+    logp   = array( [ self.evaluate_by_lookup(fidwid,s) for s in states ] );
+    idx = argmax(logp)
+    return states[idx], logp[idx]
+
 
 class EDTwoState(EmmissionDistributions):
   def __init__(self, wvd, traj, data = None, do_estimate = True):
