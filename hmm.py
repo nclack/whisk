@@ -2,10 +2,13 @@
 #       e.g. 'train' should be something else
 #            EmmissionDistributions should be StateModel or some such
 #            `data` to feature_table
+#           `feature` should be measurement or some such
 
 import features
 from numpy import zeros,array,histogram,linspace, float32, float64, log2, floor, diff, int32, ones, argmax
+from numpy import maximum
 import trace
+import pdb
 
 class EmmissionDistributions(object):
   """
@@ -97,6 +100,7 @@ class EmmissionDistributions(object):
       self._feature_table_index[ ( int(row[1]), int(row[2]) ) ] = i
 
   def estimate(self, wvd, traj, data = None):
+    nbins = 16
     if data is None:
       data = self._all_features(wvd,traj)
     else:
@@ -106,6 +110,9 @@ class EmmissionDistributions(object):
     self._update_feature_table(data)
 
     nfeat = len(self._features)
+    
+    for state in self._states:
+      self._distributions[state] = zeros( (nfeat,nbins) )
 
     for i in xrange(nfeat):
       ic = 3+i
@@ -114,16 +121,20 @@ class EmmissionDistributions(object):
       #wid = 3.0*v.std()  #  or the max/min; whichever gives the smaller interval.
       mn  = v.min()      #
       mx  = v.max()      #
-      b = linspace( mn, mx + (mx-mn)/64.0 , 65 )
+      b = linspace( mn, mx*(1.001) , nbins+1 )
       self._feature_bin_deltas[i] = b[1] - b[0]
       self._feature_bin_mins[i]   = b[0]
 
-      for i,state in enumerate(self._states):
-        mask = data[:,0]==i
+      for istate,state in enumerate(self._states):
+        mask = data[:,0]==istate
         counts,bb = histogram( v[mask], bins   = b )
         counts = counts.astype(float64) + 1.0 #add one to each bin...gets rid of zeros
-        counts /= counts.sum()                #  FIXME: (line above) better way? what's the upper bound on the prob of a bin w 0
-        self._distributions[state].append( log2(counts) ) # all counts>0
+        a = counts.copy()                  # a little blurring - extends distributions to cover things near what's been observed
+        a[1:] = maximum(a[1:],counts[:-1]) 
+        a[:-1] = maximum(a[:-1],counts[1:]) 
+        counts = a / a.sum()
+        #counts /= counts.sum()                #  FIXME: (line above) better way? what's the upper bound on the prob of a bin w 0
+        self._distributions[state][i] = log2(counts) # all counts>0
     
   def _discritize(self, fv): 
     #FIXME: there's a problem here with out of bounds values
@@ -178,6 +189,8 @@ class EDTwoState(EmmissionDistributions):
   def estimate(self, wvd, traj, data = None):
     self._classifier = self._make_classifer(traj)
     EmmissionDistributions.estimate( self, wvd, traj, data )
+    
+
 
 # def iterstates(n):
 #   yield "start"
@@ -206,7 +219,7 @@ class EDMultiState(EmmissionDistributions):
 
   def _make_classifer(self, wvd,traj):
     """ 
-    Generates the classifier function used in training.
+    Generates the classifier function used in estimating distributions
     Also generates the states.
     """
     labelled = set( list( self._itertraj(traj) ) )
@@ -240,7 +253,24 @@ class EDMultiState(EmmissionDistributions):
   def estimate(self, wvd, traj, data = None):
     self._classifier = self._make_classifer(wvd,traj)
     EmmissionDistributions.estimate( self, wvd, traj, data )
-  
+    
+    # HACK: 
+    # average junk distributions together
+    # note that at this point, the distributions are in log2 representation
+    # but that the raw probabilities may still be faithfully represented as
+    # doubles. i.e. 2**logp doesn't sacrifice precision (logp > -15 or so)
+    for prefix in ['junk','whisker']:
+      acc = zeros( self._distributions['junk0'].shape )
+      count = 0
+      for state,dist in self._distributions.iteritems():
+        if prefix == state[:len(prefix)]:
+          count += 1
+          acc += (2**dist)
+      assert(count>0)
+      acc = log2(acc/float(count))
+      for state in self._distributions.keys():
+        if prefix == state[:len(prefix)]:
+          self._distributions[state] =  acc.copy()
     
 class LeftRightModel(object):
   def __init__(self):
@@ -367,9 +397,9 @@ class LeftRightModel(object):
       for dst,logp in enumerate(row):
         for time in xrange( lrstates._nsteps+1 ):
           if src == 0: #junk
-            self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time  )] = logp
+            self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time  )] = log2(0.5) #logp
           else: #whisker
-            self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time+1)] = logp
+            self._transitions.setdefault( map_state(src,time), {} )[map_state(dst,time+1)] = log2(0.5) #logp
     self._T = self.make_transition_matrix()
     self._S = self.make_start_matrix()
     return self
