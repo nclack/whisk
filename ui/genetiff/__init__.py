@@ -23,7 +23,7 @@ def Reader(filename, transpose = False, adjuststipple = False):
     ret = TransposedReader( ret ) 
   return ret
 
-#TBD
+# TODO
 # class Writer:
 #   """ Writer
 #

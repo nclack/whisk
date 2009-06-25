@@ -1,4 +1,5 @@
-// Refectoring:
+// TODO: change the name of this file to something else, like identity.c
+// TODO: make the .h
 
 #include <assert.h>
 #include <float.h>
@@ -15,9 +16,14 @@
 #undef   TEST_BUILD_DISTRIBUTIONS
 #endif
 
-#undef   DEBUG_MEASUREMENTS_TABLE_ALLOC
-#undef   DEBUG_DISTRIBUTIONS_ALLOC
-#undef   DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+// DEBUG OUTPUT
+#if 0
+#define  DEBUG_DISTRIBUTIONS_ALLOC
+#define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+#define  DEBUG_BUILD_DISTRIBUTIONS 
+#define  DEBUG_MEASUREMENTS_TABLE_ALLOC
+#define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
+#endif
 
 typedef struct 
 { int row;
@@ -44,7 +50,7 @@ Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
   double *dataspace   = Guarded_Malloc( 2*sizeof(double)*n_measurements*n_rows, "allocate measurements table" ); 
   double *velocityspace  = dataspace + n_measurements*n_rows;
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
-  printf("Measurements table alloc: data at %p\n",dataspace);
+  printf("\nMeasurements table alloc: data at %p\n",dataspace);
 #endif
   while( n_rows-- )
   { Measurements *row = table     + n_rows;
@@ -60,6 +66,9 @@ void Free_Measurements_Table( Measurements *table )
 { if( !table ) return;
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
   printf("Measurements table free : data at %p\n",table[0].data - table[0].row * table[0].n);
+  printf("\tdata: %p\n",table[0].data);
+  printf("\t row: %d\n",table[0].row );
+  printf("\t   n: %d\n",table[0].n   );
 #endif
   free( table[0].data - table[0].row * table[0].n); // frees the data/velocities for all rows
   free(table);
@@ -71,7 +80,7 @@ Distributions *Alloc_Distributions( int n_bins, int n_measures, int n_states )
   double *data = Guarded_Malloc( sizeof(double)*nvol, "allocate distributions - data block" );
   double *bindata = Guarded_Malloc( sizeof(double)*n_measures*2, "allocate distributions - bin block" );
 #ifdef DEBUG_DISTRIBUTIONS_ALLOC
-  printf("Alloc Distributions: nvol: %d\n",nvol);
+  printf("\nAlloc Distributions: nvol: %d\n",nvol);
   printf("\tdata: %p\n", data );
   printf("\tbindata: %p\n", bindata );
 #endif
@@ -87,7 +96,7 @@ Distributions *Alloc_Distributions( int n_bins, int n_measures, int n_states )
 void Free_Distributions( Distributions *this )
 { if( !this ) return;
 #ifdef DEBUG_DISTRIBUTIONS_ALLOC
-  printf("Free Distributions:\n");
+  printf("\nFree Distributions:\n");
   printf("\tdata: %p\n", this->data );
   printf("\tbindata: %p\n", this->bin_min );
 #endif
@@ -202,17 +211,24 @@ Measurements *Measurements_Table_From_File( FILE *fp, int *n_rows)
 
   table = Alloc_Measurements_Table( *n_rows, n_measures );
   ref = table[0].data; // head of newly allocated data block
+#ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
+  printf("\tLoad -            ref: %p\n",ref);
+#endif
   fread( table, sizeof(Measurements), *n_rows, fp); 
-  old = table[0].data; // head of old (nonexistent) data block
+  old = table[0].data - table[0].row * n_measures; // head of old (nonexistent) data block
   fread( ref, sizeof(double), 2*(*n_rows)*n_measures, fp );
   
   // update pointers to new data block
   i = *n_rows;
   while(i--)
   { Measurements *row = table + i;
-    row->data     = ref + ( row->data - old );
+    row->data     = ref + ( row->data     - old );
     row->velocity = ref + ( row->velocity - old );
   }
+#ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
+  printf("\tLoad - table[0].data: %p\n",table[0].data);
+  printf("\tLoad - table[0].row : %d\n",table[0].row );
+#endif
 
   return table;
 }
@@ -370,13 +386,17 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
   Distributions *d = Alloc_Distributions_For_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
   int i,j,k;
   int n = sorted_table[0].n;
-  int *mn, *mx;
+  double *mn, *mx;
   double *delta;
   int measure_stride = d->n_bins,
       state_stride   = d->n_bins * d->n_measures,
       dvol           = d->n_bins * d->n_measures * d->n_states; 
 
-  mn = (int*) Guarded_Malloc( 2 * sizeof(int) * n, "Build distributions - alloc mn and mx" );
+#ifdef DEBUG_BUILD_DISTRIBUTIONS 
+  printf("\n\n********************** DEBUG_BUILD_DISTRIBUTIONS\n\n");
+#endif
+
+  mn = (double*) Guarded_Malloc( 2 * sizeof(double) * n, "Build distributions - alloc mn and mx" );
   mx = mn + n;
 
   // Get extents for bins
@@ -389,12 +409,12 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
     for( j=0; j < n; j++ )
     { double v = row[j];
       mn[j] = MIN( mn[j], v );
-      mx[j] = MAX( mn[j], v );
+      mx[j] = MAX( mx[j], v );
     }
   }
   for( j=0; j < n; j++ )
   { d->bin_min[j] = mn[j];
-    d->bin_delta[j] = (n_bins) / (mx[j]*(1.001) - mn[j]);
+    d->bin_delta[j] = (mx[j]*(1.001) - mn[j]) / ((double) n_bins);
   }
   delta = d->bin_delta;
 
@@ -406,7 +426,20 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
     int istate = mrow->state - minstate;
     double *hist = d->data + istate * state_stride;
     for( j=0; j<n; j++ )
-      hist[ j*measure_stride + (int) floor(  (data[j] - mn[j]) / delta[j]  ) ] ++;
+    { int ibin = (int) floor(  (data[j] - mn[j]) / delta[j]  );
+      hist[ j*measure_stride + ibin ] ++;
+#ifdef DEBUG_BUILD_DISTRIBUTIONS 
+      if(  !( ibin >= 0 && ibin < n_bins ) )
+      { printf("ibin:  %d\n",ibin);
+        printf("nbins: %d\n",n_bins);
+        printf(" data[%d]: %f\n", j,  data[j] );
+        printf("   mn[%d]: %f\n", j,    mn[j] );
+        printf("   mx[%d]: %f\n", j,    mx[j] );
+        printf("delta[%d]: %f\n", j, delta[j] );
+      }
+      assert( ibin >= 0 && ibin < n_bins );
+#endif
+    }
   }
 
   // Normalize
@@ -424,7 +457,11 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
         h[k] = log2(h[k]) - norm;
     }
   }
-
+  free(mn);
+#ifdef DEBUG_BUILD_DISTRIBUTIONS 
+  printf("Returning %p\n",d);
+  printf("**** Leaving ********* DEBUG_BUILD_DISTRIBUTIONS\n\n");
+#endif
   return d;
 }
 
@@ -437,13 +474,17 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
   Distributions *d = Alloc_Distributions_For_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
   int i,j,k;
   int n = sorted_table[0].n;
-  int *mn, *mx;
+  double *mn, *mx;
   double *delta;
   int measure_stride = d->n_bins,
       state_stride   = d->n_bins * d->n_measures,
       dvol           = d->n_bins * d->n_measures * d->n_states; 
 
-  mn = (int*) Guarded_Malloc( 2 * sizeof(int) * n, "Build distributions - alloc mn and mx" );
+#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+  printf("\n\n********************** DEBUG_BUILD_VELOCITY_DISTRIBUTIONS  \n\n");
+#endif
+
+  mn = (double*) Guarded_Malloc( 2 * sizeof(double) * n, "Build distributions - alloc mn and mx" );
   mx = mn + n;
 
   // Get extents for bins
@@ -500,7 +541,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
 
   for( j=0; j < n; j++ )
   { d->bin_min[j] = mn[j];
-    d->bin_delta[j] = (n_bins) / (mx[j]*(1.001) - mn[j]); 
+    d->bin_delta[j] = (mx[j]*(1.001) - mn[j]) / ((double)n_bins); 
   }
   delta = d->bin_delta;
 
@@ -513,7 +554,20 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       int istate   = mrow->state - minstate;
       double *hist = d->data + istate * state_stride;
       for( j=0; j<n; j++ )
-        hist[ j*measure_stride + (int) floor(  (data[j] - mn[j]) / delta[j]  ) ] ++;
+      { int ibin = floor(  (data[j] - mn[j]) / delta[j]  );
+        hist[ j*measure_stride + ibin  ] ++;
+#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
+        if(  !( ibin >= 0 && ibin < n_bins ) )
+        { printf("ibin:  %d\n",ibin);
+          printf("nbins: %d\n",n_bins);
+          printf(" data[%d]: %f\n", j,  data[j] );
+          printf("   mn[%d]: %f\n", j,    mn[j] );
+          printf("   mx[%d]: %f\n", j,    mx[j] );
+          printf("delta[%d]: %f\n", j, delta[j] );
+        }
+        assert( ibin >= 0 && ibin < n_bins );
+#endif
+      }
     }
   }
 
@@ -755,7 +809,11 @@ int main(int argc, char *argv[])
     shape    = Build_Distributions( table, n_rows, n_bins );
     velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // This changes the sort order, now table is in time order
     nframes = table[n_rows-1].fid + 1;
+
+    Free_Distributions( shape );
+    Free_Distributions( velocity );
   }
+  Free_Measurements_Table(table);
 
   if(ret)
     printf("\tTest passed.\n");

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 from ctypes import *
 from ctypes.util import find_library
 import numpy
@@ -48,7 +49,6 @@ class MeasurementsTable(object):
   >>> table._measurements[0].n
   8
   """
-  #TODO: File io
   def __init__(self, datasource):
     """
     Load table from numpy array or from a file.
@@ -61,6 +61,7 @@ class MeasurementsTable(object):
     self._measurements = None
     self._nrows = 0
     self._sort_state = None
+    self._free_measurements = ctraj.Free_Measurements_Table
     if isinstance(datasource,str):
       self._load(datasource)
     else:
@@ -75,7 +76,8 @@ class MeasurementsTable(object):
     >>> table = MeasurementsTable( zeros((500,5)) )
     >>> del table
     """
-    ctraj.Free_Measurements_Table(self._measurements)
+    self._free_measurements(self._measurements)
+    #ctraj.Free_Measurements_Table(self._measurements)
 
   def get_shape_table(self):
     """  
@@ -259,6 +261,8 @@ class MeasurementsTable(object):
 
     >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
     """
+    if not os.path.exists(filename):
+      raise IOError("Could not find file %s"%filename)
     nrows = c_int()
     if self._measurements:
       ctraj.Free_Measurements_Table( self._measurements )
@@ -268,26 +272,47 @@ class MeasurementsTable(object):
     return self
 
 class Distributions(object):
-  def __init__(self, table, nbins = 32):
+  def __init__(self, table = None, nbins = 32):
     """
+    Create an empty Distributions object:
+
+    >>> dists = Distributions()
+
+    Initialize Distributions using a MeasurementTable:
+
     >>> data = numpy.load('data/seq/whisker_data_0140[heal].npy')
     >>> table = MeasurementsTable(data)
-
-    #>>> dists = Distributions(table)
+    >>> dists = Distributions(table)         # doctest:+ELLIPSIS  
+    ...
     """
     object.__init__(self)
-    self.build(table, nbins)  
+    self._shp = None
+    self._vel = None
+    if not table is None:
+      self.build(table, nbins)  
 
   def __del__(self):
-    ctraj.Free_Distributions( self._shp )
-    ctraj.Free_Distributions( self._vel )
+    if self._shp:
+      ctraj.Free_Distributions( self._shp )
+    if self._vel:
+      ctraj.Free_Distributions( self._vel )
   
   def build(self, table, nbins = 32):
-    assert isinstance(table,MeasurementsTable), "Wrong type for table"
+    """
+    >>> dists = Distributions()
+    >>> table = MeasurementsTable('data/testing/seq140[autotraj].measurements')
+    >>> dists.build(table)                   # doctest:+ELLIPSIS  
+    <...Distributions object at ...>
+    """
+    assert isinstance(table,MeasurementsTable), "Wrong type for table."
     table.sort_by_state_time()
     self._shp = ctraj.Build_Distributions         ( table._measurements, table._nrows, nbins )
     self._vel = ctraj.Build_Velocity_Distributions( table._measurements, table._nrows, nbins ) #changes table's sort order
     table._sort_state = 'time'
+    return self
+
+  def get_shape_distribution( self, state, measurement ):
+    pass
 
 #
 # Testing
@@ -295,11 +320,12 @@ class Distributions(object):
 import unittest
 import doctest
 
-class MeasurementsTableTestCase(unittest.TestCase):
-  def setUp(self):
-    self.data = numpy.load('/Users/clackn/src/whisker/data/seq/whisker_data_0140[autotraj].npy')
-    self.table = MeasurementsTable(self.data)
-
+class Tests_MeasurementsTable(unittest.TestCase):
+  """
+  Tests for Measurements table functions.
+  There are different ways of setting up a MeasurementsTable.
+  This test case is subclassed to handle different setups.
+  """
   def test_LoadedDataValid(self):
     self.failUnless( self.data[:,0].min() == -1 )
     self.failUnless( self.data[:,0].max() > 1   )
@@ -313,10 +339,6 @@ class MeasurementsTableTestCase(unittest.TestCase):
     self.failUnlessEqual( shape.shape[0], self.data.shape[0] )
     self.failUnlessEqual( shape.shape[1], self.data.shape[1]-3 )
     self.failUnlessAlmostEqual( ((self.data[:,3:] - shape)**2).sum(), 0.0, 7 )
-
-  def test_VelocitiesInitiallyZero(self):
-    vel = self.table.get_velocities_table()
-    self.failUnlessAlmostEqual( vel.sum(), 0.0)
 
   def test_SortByStateAndTime(self):
     self.table.sort_by_state_time()
@@ -356,12 +378,39 @@ class MeasurementsTableTestCase(unittest.TestCase):
     for s in states:
       vel = self.table.get_velocities(s, rows = time.shape[0] )
       shp = self.table.get_shape_data(s, rows = time.shape[0] )
-    
-class DistributionsTestCase(unittest.TestCase):
+  
+  def test_LoadNonexistentFile(self):
+    filename = 'nonexistent.measurement'
+    self.failIf( os.path.exists(filename) )
+    self.failUnlessRaises(IOError, MeasurementsTable, filename)
+
+class Tests_MeasurementsTable_FromDoubles( Tests_MeasurementsTable ):
+  def setUp(self):
+    self.data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    self.table = MeasurementsTable(self.data)
+  
+  def test_VelocitiesInitiallyZero(self):
+    vel = self.table.get_velocities_table()
+    self.failUnlessAlmostEqual( vel.sum(), 0.0)
+
+
+class Tests_MeasurementsTable_FromFile( Tests_MeasurementsTable ):
+  def setUp(self):
+    self.data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    self.table = MeasurementsTable('data/testing/seq140[autotraj].measurements')
+
+class Tests_Distributions(unittest.TestCase):
   def setUp(self):
     self.data = numpy.load('/Users/clackn/src/whisker/data/seq/whisker_data_0140[autotraj].npy')
-    self.table = MeasurementsTable(self.data)
-    self.dists = Distributions(table)
+    self.table = MeasurementsTable('data/testing/seq140[autotraj].measurements')
+    self.dists = Distributions(self.table)
+
+  def test_PostBuildSortStateIsTime(self):
+    self.failUnlessEqual( self.table._sort_state, 'time' )
+
+  def test_InitializationTypeCheck(self):
+    self.failUnlessRaises( AssertionError, Distributions, zeros(10) )
+
 #
 # Contracts
 #
@@ -410,6 +459,14 @@ ctraj.Build_Velocity_Distributions.argtype = [
   c_int ]                   # number of bins
 
 if __name__=='__main__':
-  suite = unittest.defaultTestLoader.loadTestsFromTestCase( MeasurementsTableTestCase )
+  testcases = [ Tests_MeasurementsTable_FromDoubles,
+                Tests_MeasurementsTable_FromFile,
+                Tests_Distributions ]
+  suite = reduce( lambda a,b: a if a.addTest(b) else a, 
+                  map( unittest.defaultTestLoader.loadTestsFromTestCase, testcases ) 
+                )
+  #suite = unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromDoubles )
+  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
+  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   suite.addTest( doctest.DocTestSuite() )
   runner = unittest.TextTestRunner(verbosity=2).run(suite)
