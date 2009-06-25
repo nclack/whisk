@@ -64,7 +64,9 @@ viterbi_test = env.Object('viterbi_test', ['viterbi.c'], CPPDEFINES = "TEST_VITE
 env.Program('viterbi', [viterbi_test, 'common.c', 'utilities.c'])
 
 ## traj tests
-tests = ["TEST_BUILD_DISTRIBUTIONS","TEST_MEASUREMENT_TABLE_IO_1"]
+tests = ["TEST_BUILD_DISTRIBUTIONS",
+         "TEST_MEASUREMENT_TABLE_IO_1",
+         "TEST_SOLVE_GRAY_AREAS" ]
 totestobj = lambda t: env.Object( 'trajobj_'+t.lower(), ['traj.c'], CPPDEFINES = t)
 for t in tests:
   env.Program( 'traj_'+t.lower(), [ totestobj(t),'common.c','error.c','utilities.c'] ) 

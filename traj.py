@@ -3,7 +3,7 @@ import os
 from ctypes import *
 from ctypes.util import find_library
 import numpy
-from numpy import zeros, double, fabs
+from numpy import zeros, double, fabs, ndarray
 
 import pdb
 
@@ -41,6 +41,15 @@ class cDistributions(Structure):
               ("bin_min",      POINTER( c_double ) ),   # // array of n_measures elements                                                          
               ("bin_delta",    POINTER( c_double ) ),   # // array of n_measures elements                                                          
               ("data",         POINTER( c_double ) )]   # // array of holding histogram information with dimensions (n_bins,n_measures,n_states)
+  def asarray(self):
+    d = zeros( (self.n_states, self.n_measures, self.n_bins) )
+    ctraj.Copy_Distribution_To_Doubles( byref(self), d.ctypes.data_as( POINTER(c_double) ) )
+    return d
+  
+  def bins_as_array(self):
+    b = zeros( (self.n_measures, self.n_bins) )
+    ctraj.Distributions_Bins_To_Doubles( byref(self), b.ctypes.data_as( POINTER(c_double) ) )
+    return b
 
 class MeasurementsTable(object):
   """
@@ -140,9 +149,10 @@ class MeasurementsTable(object):
     Order of results is determined by the table's sort order.
 
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.update_velocities() # doctest:+ELLIPSIS 
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).update_velocities()
+    >>> shape = table.get_shape_data(1)
+    
+    >>> table = MeasurementsTable('data/testing/seq140[solve].measurements').update_velocities()
     >>> shape = table.get_shape_data(1)
     """
     if rows is None:
@@ -275,14 +285,14 @@ class Distributions(object):
   def __init__(self, table = None, nbins = 32):
     """
     Create an empty Distributions object:
-
+    
     >>> dists = Distributions()
-
+    
     Initialize Distributions using a MeasurementTable:
-
-    >>> data = numpy.load('data/seq/whisker_data_0140[heal].npy')
+    
+    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
     >>> table = MeasurementsTable(data)
-    >>> dists = Distributions(table)         # doctest:+ELLIPSIS  
+    >>> dists = Distributions(table.update_velocities())         # doctest:+ELLIPSIS  
     ...
     """
     object.__init__(self)
@@ -290,7 +300,7 @@ class Distributions(object):
     self._vel = None
     if not table is None:
       self.build(table, nbins)  
-
+  
   def __del__(self):
     if self._shp:
       ctraj.Free_Distributions( self._shp )
@@ -310,9 +320,21 @@ class Distributions(object):
     self._vel = ctraj.Build_Velocity_Distributions( table._measurements, table._nrows, nbins ) #changes table's sort order
     table._sort_state = 'time'
     return self
+  
+  def velocities(self):
+    """
+    >>> dists = Distributions( MeasurementsTable('data/testing/seq140[autotraj].measurements') )
+    >>> vbins, v = dists.velocities()
+    """
+    return self._vel[0].bins_as_array(), self._vel[0].asarray()  
+  
+  def shapes(self):
+    """
+    >>> dists = Distributions( MeasurementsTable('data/testing/seq140[autotraj].measurements') )
+    >>> sbins, s = dists.shapes()
+    """
+    return self._shp[0].bins_as_array(), self._shp[0].asarray()  
 
-  def get_shape_distribution( self, state, measurement ):
-    pass
 
 #
 # Testing
@@ -411,6 +433,36 @@ class Tests_Distributions(unittest.TestCase):
   def test_InitializationTypeCheck(self):
     self.failUnlessRaises( AssertionError, Distributions, zeros(10) )
 
+  def test_ShapeDistributionsAsArray(self):
+    d = self.dists._shp[0].asarray()
+    self.failUnless( isinstance( d, numpy.ndarray) )
+    nstates, nmeasures, nbins = d.shape
+    self.failUnlessEqual( nstates,   self.dists._shp[0].n_states )
+    self.failUnlessEqual( nmeasures, self.dists._shp[0].n_measures )
+    self.failUnlessEqual( nbins,     self.dists._shp[0].n_bins )
+
+  def test_ShapeDistributionBinsAsArray(self):
+    bins = self.dists._shp[0].bins_as_array()
+    self.failUnless( isinstance( bins, numpy.ndarray) )
+    nmeasures, nbins = bins.shape
+    self.failUnlessEqual( nmeasures, self.dists._shp[0].n_measures )
+    self.failUnlessEqual( nbins,     self.dists._shp[0].n_bins )
+  
+  def test_VelocityDistributionsAsArray(self):
+    d = self.dists._vel[0].asarray()
+    self.failUnless( isinstance( d, numpy.ndarray) )
+    nstates, nmeasures, nbins = d.shape
+    self.failUnlessEqual( nstates,   self.dists._vel[0].n_states )
+    self.failUnlessEqual( nmeasures, self.dists._vel[0].n_measures )
+    self.failUnlessEqual( nbins,     self.dists._vel[0].n_bins )
+  
+  def test_VelocityDistributionBinsAsArray(self):
+    bins = self.dists._vel[0].bins_as_array()
+    self.failUnless( isinstance( bins, numpy.ndarray) )
+    nmeasures, nbins = bins.shape
+    self.failUnlessEqual( nmeasures, self.dists._vel[0].n_measures )
+    self.failUnlessEqual( nbins,     self.dists._vel[0].n_bins )
+
 #
 # Contracts
 #
@@ -469,4 +521,4 @@ if __name__=='__main__':
   #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   suite.addTest( doctest.DocTestSuite() )
-  runner = unittest.TextTestRunner(verbosity=2).run(suite)
+  runner = unittest.TextTestRunner(verbosity=1).run(suite)

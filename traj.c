@@ -14,6 +14,7 @@
 #if 0  
 #undef   TEST_MEASUREMENT_TABLE_IO_1
 #undef   TEST_BUILD_DISTRIBUTIONS
+#undef   TEST_SOLVE_GRAY_AREAS
 #endif
 
 // DEBUG OUTPUT
@@ -103,6 +104,23 @@ void Free_Distributions( Distributions *this )
   if( this->bin_min ) free( this->bin_min ); // also frees bin_delta
   if( this->data    ) free( this->data    );
   free(this);
+}
+
+void Copy_Distribution_To_Doubles( Distributions *this, double *destination )
+{ memcpy( destination, this->data, (this->n_states * this->n_measures * this->n_bins) * sizeof(double) );
+}
+
+void Distributions_Bins_To_Doubles( Distributions *this, double *destination )
+{ int stride = this->n_measures;
+  int i,j;
+  for(i=0; i<this->n_measures; i++)
+  { double mn  = this->bin_min[i],
+           del = this->bin_delta[i];
+    double *row = destination + stride*i;
+    j = this->n_bins;
+    while(j--)
+      row[j] = mn + j * del;
+  }
 }
 
 // Use this to copy in from e.g. matlab, python
@@ -641,7 +659,7 @@ Measurements **Find_Path( Measurements *sorted_table,
   double valmax = -DBL_MAX;
   int istep = 0;
   int fid;
-  int istate = start->state - minstate; //FIXME need minstate?
+  int istate = start->state - minstate; 
   double *ldata = start->data;
   Measurements *last = sorted_table,
                *this = sorted_table,
@@ -741,11 +759,11 @@ void Solve( Measurements *table, int n_rows, int n_bins )
         trajs[ ( row->state - minstate )*nframes + row->fid ] = row;
 
       // fill in gray areas
-      for( i=minstate; i <= maxstate; i++ )
+      for( i==0; i <  nstates; i++ )
       { Measurements** t = trajs + i*nframes;
         for( j=0; j<ngray; j+=2 )
         { Measurements *start = t[  gray_areas[j  ] - 1  ],   //start
-                     *end   = t[  gray_areas[j+1] + 1  ] ;  //end
+                       *end   = t[  gray_areas[j+1] + 1  ];   //end
           Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate );
           int npath = end->fid - start->fid;
           memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
@@ -754,10 +772,10 @@ void Solve( Measurements *table, int n_rows, int n_bins )
       }
 
       // Commit trajectories to table/output trajectories
-      for( i=minstate; i <= maxstate; i++ )
+      for( i==0; i <  nstates; i++ )
       { Measurements** t = trajs + i*nframes;
         for(j=0; j<nframes; j++ )
-          t[j]->state = i;
+          t[j]->state = minstate + i;
       }
 
       free(trajs);
@@ -822,3 +840,28 @@ int main(int argc, char *argv[])
   return ret;
 }
 #endif // TEST_BUILD_DISTRIBUTIONS
+
+#ifdef TEST_SOLVE_GRAY_AREAS
+char *Spec[] = {"<source:string> <dest:string>", NULL};
+int main(int argc, char *argv[])
+{ Measurements *table;
+  int n_rows = 0;
+  int n_bins = 32;
+  int ret = 1;
+  
+  printf("Test: Load measurements, run solve, and save result.\n");
+  Process_Arguments(argc,argv,Spec,0);
+  table = Measurements_Table_From_Filename( Get_String_Arg("source"), &n_rows);
+
+  Solve( table, n_rows, 32 );
+
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
+  Free_Measurements_Table(table);
+
+  if(ret)
+    printf("\tTest passed.\n");
+  else
+    printf("\tTest FAILED.\n");
+  return ret;
+}
+#endif // TEST_SOLVE_GRAY_AREAS 
