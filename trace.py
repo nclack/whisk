@@ -15,20 +15,21 @@ Date  : 25 January 2009
 """
 import sys,os
 from ctypes import *
+from ctypes.util import find_library
 from numpy import zeros, float32, uint8, array, hypot, arctan2, pi, concatenate, float64, ndarray, int32
 from warnings import warn
 
 
 import pdb
 
-if sys.platform == 'win32':
-  libext = '.dll'
-else:
-  libext ='.so'
-
-dllpath = os.path.join(*os.path.split(__file__)[:-1])       #add location of this file to dll search path
-cWhisk = CDLL(os.path.join( dllpath,"libwhisk%s"%libext) )
-
+# if sys.platform == 'win32':
+#   libext = '.dll'
+# else:
+#   libext ='.so'
+#
+# dllpath = os.path.join(*os.path.split(__file__)[:-1])       #add location of this file to dll search path
+# cWhisk = CDLL(os.path.join( dllpath,"libwhisk%s"%libext) )
+cWhisk = CDLL( find_library("whisk") )
 
 #
 # DATA STRUCTURE TRANSLATIONS
