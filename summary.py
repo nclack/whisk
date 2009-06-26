@@ -200,6 +200,7 @@ def commit_traj_to_data_table( traj, data ):
   for tid, t in traj.iteritems():
     for fid, wid in t.iteritems():
       data[ index[ (fid,wid) ], 0 ] = tid
+  return data
 
 def plot_whiskers_by_trajectory(movie, wvd, traj, iframe):
   #ioff()

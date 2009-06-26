@@ -18,6 +18,7 @@
 #endif
 
 // DEBUG OUTPUT
+#define DEBUG_SOLVE_GRAY_AREAS
 #if 0
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
@@ -654,7 +655,7 @@ Measurements **Find_Path( Measurements *sorted_table,
                          Measurements *start,
                          Measurements *end,
                          int minstate)
-{ int path_length = end->fid - start->fid; // path excludes start and end
+{ int path_length = end->fid - start->fid - 1; // path excludes start and end
   Measurements **path;
   double valmax = -DBL_MAX;
   int istep = 0;
@@ -679,8 +680,9 @@ Measurements **Find_Path( Measurements *sorted_table,
   while( (++next)->fid == fid && next - sorted_table < n_rows ); // advance `next` to next-next frame
   nthis = next - this;
 
-  while( next - sorted_table < n_rows )
+  while( ((next - sorted_table) < n_rows) && ( fid < end->fid ) )
   { int j;
+    valmax = -DBL_MAX;
     for(j=0; j<nthis; j++)  
     { double *tdata = this[j].data;
       double p = Eval_Transition_Likelihood_Log2( velocity, ldata, tdata, istate );
@@ -715,6 +717,9 @@ void Solve( Measurements *table, int n_rows, int n_bins )
   int minstate, maxstate, nstates;
   int nframes;
   int i,j;
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+  printf("*****************************     DEBUG_SOLVE_GRAY_AREAS\n");
+#endif
   
   Sort_Measurements_Table_State_Time( table, n_rows );
   nstates = _count_n_states( table, n_rows, 1, &minstate, &maxstate );
@@ -748,6 +753,10 @@ void Solve( Measurements *table, int n_rows, int n_bins )
       else if( d == 1 ) // Closing a gray area
         gray_areas[ ngray++ ] = i-1;
     }
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+      printf("Found %d gray areas\n", ngray);
+      printf("Solving for %d whiskers\n", nstates);
+#endif
     
     // Compute trajectories - 
     // Each is an array, nframes long, of pointers into the table
@@ -757,15 +766,17 @@ void Solve( Measurements *table, int n_rows, int n_bins )
       // initialize
       for( ; row < table + n_rows; row++ )
         trajs[ ( row->state - minstate )*nframes + row->fid ] = row;
-
       // fill in gray areas
-      for( i==0; i <  nstates; i++ )
+      for( i=0; i <  nstates; i++ )
       { Measurements** t = trajs + i*nframes;
         for( j=0; j<ngray; j+=2 )
         { Measurements *start = t[  gray_areas[j  ] - 1  ],   //start
                        *end   = t[  gray_areas[j+1] + 1  ];   //end
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+          printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
+#endif
           Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate );
-          int npath = end->fid - start->fid;
+          int npath = end->fid - start->fid - 1;
           memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
           free(path);
         }
@@ -783,6 +794,9 @@ void Solve( Measurements *table, int n_rows, int n_bins )
 
     free( gray_areas );
   }
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+  printf("***  Leaving  ***************     DEBUG_SOLVE_GRAY_AREAS\n");
+#endif
 
   Free_Distributions( shape );
   Free_Distributions( velocity );

@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
   image = load(movie,0,&depth);
 
 // FIXME  
-/* // NOT SUPPORTED for now
+/* // NOT SUPPORTED 
   if( Is_Arg_Matched("-t") )
     transpose = 1;
   if(transpose)
@@ -276,7 +276,6 @@ int main(int argc, char *argv[])
     } else
     { //int step = (int) pow(10,round(log10(depth/100)));
 
-//OLD      write_whisk1_header( fp );
       for( i=0; i<depth; i++ )
       //for( i=450; i<460; i++ )
       //for( i=0; i<depth; i+= step )
@@ -287,14 +286,10 @@ int main(int argc, char *argv[])
         wv = find_segments(i, image, bg, &wv_n);
         nTotalSegs += wv_n;
         Whisker_File_Append_Segments(wfile, wv, wv_n);
-//OLD        k = wv_n;
-//OLD        while( k-- )
-//OLD          write_whisk1_segment( fp, wv + k );
         Free_Whisker_Seg_Vec( wv, wv_n );
         Free_Image(image);
       }
       Whisker_File_Close(wfile);
-//OLD      fclose(fp);
     }
   }
   load(movie,-1,NULL); // Close (and free)

@@ -3,7 +3,9 @@ import os
 from ctypes import *
 from ctypes.util import find_library
 import numpy
-from numpy import zeros, double, fabs, ndarray
+from numpy import zeros, double, fabs, ndarray, array
+
+import warnings
 
 import pdb
 
@@ -64,7 +66,7 @@ class MeasurementsTable(object):
 
     >>> table = MeasurementsTable( zeros((500,5)) )
 
-    #>>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
     """
     object.__init__(self)
     self._measurements = None
@@ -107,9 +109,7 @@ class MeasurementsTable(object):
     Order of results is determined by the table's sort order.
 
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.update_velocities() # doctest:+ELLIPSIS 
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).update_velocities()
     >>> time,mask = table.get_time_and_mask(1)
     """
     if rows is None:
@@ -170,9 +170,7 @@ class MeasurementsTable(object):
     Order of results is determined by the table's sort order.
 
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.update_velocities() # doctest:+ELLIPSIS 
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).update_velocities()
     >>> time,shp,vel,mask = table.get_data(1)
     """
     if rows is None:
@@ -186,9 +184,7 @@ class MeasurementsTable(object):
   def get_velocities_table(self):
     """
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.update_velocities() # doctest:+ELLIPSIS 
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).update_velocities()
     >>> vel = table.get_velocities_table()
     """
     vel = zeros( (self._nrows, self._measurements[0].n), dtype=double )
@@ -200,9 +196,7 @@ class MeasurementsTable(object):
   def sort_by_state_time(self):
     """
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.sort_by_state_time()                   # doctest:+ELLIPSIS
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).sort_by_state_time() 
     >>> table._measurements[0].state
     -1
     >>> table._measurements[0].fid
@@ -225,9 +219,7 @@ class MeasurementsTable(object):
   def sort_by_time(self):
     """
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.sort_by_time()                # doctest:+ELLIPSIS
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).sort_by_time() 
     >>> table._measurements[0].fid
     0
     >>> table._measurements[table._nrows-1].fid
@@ -244,9 +236,7 @@ class MeasurementsTable(object):
   def update_velocities(self):
     """
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.update_velocities() # doctest:+ELLIPSIS 
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).update_velocities() 
     >>> vel = table.get_velocities_table()
     """
     self.sort_by_state_time()
@@ -256,9 +246,7 @@ class MeasurementsTable(object):
   def save(self, filename):
     """
     >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
-    >>> table = MeasurementsTable(data)
-    >>> table.update_velocities()                                     # doctest:+ELLIPSIS 
-    <...MeasurementsTable object at ...>
+    >>> table = MeasurementsTable(data).update_velocities()
     >>> table.save( "data/testing/seq140[autotraj].measurements" )    # doctest:+ELLIPSIS 
     <...MeasurementsTable object at ...>
     """
@@ -296,6 +284,7 @@ class Distributions(object):
     ...
     """
     object.__init__(self)
+    self._free_distributions = ctraj.Free_Distributions
     self._shp = None
     self._vel = None
     if not table is None:
@@ -303,9 +292,9 @@ class Distributions(object):
   
   def __del__(self):
     if self._shp:
-      ctraj.Free_Distributions( self._shp )
+      self._free_distributions( self._shp )
     if self._vel:
-      ctraj.Free_Distributions( self._vel )
+      self._free_distributions( self._vel )
   
   def build(self, table, nbins = 32):
     """
@@ -335,6 +324,36 @@ class Distributions(object):
     """
     return self._shp[0].bins_as_array(), self._shp[0].asarray()  
 
+def solve( table ):
+  ctraj.Solve( table._measurements, table._nrows, 32 )
+  table._sort_state = "time"
+  return table
+
+def batch_make_measurements(sourcepath, ext = '*.seq', label = 'curated'):
+  warnings.simplefilter("ignore")
+  from glob import glob
+  from ui.whiskerdata import load_trajectories
+  from trace import Load_Whiskers
+  import summary
+  warnings.simplefilter("default")
+
+  def get_summary_data( filename, whiskers, trajectories ):
+    if os.path.exists(filename):
+      data = numpy.load(filename)
+    else:
+      data = array(list( summary.features(whiskers) ))
+      numpy.save( filename, data )
+      return data
+    return summary.commit_traj_to_data_table( trajectories, data )
+
+  for name in glob( os.path.join( sourcepath, ext ) ):
+    root,ext = os.path.splitext( name )
+    prefix = root + '[%s]'%label
+    if not os.path.exists( prefix + '.measurements' ):
+      t,tid = load_trajectories( prefix + '.trajectories' )
+      w = Load_Whiskers( prefix + '.whiskers' ) 
+      data = get_summary_data( prefix + '.npy', w, t )
+      MeasurementsTable( data ).save( prefix + '.measurements' )
 
 #
 # Testing
@@ -507,6 +526,12 @@ ctraj.Build_Distributions.argtype = [
 ctraj.Build_Velocity_Distributions.restype = POINTER( cDistributions )
 ctraj.Build_Velocity_Distributions.argtype = [
   POINTER( cMeasurements ), # measurements table
+  c_int,                    # number of rows
+  c_int ]                   # number of bins
+
+ctraj.Solve.restype = None
+ctraj.argtypes = [
+  POINTER( cMeasurements ), # table
   c_int,                    # number of rows
   c_int ]                   # number of bins
 
