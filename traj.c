@@ -20,6 +20,7 @@
 // DEBUG OUTPUT
 #define DEBUG_SOLVE_GRAY_AREAS
 #if 0
+#define DEBUG_FIND_PATH            
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
@@ -666,8 +667,14 @@ Measurements **Find_Path( Measurements *sorted_table,
                *this = sorted_table,
                *next = NULL;
   int nlast, nthis;
+#ifdef DEBUG_FIND_PATH
+  printf("*****************************     DEBUG_FIND_PATH\n");
+#endif
 
   assert(path_length > 0);
+#ifdef DEBUG_FIND_PATH
+  printf("Path length: %d \n", path_length );
+#endif
   path = (Measurements**) Guarded_Malloc( sizeof(Measurements*)*path_length, "find path - allocate path");
 
   fid = start->fid;
@@ -688,7 +695,10 @@ Measurements **Find_Path( Measurements *sorted_table,
       double p = Eval_Transition_Likelihood_Log2( velocity, ldata, tdata, istate );
       if( p > valmax )
       { valmax = p;
-        path[istep] = this;
+        path[istep] = this + j;
+#ifdef DEBUG_FIND_PATH
+        printf("\t%3d: Updating argmax: p = %7.7f (%5d,%2d)\n",istep,p,this[j].fid,this[j].wid);
+#endif
       }
     }
     ldata = path[istep++]->data; // replace argmax 
@@ -699,6 +709,18 @@ Measurements **Find_Path( Measurements *sorted_table,
     while( (++next)->fid == fid && next - sorted_table < n_rows); //advance `next` to next-next frame
     nthis = next-this;
   }
+
+#ifdef DEBUG_FIND_PATH
+  printf("Path:\n");
+  printf("(%5d,%2d)<-", end->fid, end->wid );
+  while(path_length--)
+    printf("(%5d,%2d)<-", path[path_length]->fid, path[path_length]->wid );
+  printf("(%5d,%2d)\n\n", start->fid, start->wid );
+#endif
+
+#ifdef DEBUG_FIND_PATH
+  printf("***  Leaving  ***************     DEBUG_FIND_PATH\n");
+#endif
 
   return path;
 }
@@ -755,7 +777,7 @@ void Solve( Measurements *table, int n_rows, int n_bins )
     }
 #ifdef DEBUG_SOLVE_GRAY_AREAS
       printf("Found %d gray areas\n", ngray);
-      printf("Solving for %d whiskers\n", nstates);
+      printf("Solving for %d whiskers in %d frames.\n", nstates, nframes);
 #endif
     
     // Compute trajectories - 
@@ -778,12 +800,15 @@ void Solve( Measurements *table, int n_rows, int n_bins )
           Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate );
           int npath = end->fid - start->fid - 1;
           memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+          printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);
+#endif
           free(path);
         }
       }
 
       // Commit trajectories to table/output trajectories
-      for( i==0; i <  nstates; i++ )
+      for( i=0; i <  nstates; i++ )
       { Measurements** t = trajs + i*nframes;
         for(j=0; j<nframes; j++ )
           t[j]->state = minstate + i;
@@ -868,6 +893,18 @@ int main(int argc, char *argv[])
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &n_rows);
 
   Solve( table, n_rows, 32 );
+  Sort_Measurements_Table_State_Time( table, n_rows );
+  Compute_Velocities( table, n_rows );
+  
+  { int minstate, maxstate, istate;
+    int nframes = table[n_rows-1].fid + 1;
+    _count_n_states( table, n_rows, 1, &minstate, &maxstate );
+    for( istate = minstate; istate <= maxstate; istate++ )
+    { int sz = Measurements_Table_Size_Select_State( table, n_rows, istate );
+      printf("State %3d has size %d\n",istate, sz );
+      assert( istate<0 || sz <= nframes );
+    }
+  }
 
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
   Free_Measurements_Table(table);

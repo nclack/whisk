@@ -330,6 +330,10 @@ def solve( table ):
   return table
 
 def batch_make_measurements(sourcepath, ext = '*.seq', label = 'curated'):
+  """
+  To update/remake a measurements table, delete the *.npy and *.measurements
+  files in the `sourcepath`.
+  """
   warnings.simplefilter("ignore")
   from glob import glob
   from ui.whiskerdata import load_trajectories
@@ -351,9 +355,11 @@ def batch_make_measurements(sourcepath, ext = '*.seq', label = 'curated'):
     prefix = root + '[%s]'%label
     if not os.path.exists( prefix + '.measurements' ):
       t,tid = load_trajectories( prefix + '.trajectories' )
+      print prefix
+      print t.keys()
       w = Load_Whiskers( prefix + '.whiskers' ) 
       data = get_summary_data( prefix + '.npy', w, t )
-      MeasurementsTable( data ).save( prefix + '.measurements' )
+      MeasurementsTable( data ).update_velocities().save( prefix + '.measurements' )
 
 #
 # Testing

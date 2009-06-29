@@ -205,6 +205,9 @@ int main(int argc, char *argv[])
 
   prefix = Get_String_Arg("prefix");
   prefix_len = strlen(prefix);
+  { char *dot = rindex(prefix,'.');              // Remove any file extension from the prefix
+    *dot = 0;
+  }
   whisker_file_name = (char*) Guarded_Malloc( (prefix_len+32)*sizeof(char), "whisker file name");
   bar_file_name = (char*) Guarded_Malloc( (prefix_len+32)*sizeof(char), "bar file name");
   memset(whisker_file_name, 0, (prefix_len+32)*sizeof(char) );

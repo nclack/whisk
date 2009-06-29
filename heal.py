@@ -751,8 +751,8 @@ if 1:
     # try to be friendly about args
     assert( os.path.isfile(args[0]) ) # "Could not find %s"%args[0] )
     moviename = args[0]
-    srcname = None
-    dstname = None
+    srcname = None if len(args)<2 else args[1]
+    dstname = None if len(args)<3 else args[2]
 
     getroot = lambda nm: os.path.splitext( nm )[0]
     gettail = lambda lbl,ext: '[%s]%s'%(lbl,ext) if lbl else ext
@@ -765,7 +765,7 @@ if 1:
       srcname =args[1]
       if os.path.splitext(srcname)[1] != '.whiskers':
         srcname += '.whiskers'
-      assert( os.path.isfile( srcname  ) ) #, "Could not find %s."%srcname )
+      assert os.path.isfile( srcname  ) , "Could not find %s."%srcname 
       root = getroot( srcname )
       dstname = root + gettail(options.destlabel,'.whiskers')  
 

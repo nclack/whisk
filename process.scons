@@ -1,0 +1,71 @@
+import os
+
+def get_label( pfx ):      # expect pfx = "stuff[label]", return stuff,label
+  idx = pfx.rfind('[')     # if no label, return None for label
+  if idx == -1: 
+    return pfx,None
+  return pfx[:idx],pfx[(idx+1):(len(pfx)-1)]
+
+def whisker_name_scanner( node, env, path, arg  = None):
+  """ returns list of implicit dependencies """
+  name = os.path.split( str(node) )[-1] # everthing after the path
+  prefix, ext = os.path.splitext(name)
+  assert ext == '.whiskers', 'This scanner is for *.whiskers files only.  Got *'+ext
+
+  src_movie        = lambda pfx: pfx + '.seq'
+  src_raw_whiskers = lambda pfx: pfx + '.whiskers'
+
+  prefix,lbl = get_label(prefix)
+  if lbl is None:             # Raw whiskers file
+    return [ src_movie(prefix) ] #   depends on movie
+  elif lbl == 'heal':
+    return [ src_movie(prefix),
+             src_raw_whiskers(prefix) ]
+  else:
+    assert 0
+    return []
+
+def emit_for_heal(target,source,env):
+# print '~'*10
+# print map(str,target)
+# print
+# print map(str,source)
+# print '.'*10
+  name,ext = os.path.splitext( str(target[0]) )
+  prefix, label = get_label(name)
+  if label is None:
+    name = prefix + '[heal]'
+  source = [ prefix + ".seq", prefix + ".whiskers" ]
+  target = name + '.whiskers'
+# print map(str,target)
+# print
+# print map(str,source)
+# print '~'*10
+
+  return target,source
+  
+
+
+env  = Environment( 
+  BUILDERS = {
+    'Whisk' : Builder(action = "whisk $SOURCE $TARGET --no-bar",
+                      suffix  = '.whiskers',
+                      src_suffix = '.seq'
+                     ),
+    'Bar'   : Builder(action = "whisk $SOURCE $TARGET --no-whisk",
+                      suffix  = '.bar',
+                      src_suffix = '.seq'
+                     ),
+    'Heal'  : Builder(action = "heal.py $SOURCES $TARGET",
+                      emitter = emit_for_heal 
+                     )
+  }
+)
+
+env.AppendENVPath('PATH', os.getcwd())
+
+w = env.Whisk('data/huber/021209jf22052/whisker_data_0373')
+env.Heal( str(w[0]) ) # 'data/huber/021209jf22052/whisker_data_0373' )
+# env.Heal( 'data/huber/021209jf22052/whisker_data_0373[heal].whiskers', 
+#         ['data/huber/021209jf22052/whisker_data_0373.seq',
+#           'data/huber/021209jf22052/whisker_data_0373.whiskers'] )
