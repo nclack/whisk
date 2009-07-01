@@ -18,8 +18,8 @@
 #endif
 
 // DEBUG OUTPUT
-#define DEBUG_SOLVE_GRAY_AREAS
 #if 0
+#define DEBUG_SOLVE_GRAY_AREAS
 #define DEBUG_FIND_PATH            
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
@@ -126,7 +126,7 @@ void Distributions_Bins_To_Doubles( Distributions *this, double *destination )
 }
 
 // Use this to copy in from e.g. matlab, python
-// Assumes first three columns are fid,wid,state (all ints) followed by data
+// Assumes first three columns are label,fid,wid (all ints) followed by data
 // so Measurements.n = n_cols - 3 
 //
 Measurements *Measurements_Table_From_Doubles( double *raw, int n_rows, int n_cols )
@@ -143,6 +143,46 @@ Measurements *Measurements_Table_From_Doubles( double *raw, int n_rows, int n_co
     memcpy( row->data, rawrow+3, sizeof(double)*n );
   }
   return table;
+}
+
+// Use this to copy in to e.g. matlab, python
+// Assumes first three columns are label,fid,wid followed by data
+// Velocity data is not copied
+void Measurements_Table_Data_To_Doubles(Measurements *table, int n_rows, double *raw)
+{ int n,n_cols;
+  assert( n_rows > 0 );
+  n = table[0].n;
+  n_cols = n+3;
+  while( n_rows-- )
+  { double *rawrow = raw + n_cols*n_rows;
+    Measurements *row = table + n_rows;
+    rawrow[0] = row->state;
+    rawrow[1] = row->fid;  
+    rawrow[2] = row->wid;  
+    memcpy( rawrow+3, row->data, sizeof(double)*n );
+  }
+}
+
+// Use this to copy in to e.g. matlab, python
+// Assumes first three columns are label,fid,wid followed by data
+// Shape data is not copied
+// Invalid velocities are set to 0
+void Measurements_Table_Velocity_To_Doubles(Measurements *table, int n_rows, double *raw)
+{ int n,n_cols;
+  assert( n_rows > 0 );
+  n = table[0].n;
+  n_cols = n+3;
+  while( n_rows-- )
+  { double *rawrow = raw + n_cols*n_rows;
+    Measurements *row = table + n_rows;
+    rawrow[0] = row->state;
+    rawrow[1] = row->fid;  
+    rawrow[2] = row->wid;  
+    if( row->valid_velocity )
+      memcpy( rawrow+3, row->velocity, sizeof(double)*n );
+    else
+      memset( rawrow, 0, sizeof(double)*n );
+  }
 }
 
 void Measurements_Table_Copy_Shape_Data( Measurements *table, int n_rows, double *buffer )
@@ -886,7 +926,7 @@ int main(int argc, char *argv[])
 { Measurements *table;
   int n_rows = 0;
   int n_bins = 32;
-  int ret = 1;
+  int err = 0;
   
   printf("Test: Load measurements, run solve, and save result.\n");
   Process_Arguments(argc,argv,Spec,0);
@@ -909,10 +949,10 @@ int main(int argc, char *argv[])
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
   Free_Measurements_Table(table);
 
-  if(ret)
-    printf("\tTest passed.\n");
-  else
+  if(err)
     printf("\tTest FAILED.\n");
-  return ret;
+  else
+    printf("\tTest passed.\n");
+  return err;
 }
 #endif // TEST_SOLVE_GRAY_AREAS 

@@ -57,11 +57,11 @@ env.Alias( 'python', ['ui/whiskerdata','ui'] )
 ## eval tests
 for i in range(2,6):
   obj = env.Object("evaltest%d"%i, "evaltest.c",  CPPDEFINES = "EVAL_TEST_%d"%i )
-  env.Program('evaltest%d'%i,[obj] + list(cfiles))
+  env.Program('test_eval%d'%i,[obj] + list(cfiles))
 
 ## viterbi tests
 viterbi_test = env.Object('viterbi_test', ['viterbi.c'], CPPDEFINES = "TEST_VITERBI")
-env.Program('viterbi', [viterbi_test, 'common.c', 'utilities.c'])
+env.Program('test_viterbi', [viterbi_test, 'common.c', 'utilities.c'])
 
 ## traj tests
 tests = ["TEST_BUILD_DISTRIBUTIONS",
@@ -69,4 +69,4 @@ tests = ["TEST_BUILD_DISTRIBUTIONS",
          "TEST_SOLVE_GRAY_AREAS" ]
 totestobj = lambda t: env.Object( 'trajobj_'+t.lower(), ['traj.c'], CPPDEFINES = t)
 for t in tests:
-  env.Program( 'traj_'+t.lower(), [ totestobj(t),'common.c','error.c','utilities.c'] ) 
+  env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c','utilities.c'] ) 

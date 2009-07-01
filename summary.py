@@ -69,7 +69,7 @@ def features(wvd):
   warnings.simplefilter("ignore")
   for fid,wv in wvd.iteritems():
     for wid,w in wv.iteritems():
-      try:  # 0  1   2              3                     4                5                6             7        8       9        10
+      try:  # 0  1   2              3                     4                5                6                 7        8       9        10
         yield 0,fid,wid,integrate_path_length(w), median_score(w), root_angle_deg(w,0), mean_curvature(w,0), w.x[0], w.y[0], w.x[-1], w.y[-1]
       except TypeError:
         pass
@@ -146,6 +146,25 @@ def make_trajectories( wvd, datadict, side, n=None ):
         T.setdefault(i,{})[fid] = good[idx]
   return T
 
+def make_trajectories2( data, n=None, sort_column = 8 ):
+  datadict = {}
+  for row in data:
+    fid = int( row[1] )
+    wid = int( row[2] )
+    datadict.setdefault( fid, {} )[wid] = ( int(row[0]), row[3], row[4], row[sort_column] )
+
+  if n is None:
+    n = round( estimate_number_of_trajectories( datadict ))
+
+  T = {}
+  for fid, v in datadict.iteritems():
+    good = [ wid for wid,datarow in v.iteritems() if datarow[0] == 1 ] # filter for whiskers in frame that are in the good class
+    if len(good) == n: # got the expected number of whiskers
+      mapping = argsort([ v[wid][3] for wid in good  ])
+      for i,idx in enumerate(mapping):
+        T.setdefault(i,{})[fid] = good[idx]
+  return T
+
 def autotraj(wvd,side=0, data=None):
   """ 
   Uses kmeans to partition whisker segments into two sets: 
@@ -160,6 +179,12 @@ def autotraj(wvd,side=0, data=None):
   Following classification, a simple scheme is used to label segments in frames
   with the correct number of class 1 segments.
 
+  If `data` is not provided, it will be computed from the whisker segments.
+  The `data` table is an array with a row for each whisker segment consisting of
+  a number of columns (3 + number of measurements).  The first column is a
+  classification label, the second is the frame id, and the third is the 
+  whisker id.  The `classification label` is overwritten here.
+
   Returns: traj,data
 
     'traj': a trajectories dictionary (see ui.whiskerdata.load_trajectories)
@@ -173,9 +198,13 @@ def autotraj(wvd,side=0, data=None):
     >>> summary.plot_summary_data(w,traj,data)
 
   """
-  import scipy.cluster.vq as vq
   if data == None:
     data = array(list(features(wvd)));
+  traj = _simpletraj(data)
+  return traj, data
+
+def _simpletraj(data):
+  import scipy.cluster.vq as vq
   ilength = 3
   iscore  = 4
   obs = vq.whiten( data[:,[ilength, iscore]] )
@@ -188,8 +217,8 @@ def autotraj(wvd,side=0, data=None):
   code, errs = vq.vq( obs, codebook )
   data[:,0] = (code==idx)
   res = transform_classification_data( data )
-  traj = make_trajectories(wvd,res,side)
-  return traj, data
+  traj = make_trajectories2(data, sort_column = 8 )
+  return traj
 
 def commit_traj_to_data_table( traj, data ):
   index = {}

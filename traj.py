@@ -90,6 +90,24 @@ class MeasurementsTable(object):
     self._free_measurements(self._measurements)
     #ctraj.Free_Measurements_Table(self._measurements)
 
+  def asarray(self):
+    """  
+    >>> from numpy.random import rand
+    >>> data = rand(200,10)
+    >>> table = MeasurementsTable(data)
+    >>> shape = table.asarray()
+    >>> print shape.shape
+    (200, 10)
+    >>> print (shape[:,3:]==data[:,3:]).all()
+    True
+    """
+    data = zeros( (self._nrows, self._measurements[0].n+3), dtype=double )
+    ctraj.Measurements_Table_Data_To_Doubles(self._measurements, 
+                                             self._nrows, 
+                                             data.ctypes.data_as( POINTER( c_double ))
+                                            );
+    return data
+
   def get_shape_table(self):
     """  
     >>> from numpy.random import rand
