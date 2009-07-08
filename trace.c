@@ -31,6 +31,7 @@
 
 
 #if 0
+#define DEBUG_SEEDING_FIELDS
 #define SHOW_LINE_DETECTOR
 #define DEBUG_DETECTOR_BANK
 #define DEBUG_LINE_FITTING
@@ -42,7 +43,6 @@
 #define DEBUG_MOVE
 #define DEBUG_LINE_DETECTOR
 #define DEBUG_DETECT_LOOPS
-#define DEBUG_SEEDING_FIELDS
 #define DEBUG_SEEDING_MASK
 #endif
 
@@ -505,6 +505,17 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
   // Get contours, and compute correlations on perimeters
 #ifdef SEED_ON_MHAT_CONTOURS
   omap = get_objectmap( image );
+#ifdef DEBUG_SEEDING_FIELDS
+  { Image *cim = Copy_Image( image );
+    Paint_Brush brush = { 1.0, -1.0, -1.0 }; 
+    int i;
+
+    cim = Translate_Image( cim, COLOR, 1 );
+    for( i=0; i < omap->num_objects; i++ )
+      Draw_Contour_Interior( omap->objects[i], &brush, cim );
+    Write_Image("hat_contour.tif", cim);
+  }
+#endif
   { int i;
     for( i=0; i < omap->num_objects; i++ )
     { compute_seed_from_point_field_windowed_on_contour( image, omap->objects[i],

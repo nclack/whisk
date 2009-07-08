@@ -1,4 +1,3 @@
-# ex: ft=python :
 import os
 import re
 
@@ -103,11 +102,10 @@ env.AddMethod( make_solver("test_traj_solve_gray_areas", "grey_v0"), "IdentitySo
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" )
 
-#Progress('.')
 Progress(['-', '\\', '|', '/'], interval=1)
-VariantDir('proc','data/huber/021209jf22052/',duplicate=0) 
-VariantDir('proc/curated','data/curated/huber/',duplicate=0) 
+#VariantDir('proc','data/huber/021209jf22052/',duplicate=0) 
+VariantDir('proc','data/curated/huber/',duplicate=0) 
 Export('env')
+#SConscript('proc/process.scons')
 SConscript('proc/process.scons')
-SConscript('proc/curated/process.scons')
 

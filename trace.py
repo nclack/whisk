@@ -17,6 +17,7 @@ import sys,os
 from ctypes import *
 from ctypes.util import find_library
 from numpy import zeros, float32, uint8, array, hypot, arctan2, pi, concatenate, float64, ndarray, int32
+from numpy import where, cos, sin
 from warnings import warn
 
 
@@ -631,6 +632,21 @@ def compute_seed_from_point_field_on_grid(image, spacing=8, maxr=4, window=(0.4,
   stats[mask]  = stats [mask]/hist[mask]
   slopes[mask] = slopes[mask]/hist[mask]
   return hist, slopes, stats
+
+def plot_seeds_from_seeding_fields( image, fields = compute_seed_fields_windowed_on_objects, color='w' ):
+  from pylab import quiver
+  h,m,s = fields( image )
+  ii,jj = where( s )
+  quiver( jj,ii,         cos(m[ii,jj]),     -1.0*sin(m[ii,jj]),
+          facecolors = (color,),
+          edgecolors = ('k',),
+          linewidths = (0.5,),
+          pivot = 'middle',
+          units = 'x',
+          width = 1,
+          alpha = 0.7
+          )
+
 
 
 cWhisk.trace_whisker.restype = POINTER( cWhisker_Seg )
