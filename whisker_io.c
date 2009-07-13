@@ -2,6 +2,7 @@
 
 #include "whisker_io_whisker1.h"
 #include "whisker_io_whiskbin1.h"
+#include "whisker_io_whiskold.h"
 
 #include "error.h"
 #include "trace.h"
@@ -37,47 +38,55 @@ typedef struct
 /***********************************************************************
  * Format registration
  */
-int Whisker_File_Format_Count = 2;
+int Whisker_File_Format_Count = 3;
 
 char *Whisker_File_Formats[] = {
   "whisk1",
   "whiskbin1",
+  "whiskold",
   NULL};
 
 char *Whisker_File_Format_Descriptions[] = {
   "Text based format.  See first whisker_io_whisker1.c for details.",
   "Binary format.  See whisker_io_whiskbin1.c for details.",
+  "Old text based format.  Depricated.",
   NULL
 };
 
 pf_wf_detect Whisker_File_Detectors_Table[] = {
   is_file_whisk1,
-  is_file_whiskbin1
+  is_file_whiskbin1,
+  is_file_whisk_old
 };
 
 pf_wf_open Whisker_File_Openers_Table[] = {
   open_whisk1,
-  open_whiskbin1
+  open_whiskbin1,
+  open_whisk_old
 };
 
 pf_wf_close Whisker_File_Closers_Table[] = {
   close_whisk1,
-  close_whiskbin1
+  close_whiskbin1,
+  close_whisk_old
 };
 
 pf_wf_append_segments Whisker_File_Append_Segments_Table[] = {
   append_segments_whisk1,
-  append_segments_whiskbin1
+  append_segments_whiskbin1,
+  append_segments_whisk_old
 };
 
 pf_wf_write_segments Whisker_File_Write_Segments_Table[] = {
   append_segments_whisk1,
-  append_segments_whiskbin1
+  append_segments_whiskbin1,
+  append_segments_whisk_old,
 };
 
 pf_wf_read_segments Whisker_File_Read_Segments_Table[] = {
   read_segments_whisker1,
-  read_segments_whiskbin1
+  read_segments_whiskbin1,
+  read_segments_whisker_old
 };
 
 
