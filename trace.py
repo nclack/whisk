@@ -661,6 +661,15 @@ cWhisk.Cast_As_Image.argtypes = [
   c_int,
   c_int ]
 
+cWhisk.find_segments.restype = POINTER( cWhisker_Seg )
+cWhisk.find_segments.argtypes = [
+  c_int,               # the frame id (acts as time stamp)
+  POINTER( cImage ),   # the image to analyze
+  POINTER( cImage ),   # a background image -- not used
+  POINTER( c_int )     # a pointer indicating how many segments are in the returned array
+]
+
+
 def Trace_Whisker( seed, image ):
   cim = cImage.fromarray( image )
   cws = cWhisk.trace_whisker( byref(seed), cim )
@@ -670,6 +679,14 @@ def Trace_Whisker( seed, image ):
     return ws
   else:
     return None
+
+def find_segments( image, iframe=0):
+  cim = cImage.fromarray(image)
+  n = c_int()
+  cwv = cWhisk.find_segments( iframe, byref(cim), None, byref(n) )
+  wv = [ Whisker_Seg( cwv[i] ) for i in xrange( n.value ) ] # copy into friendlier container
+  cWhisk.Free_Whisker_Seg_Vec( cwv, n )                     # free
+  return wv
 
 #
 # HMM's 

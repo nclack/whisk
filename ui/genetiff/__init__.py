@@ -1,7 +1,10 @@
+import warnings
+warnings.simplefilter( "ignore", UserWarning )
 from seq import SeqReader
 from tiff import TiffReader
 from reader import TransposedReader, AdjustStippledGainReader
 import os
+warnings.simplefilter( "default", UserWarning )
 
 def Reader(filename, transpose = False, adjuststipple = False):
   """

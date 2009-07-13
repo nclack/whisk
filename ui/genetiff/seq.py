@@ -84,6 +84,7 @@ class SeqReader(IMovieReader):
     self._reader = cReader.Seq_Open( filename )
     self.size = self._reader.contents.height, self._reader.contents.width
     self.buffer = zeros( self.size, dtype = _bpp[ self._reader.contents.bitdepthreal ] )
+    self._creader = cReader
 
   def __getitem__(self,idx):
     if isinstance(idx, slice):
@@ -105,4 +106,4 @@ class SeqReader(IMovieReader):
   def __len__(self):
     return self._reader.contents.nframes
   def __del__(self):
-    cReader.Seq_Close( self._reader )
+    self._creader.Seq_Close( self._reader )
