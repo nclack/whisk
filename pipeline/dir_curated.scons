@@ -1,0 +1,2 @@
+Import('env')
+jobs = map( env.CuratedPipeline, env.Glob('*.whiskers') )
