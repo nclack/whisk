@@ -1,14 +1,6 @@
 from SconsPipeline import *
 
 Progress(['-', '\\', '|', '/'], interval=1)
-# VariantDir('proc/',
-#            'data/huber/021209jf22052/',
-#            duplicate=0) 
-# VariantDir('proc/curated/',
-#            'data/curated/huber/',
-#            duplicate=0) 
-# SConscript('proc/dir_normal.scons')
-# SConscript('proc/curated/dir_curated.scons')
 
 VariantDir('proc/huber/021209jf22052/',
            'data/huber/021209jf22052/',
