@@ -1,6 +1,7 @@
 #include "error.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void error(char *str, ... )
 {
@@ -10,6 +11,7 @@ void error(char *str, ... )
   vfprintf(stderr, str, argList);
   va_end( argList );
   fflush(NULL);
+  exit(-1);
 }
 
 void warning(char *str, ... )
