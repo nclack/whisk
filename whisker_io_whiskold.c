@@ -33,7 +33,7 @@ int is_file_whisk_old( const char* filename)
 FILE* open_whisk_old(const char* filename, const char* mode)
 { FILE *fp;
   if( strncmp(mode,"w",1)==0 )
-  { error("Writing this whisker file format not supported (depricated)");
+  { error("This format is depricated and writing is not supported.\n");
     return NULL;
   } else if( strncmp(mode,"r",1)==0 )
   { fp = fopen(filename,"r");
@@ -49,7 +49,7 @@ void close_whisk_old(FILE* fp)
 }
 
 void append_segments_whisk_old ( FILE *fp, Whisker_Seg *wv, int n )
-{ error("Writing this whisker file format not supported (depricated)"); 
+{ error("This format is depricated and writing is not supported.\n");
 }
 
 Whisker_Seg *read_segments_whisker_old( FILE *file, int *n)
