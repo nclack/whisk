@@ -689,14 +689,19 @@ double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, doubl
 //
 // Returns a vector of pointers into the table that trace out the best path
 // This vector will need to be freed later.
+//
+// FIXME: This algorithm is stupid
+//        Should do some kind of path finding...this is just greedy.
 Measurements **Find_Path( Measurements *sorted_table, 
                           int n_rows,
                          Distributions *shape, 
                          Distributions *velocity,
                          Measurements *start,
                          Measurements *end,
-                         int minstate)
-{ int path_length = end->fid - start->fid - 1; // path excludes start and end
+                         int minstate,
+                         int *npath)
+{ int lastfid = end->fid;
+  int path_length = end->fid - start->fid - 1; // path excludes start and end
   Measurements **path;
   double valmax = -DBL_MAX;
   int istep = 0;
@@ -711,7 +716,15 @@ Measurements **Find_Path( Measurements *sorted_table,
   printf("*****************************     DEBUG_FIND_PATH\n");
 #endif
 
+  if( lastfid < start->fid || lastfid > sorted_table[n_rows-1].fid )
+    /* then indications are that the last gray area fell off the end of the
+     * movie */
+  { lastfid = sorted_table[n_rows-1].fid + 1;
+    path_length = lastfid - start->fid - 1;
+  }
+
   assert(path_length > 0);
+  *npath = path_length;
 #ifdef DEBUG_FIND_PATH
   printf("Path length: %d \n", path_length );
 #endif
@@ -727,7 +740,7 @@ Measurements **Find_Path( Measurements *sorted_table,
   while( (++next)->fid == fid && next - sorted_table < n_rows ); // advance `next` to next-next frame
   nthis = next - this;
 
-  while( ((next - sorted_table) < n_rows) && ( fid < end->fid ) )
+  while( ((next - sorted_table) < n_rows) && ( fid < lastfid ) )
   { int j;
     valmax = -DBL_MAX;
     for(j=0; j<nthis; j++)  
@@ -752,7 +765,7 @@ Measurements **Find_Path( Measurements *sorted_table,
 
 #ifdef DEBUG_FIND_PATH
   printf("Path:\n");
-  printf("(%5d,%2d)<-", end->fid, end->wid );
+  printf("(%5d,%2d)<-", nd->fid, end->wid );
   while(path_length--)
     printf("(%5d,%2d)<-", path[path_length]->fid, path[path_length]->wid );
   printf("(%5d,%2d)\n\n", start->fid, start->wid );
@@ -822,6 +835,9 @@ void Solve( Measurements *table, int n_rows, int n_bins )
     
     // Compute trajectories - 
     // Each is an array, nframes long, of pointers into the table
+    // FIXME: BUG: What about the edge cases?
+    //        For gray areas starting at the beginning or ending at the end of
+    //        the movie, the path doesn't have both.
     { Measurements **trajs = Guarded_Malloc( nstates * nframes * sizeof(Measurements*), "in solve, alloc trajectories");
       Measurements *row = table;
       memset(trajs,0, nstates * nframes * sizeof(Measurements*));
@@ -837,8 +853,8 @@ void Solve( Measurements *table, int n_rows, int n_bins )
 #ifdef DEBUG_SOLVE_GRAY_AREAS
           printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
 #endif
-          Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate );
-          int npath = end->fid - start->fid - 1;
+          int npath;
+          Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
           memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
 #ifdef DEBUG_SOLVE_GRAY_AREAS
           printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);

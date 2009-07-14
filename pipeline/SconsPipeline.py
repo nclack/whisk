@@ -46,7 +46,8 @@ def pipeline_standard(env, movie):
     lambda j: env.Measure( j )                                  ,
     lambda j: env.Classify( j )                                 ,
     lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
-    lambda j: env.IdentitySolver( j )                           
+    lambda j: env.IdentitySolver( j )                           ,
+    lambda j: env.Summary( j )                           
   ]
   compose = lambda a,b: b(a)
   jobs = reduce( compose, builders )
@@ -66,7 +67,8 @@ def pipeline_curated(env, source):
 
   builders = [
     source,
-    measure_and_label
+    measure_and_label,
+    lambda j: env.Summary( j )                           
   ]
   compose = lambda a,b: b(a)
   jobs = reduce( compose, builders )
@@ -92,7 +94,10 @@ env  = Environment(
     'Classify': Builder(action = "classify.py $SOURCE $TARGET",
                         suffix = ".trajectories",
                         src_suffix = ".measurements"
-                       )
+                       ),
+    'Summary': Builder(action = "summary.py $SOURCE $TARGET",
+                       src_suffix = ".measurements",
+                       suffix = ".png")
   }
 )
 

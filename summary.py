@@ -320,6 +320,42 @@ def plot_summary_data(wvd,traj,data):
   ax = subplot(212)
   axis((0,tmax,vmin2,vmax2))
 
+def plot_summary_measurements_table(table):
+  """
+  >>> from traj import MeasurementsTable
+  >>> table = MeasurementsTable("data/testing/seq140[autotraj].measurements")
+  >>> plot_summary_measurements_table(table.update_velocities())
+  """
+  time,mask = table.get_time_and_mask(0)
+  dt = diff(time)
+  idx, = where(dt>1)
+  bars = [ (time[i], dt[i] ) for i in idx ]
+  
+  ax = subplot(211)
+  vmin1,vmax1 = -90,90
+  ax.broken_barh( bars, (vmin1,vmax1-vmin1) ,edgecolors=[(0,0,0,0)],facecolors=[(0,0,0,0.5)] )
+  xlabel('Time (frames)')
+  ylabel('Angle at root (deg)')
+  ax = subplot(211)
+  
+  ax = subplot(212)
+  vmin2,vmax2 = -0.008,0.008
+  ax.broken_barh( bars, (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
+  xlabel('Time (frames)')
+  ylabel('Mean Curvature (1/px)')
+
+  for tid in table.iter_state():
+    time,mask = table.get_time_and_mask(tid)
+    data = table.get_shape_data(tid)
+    subplot(211)
+    plot(time,data[:,2])
+    subplot(212)
+    plot(time,data[:,3])
+
+  ax = subplot(211)
+  axis((0,time.max(),vmin1,vmax1))
+  ax = subplot(212)
+  axis((0,time.max(),vmin2,vmax2))
 
 def plot_summary(wvd,traj,side=0):
   clf()
@@ -427,6 +463,24 @@ def render_summary_to_file(whiskername,figurename):
 
 if 1:
   import optparse
+  from traj import MeasurementsTable
+
+  if __name__ == '__main__':
+    parser = optparse.OptionParser(usage = "Usage: %prog source dest")
+    options, args = parser.parse_args()
+    src,dst = args
+    assert os.path.exists(src), "Input measurements table file not found"
+    assert os.path.exists(os.path.split(dst)[0]), "Output directory doesn't exist"
+
+    t = MeasurementsTable(src).update_velocities()
+
+    f = figure()
+    plot_summary_measurements_table(t)
+    savefig(dst)
+    close(f)
+
+if 0:
+  import optparse
   if __name__ == '__main__':
     usage = "usage: summary.py [options] whiskerfile [destination_image]"
     description = \
@@ -441,8 +495,6 @@ can be saved to a .trajectories file (the filename is determined by the whisker 
 The `destination_image` argument may be a filename with or without the extension.  If no extension is specified
 the file will be saved as a .png file.  The extension is used to determine the file format to save.
 Available formats are pdf, ps, eps, and svg.
-
-
 """
     parser = optparse.OptionParser( usage = usage,
                                     description = description )

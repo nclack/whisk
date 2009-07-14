@@ -1,13 +1,59 @@
-from SconsPipeline import *
+"""
+Example SCons script for processing data.
+
+If you're using relative path names, copy this to the 
+root directory to which paths are relative.
+
+To run this, you'll have to install SCons.  See:
+  http://www.scons.org/
+
+After installing, at the command line, run:
+
+  scons -f main.scons
+
+to start processing.
+"""
+from pipeline.SconsPipeline import *
+
+join = os.path.join
+
+data = "data"
+proc = "proc"
 
 Progress(['-', '\\', '|', '/'], interval=1)
 
-VariantDir('proc/huber/021209jf22052/',
-           'data/huber/021209jf22052/',
-           duplicate=0) 
-VariantDir('proc/curated/huber/',
-           'data/curated/huber/',
-           duplicate=0) 
-SConscript('proc/huber/021209jf22052/dir_normal.scons')
-SConscript('proc/curated/huber/dir_curated.scons')
+#
+# Normal
+#
 
+dirs = """
+huber/012409jf22054 
+huber/012409jf22055 
+huber/021209jf22052 
+seq
+""".split()
+
+for d in dirs:
+  dst = join(proc,d)
+  VariantDir(dst,
+             join( data, d ),
+             duplicate=0) 
+  SConscript( join( dst,'dir_normal.scons' ) )
+
+#
+# Curated
+#
+
+dirs = """
+curated/080808/DO79 
+curated/080808/DO80 
+curated/080808/DO94 
+curated/huber 
+""".split()
+
+for d in dirs:
+  dst = join(proc,d)
+  VariantDir(dst,
+             join( data, d ),
+             duplicate=0) 
+  SConscript( join( dst,'dir_curated.scons' ) )

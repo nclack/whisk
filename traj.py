@@ -108,6 +108,40 @@ class MeasurementsTable(object):
                                             );
     return data
 
+  def get_state_range(self):
+    """
+    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> mn,mx = MeasurementsTable(data).update_velocities().get_state_range()
+    >>> mn
+    0
+    >>> mx
+    3
+    """
+    mn,mx = c_int(),c_int()
+    sorted = (not self._sort_state is None ) and \
+             ("state" in self._sort_state  )
+    n = ctraj._count_n_states(self._measurements,
+                              self._nrows,
+                              sorted,
+                              byref(mn),
+                              byref(mx))
+    f = lambda x: x.value if x.value >=0 else 0
+    return map(f,[mn,mx])
+
+  def iter_state(self):
+    """
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> for i in table.update_velocities().iter_state():
+    ...     print i
+    ...     
+    0
+    1
+    2
+    3
+    """
+    mn,mx = self.get_state_range()
+    return xrange(mn,mx+1)
+
   def get_shape_table(self):
     """  
     >>> from numpy.random import rand
@@ -382,6 +416,7 @@ def batch_make_measurements(sourcepath, ext = '*.seq', label = 'curated'):
 #
 # Testing
 #
+
 import unittest
 import doctest
 
@@ -507,7 +542,7 @@ class Tests_Distributions(unittest.TestCase):
     self.failUnlessEqual( nbins,     self.dists._vel[0].n_bins )
 
 #
-# Contracts
+# Declarations 
 #
 ctraj.Measurements_Table_From_Doubles.restype = POINTER(cMeasurements)
 ctraj.Measurements_Table_From_Doubles.argtypes = [
