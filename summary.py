@@ -320,7 +320,7 @@ def plot_summary_data(wvd,traj,data):
   ax = subplot(212)
   axis((0,tmax,vmin2,vmax2))
 
-def plot_summary_measurements_table(table):
+def plot_summary_measurements_table(table, px2mm=None):
   """
   >>> from traj import MeasurementsTable
   >>> table = MeasurementsTable("data/testing/seq140[autotraj].measurements")
@@ -339,10 +339,15 @@ def plot_summary_measurements_table(table):
   ax = subplot(211)
   
   ax = subplot(212)
-  vmin2,vmax2 = -0.008,0.008
-  ax.broken_barh( bars, (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
   xlabel('Time (frames)')
-  ylabel('Mean Curvature (1/px)')
+  if px2mm is None:
+    ylabel('Mean Curvature (1/px)')
+    px2mm = 1.0
+    vmin2,vmax2 = -0.01,0.01
+  else:
+    ylabel('Mean Curvature (1/mm)')
+    vmin2,vmax2 = -0.4,0.4
+  ax.broken_barh( bars, (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
 
   for tid in table.iter_state():
     time,mask = table.get_time_and_mask(tid)
@@ -350,7 +355,7 @@ def plot_summary_measurements_table(table):
     subplot(211)
     plot(time,data[:,2])
     subplot(212)
-    plot(time,data[:,3])
+    plot(time,data[:,3]/px2mm)
 
   ax = subplot(211)
   axis((0,time.max(),vmin1,vmax1))
@@ -466,7 +471,13 @@ if 1:
   from traj import MeasurementsTable
 
   if __name__ == '__main__':
-    parser = optparse.OptionParser(usage = "Usage: %prog source dest")
+    parser = optparse.OptionParser(usage = "Usage: %prog [options] source dest")
+    parser.add_option("--px2mm",
+                      dest = "px2mm",
+                      action = "store",
+                      type = "float",
+                      default = None,
+                      help = "The pixel to mm conversion.  Units should be mm/px. Setting this to zero or None will cause units to be in pixels. [default: %default]");
     options, args = parser.parse_args()
     src,dst = args
     assert os.path.exists(src), "Input measurements table file not found"
@@ -475,7 +486,8 @@ if 1:
     t = MeasurementsTable(src).update_velocities()
 
     f = figure()
-    plot_summary_measurements_table(t)
+    plot_summary_measurements_table(t, 
+                                    px2mm = options.px2mm if options.px2mm else None)
     savefig(dst)
     close(f)
 

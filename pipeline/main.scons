@@ -20,7 +20,7 @@ join = os.path.join
 data = "data"
 proc = "proc"
 
-Progress('$TARGET\r',overwrite=True)
+Progress('Scanning:  $TARGET\r',overwrite=True)
 
 #
 # Normal

@@ -38,6 +38,39 @@ def make_solver(command, label):
     return env.Command(target,source, "%s $SOURCE $TARGET"%command)
   return solver
 
+def dfs_consume_tuples(g,cur):
+  while isinstance(cur,tuple):
+    yield cur
+    cur = g.next()
+  def rest():
+    yield cur
+    for e in g:
+      yield e
+  yield rest()
+
+def flatten(tree):
+  if not isinstance(tree,tuple):
+    yield tree
+  for node in tree:
+    if isinstance(node,tuple):
+      for e in flatten(node):
+        yield e
+    else:
+      yield node
+
+def dfs_reduce(f,tree):
+  def _dfs_reduce(f,tree, a = None):
+    tree = iter(tree)
+    for node in tree:
+      if isinstance(node,tuple):
+        return tuple ( map(lambda e: _dfs_reduce( f, e, a ),   #branch recursively
+                          dfs_consume_tuples(tree,node) )
+                    )
+      else:
+        a = node if a is None else f(a,node)                   #process node
+    return a
+  return flatten( _dfs_reduce(f,tree) )
+
 def pipeline_standard(env, movie):
   builders = [ 
     movie                                                       ,
@@ -46,11 +79,15 @@ def pipeline_standard(env, movie):
     lambda j: env.Measure( j )                                  ,
     lambda j: env.Classify( j )                                 ,
     lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
-    lambda j: env.IdentitySolver( j )                           ,
-    lambda j: env.Summary( j )                           
+    ( lambda j: env.IdentitySolver( j )                         , 
+      lambda j: env.Summary( j )
+    )                                                           ,
+    lambda j: env.Summary( j )                             
   ]
+
+
   compose = lambda a,b: b(a)
-  jobs = reduce( compose, builders )
+  jobs = dfs_reduce( compose, builders )                         
   return jobs
 
 def pipeline_curated(env, source):
@@ -75,6 +112,7 @@ def pipeline_curated(env, source):
   return jobs
 
 env  = Environment( 
+  PX2MM = 0,
   BUILDERS = {
     'Whisk' : Builder(action = "whisk $SOURCE $TARGET --no-bar",
                       suffix  = '.whiskers',
@@ -95,7 +133,7 @@ env  = Environment(
                         suffix = ".trajectories",
                         src_suffix = ".measurements"
                        ),
-    'Summary': Builder(action = "summary.py $SOURCE $TARGET",
+    'Summary': Builder(action = "summary.py $SOURCE $TARGET --px2mm=$PX2MM",
                        src_suffix = ".measurements",
                        suffix = ".png")
   }
