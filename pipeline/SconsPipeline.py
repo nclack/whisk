@@ -59,6 +59,12 @@ def flatten(tree):
       yield node
 
 def dfs_reduce(f,tree):
+  """
+  >>> a = (0,1,2,(3,4,(5,),(6,)),(7,8),9,0,1,2,(4,(5,),6),7)
+  >>> f = lambda x,y: str(x)+str(y)
+  >>> list(dfs_reduce(f,a))
+  ['012345', '012346', '01278', '012901245', '012901246', '01290127']
+  """
   def _dfs_reduce(f,tree, a = None):
     tree = iter(tree)
     for node in tree:
@@ -147,3 +153,7 @@ env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 
 Export('env')
+
+if __name__=='__main__':
+  import doctest
+  doctest.testmod()
