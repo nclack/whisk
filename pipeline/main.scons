@@ -20,7 +20,7 @@ join = os.path.join
 data = "data"
 proc = "proc"
 
-Progress(['-', '\\', '|', '/'], interval=1)
+Progress('$TARGET\r',overwrite=True)
 
 #
 # Normal
