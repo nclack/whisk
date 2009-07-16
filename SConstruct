@@ -2,7 +2,7 @@ from glob import glob
 import os
 
 env = Environment(ENV = os.environ )
-#env.MergeFlags( env.ParseFlags( "-g -O3 -lm" ))
+#env.MergeFlags( env.ParseFlags( "-O3 -lm" ))
 env.MergeFlags( env.ParseFlags( "-g -lm" ))
 
 mains = Split( """ whisk

@@ -31,8 +31,8 @@
 
 
 #if 0
-#define DEBUG_SEEDING_FIELDS
 #define SHOW_LINE_DETECTOR
+#define DEBUG_SEEDING_FIELDS
 #define DEBUG_DETECTOR_BANK
 #define DEBUG_LINE_FITTING
 
@@ -57,7 +57,11 @@
 #undef  APPLY_ZONE_MASK
 
 #define SEED_ON_MHAT_CONTOURS
-#undef  SEED_ON_GRID
+#if 0
+#define SEED_ON_GRID
+#endif
+
+#define SEED_ON_GRID_LATTICE_SPACING 50
 
 #define HARMONIC_MEAN_N_LABELS 2
 
@@ -372,7 +376,8 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
   }
 #endif
 #ifdef SEED_ON_GRID
-  compute_seed_from_point_field_on_grid( image, 8, // lattice spacing 
+  compute_seed_from_point_field_on_grid( image,
+      SEED_ON_GRID_LATTICE_SPACING, // lattice spacing 
       4,    // maxr                   
       0.4,  // iteration threshold    
       0.4,  // accumulation threshold 
@@ -1990,26 +1995,6 @@ int adjust_line_start(Line_Params *line, Image *image, int *pp,
   double atest = line->angle;
   Line_Params backup = *line;
 
-//if( ! adjust_line_walk( line, image, pp, roff, rang ) )
-//  return 0; //not trusted 
-#if 0
-  // exhaustively but roughly optimize offset
-  { float best, off, argbest,v;
-    best = line->score;
-    argbest = line->offset;
-    for( off = roff->min; off <= (roff->max); off += 5*OFFSET_STEP )
-    { line->offset = off;
-      v = eval_line(line,image,p);
-      if( v>best )
-      { best = v;
-        argbest = off;
-      }
-    }
-    line->offset = argbest;
-    line->score = best;
-  }
-#endif
-
   better = 1;
   while (better)
   { better = 0;
@@ -2019,12 +2004,6 @@ int adjust_line_start(Line_Params *line, Image *image, int *pp,
 #endif
     best = line->score;
   
-    ///* optimize offset/thickness first */
-    //if( ! adjust_line_walk( line, image, pp, roff, rang, rwid ) )
-    //  return 0; //not trusted 
-    //best = line->score;
-
-
     /* adjust angle */
     /* when the angle switches from small to large around 45 deg, the meaning
      * off the offset changes.  But at 45 deg, the x-offset and the y-offset
