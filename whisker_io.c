@@ -101,8 +101,9 @@ int Whisker_File_Autodetect( const char * filename, char** format )
       return i;
     }
   }
-  error("Could not detect file format for %s.\n",filename);
-  exit(1);
+  error("Could not detect whisker file format for %s.\n"
+        "\t\tPerhaps it's not a whiskers file.\n",filename);
+  return -1; // doesn't return
 }
 
 WhiskerFile Whisker_File_Open(const char* filename, char* format, const char* mode )

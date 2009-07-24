@@ -10,6 +10,10 @@ mains = Split( """ whisk
                    test_whisker_io
                    stripetest
                """ )
+excludes = set(( """ collisiontable_link_list.c
+                     distance.c
+                     trajectory.c
+                 """ ).split())
         
 # Add builder for transforming .p --> .c
 awk = Builder( action = "awk -f manager.awk $SOURCE > $TARGET",
@@ -25,7 +29,7 @@ for n in pnodes:                                    #rebuild these if manager.aw
 pcfiles = [ str(n[0]) for n in pnodes ]             #get resulting c files names
 
 # Aggregate other source files 
-cfiles = set( glob("*.c")+pcfiles )        # a unique set of all *.c files: both existent and *.p dependant
+cfiles = set( glob("*.c")+pcfiles ) - excludes        # a unique set of all *.c files: both existent and *.p dependant
 main_cfiles = set([n+".c" for n in mains]) # Assume main() is in a c-file with the same name as the program
 cfiles = cfiles.difference(main_cfiles)    # Seperate c-files with and without mains
 cfiles.remove("evaltest.c")
@@ -70,3 +74,20 @@ tests = ["TEST_BUILD_DISTRIBUTIONS",
 totestobj = lambda t: env.Object( 'trajobj_'+t.lower(), ['traj.c'], CPPDEFINES = t)
 for t in tests:
   env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c','utilities.c'] ) 
+
+## merge tests
+tests = ["TEST_COLLISIONTABLE_1",
+         "TEST_COLLISIONTABLE_2",
+         "TEST_COLLISIONTABLE_3"
+         ] 
+totestobj = lambda t: env.Object( 'merge_'+t.lower(), ['merge.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_merge_'+t[5:].lower(), [ totestobj(t),
+                                              'common.o',    'image_lib.o', 'contour_lib.o',
+                                              'error.o',     'eval.o',      'level_set.o',
+                                              'utilities.o', 'tiff_io.o',   'image_filters.o',
+                                              'trace.o',     'tiff_image.o',
+                                              'aip.o',       'seed.o',      'draw_lib.o',
+                                              'whisker_io.o',          'whisker_io_whiskbin1.o',
+                                              'whisker_io_whisker1.o', 'whisker_io_whiskold.o'
+                                              ] ) 

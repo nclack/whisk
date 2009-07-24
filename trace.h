@@ -27,67 +27,46 @@
 //#define HALF_SPACE_TUNNELING_DECAY  0.99     // between 0 and 1.  Smaller values cause tunneling to stop sooner
 #define HALF_SPACE_TUNNELING_MAX_MOVES 10   // pixels.  This should be the largest size of an occluding area to cross
 
-typedef struct
-  { int    cutoff;
-    Image *mask;
-  } Zone;
-
-typedef struct
-  { float  offset;
-    float  angle;
-    float  width;
-    float  score;
-  } Line_Params;
-
-typedef struct
-  { double min;
-    double max;
-  } Interval;
-
-typedef struct
-  { int    id;
-    double width;
-    int    beg;
-    int    end;
-    int    time;    /* in units of planes */
-    float *track;
-    float *scores;
-  } Whisker_Seg_Old;
-
-typedef struct
-{ int id;
-  int time;
-  int len;
-  float *x;
-  float *y;
-  float *thick;
-  float *scores;
-} Whisker_Seg;
-
-typedef struct
-{ void        **index;
-  int          *sz;
-  int           n;
-} Index;
+typedef struct        //
+  { int    cutoff;    //
+    Image *mask;      //
+  } Zone;             //
+                     
+typedef struct        //
+  { float  offset;    //
+    float  angle;     //
+    float  width;     //
+    float  score;     //
+  } Line_Params;      //
+                     
+typedef struct        //
+  { double min;       //
+    double max;       //
+  } Interval;         //
+                     
+typedef struct        //
+  { int    id;        //
+    double width;     //
+    int    beg;       //
+    int    end;       //
+    int    time;      // in units of planes
+    float *track;     //
+    float *scores;    //
+  } Whisker_Seg_Old;  //
+                     
+typedef struct        //
+{ int id;             //
+  int time;           //
+  int len;            //
+  float *x;           //
+  float *y;           //
+  float *thick;       //
+  float *scores;      //
+} Whisker_Seg;        //
 
 Whisker_Seg  *Make_Whisker_Seg              ( int n );
 void          Free_Whisker_Seg              ( Whisker_Seg *w );
 void          Free_Whisker_Seg_Vec          ( Whisker_Seg *wv, int n );
-
-int           Compare_Whisker_Seg_Index     ( const void *a, const void *b );
-
-Index        *Build_Whisker_Index           ( Whisker_Seg *wv, int n );
-void          Free_Index                    ( Index *index );
-
-//OLD void          write_whisk1_header           ( FILE *file );
-//OLD void          write_whisk1_segment          ( FILE *file, Whisker_Seg *w );
-//OLD void          write_segments                ( FILE *file, Whisker_Seg     **wv, int *sz, int nplanes );
-//OLD void          write_segments_old            ( FILE* file, Whisker_Seg_Old **wv, int *sz, int nplanes );
-//OLD Whisker_Seg  *Load_Whiskers_From_File       ( FILE *file, int *n);
-//OLD Whisker_Seg  *Load_Whiskers                 ( char *filename, int *n);
-//OLD int           Save_Whiskers                 ( char *filename, Whisker_Seg *wv, int n );
-//void          Save_Whiskers                 ( char *filename, Index *whiskerindex );
-
 
 Whisker_Seg  *find_segments                 (int iFrame, Image *image, Image *bg, int *nseg );
 Image        *compute_background            (Stack *movie);

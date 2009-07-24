@@ -1,5 +1,9 @@
 #include "utilities.h"
 
+#if 0
+#define DEBUG_REQUEST_STORAGE
+#endif
+
 void *request_storage( void *buffer, int *maxlen, int nbytes, int minindex, char *msg )
 { if( (nbytes*minindex) > *maxlen )
   {

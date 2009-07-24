@@ -5,6 +5,7 @@
 #define SHOW_PROGRESS_MESSAGES  1  
 
 void error(char *str, ... );
+void warning(char *str, ... );
 void debug(char *str, ... );
 void progress(char *str, ... );
 

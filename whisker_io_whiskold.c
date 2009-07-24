@@ -26,8 +26,16 @@ int is_file_whisk_old( const char* filename)
       exit(1);
     }
   fscanf(fp,"%32s", format);
+
+  if( strncmp(format,not,sizeof(not)) != 0 )
+  { int n, time, id, beg, end;
+    rewind(fp);
+    n = fscanf( fp, "%d%*[, ]%d%*[, ]%d%*[, ]%d", &time, &id, &beg, &end );
+    fclose(fp);
+    return n==4;
+  }
   fclose(fp);
-  return strncmp(format,not,sizeof(not)) != 0;
+  return 0;
 }
 
 FILE* open_whisk_old(const char* filename, const char* mode)

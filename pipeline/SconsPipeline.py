@@ -14,14 +14,6 @@ def change_ext( node, newext ):
   target = env.File( os.path.split(prefix)[1] + newext )
   return target
                                       
-def emit_for_heal(target,source,env):
-  name = str(target[0]) 
-  prefix,ext = os.path.splitext( name )
-  name = change_label( name , 'heal' )
-  source = [ prefix + ".seq", prefix + ".whiskers" ]
-  target = name + '.whiskers'
-  return target,source
-
 def labelled_commit_to_measurements(env, target, label):
   target = str(target[0])
   source = map( lambda ext: os.path.splitext(target)[0] + ext, [ ".trajectories", ".measurements" ] )
@@ -81,7 +73,6 @@ def pipeline_standard(env, movie):
   builders = [ 
     movie                                                       ,
     env.Whisk                                                   ,
-    lambda j: env.Heal( j )                                     ,
     lambda j: env.Measure( j )                                  ,
     lambda j: env.Classify( j )                                 ,
     lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
@@ -90,7 +81,6 @@ def pipeline_standard(env, movie):
     )                                                           ,
     lambda j: env.Summary( j )                             
   ]
-
 
   compose = lambda a,b: b(a)
   jobs = dfs_reduce( compose, builders )                         
@@ -128,8 +118,9 @@ env  = Environment(
                       suffix  = '.bar',
                       src_suffix = '.seq'
                      ),
-    'Heal'  : Builder(action = "heal.py $SOURCES $TARGET",
-                      emitter = emit_for_heal 
+    'Heal'  : Builder(action = "test_merge_collisiontable_3 $SOURCE $TARGET",
+                      suffix = '.whiskers',
+                      src_suffix = '.whiskers'
                      ),
     'Measure': Builder(action = "measure.py $SOURCE $TARGET",
                        suffix     = '.measurements',

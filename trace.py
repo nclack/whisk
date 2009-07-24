@@ -357,21 +357,21 @@ def Save_Whiskers( filename, whiskers ):
 #
 # WHISKER DISTANCE
 #
-cWhisk.whisker_distance.restype = c_float
-cWhisk.whisker_distance.argtypes = [
-  POINTER( cWhisker_Seg ),
-  POINTER( cWhisker_Seg ) ]
-
-cWhisk.whisker_distance_time_independent.restype = c_float
-cWhisk.whisker_distance_time_independent.argtypes = [
-  POINTER( cWhisker_Seg ),
-  POINTER( cWhisker_Seg ) ]
-
-def whisker_distance( a, b ):
-  ca = cWhisker_Seg.CastFromWhiskerSeg( a )
-  cb = cWhisker_Seg.CastFromWhiskerSeg( b )
-  d  = cWhisk.whisker_distance_time_independent( byref(ca), byref(cb) )
-  return d
+# cWhisk.whisker_distance.restype = c_float
+# cWhisk.whisker_distance.argtypes = [
+#   POINTER( cWhisker_Seg ),
+#   POINTER( cWhisker_Seg ) ]
+#
+# cWhisk.whisker_distance_time_independent.restype = c_float
+# cWhisk.whisker_distance_time_independent.argtypes = [
+#   POINTER( cWhisker_Seg ),
+#   POINTER( cWhisker_Seg ) ]
+#
+# def whisker_distance( a, b ):
+#   ca = cWhisker_Seg.CastFromWhiskerSeg( a )
+#   cb = cWhisker_Seg.CastFromWhiskerSeg( b )
+#   d  = cWhisk.whisker_distance_time_independent( byref(ca), byref(cb) )
+#   return d
 
 #
 # Bipartite Match

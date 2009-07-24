@@ -12,6 +12,7 @@
 
 #include "bar.h"
 #include "trajectory.h"
+#include "merge.h"
 
 #include "adjust_scan_bias.h"
 #include "whisker_io.h"
@@ -287,6 +288,11 @@ int main(int argc, char *argv[])
         image = Copy_Image( load(movie,i,NULL) );
         progress( "Finding segments for frame %5d of %d.\n", i, depth);
         wv = find_segments(i, image, bg, &wv_n);
+        k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
+                                                   image->width, image->height, 
+                                                   2.0,    // scale down by this
+                                                   2.0,    // distance threshold
+                                                   0.8 );  // significant overlap fraction
         nTotalSegs += wv_n;
         Whisker_File_Append_Segments(wfile, wv, wv_n);
         Free_Whisker_Seg_Vec( wv, wv_n );

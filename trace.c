@@ -16,6 +16,7 @@
 #include <math.h>
 #include <string.h>
 #include <float.h>
+#include <assert.h>
 
 #include "utilities.h"
 #include "common.h"
@@ -25,7 +26,7 @@
 #include "level_set.h"
 #include "contour_lib.h"
 
-#include "distance.h"
+//#include "distance.h"
 #include "eval.h"
 #include "seed.h"
 
@@ -71,7 +72,6 @@
 #define LINE_DETECTOR_SPECIAL  20
 
 Image       * subtract_background_inplace  (Image *a, Image *b);
-void          remove_duplicate_segments    (Whisker_Seg *wv, int *n);
 
 void          initialize_paramater_ranges  (Line_Params *line, Interval *roff, Interval *rang, Interval *rwid);
 
@@ -656,37 +656,7 @@ Zone *compute_zone(Stack *movie)
 }
 
 void remove_duplicate_segments( Whisker_Seg *wv, int *n )
-{ int i, j;
-  Whisker_Seg *a, *b;
-  static char *deleted;
-  static int maxlen = 0;
-
-  deleted = (char*) request_storage( deleted, &maxlen, sizeof(char), *n, "remove duplicate segments" );
-  memset( deleted, 0, *n*sizeof(char) );
-
-  /* mark duplicates - as null */
-  for( i=0; i < (*n); i++ )
-  { a = wv + i;
-    if( !deleted[i] )
-      for( j=i+1; j < (*n); j++ )
-      { b = wv + j;
-        if( b )
-        { if( whisker_distance_time_independent( a, b ) < DUPLICATE_THRESHOLD )
-          { Free_Whisker_Seg( wv+j  );
-            deleted[j] = 1;
-          }
-        }
-      }
-  }
-
-  /* pack to get rid of nulls */
-  { Whisker_Seg *s,*w;
-    s = w = wv;
-    for( i=0; i < (*n); i++ )
-      if( deleted[i] )
-        *(w++) = s[i];
-    *n = (w - s);
-  }
+{ assert(0); // FIXME: impliment -- see merge.c
 }
 
 int  write_line_detector_bank( char *filename, Array *bank, Range *off, Range *wid, Range *ang )
