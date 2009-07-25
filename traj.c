@@ -887,8 +887,8 @@ void Solve( Measurements *table, int n_rows, int n_bins )
 int main(int argc, char *argv[])
 { int nrows = 40000;
   int ret;
-  printf("Test: Write an empty table to file and read it back in.\n");
   Measurements *table = Alloc_Measurements_Table(nrows,6);
+  printf("Test: Write an empty table to file and read it back in.\n");
   ret = test_Measurements_Table_FileIO( "tmp.measurements", table, nrows );
   Free_Measurements_Table(table);
   if(ret)

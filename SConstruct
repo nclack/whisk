@@ -1,9 +1,18 @@
+# vi:ft=python:et:ts=2
+#
 from glob import glob
 import os
 
 env = Environment(ENV = os.environ )
-#env.MergeFlags( env.ParseFlags( "-O3 -lm" ))
-env.MergeFlags( env.ParseFlags( "-g -lm" ))
+if env['PLATFORM']=='win32':
+  env.Append(CCFLAGS = r'/Od /MDd /W1 /nologo /TC /ZI' )
+  #env.Append(LDFLAGS = r'/DEBUG')
+  #env.Append(LIBS = "math.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib".split())
+  #env.Append(LIBPATH = r"C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib" )
+else:
+  #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))
+  env.MergeFlags( env.ParseFlags( "-g -lm" ))
+env['no_import_lib'] = 1
 
 mains = Split( """ whisk
                    seedtest
@@ -50,6 +59,7 @@ env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
 libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c'] )
 
 ## install - copy things around
+print libwhisk
 env.Install( 'ui/whiskerdata', ['trace.py', libwhisk] ) 
 env.Install( 'ui',             ['trace.py', libwhisk] ) 
 env.Alias( 'python', ['ui/whiskerdata','ui'] )
@@ -83,11 +93,11 @@ tests = ["TEST_COLLISIONTABLE_1",
 totestobj = lambda t: env.Object( 'merge_'+t.lower(), ['merge.c'], CPPDEFINES = t )
 for t in tests:
   env.Program( 'test_merge_'+t[5:].lower(), [ totestobj(t),
-                                              'common.o',    'image_lib.o', 'contour_lib.o',
-                                              'error.o',     'eval.o',      'level_set.o',
-                                              'utilities.o', 'tiff_io.o',   'image_filters.o',
-                                              'trace.o',     'tiff_image.o',
-                                              'aip.o',       'seed.o',      'draw_lib.o',
-                                              'whisker_io.o',          'whisker_io_whiskbin1.o',
-                                              'whisker_io_whisker1.o', 'whisker_io_whiskold.o'
+                                              'common.c',    'image_lib.c', 'contour_lib.c',
+                                              'error.c',     'eval.c',      'level_set.c',
+                                              'utilities.c', 'tiff_io.c',   'image_filters.c',
+                                              'trace.c',     'tiff_image.c','compat.c',
+                                              'aip.c',       'seed.c',      'draw_lib.c',
+                                              'whisker_io.c',          'whisker_io_whiskbin1.c',
+                                              'whisker_io_whisker1.c', 'whisker_io_whiskold.c'
                                               ] ) 

@@ -16,10 +16,10 @@
  * as proper credit is given to the author.  All other rights reserved.            *
  \*********************************************************************************/
 
+#include "compat.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <stdint.h>
 #include "common.h"
 #include "error.h"
 #include "trace.h"

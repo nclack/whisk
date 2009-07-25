@@ -1,3 +1,4 @@
+#include "compat.h"
 #include <stdlib.h>
 #include <math.h> //for fabs, log, exp
 #include <string.h>
@@ -105,7 +106,7 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
                                 int nobs,               // the size of the set of observables ( need for stride )
                                 int nstates )           // number of states (size of state alphabet)
 { static ViterbiState  *last = NULL;  
-  static ViterbiState  *next = NULL;;
+  static ViterbiState  *next = NULL;
   static int maxnext = 0;
   static int maxlast = 0;
   static ViterbiPath  *pool = NULL;
@@ -126,9 +127,10 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
   while(idst--)
   { ViterbiPath *this = pool + (npool++); 
     real   p = start_prob[idst] * emmission_prob[idst * nobs + iobs];
+    ViterbiState tmp = { p, p, this };
     this->state = idst;
     this->next  = NULL;
-    last[idst] = (ViterbiState) { p, p, this };
+    last[idst] = tmp;
   }
 
   // Deduction
@@ -211,7 +213,7 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
                                        int nobs,               // the size of the set of observables ( need for stride )
                                        int nstates)            // number of states (size of state alphabet)
 { static ViterbiState  *last = NULL;  
-  static ViterbiState  *next = NULL;;
+  static ViterbiState  *next = NULL;
   static int maxnext = 0;
   static int maxlast = 0;
   static ViterbiPath  *pool = NULL;
@@ -232,9 +234,10 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
   while(idst--)
   { ViterbiPath *this = pool + (npool++); 
     real   p = start_prob[idst] + emmission_prob[idst * nobs + iobs];
+    ViterbiState tmp = { p, p, this }; 
     this->state = idst;
     this->next  = NULL;
-    last[idst] = (ViterbiState) { p, p, this };
+    last[idst] = tmp;
   }
 
   // Deduction
@@ -456,14 +459,14 @@ void print_result( ViterbiResult *res )
 int main( int argc, char* argv[] ) 
 { int retval = 1;
   double tol = 1e-3;
-  printf("\nTest: Viterbi \n");
-  print_observations( sequence, NSEQ );
   ViterbiResult *res = Forward_Viterbi( sequence, NSEQ,
                                         sprob,  // size: nstates
                                         tprob,  // size: nstates*nstates, destintion state-major order
                                         eprob,  // size: nstates * nobs, state-major order (stride is nobs)
                                         NOBS,   // size of set of observables
                                         NSTATE);// number of states (size of state alphabet)
+  printf("\nTest: Viterbi \n");
+  print_observations( sequence, NSEQ );
   print_result( res );
   if( fabs(res->prob - expected) > tol )
   { printf("FAILED: Expected probability of viterbi path to be %g (err: %g)\n",expected,res->prob - expected);

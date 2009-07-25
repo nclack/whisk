@@ -4,7 +4,7 @@
  * The parametric curve is represented by a list of 2d vertices organized to
  * preserve orientation.  The curve is linearly interpolated between vertices.
  */
-
+#include "compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

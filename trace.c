@@ -8,6 +8,7 @@
  *                                int *pnseg )
  *
  */
+#include "compat.h"
 #define _USE_MATH_DEFINES
 #include "trace.h"
 #include <stdio.h>
