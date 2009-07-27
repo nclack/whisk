@@ -56,7 +56,6 @@ env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
 libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c'] )
 
 ## install - copy things around
-print libwhisk
 env.Install( 'ui/whiskerdata', ['trace.py', libwhisk] ) 
 env.Install( 'ui',             ['trace.py', libwhisk] ) 
 env.Alias( 'python', ['ui/whiskerdata','ui'] )
