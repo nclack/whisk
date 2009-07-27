@@ -19,8 +19,8 @@
 
 // DEBUG OUTPUT
 #if 0
-#define DEBUG_SOLVE_GRAY_AREAS
-#define DEBUG_FIND_PATH            
+#define  DEBUG_SOLVE_GRAY_AREAS
+#define  DEBUG_FIND_PATH            
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
@@ -33,9 +33,15 @@ typedef struct
   int fid;
   int wid;
   int state;
+
+  int face_x;        // used in ordering whiskers on the face...roughly, the center of the face
+  int face_y;        //                                      ...does not need to be in image
+  int col_follicle_x; // index of the column corresponding to the folicle x position
+  int col_follicle_y; // index of the column corresponding to the folicle y position
+                                                                           
   int valid_velocity;
   int n;
-  double *data;  // array of n elements
+  double *data;     // array of n elements
   double *velocity; // array of n elements - change in data/time
 } Measurements;
 
@@ -53,7 +59,7 @@ Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
   double *dataspace   = Guarded_Malloc( 2*sizeof(double)*n_measurements*n_rows, "allocate measurements table" ); 
   double *velocityspace  = dataspace + n_measurements*n_rows;
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
-  printf("\nMeasurements table alloc: data at %p\n",dataspace);
+  printf("\nMeasurements table alloc: %d rows of data at %p\n",n_rows,dataspace);
 #endif
   while( n_rows-- )
   { Measurements *row = table     + n_rows;
@@ -61,6 +67,11 @@ Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
     row->velocity = velocityspace + n_rows*n_measurements;
     row->row = n_rows;
     row->n = n_measurements;
+    row->valid_velocity = 0;
+    row->face_x = 0;
+    row->face_y = 0;
+    row->col_follicle_x = 0;
+    row->col_follicle_y = 0;
   }
   return table;
 }
@@ -125,6 +136,20 @@ void Distributions_Bins_To_Doubles( Distributions *this, double *destination )
   }
 }
 
+void Measurements_Table_Set_Constant_Face_Position( Measurements *table, int n_rows, int x, int y )
+{ while(n_rows--)
+  { table[n_rows].face_x = x;
+    table[n_rows].face_y = y;
+  }
+}
+
+void Measurements_Table_Set_Follicle_Position_Indices( Measurements *table, int n_rows, int ix, int iy )
+{ while(n_rows--)
+  { table[n_rows].col_follicle_x = ix;
+    table[n_rows].col_follicle_y = iy;
+  }
+}
+
 // Use this to copy in from e.g. matlab, python
 // Assumes first three columns are label,fid,wid (all ints) followed by data
 // so Measurements.n = n_cols - 3 
@@ -140,6 +165,10 @@ Measurements *Measurements_Table_From_Doubles( double *raw, int n_rows, int n_co
     row->state = (int) rawrow[0];
     row->valid_velocity = 0;
     row->n     = n;
+    row->face_x = 0;
+    row->face_y = 0;
+    row->col_follicle_x = 0;
+    row->col_follicle_y = 0;
     memcpy( row->data, rawrow+3, sizeof(double)*n );
   }
   return table;
@@ -361,6 +390,35 @@ int cmp_sort_time( const void* a, const void* b )
                *rowb = (Measurements*)b;
   return (rowa->fid - rowb->fid);
 }
+    
+inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
+{ int ix = a->col_follicle_x, 
+      iy = a->col_follicle_y;
+  return atan2( a->data[iy] - a->face_y,
+                a->data[ix] - a->face_x );
+}
+
+int cmp_sort_face_order( const void* a, const void* b )
+{ Measurements *rowa = (Measurements*)a,
+               *rowb = (Measurements*)b;
+  double anglea = _cmp_sort_face_order__angle_wrt_face( rowa ),
+         angleb = _cmp_sort_face_order__angle_wrt_face( rowb );
+  static const double rad2quanta = 100.0 * 180.0 / M_PI; // Multiply 180/pi by 100 to set tolerance to 0.01 deg 
+  return (int) ((anglea-angleb)*rad2quanta);
+}
+
+int cmp_sort_time_face_order( const void* a, const void* b )
+{ Measurements *rowa = (Measurements*)a,
+               *rowb = (Measurements*)b;
+  int dt = rowa->fid - rowb->fid;
+  if(dt==0)
+  { double anglea = _cmp_sort_face_order__angle_wrt_face( rowa ),
+           angleb = _cmp_sort_face_order__angle_wrt_face( rowb );
+    static const double rad2quanta = 100.0 * 180.0 / M_PI; // Multiply 180/pi by 100 to set tolerance to 0.01 deg 
+    return (int) ((anglea-angleb)*rad2quanta);
+  } 
+  return dt;
+}
 
 void Enumerate_Measurements_Table( Measurements *table, int nrows )
 { int i = nrows;
@@ -374,6 +432,10 @@ void Sort_Measurements_Table_State_Time( Measurements *table, int nrows )
 
 void Sort_Measurements_Table_Time( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time );
+}
+
+void Sort_Measurements_Table_Time_Face( Measurements *table, int nrows )
+{ qsort( table, nrows, sizeof(Measurements), cmp_sort_time_face_order );
 }
 
 inline double _diff(double a, double b) 
@@ -765,7 +827,7 @@ Measurements **Find_Path( Measurements *sorted_table,
 
 #ifdef DEBUG_FIND_PATH
   printf("Path:\n");
-  printf("(%5d,%2d)<-", nd->fid, end->wid );
+  printf("(%5d,%2d)<-", end->fid, end->wid );
   while(path_length--)
     printf("(%5d,%2d)<-", path[path_length]->fid, path[path_length]->wid );
   printf("(%5d,%2d)\n\n", start->fid, start->wid );

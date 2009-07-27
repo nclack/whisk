@@ -25,6 +25,10 @@ class cMeasurements(Structure):
               ("fid",            c_int               ),                                                           
               ("wid",            c_int               ),                                                           
               ("state",          c_int               ),                                                           
+              ("face_x",         c_int               ),             #// used in ordering whiskers on the face...roughly, the center of the face                                              
+              ("face_y",         c_int               ),             #//                                      ...does not need to be in image                                                 
+              ("col_follicle_x", c_int               ),             #// index of the column corresponding to the folicle x position                                                          
+              ("col_follicle_y", c_int               ),             #// index of the column corresponding to the folicle y position                                                          
               ("valid_velocity", c_int               ),                                                           
               ("n",              c_int               ),                                                           
               ("data",           POINTER( c_double ) ),             # // array of n elements                      
@@ -55,7 +59,7 @@ class cDistributions(Structure):
 
 class MeasurementsTable(object):
   """
-  >>> data = numpy.load('data/seq/whisker_data_0140[heal].npy')
+  >>> data = numpy.load('data/testing/seq140[autotraj].npy')
   >>> table = MeasurementsTable(data)
   >>> table._measurements[0].n
   8
@@ -110,7 +114,7 @@ class MeasurementsTable(object):
 
   def get_state_range(self):
     """
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> mn,mx = MeasurementsTable(data).update_velocities().get_state_range()
     >>> mn
     0
@@ -160,7 +164,7 @@ class MeasurementsTable(object):
     Returns `time` and `valid velocity` mask for selected state.  
     Order of results is determined by the table's sort order.
 
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).update_velocities()
     >>> time,mask = table.get_time_and_mask(1)
     """
@@ -180,7 +184,7 @@ class MeasurementsTable(object):
     Returns velocity for selected state.  
     Order of results is determined by the table's sort order.
 
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data)
     >>> table.update_velocities() # doctest:+ELLIPSIS 
     <...MeasurementsTable object at ...>
@@ -200,11 +204,11 @@ class MeasurementsTable(object):
     Returns shape data for selected state.  
     Order of results is determined by the table's sort order.
 
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).update_velocities()
     >>> shape = table.get_shape_data(1)
     
-    >>> table = MeasurementsTable('data/testing/seq140[solve].measurements').update_velocities()
+    >>> table = MeasurementsTable('data/testing/seq140[autotraj].measurements').update_velocities()
     >>> shape = table.get_shape_data(1)
     """
     if rows is None:
@@ -221,7 +225,7 @@ class MeasurementsTable(object):
     Returns time, shape, velocity and velocity_valid  data for selected state.  
     Order of results is determined by the table's sort order.
 
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).update_velocities()
     >>> time,shp,vel,mask = table.get_data(1)
     """
@@ -235,7 +239,7 @@ class MeasurementsTable(object):
 
   def get_velocities_table(self):
     """
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).update_velocities()
     >>> vel = table.get_velocities_table()
     """
@@ -245,9 +249,33 @@ class MeasurementsTable(object):
                                               vel.ctypes.data_as( POINTER(c_double) ) )
     return vel
 
+  def set_constant_face_position(self, x, y):
+    """
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> table = table.set_constant_face_position( -100, 100 )
+    >>> table._measurements[0].face_x
+    -100
+    >>> table._measurements[0].face_y
+    100
+    """
+    ctraj.Measurements_Table_Set_Constant_Face_Position( self._measurements, self._nrows, x, y )
+    return self
+
+  def set_follicle_position_column(self, ix, iy):
+    """
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> table = table.set_follicle_position_column( 7, 8 ) 
+    >>> table._measurements[0].col_follicle_x
+    7
+    >>> table._measurements[0].col_follicle_y
+    8
+    """
+    ctraj.Measurements_Table_Set_Follicle_Position_Indices( self._measurements, self._nrows, ix, iy )
+    return self
+
   def sort_by_state_time(self):
     """
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).sort_by_state_time() 
     >>> table._measurements[0].state
     -1
@@ -270,7 +298,7 @@ class MeasurementsTable(object):
 
   def sort_by_time(self):
     """
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).sort_by_time() 
     >>> table._measurements[0].fid
     0
@@ -285,9 +313,27 @@ class MeasurementsTable(object):
       self._sort_state = sortstate
     return self
 
+  def sort_by_time_face(self):
+    """
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> table = table.set_constant_face_position( -100, 100 ).set_follicle_position_column( 7, 8 )
+    >>> table = table.sort_by_time_face()
+    >>> table._measurements[0].fid
+    0
+    >>> table._measurements[table._nrows-1].fid
+    4598
+    >>> table._sort_state
+    'time,face'
+    """
+    sortstate = "time,face"
+    if(self._sort_state != sortstate):
+      ctraj.Sort_Measurements_Table_Time_Face( self._measurements, self._nrows )
+      self._sort_state = sortstate
+    return self
+
   def update_velocities(self):
     """
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).update_velocities() 
     >>> vel = table.get_velocities_table()
     """
@@ -297,9 +343,9 @@ class MeasurementsTable(object):
 
   def save(self, filename):
     """
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> data = numpy.load('data/testing/seq140[autotraj].npy')
     >>> table = MeasurementsTable(data).update_velocities()
-    >>> table.save( "data/testing/seq140[autotraj].measurements" )    # doctest:+ELLIPSIS 
+    >>> table.save( "data/testing/trash.measurements" )    # doctest:+ELLIPSIS 
     <...MeasurementsTable object at ...>
     """
     ctraj.Measurements_Table_To_Filename( filename, self._measurements, self._nrows )
@@ -473,7 +519,7 @@ class Tests_MeasurementsTable(unittest.TestCase):
     """
     self.table.update_velocities()
     states = set( self.data[:,0] )
-    states.remove(-1)
+    states.discard(-1)
     time,mask = self.table.get_time_and_mask(0) #given the input data, this should be the same for all states
     for s in states:
       vel = self.table.get_velocities(s, rows = time.shape[0] )
@@ -486,7 +532,7 @@ class Tests_MeasurementsTable(unittest.TestCase):
 
 class Tests_MeasurementsTable_FromDoubles( Tests_MeasurementsTable ):
   def setUp(self):
-    self.data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    self.data = numpy.load('data/testing/seq140[autotraj].npy')
     self.table = MeasurementsTable(self.data)
   
   def test_VelocitiesInitiallyZero(self):
@@ -496,12 +542,12 @@ class Tests_MeasurementsTable_FromDoubles( Tests_MeasurementsTable ):
 
 class Tests_MeasurementsTable_FromFile( Tests_MeasurementsTable ):
   def setUp(self):
-    self.data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    self.data = numpy.load('data/testing/seq140[autotraj].npy')
     self.table = MeasurementsTable('data/testing/seq140[autotraj].measurements')
 
 class Tests_Distributions(unittest.TestCase):
   def setUp(self):
-    self.data = numpy.load('/Users/clackn/src/whisker/data/seq/whisker_data_0140[autotraj].npy')
+    self.data = numpy.load('data/testing/seq140[autotraj].npy')
     self.table = MeasurementsTable('data/testing/seq140[autotraj].measurements')
     self.dists = Distributions(self.table)
 
@@ -605,4 +651,4 @@ if __name__=='__main__':
   #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   suite.addTest( doctest.DocTestSuite() )
-  runner = unittest.TextTestRunner(verbosity=1).run(suite)
+  runner = unittest.TextTestRunner(verbosity=1,descriptions=0).run(suite)

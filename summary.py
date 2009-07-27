@@ -65,12 +65,31 @@ def hist_length(wvd):
   ylabel('Counts')
   xlabel('Path length (px)')
 
-def features(wvd):
-  warnings.simplefilter("ignore")
+def features(wvd, hint='left'):
+  warnings.simplefilter("ignore") #for polyfit
+
+  side = make_side_function( 
+    *helper_face_point( 
+      shape_from_whiskers(wvd),hint 
+    ) 
+  )
+  otherside = lambda e: -1 if side(e)==0 else 0
   for fid,wv in wvd.iteritems():
     for wid,w in wv.iteritems():
-      try:  # 0  1   2              3                     4                5                6                 7        8       9        10
-        yield 0,fid,wid,integrate_path_length(w), median_score(w), root_angle_deg(w,0), mean_curvature(w,0), w.x[0], w.y[0], w.x[-1], w.y[-1]
+      follicle, dx = side(w)
+      root     = otherside(w)
+      try:  
+        yield 0,                               \
+              fid,                             \
+              wid,                             \
+              integrate_path_length(w),        \
+              median_score(w),                 \
+              root_angle_deg(w,follicle,dx),   \
+              mean_curvature(w,follicle,dx),   \
+              w.x[follicle],                   \
+              w.y[follicle],                   \
+              w.x[root],                       \
+              w.y[root]                         
       except TypeError:
         pass
   warnings.resetwarnings()
@@ -160,7 +179,7 @@ def make_trajectories2( data, n=None, sort_column = 8 ):
   for fid, v in datadict.iteritems():
     good = [ wid for wid,datarow in v.iteritems() if datarow[0] == 1 ] # filter for whiskers in frame that are in the good class
     if len(good) == n: # got the expected number of whiskers
-      mapping = argsort([ v[wid][3] for wid in good  ])
+      mapping = argsort([ v[wid][3] for wid in good  ])  #<--------- whisker ordering!!
       for i,idx in enumerate(mapping):
         T.setdefault(i,{})[fid] = good[idx]
   return T
@@ -231,7 +250,7 @@ def commit_traj_to_data_table( traj, data ):
       try:
         data[ index[ (fid,wid) ], 0 ] = tid
       except KeyError:
-        pdb.set_trace()
+        #pdb.set_trace()
         warn("Trajectory referenced a non-existent whisker (tid:%d, fid:%d, wid:%d)"%(tid,fid,wid))
   return data
 

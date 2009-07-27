@@ -25,9 +25,9 @@
 #include "trace.h"
 
 #if 0
+#define DEBUG_REMOVE_OVERLAPPING_WHISKERS_ONE_FRAME
 #define DEBUG_COLLISIONTABLE_REQUEST_DEPTH
 #define DEBUG_REMOVE_OVERLAPPING_WHISKERS_MULTI_FRAME
-#define DEBUG_REMOVE_OVERLAPPING_WHISKERS_ONE_FRAME
 #define DEBUG_COLLISIONTABLE_REMOVE
 #define DEBUG_TRACE_OVERLAP_ONE_SIDE
 #define DEBUG_ALLOC_COLLISIONTABLE
@@ -77,23 +77,6 @@ typedef struct
   int depth;
   float scale;
 } CollisionTable;
-
-void CollisionTable_Estimate_Support_From_Segments( Whisker_Seg* wv, int n, int *width, int *height )
-{ int w = 0,
-      h = 0;
-  while(n--)
-  { Whisker_Seg *cur = wv + n;
-    int i = cur->len;
-    float *x = cur->x,
-          *y = cur->y;
-    while(i--)
-    { w = MAX( w, x[i] );
-      h = MAX( h, y[i] );
-    }
-  }
-  *width  = w+1;
-  *height = h+1;
-}
 
 void CollisionTable_Reset( CollisionTable *this )
 { memset(this->table, 0, sizeof(unsigned int)*(this->area) );
@@ -509,7 +492,7 @@ int Remove_Overlapping_Whiskers_Multi_Frame( Whisker_Seg *wv, int wv_n, float sc
   keepers = request_storage( keepers, &keepers_size, sizeof(uint8_t), wv_n, "Expand keepers" );
   memset(keepers,1, sizeof(uint8_t)*wv_n);
 
-  CollisionTable_Estimate_Support_From_Segments( wv, wv_n, &w, &h );
+  Estimate_Image_Shape_From_Segments(wv, wv_n, &w, &h );
 #ifdef DEBUG_REMOVE_OVERLAPPING_WHISKERS_MULTI_FRAME
   debug("Computing table for width: %3d and height: %3d\n",w,h);
 #endif
@@ -708,7 +691,7 @@ int main(int argc, char *argv[])
   Process_Arguments(argc,argv,Spec,0);                               
   wv = Load_Whiskers( Get_String_Arg("source"), NULL, &wv_n);
   
-  CollisionTable_Estimate_Support_From_Segments( wv, wv_n, &w, &h );
+  Estimate_Image_Shape_From_Segments( wv, wv_n, &w, &h );
   debug("Computing table for width: %3d and height: %3d\n",w,h);
   table = Alloc_CollisionTable( w, h, 2, 5 );
   CollisionTable_Add_Segments( table, wv, wv_n ); 
@@ -785,7 +768,7 @@ int main(int argc, char *argv[])
   fp = fopen( Get_String_Arg("dest"), "wb" );
   if(!fp) error("Couldn't open destination file %s", Get_String_Arg("dest"));
 
-  CollisionTable_Estimate_Support_From_Segments( wv, wv_n, &w, &h );
+  Estimate_Image_Shape_From_Segments( wv, wv_n, &w, &h );
   debug("Computing table for width: %3d and height: %3d\n",w,h);
   table = Alloc_CollisionTable( w, h, 2, 5 );
 

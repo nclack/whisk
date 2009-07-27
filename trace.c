@@ -58,12 +58,12 @@
 #undef  EXPORT_COMPZONE_TIF
 #undef  APPLY_ZONE_MASK
 
-#define SEED_ON_MHAT_CONTOURS
-#if 0
 #define SEED_ON_GRID
+#if 0
+#define SEED_ON_MHAT_CONTOURS
 #endif
 
-#define SEED_ON_GRID_LATTICE_SPACING 50
+#define SEED_ON_GRID_LATTICE_SPACING 100
 
 #define HARMONIC_MEAN_N_LABELS 2
 
@@ -133,6 +133,23 @@ void Free_Whisker_Seg_Vec ( Whisker_Seg *wv, int n )
     }
   }
   free(wv);
+}
+
+void Estimate_Image_Shape_From_Segments( Whisker_Seg* wv, int n, int *width, int *height )
+{ int w = 0,
+      h = 0;
+  while(n--)
+  { Whisker_Seg *cur = wv + n;
+    int i = cur->len;
+    float *x = cur->x,
+          *y = cur->y;
+    while(i--)
+    { w = MAX( w, x[i] );
+      h = MAX( h, y[i] );
+    }
+  }
+  *width  = w+1;
+  *height = h+1;
 }
 
 Line_Params line_param_from_seed( const Seed *s )

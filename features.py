@@ -1,17 +1,55 @@
 from numpy import *
 from scipy.integrate import quad
+import re
 
-def check_side(w,side):
-  if side == 0:
-    return (0,1) if w.x[0] < w.x[-1] else (-1,-1)
+def shape_from_whiskers(wvd):
+  x,y = 0,0
+  for wv in wvd.itervalues():
+    for w in wv.itervalues():
+      x = max(x,w.x.max())
+      y = max(y,w.y.max())
+  return x+1,y+1
+
+def helper_face_point(shape, directive):
+  helpers = {
+   'top'    : lambda : (  shape[1]/2 ,  -shape[0]/2) ,
+   'left'   : lambda : ( -shape[1]/2 ,   shape[0]/2) ,
+   'bottom' : lambda : (  shape[1]/2 , 3*shape[0]/2) ,
+   'right'  : lambda : (3*shape[1]/2 ,   shape[0]/2)
+  }
+
+  m = re.search("(/d+),(/d+)",directive)
+  if m:
+    if len(m.groups())==2:
+      return tuple(map(int,m.groups()))
+    else:
+      raise Exception, 'Could not interpret directive: %s'%directive
   else:
-    return (-1,1) if w.x[0] < w.x[-1] else (0,-1)
+    try:
+      return helpers[directive]()
+    except KeyError:
+      print "Available directives"
+      for k in helpers.iterkeys():
+        print '\t',k
+      raise Exception, 'Could not use supplied directive: %s'%directive
 
-def follicle_x(w,side=0):
+def make_side_function(cx,cy):
+  """ returns (follicle index, dx) """
+  d2 = lambda e,side: (e.x[side]-cx)**2 + (e.y[side]-cy)**2
+  s  = lambda e: (0,1) if d2(e,0)<d2(e,-1) else (-1,-1)
+  return s
+
+def make_comparitor(cx,cy):
+  from numpy import arctan2
+  side = make_side_function(cx,cy)
+  angle = lambda e: arctan2(e.y[side(e)]-cy,e.x[side(e)]-cx)
+  return lambda s,t: cmp( angle(s), angle(t) )
+
+def follicle_x(w,side):
   side,dx = check_side(w,side)
   return w.x[side]
 
-def follicle_y(w,side=0):
+def follicle_y(w,side):
   side,dx = check_side(w,side)
   return w.y[side]
 
@@ -27,21 +65,19 @@ def median_score(w):
 def median_thick(w):
   return median(w.thick)
 
-def root_angle_rad(w, side=0, n=16):
+def root_angle_rad(w, side, dx, n=16):
   n = min(n, len(w.x)/2)
-  side,dx = check_side(w,side)
   if side == 0:
     return arctan2( dx*diff(w.y[n:(2*n)]), dx*diff(w.x[n:(2*n)]) ).mean()
   elif side == -1:
     return arctan2( dx*diff(w.y[(-2*n):-n]), dx*diff(w.x[(-2*n):-n]) ).mean()
 
-def root_angle_deg(w, side=0, n=16):
+def root_angle_deg(w, side, dx, n=16):
   n = min(n, len(w.x)/2)
-  return root_angle_rad(w,side,n) * 180.0/pi
+  return root_angle_rad(w,side,dx,n) * 180.0/pi
 
-def root_curvature(w,side=0,n=16):
+def root_curvature(w,side,dx,n=16):
   n = min(n, len(w.x)/4)
-  side,dx = check_side(w,side)
   L = cumulative_path_length(w)
   tt = L/L.max()
   teval = tt[n] if side==0 else tt[-n]
@@ -56,9 +92,8 @@ def root_curvature(w,side=0,n=16):
   kappa = lambda t:  polyval( pn, t )/( polyval( pd, t )**(1.5)) # d Tangent angle/ds 
   return dx*kappa(teval)
 
-def mean_curvature(w,side=0,n=16):
+def mean_curvature(w,side,dx,n=16):
   n = min(n, len(w.x)/4)
-  side,dx = check_side(w,side)
   L = cumulative_path_length(w)
   tt = L/L.max()
   teval = tt[n] if side==0 else tt[-n]

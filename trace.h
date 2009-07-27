@@ -64,9 +64,10 @@ typedef struct        //
   float *scores;      //
 } Whisker_Seg;        //
 
-Whisker_Seg  *Make_Whisker_Seg              ( int n );
-void          Free_Whisker_Seg              ( Whisker_Seg *w );
-void          Free_Whisker_Seg_Vec          ( Whisker_Seg *wv, int n );
+Whisker_Seg  *Make_Whisker_Seg                      ( int n );
+void          Free_Whisker_Seg                      ( Whisker_Seg *w );
+void          Free_Whisker_Seg_Vec                  ( Whisker_Seg *wv, int n );
+void          Estimate_Image_Shape_From_Segments    ( Whisker_Seg* wv, int n, int *width, int *height );
 
 Whisker_Seg  *find_segments                 (int iFrame, Image *image, Image *bg, int *nseg );
 Image        *compute_background            (Stack *movie);

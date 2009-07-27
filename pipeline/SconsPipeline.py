@@ -137,7 +137,7 @@ env  = Environment(
                       suffix = '.whiskers',
                       src_suffix = '.whiskers'
                      ),
-    'Measure': Builder(action = "measure.py $SOURCE $TARGET",
+    'Measure': Builder(action = "measure.py $SOURCE $TARGET --face=$FACEHINT",
                        suffix     = '.measurements',
                        src_suffix = '.whiskers'
                       ),

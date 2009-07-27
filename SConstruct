@@ -3,6 +3,8 @@
 from glob import glob
 import os
 
+Progress('Scanning:  $TARGET\r',overwrite=True)
+
 env = Environment(ENV = os.environ )
 if env['PLATFORM']=='win32':
   env.Append(CCFLAGS = r'/Od /MDd /W1 /nologo /TC /ZI' )

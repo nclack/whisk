@@ -42,11 +42,28 @@ def _fmt(s):
 if __name__ == '__main__':
   parser = optparse.OptionParser( usage = "Usage: %prog source[s] dest [options]",
                                   description = _fmt(
-                                    "`sources` should include a whiskers file or   \
-                                    a measurements file.   Optionally, a           \
-                                    trajectories file may be  included."
+                                    "`sources` should include a whiskers file or         \
+                                    a measurements file.   Optionally, a                 \
+                                    trajectories file may be  included.                  \
+                                                                                         \
+                                    If a `whiskers` file is used,                        \
+                                    Some hint must be provided to determine which        \
+                                    side of a whisker segment is the follicle.  If       \
+                                    the face is on the side of the image, then           \
+                                    specify which side (left, right, top, bottom).       \
+                                    Alternatively, provide the center of the head as     \
+                                    an (x,y) pair.  See the 'face' option.               \
+                                    Currently, this is set up for experiments where the  \
+                                    mouse is head-fixed.                                 \
+                                    "
                                   ) 
                                 )
+  parser.add_option("--face",
+                    help    = "A hint describing where the face is.  Can be a side of the image (left,right,top,bottom) or an x,y pair, e.g. --face=40,30 [default: %default].",
+                    default = "left", 
+                    action  = "store",
+                    type    = "string",
+                    dest    = "face")
   options,args = parser.parse_args()
   dst = args.pop()
   args.sort( cmp = ext_cmp ) #sort sources by extension (expect .measurements to sort before .trajetories)
@@ -68,7 +85,7 @@ if __name__ == '__main__':
       src = args[1]   #know the order b.c. already sorted by file extenstion
       tfile = args[0]
     w = trace.Load_Whiskers( src )
-    data = numpy.array(list( summary.features(w) ))
+    data = numpy.array(list( summary.features(w, options.face) ))
     if tfile:
       t,tid = load_trajectories( tfile )
       summary.commit_traj_to_data_table( t, data ) 

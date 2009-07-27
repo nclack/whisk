@@ -188,7 +188,7 @@ Image *load(char *path, int index, int *nframes)
 /*
  * MAIN
  */
-static char *Spec[] = { "<movie:string> <prefix:string> [-t] [--no-whisk] [--no-bar] [--no-traj]", NULL };
+static char *Spec[] = { "<movie:string> <prefix:string> [--no-whisk] [--no-bar]", NULL };
 int main(int argc, char *argv[])
 { //Stack *movie;
   //Zone  *mask;
@@ -222,16 +222,6 @@ int main(int argc, char *argv[])
   movie = Get_String_Arg("movie");
   image = load(movie,0,&depth);
 
-// FIXME  
-/* // NOT SUPPORTED 
-  if( Is_Arg_Matched("-t") )
-    transpose = 1;
-  if(transpose)
-  { Image *timage = transpose_copy_uint8( image );
-    Free_Stack(image);
-    movie = tmovie;
-  }
-  */
   progress("Done.\n");
 
   // No background subtraction (init to blank)
@@ -293,8 +283,7 @@ int main(int argc, char *argv[])
                                                    2.0,    // scale down by this
                                                    2.0,    // distance threshold
                                                    0.8 );  // significant overlap fraction
-        nTotalSegs += wv_n;
-        Whisker_File_Append_Segments(wfile, wv, wv_n);
+        Whisker_File_Append_Segments(wfile, wv, k);
         Free_Whisker_Seg_Vec( wv, wv_n );
         Free_Image(image);
       }
