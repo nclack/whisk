@@ -6,9 +6,6 @@ import os
 env = Environment(ENV = os.environ )
 if env['PLATFORM']=='win32':
   env.Append(CCFLAGS = r'/Od /MDd /W1 /nologo /TC /ZI' )
-  #env.Append(LDFLAGS = r'/DEBUG')
-  #env.Append(LIBS = "math.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib".split())
-  #env.Append(LIBPATH = r"C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib" )
 else:
   #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))
   env.MergeFlags( env.ParseFlags( "-g -lm" ))

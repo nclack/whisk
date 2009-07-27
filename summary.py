@@ -225,13 +225,14 @@ def commit_traj_to_data_table( traj, data ):
   for i,row in enumerate(data):
     index[ ( row[1], row[2] ) ] = i;
 
-    data[:,0] = -1 #null tid
-    for tid, t in traj.iteritems():
-      for fid, wid in t.iteritems():
-        try:
-          data[ index[ (fid,wid) ], 0 ] = tid
-        except KeyError:
-          warn("Trajectory referenced a non-existent whisker (tid:%d, fid:%d, wid:%d)"%(tid,fid,wid))
+  data[:,0] = -1 #null tid
+  for tid, t in traj.iteritems():
+    for fid, wid in t.iteritems():
+      try:
+        data[ index[ (fid,wid) ], 0 ] = tid
+      except KeyError:
+        pdb.set_trace()
+        warn("Trajectory referenced a non-existent whisker (tid:%d, fid:%d, wid:%d)"%(tid,fid,wid))
   return data
 
 def plot_whiskers_by_trajectory(movie, wvd, traj, iframe):

@@ -41,14 +41,20 @@ def dfs_consume_tuples(g,cur):
   yield rest()
 
 def flatten(tree):
-  if not isinstance(tree,tuple):
+  isbranch = lambda y: any( map( lambda x: isinstance(y,x), 
+                                [tuple,
+                                 list,
+                                 SCons.Node.NodeList] 
+                               ))
+  if not isbranch(tree):
     yield tree
-  for node in tree:
-    if isinstance(node,tuple):
-      for e in flatten(node):
-        yield e
-    else:
-      yield node
+  else:
+    for node in tree:
+      if isbranch(node):
+        for e in flatten(node):
+          yield e
+      else:
+        yield node
 
 def dfs_reduce(f,tree):
   """
@@ -67,7 +73,9 @@ def dfs_reduce(f,tree):
       else:
         a = node if a is None else f(a,node)                   #process node
     return a
-  return flatten( _dfs_reduce(f,tree) )
+  res =  flatten(_dfs_reduce(f,tree))  
+  #print res
+  return res
 
 def pipeline_standard(env, movie):
   builders = [ 
@@ -84,6 +92,13 @@ def pipeline_standard(env, movie):
 
   compose = lambda a,b: b(a)
   jobs = dfs_reduce( compose, builders )                         
+  # print '*'*30
+  # for j in jobs:
+  #   print j
+  #   print '\t',j.__class__
+  #   print '\t','Exists: ',j.exists()
+  # print '*'*30
+  # print
   return jobs
 
 def pipeline_curated(env, source):
