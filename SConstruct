@@ -99,3 +99,12 @@ for t in tests:
                                               'whisker_io.c',          'whisker_io_whiskbin1.c',
                                               'whisker_io_whisker1.c', 'whisker_io_whiskold.c'
                                               ] ) 
+## classift tests
+tests = ["TEST_CLASSIFY_1",
+         ] 
+totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 'utilities.c', 'traj.c', 'common.c',
+                                                 'error.c'
+                                               ] ) 

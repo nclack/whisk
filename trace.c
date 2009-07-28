@@ -1423,7 +1423,8 @@ int is_local_area_trusted( Line_Params *line, Image *image, int p )
 
 
 float  eval_line(Line_Params *line, Image *image, int p)
-{ int i,support  = 2*TLEN + 3;
+{ int i;
+  const int support  = 2*TLEN + 3;
   int npxlist;
   
   int   *pxlist;
@@ -1485,6 +1486,7 @@ float  eval_line(Line_Params *line, Image *image, int p)
     while(i--)
       s += parray[pxlist[2*i]] * weights[pxlist[2*i+1]];
   }
+
   return -s;
 }
 

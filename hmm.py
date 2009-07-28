@@ -430,3 +430,6 @@ def apply_model(wvd,model):
         traj.setdefault(tid,{})[fid] = wid
 
   return traj,logp,vlogp
+
+if __name__=='__main__':
+  pass

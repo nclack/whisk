@@ -1,4 +1,4 @@
-from numpy import *
+import numpy as np
 from scipy.integrate import quad
 import re
 
@@ -40,9 +40,8 @@ def make_side_function(cx,cy):
   return s
 
 def make_comparitor(cx,cy):
-  from numpy import arctan2
   side = make_side_function(cx,cy)
-  angle = lambda e: arctan2(e.y[side(e)]-cy,e.x[side(e)]-cx)
+  angle = lambda e: np.arctan2(e.y[side(e)]-cy,e.x[side(e)]-cx)
   return lambda s,t: cmp( angle(s), angle(t) )
 
 def follicle_x(w,side):
@@ -54,42 +53,42 @@ def follicle_y(w,side):
   return w.y[side]
 
 def integrate_path_length(w):
-  return sqrt( diff(w.x)**2 + diff(w.y)**2 ).sum()
+  return np.sqrt( np.diff(w.x)**2 + np.diff(w.y)**2 ).sum()
 
 def cumulative_path_length(w):
-  return concatenate(([0],sqrt( diff(w.x)**2 + diff(w.y)**2 ).cumsum() ))
+  return np.concatenate(([0],np.sqrt( np.diff(w.x)**2 + np.diff(w.y)**2 ).cumsum() ))
 
 def median_score(w):
-  return median(w.scores)
+  return np.median(w.scores)
 
 def median_thick(w):
-  return median(w.thick)
+  return np.median(w.thick)
 
 def root_angle_rad(w, side, dx, n=16):
   n = min(n, len(w.x)/2)
   if side == 0:
-    return arctan2( dx*diff(w.y[n:(2*n)]), dx*diff(w.x[n:(2*n)]) ).mean()
+    return np.arctan2( dx*np.diff(w.y[n:(2*n)]), dx*np.diff(w.x[n:(2*n)]) ).mean()
   elif side == -1:
-    return arctan2( dx*diff(w.y[(-2*n):-n]), dx*diff(w.x[(-2*n):-n]) ).mean()
+    return np.arctan2( dx*np.diff(w.y[(-2*n):-n]), dx*np.diff(w.x[(-2*n):-n]) ).mean()
 
 def root_angle_deg(w, side, dx, n=16):
   n = min(n, len(w.x)/2)
-  return root_angle_rad(w,side,dx,n) * 180.0/pi
+  return root_angle_rad(w,side,dx,n) * 180.0/np.pi
 
 def root_curvature(w,side,dx,n=16):
   n = min(n, len(w.x)/4)
   L = cumulative_path_length(w)
   tt = L/L.max()
   teval = tt[n] if side==0 else tt[-n]
-  px = polyfit(tt[n:-n],w.x[n:-n],2)
-  py = polyfit(tt[n:-n],w.y[n:-n],2)
-  xp  = polyder( px, 1 )
-  xpp = polyder( px, 2 )
-  yp  = polyder( py, 1 )
-  ypp = polyder( py, 2 )
-  pn = polyadd( polymul( xp, ypp ), polymul( yp, xpp )) #numerator
-  pd = polyadd( polymul( xp, xp ) , polymul( yp, yp ) ) #denominator
-  kappa = lambda t:  polyval( pn, t )/( polyval( pd, t )**(1.5)) # d Tangent angle/ds 
+  px = np.polyfit(tt[n:-n],w.x[n:-n],2)
+  py = np.polyfit(tt[n:-n],w.y[n:-n],2)
+  xp  = np.polyder( px, 1 )
+  xpp = np.polyder( px, 2 )
+  yp  = np.polyder( py, 1 )
+  ypp = np.polyder( py, 2 )
+  pn = np.polyadd( polymul( xp, ypp ), np.polymul( yp, xpp )) #numerator
+  pd = np.polyadd( polymul( xp, xp ) , np.polymul( yp, yp ) ) #denominator
+  kappa = lambda t:  np.polyval( pn, t )/( np.polyval( pd, t )**(1.5)) # d Tangent angle/ds 
   return dx*kappa(teval)
 
 def mean_curvature(w,side,dx,n=16):
@@ -97,15 +96,15 @@ def mean_curvature(w,side,dx,n=16):
   L = cumulative_path_length(w)
   tt = L/L.max()
   teval = tt[n] if side==0 else tt[-n]
-  px = polyfit(tt[n:-n],w.x[n:-n],2)
-  py = polyfit(tt[n:-n],w.y[n:-n],2)
-  xp  = polyder( px, 1 )
-  xpp = polyder( px, 2 )
-  yp  = polyder( py, 1 )
-  ypp = polyder( py, 2 )
-  pn = polyadd( polymul( xp, ypp ), polymul( yp, xpp )) #numerator
-  pd = polyadd( polymul( xp, xp ) , polymul( yp, yp ) ) #denominator
-  kappa = lambda t:  dx*polyval( pn, t )/( polyval( pd, t )**(1.5)) # d Tangent angle/ds * ds/dt 
+  px = np.polyfit(tt[n:-n],w.x[n:-n],2)
+  py = np.polyfit(tt[n:-n],w.y[n:-n],2)
+  xp  = np.polyder( px, 1 )
+  xpp = np.polyder( px, 2 )
+  yp  = np.polyder( py, 1 )
+  ypp = np.polyder( py, 2 )
+  pn = np.polyadd( np.polymul( xp, ypp ), np.polymul( yp, xpp )) #numerator
+  pd = np.polyadd( np.polymul( xp, xp ) , np.polymul( yp, yp ) ) #denominator
+  kappa = lambda t:  dx*np.polyval( pn, t )/( np.polyval( pd, t )**(1.5)) # d Tangent angle/ds * ds/dt 
   return quad(kappa,0,1,epsrel=1e-3)[0]
 
 def time(w):

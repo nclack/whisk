@@ -1,4 +1,6 @@
 from SCons.Script import *
+from ui.genetiff import Reader
+from traj import MeasurementsTable
 import os
 import re
 
@@ -29,6 +31,17 @@ def make_solver(command, label):
     target = os.path.splitext(target)[0] + suffix
     return env.Command(target,source, "%s $SOURCE $TARGET"%command)
   return solver
+
+def thumbnail(target, source, env):
+  import Image
+  Image.fromarray( Reader(source[0].path)[0] ).save( target[0].path )
+
+def length_v_score_plot(target,source,env):
+  from pylab import plot, savefig, clf
+  data = MeasurementsTable( source[0].path ).get_shape_table()
+  clf()
+  plot(data[:,0],data[:,1],'k.',markersize=1, hold=0)
+  savefig( target[0].path )
 
 def dfs_consume_tuples(g,cur):
   while isinstance(cur,tuple):
@@ -74,31 +87,35 @@ def dfs_reduce(f,tree):
         a = node if a is None else f(a,node)                   #process node
     return a
   res =  flatten(_dfs_reduce(f,tree))  
-  #print res
+  #for e in  map(str,res):
+  #  print e
   return res
 
 def pipeline_standard(env, movie):
+  def alter(j,subdir,ext):
+    name = reduce( os.path.join, [os.path.split(j.path)[0], 
+                                  subdir, 
+                                  os.path.splitext(os.path.split(j.path)[-1])[0]+ext ])
+    return name
+
   builders = [ 
     movie                                                       ,
+    ( lambda j: env.Thumbnail(target = alter(j,'firstframe','[frm0].png'),
+                              source = j) ,)                    ,
     env.Whisk                                                   ,
-    lambda j: env.Measure( j )                                  ,
-    lambda j: env.Classify( j )                                 ,
+    env.Measure                                                 ,
+    ( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
+                                     source = j[0]) ,)          ,
+    env.Classify                                                ,
     lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
-    ( lambda j: env.IdentitySolver( j )                         , 
-      lambda j: env.Summary( j )
+    ( env.IdentitySolver                                        , 
+      env.Summary
     )                                                           ,
-    lambda j: env.Summary( j )                             
+    env.Summary                             
   ]
 
   compose = lambda a,b: b(a)
   jobs = dfs_reduce( compose, builders )                         
-  # print '*'*30
-  # for j in jobs:
-  #   print j
-  #   print '\t',j.__class__
-  #   print '\t','Exists: ',j.exists()
-  # print '*'*30
-  # print
   return jobs
 
 def pipeline_curated(env, source):
@@ -116,7 +133,7 @@ def pipeline_curated(env, source):
   builders = [
     source,
     measure_and_label,
-    lambda j: env.Summary( j )                           
+    env.Summary                           
   ]
   compose = lambda a,b: b(a)
   jobs = reduce( compose, builders )
@@ -125,6 +142,8 @@ def pipeline_curated(env, source):
 env  = Environment( 
   PX2MM = 0,
   BUILDERS = {
+    'Thumbnail' : Builder(action = thumbnail),
+    'LengthVScorePlot': Builder(action = length_v_score_plot),
     'Whisk' : Builder(action = "whisk $SOURCE $TARGET --no-bar",
                       suffix  = '.whiskers',
                       src_suffix = '.seq'

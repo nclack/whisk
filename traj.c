@@ -1,6 +1,7 @@
 // TODO: change the name of this file to something else, like identity.c
 // TODO: make the .h
 
+#include "traj.h"
 #include <assert.h>
 #include <float.h>
 #include <stdlib.h>
@@ -27,32 +28,6 @@
 #define  DEBUG_MEASUREMENTS_TABLE_ALLOC
 #define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
 #endif
-
-typedef struct 
-{ int row;
-  int fid;
-  int wid;
-  int state;
-
-  int face_x;        // used in ordering whiskers on the face...roughly, the center of the face
-  int face_y;        //                                      ...does not need to be in image
-  int col_follicle_x; // index of the column corresponding to the folicle x position
-  int col_follicle_y; // index of the column corresponding to the folicle y position
-                                                                           
-  int valid_velocity;
-  int n;
-  double *data;     // array of n elements
-  double *velocity; // array of n elements - change in data/time
-} Measurements;
-
-typedef struct
-{ int n_measures;
-  int n_states;
-  int n_bins;
-  double *bin_min;    // array of n_measures elements
-  double *bin_delta;  // array of n_measures elements
-  double *data;       // array of holding histogram information with dimensions (n_bins,n_measures,n_states)
-} Distributions;
 
 Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
 { Measurements *table = Guarded_Malloc( sizeof(Measurements)*n_rows, "allocate measurements table" );
@@ -420,6 +395,22 @@ int cmp_sort_time_face_order( const void* a, const void* b )
   return dt;
 }
 
+int cmp_sort_time_state_face_order( const void* a, const void *b )
+{ Measurements *rowa = (Measurements*)a,
+               *rowb = (Measurements*)b;
+  int d = rowa->fid - rowb->fid;
+  if(d==0)
+  { d = rowa->state - rowb->state;
+    if(d==0)
+    { double anglea = _cmp_sort_face_order__angle_wrt_face( rowa ),
+            angleb = _cmp_sort_face_order__angle_wrt_face( rowb );
+      static const double rad2quanta = 100.0 * 180.0 / M_PI; // Multiply 180/pi by 100 to set tolerance to 0.01 deg 
+      return (int) ((anglea-angleb)*rad2quanta);
+    }
+  }
+  return d;
+}
+
 void Enumerate_Measurements_Table( Measurements *table, int nrows )
 { int i = nrows;
   while(i--)
@@ -436,6 +427,10 @@ void Sort_Measurements_Table_Time( Measurements *table, int nrows )
 
 void Sort_Measurements_Table_Time_Face( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time_face_order );
+}
+
+void Sort_Measurements_Table_Time_State_Face( Measurements *table, int nrows )
+{ qsort( table, nrows, sizeof(Measurements), cmp_sort_time_state_face_order );
 }
 
 inline double _diff(double a, double b) 
@@ -762,8 +757,8 @@ Measurements **Find_Path( Measurements *sorted_table,
                          Measurements *end,
                          int minstate,
                          int *npath)
-{ int lastfid = end->fid;
-  int path_length = end->fid - start->fid - 1; // path excludes start and end
+{ int lastfid;
+  int path_length;
   Measurements **path;
   double valmax = -DBL_MAX;
   int istep = 0;
@@ -778,11 +773,15 @@ Measurements **Find_Path( Measurements *sorted_table,
   printf("*****************************     DEBUG_FIND_PATH\n");
 #endif
 
-  if( lastfid < start->fid || lastfid > sorted_table[n_rows-1].fid )
+
+  if( end == NULL )
     /* then indications are that the last gray area fell off the end of the
      * movie */
   { lastfid = sorted_table[n_rows-1].fid + 1;
     path_length = lastfid - start->fid - 1;
+  } else {
+    lastfid = end->fid;
+    path_length = end->fid - start->fid - 1;
   }
 
   assert(path_length > 0);

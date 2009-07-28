@@ -65,12 +65,12 @@ def hist_length(wvd):
   ylabel('Counts')
   xlabel('Path length (px)')
 
-def features(wvd, hint='left'):
+def features(wvd, face):
   warnings.simplefilter("ignore") #for polyfit
 
   side = make_side_function( 
     *helper_face_point( 
-      shape_from_whiskers(wvd),hint 
+      shape_from_whiskers(wvd),face 
     ) 
   )
   otherside = lambda e: -1 if side(e)==0 else 0
@@ -94,8 +94,8 @@ def features(wvd, hint='left'):
         pass
   warnings.resetwarnings()
 
-def pca(wvd):
-  data = array(list(features(wvd)))[3:]
+def pca(wvd,face):
+  data = array(list(features(wvd,face)))[3:]
   zscore = lambda v: (v-v.mean())/v.std()
   for i in xrange( data.shape[1] ):
     data[:,i] = zscore(data[:,i])
@@ -104,8 +104,8 @@ def pca(wvd):
   proj = lambda i: dot(evec[:,i],data.T)
   return map( proj, reversed(idx) ) # descending (first corresponds to largest eigenvalue)
 
-def classify(wvd, minscore = 1090, minlen = 122 ):
-  data = array(list(features(wvd)))
+def classify(wvd, face, minscore = 1090, minlen = 122 ):
+  data = array(list(features(wvd,face)))
   for row in data:
     fid = row[1]
     wid = row[2]
@@ -165,7 +165,7 @@ def make_trajectories( wvd, datadict, side, n=None ):
         T.setdefault(i,{})[fid] = good[idx]
   return T
 
-def make_trajectories2( data, n=None, sort_column = 8 ):
+def make_trajectories2( data, face, n=None, ix = 8, iy = 9 ):
   datadict = {}
   for row in data:
     fid = int( row[1] )
@@ -184,7 +184,7 @@ def make_trajectories2( data, n=None, sort_column = 8 ):
         T.setdefault(i,{})[fid] = good[idx]
   return T
 
-def autotraj(wvd,side=0, data=None):
+def autotraj(wvd, face, data=None):
   """ 
   Uses kmeans to partition whisker segments into two sets: 
   
@@ -213,16 +213,16 @@ def autotraj(wvd,side=0, data=None):
 
     >>> import summary
     >>> w,movie = summary.load('data/my_movie.seq', 'data/my_movie[heal].whiskers')
-    >>> traj,data = summary.autotraj(w)
+    >>> traj,data = summary.autotraj(w, face='left')
     >>> summary.plot_summary_data(w,traj,data)
 
   """
   if data == None:
-    data = array(list(features(wvd)));
-  traj = _simpletraj(data)
+    data = array(list(features(wvd,face)));
+  traj = _simpletraj(data, face)
   return traj, data
 
-def _simpletraj(data):
+def _simpletraj(data, face):
   import scipy.cluster.vq as vq
   ilength = 3
   iscore  = 4
@@ -236,7 +236,7 @@ def _simpletraj(data):
   code, errs = vq.vq( obs, codebook )
   data[:,0] = (code==idx)
   res = transform_classification_data( data )
-  traj = make_trajectories2(data, sort_column = 8 )
+  traj = make_trajectories2(data, face )
   return traj
 
 def commit_traj_to_data_table( traj, data ):
@@ -351,8 +351,10 @@ def plot_summary_measurements_table(table, px2mm=None):
   idx, = where(dt>1)
   bars = [ (time[i], dt[i] ) for i in idx ]
   
+  data = table.get_shape_table()
+  th0 = floor(( data[:,2].mean() + 45)/90)*90
+  vmin1,vmax1 = th0-90,th0+90
   ax = subplot(211)
-  vmin1,vmax1 = -90,90
   ax.broken_barh( bars, (vmin1,vmax1-vmin1) ,edgecolors=[(0,0,0,0)],facecolors=[(0,0,0,0.5)] )
   xlabel('Time (frames)')
   ylabel('Angle at root (deg)')
@@ -501,7 +503,8 @@ if 1:
     options, args = parser.parse_args()
     src,dst = args
     assert os.path.exists(src), "Input measurements table file not found"
-    assert os.path.exists(os.path.split(dst)[0]), "Output directory doesn't exist"
+    _nice = lambda x: x if x else '.'
+    assert os.path.exists(_nice( os.path.split(dst)[0] )), "Output directory doesn't exist"
 
     t = MeasurementsTable(src).update_velocities()
 
@@ -511,78 +514,3 @@ if 1:
     savefig(dst)
     close(f)
 
-if 0:
-  import optparse
-  if __name__ == '__main__':
-    usage = "usage: summary.py [options] whiskerfile [destination_image]"
-    description = \
-"""
-This utility makes trajectories from whisker segments and renders a plot of whisker curvature and angle.
-The plot is saved to the file name specified by the optional `destination_image` argument.  If this 
-argument isn't supplied the filename is automatically determined based on the whisker file name.
-
-The resulting trajectories are not, by default, saved.  However, by specifying the appropriate option they
-can be saved to a .trajectories file (the filename is determined by the whisker file name).
-
-The `destination_image` argument may be a filename with or without the extension.  If no extension is specified
-the file will be saved as a .png file.  The extension is used to determine the file format to save.
-Available formats are pdf, ps, eps, and svg.
-"""
-    parser = optparse.OptionParser( usage = usage,
-                                    description = description )
-    parser.add_option('-s','--save-trajectories',
-                        dest = "savetraj",
-                        action = "store_true",
-                        default = False,
-                        help = "Causes computed trajectories to be written to file.")
-    parser.add_option("--label",
-                    help    = "This is used when determining the destination image file name. [default: %default]",
-                    dest    = "label",
-                    action  = "store",
-                    type    = "string",
-                    default = "") 
-    parser.add_option("--imagedir",
-                    help    = "This is used when determining where to save images  [default: %default]",
-                    dest    = "imagedir",
-                    action  = "store",
-                    type    = "string",
-                    default = "") 
-    options, args = parser.parse_args()
-    
-    whiskername = args[0]
-    trajname = os.path.splitext(whiskername)[0] + '.trajectories'
-
-    destname = None
-    if len(args)>1: #if the destination image file name was provided (or some variant thereof)
-      beginning,ending = os.path.split( args[1] )
-      middle,ending    = os.path.splitext( ending )
-      destname = args[1]
-      if options.imagedir:
-        if beginning:
-          warn("The destination image file name was specified with a path.  Going with the --imagedir option.");
-        destname = os.path.join( options.imagedir, middle )
-      if not ending:
-        destname += '.png'
-      else:
-        destname += ending
-    else: #derive destination file name from whisker filename and options
-      beginning,ending = os.path.split( whiskername )
-      middle,ending    = os.path.splitext( ending )
-      lblpart = ''
-      if options.label:
-        lblpart = '[%s]'%options.label
-      if options.imagedir:
-        beginning = options.imagedir
-      destname = os.path.join( beginning, middle + lblpart + '.png' )
-
-    destdir = os.path.split(destname)[0]
-    if destdir: #not working directory
-      assert( os.path.isdir(destdir) )
-
-    w,traj,data = render_summary_to_file(whiskername,destname)
-    numpy.save( os.path.splitext(destname)[0] + '.npy', data );
-    if options.savetraj:
-      from ui.whiskerdata import save_trajectories
-      save_trajectories( trajname, traj )
-  
-    

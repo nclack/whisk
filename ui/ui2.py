@@ -138,10 +138,10 @@ def draw_whisker( surf, w, radius=5, color=(0,255,255,200) , scale=1, color2=(0,
     except:
       pdb.set_trace()
   if selected:
-    xp = 40.* floor( max(min(x)-2*radius,0) / 40.) #snap x position to a rough lattice
-    xp = max(xp,radius);
+    #xp = 40.* floor( max(x[0]-2*radius,0) / 40.) #snap x position to a rough lattice
+    #xp = max(xp,radius);
     pygame.draw.circle( surf, color, 
-        [xp, y[where(x==min(x))[0][0]]], 
+        [x[0], y[0]], 
         int(radius))
 
 def draw_bar( surf, x, y, radius, color, scale=1 ):
