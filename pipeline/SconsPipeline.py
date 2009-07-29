@@ -37,11 +37,12 @@ def thumbnail(target, source, env):
   Image.fromarray( Reader(source[0].path)[0] ).save( target[0].path )
 
 def length_v_score_plot(target,source,env):
-  from pylab import plot, savefig, clf
+  from pylab import plot, savefig, figure, close
   data = MeasurementsTable( source[0].path ).get_shape_table()
-  clf()
+  f = figure()
   plot(data[:,0],data[:,1],'k.',markersize=1, hold=0)
   savefig( target[0].path )
+  close(f)
 
 def dfs_consume_tuples(g,cur):
   while isinstance(cur,tuple):
@@ -93,10 +94,7 @@ def dfs_reduce(f,tree):
 
 def pipeline_standard(env, movie):
   def alter(j,subdir,ext):
-    name = reduce( os.path.join, [os.path.split(j.path)[0], 
-                                  subdir, 
-                                  os.path.splitext(os.path.split(j.path)[-1])[0]+ext ])
-    return name
+    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
 
   builders = [ 
     movie                                                       ,
@@ -107,7 +105,7 @@ def pipeline_standard(env, movie):
     ( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
                                      source = j[0]) ,)          ,
     env.Classify                                                ,
-    lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
+    #lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
     ( env.IdentitySolver                                        , 
       env.Summary
     )                                                           ,
@@ -160,8 +158,8 @@ env  = Environment(
                        suffix     = '.measurements',
                        src_suffix = '.whiskers'
                       ),
-    'Classify': Builder(action = "classify.py $SOURCE $TARGET",
-                        suffix = ".trajectories",
+    'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT",
+                        suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
                        ),
     'Summary': Builder(action = "summary.py $SOURCE $TARGET --px2mm=$PX2MM",

@@ -73,7 +73,7 @@ def features(wvd, face):
       shape_from_whiskers(wvd),face 
     ) 
   )
-  otherside = lambda e: -1 if side(e)==0 else 0
+  otherside = lambda e: -1 if side(e)[0]==0 else 0
   for fid,wv in wvd.iteritems():
     for wid,w in wv.iteritems():
       follicle, dx = side(w)

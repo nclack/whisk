@@ -276,7 +276,9 @@ int main(int argc, char *argv[])
       { //int i=76;
         int k;
         image = Copy_Image( load(movie,i,NULL) );
-        progress( "Finding segments for frame %5d of %d.\n", i, depth);
+
+        progress_meter(i, 0, depth, 50, "Finding segments for frame:");
+        //progress( "Finding segments for frame %5d of %d.\r", i, depth);
         wv = find_segments(i, image, bg, &wv_n);
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
                                                    image->width, image->height, 
@@ -287,6 +289,7 @@ int main(int argc, char *argv[])
         Free_Whisker_Seg_Vec( wv, wv_n );
         Free_Image(image);
       }
+      printf("\n");
       Whisker_File_Close(wfile);
     }
   }

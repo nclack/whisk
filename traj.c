@@ -911,16 +911,19 @@ void Solve( Measurements *table, int n_rows, int n_bins )
         for( j=0; j<ngray; j+=2 )
         { Measurements *start = t[  gray_areas[j  ] - 1  ],   //start
                        *end   = t[  gray_areas[j+1] + 1  ];   //end
-#ifdef DEBUG_SOLVE_GRAY_AREAS
-          printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
-#endif
           int npath;
-          Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
-          memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
+          if( start && end )
+          {
 #ifdef DEBUG_SOLVE_GRAY_AREAS
-          printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);
+            printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
 #endif
-          free(path);
+            Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
+            memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+            printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);
+#endif
+            free(path);
+          }
         }
       }
 
@@ -928,7 +931,8 @@ void Solve( Measurements *table, int n_rows, int n_bins )
       for( i=0; i <  nstates; i++ )
       { Measurements** t = trajs + i*nframes;
         for(j=0; j<nframes; j++ )
-          t[j]->state = minstate + i;
+          if( t[j] )
+            t[j]->state = minstate + i;
       }
 
       free(trajs);

@@ -101,6 +101,7 @@ for t in tests:
                                               ] ) 
 ## classift tests
 tests = ["TEST_CLASSIFY_1",
+         "TEST_CLASSIFY_2"
          ] 
 totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFINES = t )
 for t in tests:

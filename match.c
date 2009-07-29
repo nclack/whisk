@@ -21,7 +21,6 @@
 #define CHECK_FOR_INF
 #undef ONE_INDEXING
 #undef MATLAB
-#define TEST
 
 #ifndef INFINITY
   #define INFINITY FLT_MAX
@@ -474,7 +473,7 @@ void step5(double *assignment, double *distMatrix, char *starMatrix, char *newSt
  ** TEST CASE
  **
  ****************************************/
-#ifdef TEST
+#ifdef TEST_MATCH
 #define M  10
 #define N  1
 int B[5*5] =    { 7, 2, 1, 9, 4,
@@ -533,7 +532,7 @@ void f()
   printf("Cost: %g\n", result.cost);
 
 }
-/*
+
 int main(int argc, char* argv[] )
 { int i;
   srand( time(NULL) );
@@ -541,5 +540,4 @@ int main(int argc, char* argv[] )
     f();
   return 0;
 }
-*/
 #endif
