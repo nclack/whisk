@@ -224,9 +224,9 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
   assert(nseq>=1);
 
   // prealloc request for minimum required space
-  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath), nstates*(nseq+1), "Forward Vitirbi LogP - init" );
-  next = (ViterbiState*) request_storage( next, &maxnext, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init" );
-  last = (ViterbiState*) request_storage( last, &maxlast, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init" );
+  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath), nstates*(nseq+1), "Forward Vitirbi LogP - init pool" );
+  next = (ViterbiState*) request_storage( next, &maxnext, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init next" );
+  last = (ViterbiState*) request_storage( last, &maxlast, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init last" );
 
   // Initialize
   idst = nstates;
@@ -271,7 +271,7 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
                                                 &poolsize, 
                                                  sizeof(ViterbiPath), 
                                                  npool+1, 
-                                                 "Forward Viterbi - argmax" );
+                                                 "Forward Viterbi - argmax - 1" );
           this = pool + (npool++);  // Append dst to src->path 
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;
@@ -303,7 +303,7 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
                                                 &poolsize, 
                                                  sizeof(ViterbiPath), 
                                                  npool+1, 
-                                                 "Forward Viterbi - argmax" );
+                                                 "Forward Viterbi - argmax - 2" );
           this = pool + (npool++);  // Append dst to src->path 
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;

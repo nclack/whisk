@@ -55,7 +55,7 @@ obj = env.Object("whisker_io_main", "whisker_io.c", CPPDEFINES = "WHISKER_IO_CON
 env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
 
 ## traj 
-libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c'] )
+libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c','viterbi.c'] )
 
 ## install - copy things around
 env.Install( 'ui/whiskerdata', ['trace.py', libwhisk] ) 
@@ -81,7 +81,7 @@ tests = ["TEST_BUILD_DISTRIBUTIONS",
          "TEST_SOLVE_GRAY_AREAS" ]
 totestobj = lambda t: env.Object( 'trajobj_'+t.lower(), ['traj.c'], CPPDEFINES = t)
 for t in tests:
-  env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c','utilities.c'] ) 
+  env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c','utilities.c','viterbi.c'] ) 
 
 ## merge tests
 tests = ["TEST_COLLISIONTABLE_1",
@@ -107,5 +107,5 @@ totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFI
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',
-                                                 'error.c'
+                                                 'error.c','viterbi.c'
                                                ] ) 

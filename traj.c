@@ -11,6 +11,8 @@
 #include "error.h"
 #include "utilities.h"
 
+#include "viterbi.h"
+
 // TESTS
 #if 0  
 #undef   TEST_MEASUREMENT_TABLE_IO_1
@@ -19,9 +21,9 @@
 #endif
 
 // DEBUG OUTPUT
-#if 0
 #define  DEBUG_SOLVE_GRAY_AREAS
-#define  DEBUG_FIND_PATH            
+#define  DEBUG_FIND_PATH
+#if 0
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
@@ -214,7 +216,6 @@ int Measurements_Table_Size_Select_State( Measurements *table, int n_rows, int s
 void Measurements_Table_Select_Time_And_Mask_By_State( Measurements *table, int n_rows, int state, double *time, int *mask )
 { int i=0;
   int j=0;
-  int n = table[0].n;
   for( i=0; i<n_rows; i++ )
   { Measurements *row = table + i;
     if( row->state == state )
@@ -735,7 +736,7 @@ double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, doubl
   while(i--)
     vec[i] = _diff( next[i], prev[i] );
   
-  return Eval_Likelihood_Log2(dist,vec,istate);;
+  return Eval_Likelihood_Log2(dist,vec,istate);
 }
 
 // sorted_table must be sorted in ascending time order (i.e. ascending fid)
@@ -749,7 +750,7 @@ double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, doubl
 //
 // FIXME: This algorithm is stupid
 //        Should do some kind of path finding...this is just greedy.
-Measurements **Find_Path( Measurements *sorted_table, 
+Measurements **Find_Path_old( Measurements *sorted_table, 
                           int n_rows,
                          Distributions *shape, 
                          Distributions *velocity,
@@ -774,15 +775,8 @@ Measurements **Find_Path( Measurements *sorted_table,
 #endif
 
 
-  if( end == NULL )
-    /* then indications are that the last gray area fell off the end of the
-     * movie */
-  { lastfid = sorted_table[n_rows-1].fid + 1;
-    path_length = lastfid - start->fid - 1;
-  } else {
-    lastfid = end->fid;
-    path_length = end->fid - start->fid - 1;
-  }
+  lastfid = end->fid;
+  path_length = end->fid - start->fid - 1;
 
   assert(path_length > 0);
   *npath = path_length;
@@ -839,6 +833,125 @@ Measurements **Find_Path( Measurements *sorted_table,
   return path;
 }
 
+// sorted_table must be sorted in ascending time order (i.e. ascending fid)
+// Start and end should have the same `state` property.
+// Algorithm here is to just take the transition with maximum liklihood at 
+// each step.  This will be the most probable markov path joining the start
+// and end states. 
+//
+// Returns a vector of pointers into the table that trace out the best path
+// This vector will need to be freed later.
+//
+Measurements **Find_Path( Measurements *sorted_table, 
+                          int n_rows,
+                         Distributions *shape, 
+                         Distributions *velocity,
+                         Measurements *start,
+                         Measurements *end,
+                         int minstate,
+                         int *npath)
+{ // do viterbi like thing
+  // states are the nodes in the gray area
+  // only one state (the seqence is start->state repeated)
+  int pathlength = end->fid - start->fid - 1;
+  int *sequence  = calloc( pathlength+1, sizeof(int) );
+  Measurements *first, *last; //marks edge of gray area in sorted_table
+  int target = start->state;
+  int nstate;
+  static const double baseline_log2p = -100;
+  Measurements **path = (Measurements**) Guarded_Malloc( sizeof(Measurements*)*(pathlength+1), "Find_Path");
+#ifdef DEBUG_FIND_PATH 
+  assert(start->state == end->state );
+  assert(pathlength>0);   // end should come after start
+  assert(start<end);      // table should be sorted
+#endif
+
+  if(npath) *npath = pathlength;
+  
+  // count number of nodes (includes start and end)
+  { Measurements *row = start;
+    while( row->fid == start->fid ) row++; // scroll to first frame after
+    first = row;
+    while( row->fid != end->fid   ) row++; // scroll to last item in gray area
+    last = row - 1;
+  }
+  nstate = last - first + 2; //one extra for the end state
+
+  // setup up for generic forward viterbi (inefficient!)
+  { double *sprob = malloc( sizeof(double) * nstate );
+    double *tprob = malloc( sizeof(double) * nstate * nstate );
+    double *eprob = malloc( sizeof(double) * nstate );
+    int i,j;
+
+    //transition prob - init
+    for(i=0;i<nstate;i++)
+      for(j=0;j<nstate;j++)
+        tprob[ i*nstate + j ] = baseline_log2p;
+    //compute start, transition and emission probs
+    { Measurements *row = first,
+                   *a, *b, *c;
+      // sprob
+      for(a = row; a->fid==row->fid; a++)
+        sprob[a-first] = 
+          Eval_Transition_Likelihood_Log2( velocity, 
+                                           start->data, 
+                                           a->data, 
+                                           target );
+      for(i=a-first;i<nstate;i++)
+        sprob[i] = baseline_log2p;
+
+      // eprob, tprob
+      while( row <= last )
+      { c = a = row;
+        while( a->fid == row->fid) a++;
+        for( ; row < a; row ++ )
+        { int off = (row-first)*nstate;
+          eprob[row-first] = Eval_Likelihood_Log2( shape, 
+                                                   row->data, 
+                                                   target );
+          if( a->fid != end->fid )
+            for(b=a ; b->fid == a->fid; b++ )
+              tprob[ off + b-first ] =
+                Eval_Transition_Likelihood_Log2( velocity, 
+                                                row->data, 
+                                                b->data, 
+                                                target );
+        }
+      }
+      // do probs for end
+      eprob[nstate-1] = 0; //log2(1.0)
+      for( ; c <= last; c++ )
+        tprob[ (c-first)*nstate + nstate - 1 ] = 
+          Eval_Transition_Likelihood_Log2( velocity, 
+                                           c->data, 
+                                           end->data, 
+                                           target );
+    }
+      
+    { ViterbiResult *res = Forward_Viterbi_Log2( sequence, pathlength+1, sprob, tprob, eprob, 1, nstate );
+#ifdef DEBUG_FIND_PATH
+      assert( res->n == pathlength + 1 );
+      printf("Viterbi Result:\n"
+             "        Length: %d\n"
+             "          Prob: %f\n"
+             "         Total: %f\n"
+             "    Likelihood: %g\n", res->n, res->prob, res->total, 1.0-pow(2.0,res->prob-res->total) );
+#endif
+      for( i=0; i<res->n; i++ )
+        path[i] = first + res->sequence[i];
+      Free_Viterbi_Result(res);
+    }
+
+    free(sprob);
+    free(tprob);
+    free(eprob);
+  }
+
+
+  free(sequence);
+  return path;
+}
+
 // This function takes a table of measurements where some subset of the frames
 // in the movie have been labeled.  That is, a subset of the rows have a
 // `state` field that is different than -1.
@@ -880,14 +993,17 @@ void Solve( Measurements *table, int n_rows, int n_bins )
     }
 
     // Compute the inclusive boundaries of the gray areas in place
-    if(gray_areas[0]==0)
-      ngray++; //equiv to: gray_areas[ngray++] = current_frame; because current_frame=0
+    //if(gray_areas[0]==0) // is first frame gray?
+    //  ngray++; //don't need to set: gray_areas[ngray++] = current_frame; because current_frame==0
+    ngray = 0;
     for(i=1;i<nframes;i++)
     { int d = gray_areas[i] - gray_areas[i-1]; 
       if( d == -1 )     // Opening a gray area
-        gray_areas[ ngray++ ] = i;
+        gray_areas[ ngray ] = i;
       else if( d == 1 ) // Closing a gray area
-        gray_areas[ ngray++ ] = i-1;
+      { gray_areas[ ngray+1 ] = i-1;
+        ngray += 2;     // only incriment on closing
+      }
     }
 #ifdef DEBUG_SOLVE_GRAY_AREAS
       printf("Found %d gray areas\n", ngray);
@@ -906,29 +1022,35 @@ void Solve( Measurements *table, int n_rows, int n_bins )
       for( ; row < table + n_rows; row++ )
         trajs[ ( row->state - minstate )*nframes + row->fid ] = row;
       // fill in gray areas
-      for( i=0; i <  nstates; i++ )
+      for( i=1; i <  nstates; i++ ) // forget about minstate (trash state)
       { Measurements** t = trajs + i*nframes;
         for( j=0; j<ngray; j+=2 )
         { Measurements *start = t[  gray_areas[j  ] - 1  ],   //start
                        *end   = t[  gray_areas[j+1] + 1  ];   //end
-          int npath;
-          if( start && end )
+          if( gray_areas[j] != 0 && gray_areas[j+1] != nframes-1 )
           {
+            int npath;
+            //if( start && end )
+            {
 #ifdef DEBUG_SOLVE_GRAY_AREAS
-            printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
+              printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
 #endif
-            Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
-            memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
+              Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
+              memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
 #ifdef DEBUG_SOLVE_GRAY_AREAS
-            printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);
+              assert( start->fid == path[0]->fid      - 1 );
+              assert( end->fid   == path[npath-1]->fid + 1);
+              printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);
+              { int x = npath; while(--x) assert( path[x]->fid == path[x-1]->fid + 1 ); } //check frames increment as aexpected
 #endif
-            free(path);
+              free(path);
+            }
           }
         }
       }
 
       // Commit trajectories to table/output trajectories
-      for( i=0; i <  nstates; i++ )
+      for( i=1; i <  nstates; i++ )           // don't worry about minstate (trash state)
       { Measurements** t = trajs + i*nframes;
         for(j=0; j<nframes; j++ )
           if( t[j] )
@@ -1006,7 +1128,6 @@ char *Spec[] = {"<source:string> <dest:string>", NULL};
 int main(int argc, char *argv[])
 { Measurements *table;
   int n_rows = 0;
-  int n_bins = 32;
   int err = 0;
   
   printf("Test: Load measurements, run solve, and save result.\n");
