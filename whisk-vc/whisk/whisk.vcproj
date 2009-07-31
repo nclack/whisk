@@ -51,6 +51,8 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="1"
 				DebugInformationFormat="4"
+				CallingConvention="0"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -191,6 +193,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\classify.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common.c"
 				>
 			</File>
@@ -207,10 +213,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\distance.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\draw_lib.c"
 				>
 			</File>
@@ -220,6 +222,10 @@
 			</File>
 			<File
 				RelativePath="..\..\eval.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\evaltest.c"
 				>
 			</File>
 			<File
@@ -243,11 +249,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\merge.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\seed.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\seq.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\tiff_adapt.c"
 				>
 			</File>
 			<File
@@ -263,11 +277,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\trajectory.c"
+				RelativePath="..\..\traj.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\utilities.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\viterbi.c"
 				>
 			</File>
 			<File
@@ -288,6 +306,10 @@
 			</File>
 			<File
 				RelativePath="..\..\whisker_io_whisker1.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\whisker_io_whiskold.c"
 				>
 			</File>
 		</Filter>
@@ -325,10 +347,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\distance.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\draw_lib.h"
 				>
 			</File>
@@ -361,6 +379,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\merge.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\seed.h"
 				>
 			</File>
@@ -381,11 +403,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\trajectory.h"
+				RelativePath="..\..\traj.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\utilities.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\viterbi.h"
 				>
 			</File>
 			<File
@@ -402,6 +428,10 @@
 			</File>
 			<File
 				RelativePath="..\..\whisker_io_whisker1.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\whisker_io_whiskold.h"
 				>
 			</File>
 		</Filter>
