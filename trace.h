@@ -76,10 +76,10 @@ typedef struct        //
  SHARED_EXPORT  float         eval_line                     (Line_Params *line, Image *image, int p);                    
 
  SHARED_EXPORT  int           adjust_line_walk              (Line_Params *line, Image *image, int *pp,                   
- SHARED_EXPORT                                               Interval *roff, Interval *rang, Interval *rwid);            
+                                                             Interval *roff, Interval *rang, Interval *rwid);            
 
  SHARED_EXPORT  int           adjust_line_start             (Line_Params *line, Image *image, int *pp,                   
- SHARED_EXPORT                                               Interval *roff, Interval *rang, Interval *rwid);            
+                                                             Interval *roff, Interval *rang, Interval *rwid);            
 
  SHARED_EXPORT  Whisker_Seg  *trace_whisker                 (Seed *s, Image *image);                                     
 
