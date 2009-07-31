@@ -11,6 +11,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include "error.h"
 #include "utilities.h"
 #include "image_lib.h"
 #include "seq.h"
@@ -50,7 +51,8 @@ SeqReader *Seq_Open( const char* path )
   h->starttime = Seq_Time_Stamp( h, 0 );
   return h;
 error:
-  fprintf( stderr, "Problem reading header of seq file\n" );
+	
+  error( "Problem reading header of seq file\n" );
   if(h)  free(h);
   if(fp) fclose(fp);
   return NULL;
@@ -75,9 +77,44 @@ Image *Seq_Read_Image( SeqReader *h, int index )
 
   return im;
 error:
-  fprintf(stderr, "WARNING: Couldn't read image at index %d\n",index);
+  warning( "Seq reader: Couldn't read image at index %d\n",index);
   Free_Image( im );
   return NULL;
+}
+
+SHARED_EXPORT
+int  Seq_Read_Images_To_Buffer ( SeqReader *r, int start, int stop, int step,  void *buffer )
+{ size_t offset = 1024;
+  size_t dz_buf, dz_seq;
+  unsigned int i = 0, count=0;
+  unsigned int w,h;
+  dz_seq = r->truesize;
+  dz_buf = r->sizebytes;  
+
+  //printf("From %d to %d by %d to %p.\n", start, stop, step, buffer);
+  for( i=start; i < stop; i+=step )
+  { //printf(" Read at %d and write to %d\n",step*i+start ,count);
+    SEQ_ASSERT( fseek( r->fp, 1024+i*dz_seq       , SEEK_SET ) );
+    SEQ_ASSERT( fread( (uint8_t*)buffer + (count++)*dz_buf,1, dz_buf, r->fp ) != dz_buf   );
+  } 
+
+  return 0;
+error:
+  error( "Couldn't read stack.\n"
+         "         Failed on %d.\n",i);     
+  return 1;   
+}
+
+SHARED_EXPORT
+int  Seq_Read_Image_To_Buffer ( SeqReader *h, int index, void *buffer )
+{ size_t offset = 1024 + index * h->truesize;
+  
+  SEQ_ASSERT( fseek( h->fp, offset, SEEK_SET)                            );
+  SEQ_ASSERT( fread( buffer   , 1, h->sizebytes, h->fp ) != h->sizebytes ); 
+  return 0;
+error:
+  warning("Seq reader: Couldn't read image at index %d\n",index);
+  return 1;   
 }
 
 SHARED_EXPORT
@@ -102,7 +139,7 @@ Image *Seq_Read_Image_Static_Storage( SeqReader *h, int index )
 
   return im;
 error:
-  fprintf(stderr, "WARNING: Couldn't read image at index %d\n",index);
+  warning("Seq reader: Couldn't read image at index %d\n",index);
   Free_Image( im );
   im = NULL;
   return NULL;
@@ -126,10 +163,31 @@ Stack *Seq_Read_Stack ( SeqReader *r )
   return s;
 
 error:
-  fprintf(stderr, "ERROR:   Couldn't read stack.\n");
-  fprintf(stderr, "         Failed on %d.\n", i);     
+  error( "Couldn't read stack.\n"
+         "         Failed on %d.\n",i);
   Free_Stack( s );
   return NULL;
+}
+
+SHARED_EXPORT
+int  Seq_Read_Stack_To_Buffer ( SeqReader *r, void *buffer )
+{ size_t offset = 1024;
+  size_t dz_buf, dz_seq;
+  unsigned int i = 0;
+  unsigned int w,h;
+  dz_seq = r->truesize;
+  dz_buf = r->sizebytes;  
+
+  for( i=0; i < r->nframes; i++ )
+  { SEQ_ASSERT( fseek( r->fp, 1024+i*dz_seq       , SEEK_SET ) );
+    SEQ_ASSERT( fread( (uint8_t*)buffer +i*dz_buf,1, dz_buf, r->fp ) != dz_buf   );
+  } 
+
+  return 0;
+error:
+  error( "Couldn't read stack.\n"
+         "         Failed on %d.\n",i);  
+  return 1;   
 }
 
 SHARED_EXPORT
@@ -143,7 +201,7 @@ double Seq_Time_Stamp( SeqReader *h, int index )
   return t1 + t2/1000.0;
 
 error:
-  fprintf( stderr, "\nError reading time stamp at index %d\n", index );
+  error("Seq reader: Error reading time stamp at index %d\n", index );
   exit(1);
 }
 

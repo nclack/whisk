@@ -1,16 +1,19 @@
 from ctypes import *
+from ctypes.util import find_library
 import numpy
 from numpy import zeros
 from reader import StackReader
 import os,sys
 
-if sys.platform == 'win32':
-  libext = '.dll'
-else:
-  libext ='.so'
+#if sys.platform == 'win32':
+#  libext = '.dll'
+#else:
+#  libext ='.so'
 
-dllpath = os.path.join(*os.path.split(__file__)[:-1])
-cReader = CDLL(os.path.join( dllpath,"libreader%s"%libext) )
+#dllpath = os.path.join(*os.path.split(__file__)[:-1])
+#cReader = CDLL(os.path.join( dllpath,"libreader%s"%libext) )
+os.environ['PATH']+=';.\\'
+cReader = CDLL( find_library("whisk") )
 
 cReader.Get_Stack_Dimensions_px.restype = c_int
 cReader.Get_Stack_Dimensions_px.argtypes = [

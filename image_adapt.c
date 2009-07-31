@@ -1,5 +1,5 @@
 #include "image_lib.h"
-
+SHARED_EXPORT
 Image *Cast_As_Image( uint8 *array, int width, int height, int kind )
 { static Image im = {0,0,0,NULL,NULL};
   im.kind = kind;

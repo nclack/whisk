@@ -12,14 +12,16 @@
 #ifndef H_MATCH
 #define H_MATCH
 
+#include "compat.h"
+
 typedef struct  
 { double  *assignment; 
   double  cost;
   int     n;
 } Assignment;
 
-Assignment match( double* distMatrixIn, int nOfRows, int nOfColumns );
-void assignmentoptimal(double *assignment, double *cost, double *distMatrixIn, int nOfRows, int nOfColumns);
+SHARED_EXPORT Assignment match( double* distMatrixIn, int nOfRows, int nOfColumns );
+SHARED_EXPORT void assignmentoptimal(double *assignment, double *cost, double *distMatrixIn, int nOfRows, int nOfColumns);
 
 /* Matrix printing functions (for debuging mostly)*/
 void pmat( double* array, int m, int n);

@@ -7,7 +7,7 @@ Progress('Scanning:  $TARGET\r',overwrite=True)
 
 env = Environment(ENV = os.environ )
 if env['PLATFORM']=='win32':
-  env.Append(CCFLAGS = r'/Od /MDd /W1 /nologo /TC /ZI' )
+  env.Append(CCFLAGS = r'/Od /W1 /TC' ) # /nologo /TC /ZI
 else:
   #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))
   env.MergeFlags( env.ParseFlags( "-g -lm" ))
@@ -59,6 +59,7 @@ libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c
 
 ## install - copy things around
 env.Install( 'ui/whiskerdata', ['trace.py', libwhisk] ) 
+env.Install( 'ui/genetiff', [libwhisk] ) 
 env.Install( 'ui',             ['trace.py', libwhisk] ) 
 env.Alias( 'python', ['ui/whiskerdata','ui'] )
 

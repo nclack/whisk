@@ -34,7 +34,7 @@
 #define isinf(x) (!isfinite(x))
 #endif
 
-void assignmentoptimal(double *assignment, double *cost, double *distMatrix, int nOfRows, int nOfColumns);
+SHARED_EXPORT void assignmentoptimal(double *assignment, double *cost, double *distMatrix, int nOfRows, int nOfColumns);
 void buildassignmentvector(double *assignment, char *starMatrix, int nOfRows, int nOfColumns);
 void computeassignmentcost(double *assignment, double *cost, double *distMatrix, int nOfRows);
 void step2a(double *assignment, double *distMatrix, char *starMatrix, char *newStarMatrix, char *primeMatrix, char *coveredColumns, char *coveredRows, int nOfRows, int nOfColumns, int minDim);
@@ -43,7 +43,7 @@ void step3 (double *assignment, double *distMatrix, char *starMatrix, char *newS
 void step4 (double *assignment, double *distMatrix, char *starMatrix, char *newStarMatrix, char *primeMatrix, char *coveredColumns, char *coveredRows, int nOfRows, int nOfColumns, int minDim, int row, int col);
 void step5 (double *assignment, double *distMatrix, char *starMatrix, char *newStarMatrix, char *primeMatrix, char *coveredColumns, char *coveredRows, int nOfRows, int nOfColumns, int minDim);
 
-Assignment match( double* distMatrixIn, int nOfRows, int nOfColumns )
+SHARED_EXPORT Assignment match( double* distMatrixIn, int nOfRows, int nOfColumns )
 {	Assignment result;
 
   result.n = nOfRows;
@@ -55,7 +55,7 @@ Assignment match( double* distMatrixIn, int nOfRows, int nOfColumns )
   return result;
 }
  
-void assignmentoptimal(double *assignment, double *cost, double *distMatrixIn, int nOfRows, int nOfColumns)
+SHARED_EXPORT void assignmentoptimal(double *assignment, double *cost, double *distMatrixIn, int nOfRows, int nOfColumns)
 {
 	double *distMatrix, *distMatrixTemp, *distMatrixEnd, *columnEnd, value, minValue;
 	char *coveredColumns, *coveredRows, *starMatrix, *newStarMatrix, *primeMatrix;

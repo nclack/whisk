@@ -34,8 +34,10 @@ typedef struct
 SHARED_EXPORT  SeqReader *Seq_Open               ( const char* path );               
 SHARED_EXPORT  void       Seq_Close              ( SeqReader *h );                   
 SHARED_EXPORT  Image     *Seq_Read_Image         ( SeqReader *h, int index );        
+SHARED_EXPORT  int        Seq_Read_Image_To_Buffer ( SeqReader *h, int index, void *buffer );
 SHARED_EXPORT  Image     *Seq_Read_Image_Static_Storage  ( SeqReader *h, int index );
-SHARED_EXPORT  Stack     *Seq_Read_Stack         ( SeqReader *h );                   
+SHARED_EXPORT  Stack     *Seq_Read_Stack         ( SeqReader *h );           
+SHARED_EXPORT  int        Seq_Read_Stack_To_Buffer ( SeqReader *h, void *buffer );        
 SHARED_EXPORT  double     Seq_Time_Stamp         ( SeqReader *h, int index );        
 SHARED_EXPORT  double     Seq_Time_From_Start    ( SeqReader *h, int index );        
 

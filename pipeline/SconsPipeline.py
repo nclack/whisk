@@ -106,9 +106,9 @@ def pipeline_standard(env, movie):
                                      source = j[0]) ,)          ,
     env.Classify                                                ,
     #lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
-    ( env.IdentitySolver                                        , 
-      env.Summary
-    )                                                           ,
+    #( env.IdentitySolver                                        , 
+    #  env.Summary
+    #)                                                           ,
     env.Summary                             
   ]
 

@@ -2,6 +2,6 @@
 #
 Import('env')
 local = env.Clone()         # Clone, so we can locally control the px2mm
-local['PX2MM'] = 0.5/22.677 # guessed as pixels half the size of O'Connor's
-local['FACEHINT'] = 'left'
+local['PX2MM']    = 0.5/22.677 # guessed as pixels half the size of O'Connor's
+local['FACEHINT'] = 'left' # can be 'left' 'right' 'top' 'bottom'
 jobs = map( local.Pipeline, Glob('*.seq') )
