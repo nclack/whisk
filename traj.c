@@ -499,6 +499,7 @@ void Compute_Velocities( Measurements *sorted_table, int n_rows )
 //
 // If sorted, this is constant time
 // If not sorted, this is O(n_rows)
+SHARED_EXPORT
 int _count_n_states( Measurements *table, int n_rows, int sorted, int *minstate, int *maxstate )
 { int mn,mx;
   if( sorted )
