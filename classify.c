@@ -32,7 +32,7 @@ void Helper_Get_Face_Point( char* directive, int maxx, int maxy, int* x, int *y)
                              "right",
                              NULL};
   int iopt = 0;
-  while( options[iopt] && strncasecmp( options[iopt], directive, 10 ) != 0 )
+  while( options[iopt] && strncmp( options[iopt], directive, 10 ) != 0 )
     iopt++;
 
   switch(iopt)
