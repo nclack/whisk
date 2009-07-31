@@ -73,7 +73,7 @@ for i in range(2,6):
 
 ## viterbi tests
 viterbi_test = env.Object('viterbi_test', ['viterbi.c'], CPPDEFINES = "TEST_VITERBI")
-env.Program('test_viterbi', [viterbi_test, 'common.c', 'utilities.c'])
+env.Program('test_viterbi', [viterbi_test, 'common.c', 'utilities.c','error.c'])
 
 ## traj tests
 tests = ["TEST_BUILD_DISTRIBUTIONS",

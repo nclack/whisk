@@ -1,9 +1,14 @@
+/*
+ * FIXME: realloc break linked list pointers in Forward_Viterbi_Log2
+ * FIXME: realloc break linked list pointers in Forward_Viterbi
+ */
 #include "compat.h"
 #include <stdlib.h>
 #include <math.h> //for fabs, log, exp
 #include <string.h>
 #include "utilities.h"
 #include "common.h"
+#include "error.h"
 #include "assert.h"
          
 #include "viterbi.h"
@@ -117,11 +122,11 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
   assert(nseq>=1);
 
   // prealloc request for minimum required space
-  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath), nstates*(nseq+1), "Forward Vitirbi - init" );
+  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath),  nstates*nstates*(nseq+1), "Forward Vitirbi - init" );
   next = (ViterbiState*) request_storage( next, &maxnext, sizeof(ViterbiState), nstates, "Forward Vitirbi - init" );
   last = (ViterbiState*) request_storage( last, &maxlast, sizeof(ViterbiState), nstates, "Forward Vitirbi - init" );
 
-  // Initialize
+  // Initialize   - setup nodes for first step
   idst = nstates;
   iobs = sequence[0];
   while(idst--)
@@ -161,11 +166,13 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
         if( vprob > valmax )        // Look for most likely source path to dst
         { ViterbiPath *this;
           valmax = vprob;
-          pool = (ViterbiPath*) request_storage( pool,
-                                                &poolsize, 
-                                                 sizeof(ViterbiPath), 
-                                                 npool+1, 
-                                                 "Forward Viterbi - argmax" );
+          if( npool >= poolsize )
+            error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
+          //pool = (ViterbiPath*) request_storage( pool,
+          //                                      &poolsize, 
+          //                                      sizeof(ViterbiPath), 
+          //                                      npool+1, 
+          //                                      "Forward Viterbi - argmax" );
           this = pool + (npool++);  // Append dst to src->path 
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;
@@ -224,7 +231,7 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
   assert(nseq>=1);
 
   // prealloc request for minimum required space
-  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath), nstates*(nseq+1), "Forward Vitirbi LogP - init pool" );
+  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath), nstates*nstates*(nseq+1), "Forward Vitirbi LogP - init pool" );
   next = (ViterbiState*) request_storage( next, &maxnext, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init next" );
   last = (ViterbiState*) request_storage( last, &maxlast, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init last" );
 
@@ -267,11 +274,13 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
         argmax->total = prob; 
         { ViterbiPath *this;
           valmax = vprob;
-          pool = (ViterbiPath*) request_storage( pool,
-                                                &poolsize, 
-                                                 sizeof(ViterbiPath), 
-                                                 npool+1, 
-                                                 "Forward Viterbi - argmax - 1" );
+          if( npool+1 >= poolsize )
+            error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
+          //pool = (ViterbiPath*) request_storage( pool,
+          //                                      &poolsize, 
+          //                                      sizeof(ViterbiPath), 
+          //                                      npool+1, 
+          //                                      "Forward Viterbi - argmax - 1" );
           this = pool + (npool++);  // Append dst to src->path 
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;
@@ -299,11 +308,13 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
         if( vprob > valmax )        // Look for most likely source path to dst
         { ViterbiPath *this;
           valmax = vprob;
-          pool = (ViterbiPath*) request_storage( pool,
-                                                &poolsize, 
-                                                 sizeof(ViterbiPath), 
-                                                 npool+1, 
-                                                 "Forward Viterbi - argmax - 2" );
+          if( npool+1 >= poolsize )
+            error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
+          //pool = (ViterbiPath*) request_storage( pool,
+          //                                      &poolsize, 
+          //                                      sizeof(ViterbiPath), 
+          //                                      npool+1, 
+          //                                      "Forward Viterbi - argmax - 2" );
           this = pool + (npool++);  // Append dst to src->path 
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;

@@ -21,9 +21,9 @@
 #endif
 
 // DEBUG OUTPUT
+#if 0
 #define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_FIND_PATH
-#if 0
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
@@ -833,11 +833,16 @@ Measurements **Find_Path_old( Measurements *sorted_table,
   return path;
 }
 
+void dump_doubles(char *filename, double *array, int n)
+{ FILE *fp = fopen(filename,"wb");
+  fwrite(array,sizeof(double),n,fp);
+  fclose(fp);
+}
+
 // sorted_table must be sorted in ascending time order (i.e. ascending fid)
-// Start and end should have the same `state` property.
-// Algorithm here is to just take the transition with maximum liklihood at 
-// each step.  This will be the most probable markov path joining the start
-// and end states. 
+// Start and end should have the same `state` property.  Uses the viterbi
+// algorithm to find the most probable markov path joining the start and end
+// states. 
 //
 // Returns a vector of pointers into the table that trace out the best path
 // This vector will need to be freed later.
@@ -850,15 +855,13 @@ Measurements **Find_Path( Measurements *sorted_table,
                          Measurements *end,
                          int minstate,
                          int *npath)
-{ // do viterbi like thing
-  // states are the nodes in the gray area
-  // only one state (the seqence is start->state repeated)
+{
   int pathlength = end->fid - start->fid - 1;
   int *sequence  = calloc( pathlength+1, sizeof(int) );
   Measurements *first, *last; //marks edge of gray area in sorted_table
   int target = start->state;
   int nstate;
-  static const double baseline_log2p = -100;
+  static const double baseline_log2p = -1e7;
   Measurements **path = (Measurements**) Guarded_Malloc( sizeof(Measurements*)*(pathlength+1), "Find_Path");
 #ifdef DEBUG_FIND_PATH 
   assert(start->state == end->state );
@@ -936,6 +939,7 @@ Measurements **Find_Path( Measurements *sorted_table,
              "          Prob: %f\n"
              "         Total: %f\n"
              "    Likelihood: %g\n", res->n, res->prob, res->total, 1.0-pow(2.0,res->prob-res->total) );
+      {int x = res->n; while(--x) assert( first[res->sequence[x]].fid == first[res->sequence[x-1]].fid + 1 ); }
 #endif
       for( i=0; i<res->n; i++ )
         path[i] = first + res->sequence[i];
@@ -974,41 +978,15 @@ void Solve( Measurements *table, int n_rows, int n_bins )
   nstates = _count_n_states( table, n_rows, 1, &minstate, &maxstate );
   Compute_Velocities( table, n_rows );
   shape    = Build_Distributions( table, n_rows, n_bins );
-  velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // This changes the sort order, now table is in time order
+  velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // !! Changes the sort order: now table is in time order
   nframes = table[n_rows-1].fid + 1;
 
-  // Find the gray areas:
-  // A frame is in a `gray area` if all observations in that frame have
-  // state==-1.
-  // This iterates over the sorted table building a sequence of start/stop
-  // frame_id pairs marking the (inclusive) boundaries of gray areas.
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+  { int x = n_rows; while(--x) assert( (table[x].fid - table[x-1].fid) >= 0 ); } // check sort order 
+#endif
+
   { int *gray_areas = Guarded_Malloc(nframes * sizeof(int), "in solve - alloc gray_areas");
     int ngray = 0;
-    memset(gray_areas,0,sizeof(int)*nframes);
-    // Compute whether frames have any rows with state > -1
-    for(i=0;i<n_rows;i++)
-    { Measurements *row = table+i;
-      if(row->state > -1 )
-        gray_areas[row->fid] = 1;
-    }
-
-    // Compute the inclusive boundaries of the gray areas in place
-    //if(gray_areas[0]==0) // is first frame gray?
-    //  ngray++; //don't need to set: gray_areas[ngray++] = current_frame; because current_frame==0
-    ngray = 0;
-    for(i=1;i<nframes;i++)
-    { int d = gray_areas[i] - gray_areas[i-1]; 
-      if( d == -1 )     // Opening a gray area
-        gray_areas[ ngray ] = i;
-      else if( d == 1 ) // Closing a gray area
-      { gray_areas[ ngray+1 ] = i-1;
-        ngray += 2;     // only incriment on closing
-      }
-    }
-#ifdef DEBUG_SOLVE_GRAY_AREAS
-      printf("Found %d gray areas\n", ngray);
-      printf("Solving for %d whiskers in %d frames.\n", nstates, nframes);
-#endif
     
     // Compute trajectories - 
     // Each is an array, nframes long, of pointers into the table
@@ -1019,13 +997,38 @@ void Solve( Measurements *table, int n_rows, int n_bins )
       Measurements *row = table;
       memset(trajs,0, nstates * nframes * sizeof(Measurements*));
       // initialize
-      for( ; row < table + n_rows; row++ )
-        trajs[ ( row->state - minstate )*nframes + row->fid ] = row;
+      for( ; row < table + n_rows; row++ )                            // Build an index into table [ rows:time, cols:state ]
+        trajs[ ( row->state - minstate )*nframes + row->fid ] = row;  //   Assumes (time,state) uniquely identifies whisker segment
       // fill in gray areas
       for( i=1; i <  nstates; i++ ) // forget about minstate (trash state)
-      { Measurements** t = trajs + i*nframes;
+      { Measurements** t = trajs + i*nframes;                          // get index relative to current state
+  
+        // Find the gray areas:
+        // A frame is in a `gray area` if there's no appt. labelled segment
+        //    Step 1: mask frames
+        memset(gray_areas,0,sizeof(int)*nframes);
+        for(j=0;j<nframes;j++)
+          if(t[j])
+            gray_areas[ t[j]->fid ] = 1;
+
+        //    Step 2: Compute the inclusive boundaries of the gray areas in place
+        ngray = 0;
+        for(j=1;j<nframes;j++)
+        { int d = gray_areas[j] - gray_areas[j-1]; 
+          if( d == -1 )     // Opening a gray area
+            gray_areas[ ngray ] = j;
+          else if( d == 1 ) // Closing a gray area
+          { gray_areas[ ngray+1 ] = j-1;
+            ngray += 2;     // only incriment on closing
+          }
+        }
+#ifdef DEBUG_SOLVE_GRAY_AREAS
+        printf("Label %3d: Found %d gray areas\n"
+               "           Solving for %d whiskers in %d frames.\n", i, ngray, nstates, nframes);
+#endif
+
         for( j=0; j<ngray; j+=2 )
-        { Measurements *start = t[  gray_areas[j  ] - 1  ],   //start
+        { Measurements *start = t[  gray_areas[j  ] - 1  ],   //start  //start and end are pulled from the state == current state segments
                        *end   = t[  gray_areas[j+1] + 1  ];   //end
           if( gray_areas[j] != 0 && gray_areas[j+1] != nframes-1 )
           {
@@ -1033,6 +1036,7 @@ void Solve( Measurements *table, int n_rows, int n_bins )
             //if( start && end )
             {
 #ifdef DEBUG_SOLVE_GRAY_AREAS
+              assert(start && end);
               printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
 #endif
               Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
