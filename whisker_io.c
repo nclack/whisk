@@ -93,6 +93,7 @@ pf_wf_read_segments Whisker_File_Read_Segments_Table[] = {
 /*********************************************************************** 
  * General interface
  */
+SHARED_EXPORT
 int Whisker_File_Autodetect( const char * filename, char** format )
 { int i;
   for( i=0; i < Whisker_File_Format_Count; i++ )
@@ -106,6 +107,7 @@ int Whisker_File_Autodetect( const char * filename, char** format )
   return -1; // doesn't return
 }
 
+SHARED_EXPORT
 WhiskerFile Whisker_File_Open(const char* filename, char* format, const char* mode )
 // Returns NULL on failure
 { int ifmt = -1;
@@ -165,6 +167,7 @@ Err:
   return NULL;
 }
 
+SHARED_EXPORT
 void Whisker_File_Close(WhiskerFile wf)
 { WF_CALL( wf, close )( WF_DEREF(wf,fp) );
   WF_DEREF(wf,fp) = NULL;
@@ -172,18 +175,22 @@ void Whisker_File_Close(WhiskerFile wf)
   free(wf);
 }
 
+SHARED_EXPORT
 void Whisker_File_Append_Segments(WhiskerFile wf, Whisker_Seg *w, int n)
 { WF_CALL( wf, append_segments )( WF_DEREF(wf,fp) ,w,n);
 }
 
+SHARED_EXPORT
 void Whisker_File_Write_Segments(WhiskerFile wf, Whisker_Seg *w, int n)
 { WF_CALL( wf, write_segments )( WF_DEREF(wf,fp),w,n);
 }
 
+SHARED_EXPORT
 Whisker_Seg* Whisker_File_Read_Segments(WhiskerFile wf, int *n)
 { return WF_CALL(wf, read_segments)( WF_DEREF(wf,fp),n);
 }
 
+SHARED_EXPORT
 Whisker_Seg *Load_Whiskers(const char *filename, char* format, int *n )
 { Whisker_Seg *wv;
   WhiskerFile wf = Whisker_File_Open(filename, format, "r");
@@ -192,6 +199,7 @@ Whisker_Seg *Load_Whiskers(const char *filename, char* format, int *n )
   return wv;
 }
 
+SHARED_EXPORT
 void Save_Whiskers(const char *filename, char* format, Whisker_Seg *w, int n )
 { WhiskerFile wf;
   if( format == NULL )

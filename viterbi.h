@@ -1,6 +1,8 @@
 #ifndef H_VITERBI
 #define H_VITERBI
 
+#include "compat.h"
+
 typedef double real;
 
 typedef struct _ViterbiResult
@@ -10,8 +12,10 @@ typedef struct _ViterbiResult
   int *sequence;
 } ViterbiResult;
 
+SHARED_EXPORT
 void Free_Viterbi_Result( ViterbiResult *self);
 
+SHARED_EXPORT
 ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
                                 int   nseq,             // number of observations (size of seqeunce)
                                 real *start_prob,       // size: nstates
@@ -23,6 +27,7 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
 // TODO: Logarithmic number system
 // LNS can be ignored if P(O|Model) doesn't need to be computed
 // Without LNS, can still get P(X|O,Model)
+SHARED_EXPORT
 ViterbiResult *Forward_Viterbi_Log2(  int  *sequence,         // size: nobs
                                       int   nseq,             // number of observations (size of seqeunce)
                                       real *start_prob,       // size: nstates (log probs)

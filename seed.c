@@ -24,6 +24,7 @@
 **  Uses a levelset and size threshold to segment an image constrained by the
 **  zone mask.
 */
+SHARED_EXPORT
 Object_Map *find_objects(Image *image, int vthresh, int sthresh)
 { static Object_Map mymap;
   static int        obj_max = 0;
@@ -60,6 +61,7 @@ Object_Map *find_objects(Image *image, int vthresh, int sthresh)
   return (&mymap);
 }
 
+SHARED_EXPORT
 Seed *compute_seed(Raster *raster, int n, int x0, int width, uint8 *value)
 { static Seed myseed;
 
@@ -149,6 +151,7 @@ Seed *compute_seed(Raster *raster, int n, int x0, int width, uint8 *value)
 }
 
 
+SHARED_EXPORT
 Seed_Vector *decompose_trace_x(Contour *trace, int width, int height, uint8 *value)
 { static Seed       *seedlist = NULL;
   static int         seedmax  = 0;
@@ -323,6 +326,7 @@ Seed_Vector *decompose_trace_x(Contour *trace, int width, int height, uint8 *val
   return (&myseeds);
 }
 
+SHARED_EXPORT
 Seed_Vector *find_seeds(Contour *trace, Image *image)
 { //Contour_Extent *extent;
   //extent = Contour_Get_Extent(trace);
@@ -367,11 +371,13 @@ inline float _compute_seed_from_point_eigennorm( float th )
   return 1.0f/MAX(ss,cs);
 }
 
+SHARED_EXPORT
 Seed *compute_seed_from_point( Image *image, int p, int maxr )
 { float m, stat;
   return compute_seed_from_point_ex( image, p, maxr, &m, &stat);
 }
 
+SHARED_EXPORT
 Seed *compute_seed_from_point_ex( Image *image, int p, int maxr, float *out_m, float *out_stat)
   /* Specific for uint8 */
 { static Seed myseed;
@@ -621,6 +627,7 @@ Seed *compute_seed_from_point_ex( Image *image, int p, int maxr, float *out_m, f
   return &myseed;
 }
 
+SHARED_EXPORT
 void compute_seed_from_point_histogram( Image *image, int maxr, Image *hist)
   // Assumes `image` and 'hist' are 8bit grayscale
 { int a = image->width * image->height;
@@ -646,6 +653,7 @@ void compute_seed_from_point_histogram( Image *image, int maxr, Image *hist)
 }
 
 
+SHARED_EXPORT
 void compute_seed_from_point_field_windowed( Image *image, int maxr, float statlow, float stathigh,
                                     Image *hist, Image *slopes, Image *stats)
   // Assumes `image` and 'hist' are 8bit grayscale
@@ -689,11 +697,13 @@ void compute_seed_from_point_field_windowed( Image *image, int maxr, float statl
   }
 }                                     
 
+SHARED_EXPORT
 void compute_seed_from_point_field( Image *image, int maxr,
                                     Image *hist, Image *slopes, Image *stats)
 { compute_seed_from_point_field_windowed( image, maxr, 0.1, 0.4, hist, slopes, stats );
 }
 
+SHARED_EXPORT
 void compute_seed_from_point_field_windowed_on_contour( Image *image, Contour *trace,
                                                         int maxr, float statlow, float stathigh,
                                                         Image *hist, Image *slopes, Image *stats )
@@ -727,6 +737,7 @@ void compute_seed_from_point_field_windowed_on_contour( Image *image, Contour *t
   }
 }
 
+SHARED_EXPORT
 void compute_seed_from_point_field_on_grid( Image *image, int spacing,
                                             int maxr, float statlow, float stathigh,
                                             Image *hist, Image *slopes, Image *stats )
@@ -789,6 +800,7 @@ void compute_seed_from_point_field_on_grid( Image *image, int spacing,
   }
 }
 
+SHARED_EXPORT
 Seed_Vector *find_seeds2( Contour *trace, Image *image )
 { static Seed_Vector sv;
   static Seed *seeds = NULL;

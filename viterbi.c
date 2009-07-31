@@ -61,6 +61,7 @@ ViterbiResult *Make_Viterbi_Result(int n)
   return self;
 }
 
+SHARED_EXPORT
 void Free_Viterbi_Result( ViterbiResult *self)
 { if( self->sequence ) free(self->sequence);
   self->sequence = NULL;
@@ -103,6 +104,7 @@ ViterbiResult *Make_Viterbi_Result_From_State( ViterbiState *state )
  *
  * Transition and emmission probabilities must be precomputed.
  */
+SHARED_EXPORT
 ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
                                 int   nseq,             // number of observations (size of seqeunce)
                                 real *start_prob,       // size: nstates
@@ -212,6 +214,7 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
 #include <float.h> // for -DBL_MAX
 #define LOG2_ADD(x,y) ( (x) + log2( 1.0 + pow(2.0, (y)-(x) ) ) ) // this works b.c. x and y are always same sign (negative)
 
+SHARED_EXPORT
 ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
                                        int   nseq,             // number of observations (size of seqeunce)
                                        real *start_prob,       // size: nstates

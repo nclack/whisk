@@ -24,6 +24,7 @@
 #define   SEQ_ASSERT(stmt)    stmt
 #endif
 
+SHARED_EXPORT
 SeqReader *Seq_Open( const char* path )
 { FILE *fp;
   SeqReader *h;
@@ -55,6 +56,7 @@ error:
   return NULL;
 }
 
+SHARED_EXPORT
 void Seq_Close( SeqReader *h )
 { if(h)
   { if(h->fp) 
@@ -63,6 +65,7 @@ void Seq_Close( SeqReader *h )
   }
 }
 
+SHARED_EXPORT
 Image *Seq_Read_Image( SeqReader *h, int index )
 { size_t offset = 1024 + index * h->truesize;
   Image *im = Make_Image( h->bitdepthreal/8, h->width, h->height );
@@ -77,6 +80,7 @@ error:
   return NULL;
 }
 
+SHARED_EXPORT
 Image *Seq_Read_Image_Static_Storage( SeqReader *h, int index )
 { size_t offset = 1024 + index * h->truesize;
   static Image *im = NULL;
@@ -104,6 +108,7 @@ error:
   return NULL;
 }
 
+SHARED_EXPORT
 Stack *Seq_Read_Stack ( SeqReader *r )
 { size_t offset = 1024;
   size_t dz;
@@ -127,6 +132,7 @@ error:
   return NULL;
 }
 
+SHARED_EXPORT
 double Seq_Time_Stamp( SeqReader *h, int index )
 { size_t offset = 1024 + index * h->truesize + h->sizebytes;
   double t1,t2;
@@ -141,6 +147,7 @@ error:
   exit(1);
 }
 
+SHARED_EXPORT
 double Seq_Time_From_Start( SeqReader *h, int index )
 { return Seq_Time_Stamp( h, index ) - h->starttime;
 }

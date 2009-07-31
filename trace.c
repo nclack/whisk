@@ -72,8 +72,10 @@
 #define LINE_DETECTOR_CURVED   2
 #define LINE_DETECTOR_SPECIAL  20
 
+SHARED_EXPORT
 Image       * subtract_background_inplace  (Image *a, Image *b);
 
+SHARED_EXPORT
 void          initialize_paramater_ranges  (Line_Params *line, Interval *roff, Interval *rang, Interval *rwid);
 
 void breakme(void) {
@@ -101,6 +103,7 @@ inline int is_angle_leftward( float angle )
   return  (n % 2) == 0;
 }
 
+SHARED_EXPORT
 Whisker_Seg *Make_Whisker_Seg( int n )
 { Whisker_Seg *w = (Whisker_Seg*) Guarded_Malloc( sizeof(Whisker_Seg), "Make whisker segment - root." );
   w->len = n;
@@ -111,6 +114,7 @@ Whisker_Seg *Make_Whisker_Seg( int n )
   return w;
 }
 
+SHARED_EXPORT
 void Free_Whisker_Seg( Whisker_Seg *w )
 { if(w)
   { if ( w->scores ) free( w->scores );
@@ -121,6 +125,7 @@ void Free_Whisker_Seg( Whisker_Seg *w )
   }
 }
 
+SHARED_EXPORT
 void Free_Whisker_Seg_Vec ( Whisker_Seg *wv, int n )
 {
   while( n-- )
@@ -135,6 +140,7 @@ void Free_Whisker_Seg_Vec ( Whisker_Seg *wv, int n )
   free(wv);
 }
 
+SHARED_EXPORT
 void Estimate_Image_Shape_From_Segments( Whisker_Seg* wv, int n, int *width, int *height )
 { int w = 0,
       h = 0;
@@ -152,6 +158,7 @@ void Estimate_Image_Shape_From_Segments( Whisker_Seg* wv, int n, int *width, int
   *height = h+1;
 }
 
+SHARED_EXPORT
 Line_Params line_param_from_seed( const Seed *s )
 {   Line_Params line;
     const double hpi = M_PI/4.0;
@@ -167,6 +174,7 @@ Line_Params line_param_from_seed( const Seed *s )
     return line;
 }
 
+SHARED_EXPORT
 Image *subtract_background_inplace(Image *a, Image *b)
 { int i,n = a->width*a->height;
   uint8 *ta,*tb;
@@ -186,6 +194,7 @@ Image *subtract_background_inplace(Image *a, Image *b)
   return a;
 }
 
+SHARED_EXPORT
 Object_Map *get_objectmap( Image *image )
 { static Image *hat = NULL;
   Image *imhat;
@@ -207,6 +216,7 @@ Object_Map *get_objectmap( Image *image )
 }
 
 
+SHARED_EXPORT
 void draw_whisker_update_rasters( int *raster, float x0, float y0, float x1, float y1, int height )
 { int y;
   int yl = (int) y1,
@@ -245,6 +255,7 @@ void draw_whisker_update_rasters( int *raster, float x0, float y0, float x1, flo
   return;
 }
 
+SHARED_EXPORT
 void draw_whisker( Image *image, Whisker_Seg *w, int thick, uint8 value )
   /* The basic steps are:
    * 1. Form polygon by offsetting whisker segment backbone by thick along
@@ -338,6 +349,7 @@ int _cmp_seed_scores(const void *a, const void *b)
   return d < 0 ? -1 : 1;
 }
 
+SHARED_EXPORT
 Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
 { static Image *h = NULL,   // histogram from compute_seed_from_point_field_windowed_on_contour
                *th = NULL,  // slopes                             "
@@ -531,6 +543,7 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
   return wsegs;
 }
 
+SHARED_EXPORT
 void   median_uint8(  unsigned char *s,/* array with the data. size = n x m    */
                       int n,           /* e.g. n pixels in an image            */
                       int m,           /* e.g. m images in a time-series       */
@@ -562,6 +575,7 @@ void   median_uint8(  unsigned char *s,/* array with the data. size = n x m    *
   return;
 }
 
+SHARED_EXPORT
 Image *compute_background(Stack *movie)
 { Image *bg;
 
@@ -598,6 +612,7 @@ error:
   return (NULL);
 }
 
+SHARED_EXPORT
 Zone *compute_zone(Stack *movie)
 { static Zone myzone;
 
@@ -673,10 +688,12 @@ Zone *compute_zone(Stack *movie)
   return (&myzone);
 }
 
+SHARED_EXPORT
 void remove_duplicate_segments( Whisker_Seg *wv, int *n )
 { assert(0); // FIXME: impliment -- see merge.c
 }
 
+SHARED_EXPORT
 int  write_line_detector_bank( char *filename, Array *bank, Range *off, Range *wid, Range *ang )
 { FILE *fp = fopen(filename,"w+b");
 //  printf("%s %p\n",filename,fp);
@@ -700,6 +717,7 @@ int  write_line_detector_bank( char *filename, Array *bank, Range *off, Range *w
   }
 }
 
+SHARED_EXPORT
 int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *wid, Range *ang )
 { FILE *fp = fopen(filename,"r+b");
 //  printf("%s %p\n",filename,fp);
@@ -728,6 +746,7 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
   }
 }
 
+SHARED_EXPORT
 Array *get_line_detector_bank(Range *off, Range *wid, Range *ang)
 { static Array *bank = (NULL);
   static Range o,a,w;
@@ -780,6 +799,7 @@ error:
 //  return (NULL);
 //}
 
+SHARED_EXPORT
 Array *get_harmonic_line_detector_bank(Range *off, Range *wid, Range *ang) // FIXME: Bad name - should be labelled line detectors
 { static Array *bank = (NULL);
   static Range o,a,w;
@@ -806,6 +826,7 @@ error:
   return (NULL);
 }
 
+SHARED_EXPORT
 float integrate_harmonic_mean_by_labels( uint8 *im, float* w, int *pxlist, int npx )
 { // assumes 4 groups.  Takes harmonic mean of group means
   float acc[HARMONIC_MEAN_N_LABELS] = {0.0,0.0/*,0.0,0.0*/};
@@ -871,6 +892,7 @@ float integrate_harmonic_mean_by_labels( uint8 *im, float* w, int *pxlist, int n
   }
 }
 
+SHARED_EXPORT
 float integrate_special_by_labels( uint8 *im, float *w, int *pxlist, int npx )
 { float acc[HARMONIC_MEAN_N_LABELS] = {0.0,0.0};
   float total;
@@ -900,6 +922,7 @@ float integrate_special_by_labels( uint8 *im, float *w, int *pxlist, int npx )
   return total; //2*acc[0]*acc[1]/total;
 }
 
+SHARED_EXPORT
 float *get_nearest_from_line_detector_bank(float offset, float width, float angle)
 { int o,a,w;
   Range orng, arng, wrng;
@@ -986,6 +1009,7 @@ float *get_nearest_from_curved_line_detector_bank(float offset, float width, flo
 }
 #endif
 
+SHARED_EXPORT
 Array *get_half_space_detector_bank(Range *off, Range *wid, Range *ang, float *norm)
 { static Array *bank = (NULL);
   static float sum = -1.0;
@@ -1019,6 +1043,7 @@ error:
   return (NULL);
 }
 
+SHARED_EXPORT
 float *get_nearest_from_half_space_detector_bank(float offset, float width, float angle, float *norm)
 { int o,a,w;
   Range orng, arng, wrng;
@@ -1069,6 +1094,7 @@ int *make_offset_list_lookup_table(Image *image, int support)
 }
 #endif
 
+SHARED_EXPORT
 int *get_offset_list( Image *image, int support, float angle, int p, int *npx )
   /* returns a static buffer with *npx integer pairs.  The integer pairs are
    * indices into the image and weight arrays such that:
@@ -1173,6 +1199,7 @@ int *get_offset_list( Image *image, int support, float angle, int p, int *npx )
   return pxlist;
 }
 
+SHARED_EXPORT
 float round_anchor_and_offset( Line_Params *line, int *p, int stride )
 /* rounds pixel anchor, p, to pixel nearest center of line detector (rx,ry)
 ** returns best offset to line                   
@@ -1209,6 +1236,7 @@ float round_anchor_and_offset( Line_Params *line, int *p, int stride )
   return t;
 }
 
+SHARED_EXPORT
 int mean_uint8( Image *im )
 { float acc = 0.0;
   int a = im->width * im->height;
@@ -1218,6 +1246,7 @@ int mean_uint8( Image *im )
   return acc/(float)a;
 }
 
+SHARED_EXPORT
 int threshold_bottom_fraction_uint8( Image* im ) //, float fraction )
 { float acc, mean, lm;
   int a,i, count;
@@ -1245,6 +1274,7 @@ int threshold_bottom_fraction_uint8( Image* im ) //, float fraction )
   return (int) lm;
 }
 
+SHARED_EXPORT
 int threshold_upper_fraction_uint8( Image* im )
 { float acc, mean, lm, hm;
   int a,i, count;
@@ -1272,6 +1302,7 @@ int threshold_upper_fraction_uint8( Image* im )
   return (int) lm;
 }
 
+SHARED_EXPORT
 float eval_half_space( Line_Params *line, Image *image, int p, float *rr, float *ll )
 { int i,support  = 2*TLEN + 3;
   int npxlist, a = support*support;
@@ -1355,6 +1386,7 @@ float eval_half_space( Line_Params *line, Image *image, int p, float *rr, float 
   return q;
 }
 
+SHARED_EXPORT
 int is_change_too_big( Line_Params *new, Line_Params *old, float alim, float wlim, float olim)
 { float dth = old->angle - new->angle,
         dw  = old->width - new->width,
@@ -1379,6 +1411,7 @@ int is_change_too_big( Line_Params *new, Line_Params *old, float alim, float wli
   return 0;
 }
 
+SHARED_EXPORT
 int is_local_area_trusted_conservative( Line_Params *line, Image *image, int p )
 { float q,r,l;
   static float thresh = -1.0;
@@ -1400,6 +1433,7 @@ int is_local_area_trusted_conservative( Line_Params *line, Image *image, int p )
   }
 }
 
+SHARED_EXPORT
 int is_local_area_trusted( Line_Params *line, Image *image, int p )
 { float q,r,l;
   static float thresh = -1.0;
@@ -1422,6 +1456,7 @@ int is_local_area_trusted( Line_Params *line, Image *image, int p )
 }
 
 
+SHARED_EXPORT
 float  eval_line(Line_Params *line, Image *image, int p)
 { int i;
   const int support  = 2*TLEN + 3;
@@ -1490,6 +1525,7 @@ float  eval_line(Line_Params *line, Image *image, int p)
   return -s;
 }
 
+SHARED_EXPORT
 float  eval_line_no_debug(Line_Params *line, Image *image, int p)
 { int i,support  = 2*TLEN + 3;
   int npxlist, a = support*support;
@@ -1579,6 +1615,7 @@ float  eval_line_by_curved_detector(Line_Params *line, Image *image, int p)
 }
 #endif
 
+SHARED_EXPORT
 int adjust_line_walk(Line_Params *line, Image *image, int *pp,
     Interval *roff, Interval *rang, Interval *rwid)
 { double hpi = acos(0.)/2.;
@@ -1742,6 +1779,7 @@ int adjust_line_walk(Line_Params *line, Image *image, int *pp,
   return 1;
 }
 
+SHARED_EXPORT
 Line_Params *adjust_line_exhaustive( Line_Params *line, Image *image, int *pp,
                                      Interval *roff, Interval *rang, Interval *rwid)
 { double hpi = acos(0.)/2.;
@@ -1769,6 +1807,7 @@ Line_Params *adjust_line_exhaustive( Line_Params *line, Image *image, int *pp,
   return line;
 }
 
+SHARED_EXPORT
 int interval_size(Interval *r, double step)
 { // interval is inclusive of bounds
   //printf("[%5.5g, %5.5g] by %g\n", r->min, r->max, step );
@@ -1785,6 +1824,7 @@ int interval_size(Interval *r, double step)
     
 }
 
+SHARED_EXPORT
 void save_response(char *filename, Image *image, int p )
 { Line_Params cur;
   Interval roff, rang, rwid;
@@ -1828,6 +1868,7 @@ void save_response(char *filename, Image *image, int p )
   }
 }
 
+SHARED_EXPORT
 void get_response_extents( int *noff, int *nang, int *nwid )
 { Line_Params cur;
   Interval roff, rang, rwid;
@@ -1840,6 +1881,7 @@ void get_response_extents( int *noff, int *nang, int *nwid )
   *nwid = interval_size( &rwid, WIDTH_STEP  );
 }
 
+SHARED_EXPORT
 void get_response_axes_ticks( float *x, float *y, float* z )
 { Line_Params cur;
   Interval roff, rang, rwid;
@@ -1855,6 +1897,7 @@ void get_response_axes_ticks( float *x, float *y, float* z )
     *(x++) = cur.width;
 }
 
+SHARED_EXPORT
 void compute_dxdy( Line_Params *line, float *dx, float *dy )
 {float ex,ey;
   ex  = cos(line->angle + M_PI/2);  // unit vector normal to line
@@ -1863,6 +1906,7 @@ void compute_dxdy( Line_Params *line, float *dx, float *dy )
   *dy = ey * line->offset;
 }
 
+SHARED_EXPORT
 void Print_Position(Line_Params *line, int p, int stride)
 { float dx,dy;
   int x = p%stride,
@@ -1873,6 +1917,7 @@ void Print_Position(Line_Params *line, int p, int stride)
 
 }
 
+SHARED_EXPORT
 void get_response( float *buffer, Image *image, int p)
 { Line_Params cur;
   Interval roff, rang, rwid;
@@ -1886,6 +1931,7 @@ void get_response( float *buffer, Image *image, int p)
         *(buffer++) = eval_line_no_debug( &cur, image, p );
 }
 
+SHARED_EXPORT
 int adjust_line_start_old(Line_Params *line, Image *image, int *pp,
     Interval *roff, Interval *rang, Interval *rwid)
 { double hpi = acos(0.)/2.;
@@ -1971,6 +2017,7 @@ int adjust_line_start_old(Line_Params *line, Image *image, int *pp,
 }
 
 
+SHARED_EXPORT
 int adjust_line_start(Line_Params *line, Image *image, int *pp,
                                Interval *roff, Interval *rang, Interval *rwid)
 { double hpi = acos(0.)/2.;
@@ -2091,6 +2138,7 @@ int adjust_line_start(Line_Params *line, Image *image, int *pp,
   return trusted;
 }
 
+SHARED_EXPORT
 int move_line( Line_Params *line, int *p, int stride, int direction )
 { float lx,ly,ex,ey,rx0,ry0,rx1,ry1;
   float ppx, ppy, drx, dry, t, ox, oy;
@@ -2117,6 +2165,7 @@ int move_line( Line_Params *line, int *p, int stride, int direction )
   return *p;
 }
 
+SHARED_EXPORT
 int  detect_loops(int p, float o)
 { static int phistory[10] = {-1,-1,-1,-1,-1,
                              -1,-1,-1,-1,-1};
@@ -2139,6 +2188,7 @@ int  detect_loops(int p, float o)
   return i;
 }
 
+SHARED_EXPORT
 void initialize_paramater_ranges( Line_Params *line, Interval *roff, Interval *rang, Interval *rwid)
 {
     rwid->min = 0.5;
@@ -2149,6 +2199,7 @@ void initialize_paramater_ranges( Line_Params *line, Interval *roff, Interval *r
     rang->max = line->angle + M_PI;
 }
 
+SHARED_EXPORT
 Whisker_Seg *trace_whisker(Seed *s, Image *image)
 { typedef struct { float x; float y; float thick; float score; } record;
   static record *ldata, *rdata;

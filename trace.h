@@ -1,6 +1,7 @@
 #ifndef H_TRACE
 #define H_TRACE
 
+#include "common.h"
 #include "image_lib.h"
 #include "contour_lib.h"
 #include "seed.h"
@@ -64,22 +65,22 @@ typedef struct        //
   float *scores;      //
 } Whisker_Seg;        //
 
-Whisker_Seg  *Make_Whisker_Seg                      ( int n );
-void          Free_Whisker_Seg                      ( Whisker_Seg *w );
-void          Free_Whisker_Seg_Vec                  ( Whisker_Seg *wv, int n );
-void          Estimate_Image_Shape_From_Segments    ( Whisker_Seg* wv, int n, int *width, int *height );
+ SHARED_EXPORT  Whisker_Seg  *Make_Whisker_Seg                      ( int n );                                           
+ SHARED_EXPORT  void          Free_Whisker_Seg                      ( Whisker_Seg *w );                                  
+ SHARED_EXPORT  void          Free_Whisker_Seg_Vec                  ( Whisker_Seg *wv, int n );                          
+ SHARED_EXPORT  void          Estimate_Image_Shape_From_Segments    ( Whisker_Seg* wv, int n, int *width, int *height ); 
 
-Whisker_Seg  *find_segments                 (int iFrame, Image *image, Image *bg, int *nseg );
-Image        *compute_background            (Stack *movie);
-Zone         *compute_zone                  (Stack *movie);
-float         eval_line                     (Line_Params *line, Image *image, int p);
+ SHARED_EXPORT  Whisker_Seg  *find_segments                 (int iFrame, Image *image, Image *bg, int *nseg );           
+ SHARED_EXPORT  Image        *compute_background            (Stack *movie);                                              
+ SHARED_EXPORT  Zone         *compute_zone                  (Stack *movie);                                              
+ SHARED_EXPORT  float         eval_line                     (Line_Params *line, Image *image, int p);                    
 
-int           adjust_line_walk              (Line_Params *line, Image *image, int *pp,
-                                             Interval *roff, Interval *rang, Interval *rwid);
+ SHARED_EXPORT  int           adjust_line_walk              (Line_Params *line, Image *image, int *pp,                   
+ SHARED_EXPORT                                               Interval *roff, Interval *rang, Interval *rwid);            
 
-int           adjust_line_start             (Line_Params *line, Image *image, int *pp,
-                                             Interval *roff, Interval *rang, Interval *rwid);
+ SHARED_EXPORT  int           adjust_line_start             (Line_Params *line, Image *image, int *pp,                   
+ SHARED_EXPORT                                               Interval *roff, Interval *rang, Interval *rwid);            
 
-Whisker_Seg  *trace_whisker                 (Seed *s, Image *image);
+ SHARED_EXPORT  Whisker_Seg  *trace_whisker                 (Seed *s, Image *image);                                     
 
 #endif

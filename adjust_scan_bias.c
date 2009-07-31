@@ -17,6 +17,7 @@ typedef struct
   size_t count;
 } Statistic;
 
+SHARED_EXPORT
 double incremental_estimate_scan_bias_h(Image *image, double thresh, double *stat)
 // pass NULL for Image* to reset the accumulator
 // otherwise, assumes Image* is a uint8 image
@@ -66,7 +67,8 @@ double incremental_estimate_scan_bias_h(Image *image, double thresh, double *sta
   }
   return mean;
 }
-  
+
+SHARED_EXPORT
 void image_adjust_scan_bias_h( Image *image, double gain )
 { int    w, h, a;
   w = image->width;
@@ -84,6 +86,8 @@ void image_adjust_scan_bias_h( Image *image, double gain )
   }
 }
 
+
+SHARED_EXPORT
 double incremental_estimate_scan_bias_v(Image *image, double thresh, double *stat)
 // pass NULL for Image* to reset the accumulator
 // otherwise, assumes Image* is a uint8 image
@@ -136,6 +140,7 @@ double incremental_estimate_scan_bias_v(Image *image, double thresh, double *sta
   }
 }
   
+SHARED_EXPORT
 void image_adjust_scan_bias_v( Image *image, double gain )
 { int    w, h, a;
   w = image->width;
@@ -160,6 +165,7 @@ void image_adjust_scan_bias_v( Image *image, double gain )
  * Stack based interface
  */
 
+SHARED_EXPORT
 double estimate_scan_bias_h(Stack *movie, double mean_intensity, double *stat)
 { int d = movie->depth;
   double mean;
@@ -170,6 +176,7 @@ double estimate_scan_bias_h(Stack *movie, double mean_intensity, double *stat)
   return mean;
 }
 
+SHARED_EXPORT
 void adjust_scan_bias_h( Stack *movie, double gain )
 { int d = movie->depth;
   debug("Adjust horizontal\n");
@@ -179,6 +186,7 @@ void adjust_scan_bias_h( Stack *movie, double gain )
   }
 }
 
+SHARED_EXPORT
 double estimate_scan_bias_v(Stack *movie, double mean_intensity, double *stat)
 { int d = movie->depth;
   double mean;
@@ -189,6 +197,7 @@ double estimate_scan_bias_v(Stack *movie, double mean_intensity, double *stat)
   return mean;
 }
 
+SHARED_EXPORT
 void adjust_scan_bias_v( Stack *movie, double gain )
 { int d = movie->depth;
   debug("Adjust vertical\n");
@@ -198,6 +207,7 @@ void adjust_scan_bias_v( Stack *movie, double gain )
   }
 }
 
+SHARED_EXPORT
 void adjust_scan_bias( Stack *movie )
 { double mean_intensity = 0.0;
   double vgain, vstat, hgain, hstat;

@@ -13,6 +13,7 @@
  *         No bounds checking on indexes. Out of bounds will result in an exit.
  */
 
+#include "compat.h"
 #include <stdio.h>
 #include "image_lib.h"
 
@@ -30,12 +31,12 @@ typedef struct
   FILE   *fp;                    /*                                          */  
 } SeqReader;
 
-SeqReader *Seq_Open               ( const char* path );
-void       Seq_Close              ( SeqReader *h );
-Image     *Seq_Read_Image         ( SeqReader *h, int index );
-Image     *Seq_Read_Image_Static_Storage  ( SeqReader *h, int index );
-Stack     *Seq_Read_Stack         ( SeqReader *h );
-double     Seq_Time_Stamp         ( SeqReader *h, int index );
-double     Seq_Time_From_Start    ( SeqReader *h, int index );
+SHARED_EXPORT  SeqReader *Seq_Open               ( const char* path );               
+SHARED_EXPORT  void       Seq_Close              ( SeqReader *h );                   
+SHARED_EXPORT  Image     *Seq_Read_Image         ( SeqReader *h, int index );        
+SHARED_EXPORT  Image     *Seq_Read_Image_Static_Storage  ( SeqReader *h, int index );
+SHARED_EXPORT  Stack     *Seq_Read_Stack         ( SeqReader *h );                   
+SHARED_EXPORT  double     Seq_Time_Stamp         ( SeqReader *h, int index );        
+SHARED_EXPORT  double     Seq_Time_From_Start    ( SeqReader *h, int index );        
 
 #endif // #ifndef H_SEQ_READER

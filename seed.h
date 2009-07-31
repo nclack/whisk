@@ -1,6 +1,7 @@
 #ifndef _H_SEED
 #define _H_SEED
 
+#include "compat.h"
 #include "image_lib.h"
 #include "contour_lib.h"
 
@@ -28,23 +29,23 @@ typedef struct
     Seed *seeds;
   } Seed_Vector;
 
-Object_Map*   find_objects      (Image *image, int vthresh, int sthresh);
-Seed*         compute_seed      (Raster *raster, int n, int x0, int width, uint8 *value);
-Seed_Vector*  decompose_trace_x (Contour *trace, int width, int height, uint8 *value);
-Seed_Vector*  find_seeds        (Contour *trace, Image *image);
-
-Seed*         compute_seed_from_point           ( Image *image, int p, int maxr );
-Seed*         compute_seed_from_point_ex        ( Image *image, int p, int maxr, 
-                                                  float *out_m, float *out_stat);
-void          compute_seed_from_point_histogram ( Image *image, int maxr, Image *hist);
-void          compute_seed_from_point_field     ( Image *image, int maxr, Image *hist, 
-                                                  Image *slopes, Image *stats);
-void          compute_seed_from_point_field_windowed_on_contour
-                                                ( Image *image, Contour *trace,
-                                                  int maxr, float statlow, float stathigh,
-                                                  Image *hist, Image *slopes, Image *stats );
-void compute_seed_from_point_field_on_grid( Image *image, int spacing,
-                                            int maxr, float statlow, float stathigh,
-                                            Image *hist, Image *slopes, Image *stats );
-Seed_Vector*  find_seeds2       ( Contour *trace, Image *image );
+SHARED_EXPORT  Object_Map*   find_objects      (Image *image, int vthresh, int sthresh);                       
+SHARED_EXPORT  Seed*         compute_seed      (Raster *raster, int n, int x0, int width, uint8 *value);       
+SHARED_EXPORT  Seed_Vector*  decompose_trace_x (Contour *trace, int width, int height, uint8 *value);          
+SHARED_EXPORT  Seed_Vector*  find_seeds        (Contour *trace, Image *image);                                 
+                                                                                                               
+SHARED_EXPORT  Seed*         compute_seed_from_point           ( Image *image, int p, int maxr );              
+SHARED_EXPORT  Seed*         compute_seed_from_point_ex        ( Image *image, int p, int maxr,                
+                                                                 float *out_m, float *out_stat);               
+SHARED_EXPORT  void          compute_seed_from_point_histogram ( Image *image, int maxr, Image *hist);         
+SHARED_EXPORT  void          compute_seed_from_point_field     ( Image *image, int maxr, Image *hist,          
+                                                                 Image *slopes, Image *stats);                 
+SHARED_EXPORT  void          compute_seed_from_point_field_windowed_on_contour                                 
+                                                               ( Image *image, Contour *trace,                 
+                                                                 int maxr, float statlow, float stathigh,      
+                                                                 Image *hist, Image *slopes, Image *stats );   
+SHARED_EXPORT  void compute_seed_from_point_field_on_grid( Image *image, int spacing,                          
+                                                           int maxr, float statlow, float stathigh,            
+                                                           Image *hist, Image *slopes, Image *stats );         
+SHARED_EXPORT  Seed_Vector*  find_seeds2       ( Contour *trace, Image *image );                               
 #endif //  _H_SEED

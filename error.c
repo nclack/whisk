@@ -2,7 +2,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+ 
+SHARED_EXPORT
 void error(char *str, ... )
 {
   va_list argList;
@@ -14,6 +15,7 @@ void error(char *str, ... )
   exit(-1);
 }
 
+SHARED_EXPORT
 void warning(char *str, ... )
 {
   va_list argList;
@@ -24,6 +26,7 @@ void warning(char *str, ... )
   fflush(NULL);
 }
 
+SHARED_EXPORT
 void debug(char *str, ... )
 {
   va_list argList;
@@ -34,6 +37,7 @@ void debug(char *str, ... )
   fflush(NULL);
 }
 
+SHARED_EXPORT
 void progress(char *str, ... )
 { va_list argList;
   va_start( argList, str );
@@ -43,6 +47,7 @@ void progress(char *str, ... )
   fflush(NULL);
 }
 
+SHARED_EXPORT
 void progress_meter(double cur, double min, double max, int len, char *str, ...)
 { va_list argList;
   char buf[1024];

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # TODO: Refactor so the names make more sense given their jobs
 #       e.g. 'train' should be something else
 #            EmmissionDistributions should be StateModel or some such
@@ -432,4 +433,11 @@ def apply_model(wvd,model):
   return traj,logp,vlogp
 
 if __name__=='__main__':
-  pass
+  import sys, traj, trace
+  name, whisker_src, measurements_src, dest = sys.argv
+  wvd = Load_Whiskers( whisker_src )
+  table = traj.MeasurementsTable( measurements_src )
+
+  data = table.asarray()
+  # XXX: HERE
+

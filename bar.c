@@ -178,6 +178,7 @@ void bar_lvlset_traverse( Level_Set *self,
   return;
 }
 
+SHARED_EXPORT
 void Compute_Bar_Histogram( Image *im, 
                             unsigned int *result,
                             int gap,
@@ -236,6 +237,7 @@ void Compute_Bar_Histogram( Image *im,
   return;
 }
 
+SHARED_EXPORT
 void Compute_Bar_Location(  Image *im, 
                             double *x,
                             double *y,

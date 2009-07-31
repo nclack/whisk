@@ -3,8 +3,10 @@
 
 #include <float.h>
 
+
 // For Microsoft Visual Studio
 #ifdef _MSC_VER
+
 typedef signed char int8_t; 
 typedef signed short int16_t; 
 typedef signed long int32_t; 
@@ -26,14 +28,17 @@ inline char* rindex(char *,char);
 
 #define isnan _isnan
 
-#else 
+#else  // NOT MSVC
+
 #include <stdint.h>
 #define msvcextern 
+#define __declspec(x) 
 #endif
 
 #ifndef INFINITY
   #define INFINITY FLT_MAX
 #endif
 
+#define SHARED_EXPORT __declspec(dllexport)
 
 #endif //#define _H_COMPAT_

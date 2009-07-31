@@ -1,6 +1,7 @@
 // TODO: change the name of this file to something else, like identity.c
 // TODO: make the .h
 
+#include "compat.h"
 #include "traj.h"
 #include <assert.h>
 #include <float.h>
@@ -32,6 +33,7 @@
 #define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
 #endif
 
+SHARED_EXPORT
 Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
 { Measurements *table = Guarded_Malloc( sizeof(Measurements)*n_rows, "allocate measurements table" );
   double *dataspace   = Guarded_Malloc( 2*sizeof(double)*n_measurements*n_rows, "allocate measurements table" ); 
@@ -54,6 +56,7 @@ Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
   return table;
 }
 
+SHARED_EXPORT
 void Free_Measurements_Table( Measurements *table )
 { if( !table ) return;
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
@@ -66,6 +69,7 @@ void Free_Measurements_Table( Measurements *table )
   free(table);
 }
 
+SHARED_EXPORT
 Distributions *Alloc_Distributions( int n_bins, int n_measures, int n_states )
 { Distributions *this = Guarded_Malloc( sizeof(Distributions), "allocate distributions" );
   int nvol = n_bins*n_measures*n_states;
@@ -85,6 +89,7 @@ Distributions *Alloc_Distributions( int n_bins, int n_measures, int n_states )
   return this;
 }
 
+SHARED_EXPORT
 void Free_Distributions( Distributions *this )
 { if( !this ) return;
 #ifdef DEBUG_DISTRIBUTIONS_ALLOC
@@ -97,10 +102,12 @@ void Free_Distributions( Distributions *this )
   free(this);
 }
 
+SHARED_EXPORT
 void Copy_Distribution_To_Doubles( Distributions *this, double *destination )
 { memcpy( destination, this->data, (this->n_states * this->n_measures * this->n_bins) * sizeof(double) );
 }
 
+SHARED_EXPORT
 void Distributions_Bins_To_Doubles( Distributions *this, double *destination )
 { int stride = this->n_measures;
   int i,j;
@@ -114,6 +121,7 @@ void Distributions_Bins_To_Doubles( Distributions *this, double *destination )
   }
 }
 
+SHARED_EXPORT
 void Measurements_Table_Set_Constant_Face_Position( Measurements *table, int n_rows, int x, int y )
 { while(n_rows--)
   { table[n_rows].face_x = x;
@@ -121,6 +129,7 @@ void Measurements_Table_Set_Constant_Face_Position( Measurements *table, int n_r
   }
 }
 
+SHARED_EXPORT
 void Measurements_Table_Set_Follicle_Position_Indices( Measurements *table, int n_rows, int ix, int iy )
 { while(n_rows--)
   { table[n_rows].col_follicle_x = ix;
@@ -132,6 +141,7 @@ void Measurements_Table_Set_Follicle_Position_Indices( Measurements *table, int 
 // Assumes first three columns are label,fid,wid (all ints) followed by data
 // so Measurements.n = n_cols - 3 
 //
+SHARED_EXPORT
 Measurements *Measurements_Table_From_Doubles( double *raw, int n_rows, int n_cols )
 { int n = n_cols - 3;
   Measurements *table = Alloc_Measurements_Table( n_rows, n );
@@ -155,6 +165,7 @@ Measurements *Measurements_Table_From_Doubles( double *raw, int n_rows, int n_co
 // Use this to copy in to e.g. matlab, python
 // Assumes first three columns are label,fid,wid followed by data
 // Velocity data is not copied
+SHARED_EXPORT
 void Measurements_Table_Data_To_Doubles(Measurements *table, int n_rows, double *raw)
 { int n,n_cols;
   assert( n_rows > 0 );
@@ -174,6 +185,7 @@ void Measurements_Table_Data_To_Doubles(Measurements *table, int n_rows, double 
 // Assumes first three columns are label,fid,wid followed by data
 // Shape data is not copied
 // Invalid velocities are set to 0
+SHARED_EXPORT
 void Measurements_Table_Velocity_To_Doubles(Measurements *table, int n_rows, double *raw)
 { int n,n_cols;
   assert( n_rows > 0 );
@@ -192,11 +204,13 @@ void Measurements_Table_Velocity_To_Doubles(Measurements *table, int n_rows, dou
   }
 }
 
+SHARED_EXPORT
 void Measurements_Table_Copy_Shape_Data( Measurements *table, int n_rows, double *buffer )
 { int n = table[0].n;
   memcpy( buffer, table[0].data - n*table[0].row, n*n_rows*sizeof(double) );
 }
 
+SHARED_EXPORT
 void Measurements_Table_Copy_Velocities( Measurements *table, int n_rows, double *buffer )
 { int n = table[0].n;
   memcpy( buffer, table[0].data - n*table[0].row + n*n_rows, n*n_rows*sizeof(double) );
@@ -204,6 +218,7 @@ void Measurements_Table_Copy_Velocities( Measurements *table, int n_rows, double
 
 // Returns the number of rows with the queried state
 // Scans once over the table.
+SHARED_EXPORT
 int Measurements_Table_Size_Select_State( Measurements *table, int n_rows, int state )
 { int count = 0;
   while(n_rows--)
@@ -214,6 +229,7 @@ int Measurements_Table_Size_Select_State( Measurements *table, int n_rows, int s
 
 // Selects rows according to their state and returns the `time` and `valid_velocity` arrays.
 // time and mask should be the appropriate size. See `Measurements_Table_Size_Select_State`
+SHARED_EXPORT
 void Measurements_Table_Select_Time_And_Mask_By_State( Measurements *table, int n_rows, int state, double *time, int *mask )
 { int i=0;
   int j=0;
@@ -228,6 +244,7 @@ void Measurements_Table_Select_Time_And_Mask_By_State( Measurements *table, int 
 
 // Selects rows according to their state and returns velocities
 // `data` should be the appropriate size. See `Measurements_Table_Size_Select_Velocities`
+SHARED_EXPORT
 void Measurements_Table_Select_Velocities_By_State( Measurements *table, int n_rows, int state, double *data )
 { int i=0;
   int j=0;
@@ -241,6 +258,7 @@ void Measurements_Table_Select_Velocities_By_State( Measurements *table, int n_r
 
 // Selects rows according to their state and returns shape data
 // `data` should be the appropriate size. See `Measurements_Table_Size_Select_Velocities`
+SHARED_EXPORT
 void Measurements_Table_Select_Shape_By_State( Measurements *table, int n_rows, int state, double *data )
 { int i=0;
   int j=0;
@@ -252,6 +270,7 @@ void Measurements_Table_Select_Shape_By_State( Measurements *table, int n_rows, 
   } 
 }
 
+SHARED_EXPORT
 FILE *Measurements_Table_To_File( FILE *fp, Measurements *table, int n_rows )
 { int n_measures = table[0].n;
   fwrite( &n_rows, sizeof(int), 1, fp );
@@ -261,12 +280,14 @@ FILE *Measurements_Table_To_File( FILE *fp, Measurements *table, int n_rows )
   return fp;
 }
 
+SHARED_EXPORT
 void Measurements_Table_To_Filename( const char *filename, Measurements *table, int n_rows )
 { FILE *fp = fopen( filename, "wb" );
   fp = Measurements_Table_To_File( fp, table, n_rows );
   fclose(fp);
 }
 
+SHARED_EXPORT
 Measurements *Measurements_Table_From_File( FILE *fp, int *n_rows)
 { Measurements *table;
   int n_measures,i;
@@ -299,6 +320,7 @@ Measurements *Measurements_Table_From_File( FILE *fp, int *n_rows)
   return table;
 }
 
+SHARED_EXPORT
 Measurements *Measurements_Table_From_Filename( const char *filename, int *n_rows)
 { Measurements *t = NULL;
   FILE *fp = fopen( filename, "rb" );
@@ -413,24 +435,29 @@ int cmp_sort_time_state_face_order( const void* a, const void *b )
   return d;
 }
 
+SHARED_EXPORT
 void Enumerate_Measurements_Table( Measurements *table, int nrows )
 { int i = nrows;
   while(i--)
     table[i].row = i;
 }
 
+SHARED_EXPORT
 void Sort_Measurements_Table_State_Time( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_state_time );
 }
 
+SHARED_EXPORT
 void Sort_Measurements_Table_Time( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time );
 }
 
+SHARED_EXPORT
 void Sort_Measurements_Table_Time_Face( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time_face_order );
 }
 
+SHARED_EXPORT
 void Sort_Measurements_Table_Time_State_Face( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time_state_face_order );
 }
@@ -440,6 +467,7 @@ inline double _diff(double a, double b)
 }
 
 // Assumes `sorted_table` is sorted by Sort_Measurements_Table_State_Time
+SHARED_EXPORT
 void Compute_Velocities( Measurements *sorted_table, int n_rows )
 { int i;
   int n = sorted_table[0].n;
@@ -493,6 +521,7 @@ int _count_n_states( Measurements *table, int n_rows, int sorted, int *minstate,
   return mx - mn + 1;
 }
 
+SHARED_EXPORT
 Distributions *Alloc_Distributions_For_Sorted_Table( Measurements *sorted_table, int n_rows, int n_bins, int *minstate, int* maxstate )
 { return Alloc_Distributions( n_bins,                                                   // n_bins
                               sorted_table[0].n,                                        // n_measures
@@ -500,6 +529,7 @@ Distributions *Alloc_Distributions_For_Sorted_Table( Measurements *sorted_table,
 }
 
 // The range of these histograms covers the state space sampled by the movie
+SHARED_EXPORT
 Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int n_bins )
 { int minstate,maxstate;
   Distributions *d = Alloc_Distributions_For_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
@@ -588,6 +618,7 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
 // This changes the sort order of the table.  The input should be sorted in
 //   state,time order.
 // These histograms cover the required state space
+SHARED_EXPORT
 Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_rows, int n_bins )
 { int minstate,maxstate;
   Distributions *d = Alloc_Distributions_For_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
@@ -711,6 +742,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
 
 // vec must be an array of length dist->n_measures
 // Assumes distributions encodes densities as log2 probability
+SHARED_EXPORT
 double Eval_Likelihood_Log2( Distributions *dist, double *vec, int istate )
 { int measure_stride = dist->n_bins,
       state_stride   = dist->n_bins * dist->n_measures;
@@ -729,6 +761,7 @@ double Eval_Likelihood_Log2( Distributions *dist, double *vec, int istate )
 // prev and next must be arrays of length dist->n_measures
 // Assumes distributions encodes densities as log2 probability
 // Distributions should be functions of the differences between next and prev
+SHARED_EXPORT
 double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, double *next, int istate )
 { static double *vec = NULL;
   static int maxn = 0;
@@ -751,6 +784,7 @@ double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, doubl
 //
 // FIXME: This algorithm is stupid
 //        Should do some kind of path finding...this is just greedy.
+SHARED_EXPORT
 Measurements **Find_Path_old( Measurements *sorted_table, 
                           int n_rows,
                          Distributions *shape, 
@@ -848,6 +882,7 @@ void dump_doubles(char *filename, double *array, int n)
 // Returns a vector of pointers into the table that trace out the best path
 // This vector will need to be freed later.
 //
+SHARED_EXPORT
 Measurements **Find_Path( Measurements *sorted_table, 
                           int n_rows,
                          Distributions *shape, 
@@ -966,6 +1001,7 @@ Measurements **Find_Path( Measurements *sorted_table,
 //
 // For unlabelled frames (gray areas), Find_Path will be called to link the labeled
 // observations on either side of the gray area.
+SHARED_EXPORT
 void Solve( Measurements *table, int n_rows, int n_bins )
 { Distributions *shape, *velocity;
   int minstate, maxstate, nstates;

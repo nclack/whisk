@@ -1,6 +1,7 @@
 #ifndef H_WHISK_BAR
 #define H_WHISK_BAR
 
+#include "compat.h"
 #include "image_lib.h"
 
 /* Finds the center of a circular object present in the image.
@@ -29,6 +30,7 @@
  * So, for an expected radius of 19, the `gap` should be 15.
  *
  */ 
+SHARED_EXPORT
 void Compute_Bar_Location(  Image *im,      // The bar should be bright.
                             double *x,      // Output: x position
                             double *y,      // Output: y position
