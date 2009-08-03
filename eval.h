@@ -4,9 +4,9 @@
 #include "compat.h"
 #include "aip.h"
 
-typedef struct {double min; double max; double step;} Range;
+typedef struct _Range {double min; double max; double step;} Range;
 
-typedef struct 
+typedef struct _Array
 { void *data; 
   int *strides_bytes;
   int *strides_px;

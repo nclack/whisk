@@ -70,7 +70,7 @@
  *       makes better use of the cache.  Should give ~2X speed boost.
  */
 
-typedef struct
+typedef struct CollisionTable
 { unsigned int *table;
   int stride;
   int area;
@@ -234,7 +234,7 @@ Err:
  * }
  */
 
-typedef struct 
+typedef struct _CollisionTableCursor
 { int p;
   unsigned int *hit;   // a 4-element array with id0, index0, id1, index1.
   int stride; // the stride between succesive elements of the hit array

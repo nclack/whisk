@@ -1,3 +1,4 @@
+#include "compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -129,9 +130,8 @@ Image *load(char *path, int index, int *nframes)
     // Use abstract file interface to open file and init
     fp = (*opener)(path);
     if( !fp )
-    { fprintf(stderr, "Couldn't open file %s", path );
-      exit(1);
-    }
+      error( "Couldn't open file %s", path );
+      
     saved_nframes = (*get_nframes)(fp);
     if( nframes )
       *nframes = saved_nframes;
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 
   prefix = Get_String_Arg("prefix");
   prefix_len = strlen(prefix);
-  { char *dot = rindex(prefix,'.');  // Remove any file extension from the prefix
+  { char *dot = strrchr(prefix,'.');  // Remove any file extension from the prefix
     if(dot) *dot = 0;
   }
   whisker_file_name = (char*) Guarded_Malloc( (prefix_len+32)*sizeof(char), "whisker file name");
@@ -237,7 +237,8 @@ int main(int argc, char *argv[])
     progress( "Finding bar positions\n" );
     fp = fopen( bar_file_name, "w" );
     for( i=0; i<depth; i++ )
-    { progress( "Locating bar for frame %5d of %d.\n", i, depth);
+    { progress_meter(i, 0, depth, 79, "Locating post: [%5d/%5d]",i,depth);
+      //progress( "Locating bar for frame %5d of %d.\n", i, depth);
       image = Copy_Image( load(movie,i,NULL) );
       invert_uint8( image );
       Compute_Bar_Location(   image,
@@ -277,7 +278,7 @@ int main(int argc, char *argv[])
         int k;
         image = Copy_Image( load(movie,i,NULL) );
 
-        progress_meter(i, 0, depth, 50, "Finding segments for frame:");
+        progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
         //progress( "Finding segments for frame %5d of %d.\r", i, depth);
         wv = find_segments(i, image, bg, &wv_n);
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 

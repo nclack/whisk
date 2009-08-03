@@ -11,8 +11,8 @@
 #include <math.h> //for testing
 
 //typedef unsigned char uint8;
-typedef struct {uint8 r; uint8 g; uint8 b;} rgb;
-typedef struct {uint8 h; uint8 s; uint8 v;} hsv;
+typedef struct _rgb{uint8 r; uint8 g; uint8 b;} rgb;
+typedef struct _hsv{uint8 h; uint8 s; uint8 v;} hsv;
 //typedef struct {float x; float y;} point;
 
 void hsv2rgb( hsv *im, rgb *r    )

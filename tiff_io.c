@@ -51,7 +51,7 @@ typedef unsigned char  uint8;
 typedef unsigned short uint16;
 typedef unsigned int   uint32;
 
-typedef struct
+typedef struct _Tif_Tag
   { uint16  label;
     uint16  type;
     uint32  count;
@@ -69,7 +69,7 @@ static int type_sizes[13] = //  Sizes in bytes of the tiff types (see tiff_io.h)
 
 #define WORD_MULTIPLE(x) ((((x)-1)/4+1)*4)  // Will align values internally on word boundaries
 
-typedef struct
+typedef struct _TIFD
   { int     data_flip;  //  The image data needs to be endian-flipped when interpreted
 
     int     numtags;    //  Number of tags in the IFD
@@ -87,7 +87,7 @@ typedef struct
     uint8   *data;      //  concatenation of all tiles/strips encoding the image
   } TIFD;
 
-typedef struct
+typedef struct _Treader
   { int      flip;       //  bytes need to be flipped to get machine endian
     int      ifd_no;     //  # of next ifd to be read (start counting at 1)
     int      lsm;        //  this is an lsm file and you have to do hideous things to read it
@@ -97,7 +97,7 @@ typedef struct
     FILE    *input;
   } Treader;
 
-typedef struct
+typedef struct _Twriter
   { int      flip;        //  bytes need to be flipped to get machine endian
     int      ifd_no;      //  # of next ifd to be written (start counting at 1)
     int      lsm;         //  this is an lsm file and you have to do hideous things as a result
@@ -109,7 +109,7 @@ typedef struct
     FILE    *output;
   } Twriter;
 
-typedef struct
+typedef struct _Tannotator
   { int      flip;        //  bytes need to be flipped to get machine endian
     uint32   ano_cnto;    //  offset of annotation count
     uint32   ano_offset;  //  offset of annotation block

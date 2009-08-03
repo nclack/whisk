@@ -18,7 +18,7 @@
 
 /* 2D (Outer) Contour abstraction    */
 
-typedef struct
+typedef struct _Contour
   { int  length;          // Length of the contour 
     int  boundary;        // Does contour touch the image boundary?
     int  width;           // Width of image from which contour was derived
@@ -51,7 +51,7 @@ int      Contour_Usage();
 //    (i.e. a pointer to a static copy within the producing routine that is
 //          *reused* on every invocation).
 
-typedef struct
+typedef struct _Contour_Extent
   { int   min_x;    
     int   max_x;
     int   min_y;
@@ -76,7 +76,7 @@ Contour_Extent *Contour_Get_Extent(Contour *trace);
 
 /* Surfaces of level sets abstraction */
 
-typedef struct
+typedef struct _Surface
   { int x;      // TBD
   } Surface;
 

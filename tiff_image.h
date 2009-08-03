@@ -48,13 +48,13 @@ typedef enum
     CHAN_FLOAT       //  The bits ... as an IEEE floating point value
   } Channel_Type;
 
-typedef struct
+typedef struct _Tiff_Histogram
   { int          bitshift;     // The largest non-zero bit position
     int          total;        // Sum of all counts in the histogram
     unsigned int counts[512];  // Bitshift is at least 1/2*max value, giving 8-bit
   } Tiff_Histogram;            //   precision when max >= 256
 
-typedef struct
+typedef struct _Tiff_Channel
   { int             width;            //  The width of every channel plane
     int             height;           //  The height of every chanel plane
     Channel_Meaning interpretation;   //  Any interpretation hint (if any) provided by the tiff
@@ -66,7 +66,7 @@ typedef struct
     Tiff_Histogram *histogram;        //  Histogram of channel values (NULL if not computed)
   } Tiff_Channel;
 
-typedef struct
+typedef struct _Tiff_Image
   { int             width;            //  The width of every channel plane
     int             height;           //  The height of every chanel plane
     int             number_channels;  //  The number of channels (samples_per_pixel)

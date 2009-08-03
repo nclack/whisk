@@ -1,6 +1,8 @@
 #ifndef  _H_COMPAT_
 #define _H_COMPAT_
 
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <float.h>
 
 
@@ -24,7 +26,6 @@ typedef unsigned long uint32_t;
 inline long int lround(float x);
 inline double round(double x);
 inline float roundf(float x);
-inline char* rindex(char *,char);
 
 #define isnan _isnan
 
@@ -32,7 +33,9 @@ inline char* rindex(char *,char);
 
 #include <stdint.h>
 #define msvcextern 
+#ifndef __declspec
 #define __declspec(x) 
+#endif
 #endif
 
 #ifndef INFINITY

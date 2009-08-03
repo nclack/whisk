@@ -19,11 +19,4 @@ extern inline float roundf(float x)
   return x < 0 ? -floorf(fabsf(x) + .5) : floorf(x + .5);
 }
 
-extern inline char *rindex(char * str, char c)
-{ char t;
-  while( (t=*str++) != '\0' )
-    if( t==c )
-      return str-1;
-  return 0;
-}
 #endif

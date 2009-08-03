@@ -28,24 +28,24 @@
 //#define HALF_SPACE_TUNNELING_DECAY  0.99     // between 0 and 1.  Smaller values cause tunneling to stop sooner
 #define HALF_SPACE_TUNNELING_MAX_MOVES 10   // pixels.  This should be the largest size of an occluding area to cross
 
-typedef struct        //
+typedef struct  _Zone      //
   { int    cutoff;    //
     Image *mask;      //
   } Zone;             //
                      
-typedef struct        //
+typedef struct  _Line_Params      //
   { float  offset;    //
     float  angle;     //
     float  width;     //
     float  score;     //
   } Line_Params;      //
                      
-typedef struct        //
+typedef struct _Interval       //
   { double min;       //
     double max;       //
   } Interval;         //
                      
-typedef struct        //
+typedef struct  _Whisker_Seg_Old      //
   { int    id;        //
     double width;     //
     int    beg;       //
@@ -55,7 +55,7 @@ typedef struct        //
     float *scores;    //
   } Whisker_Seg_Old;  //
                      
-typedef struct        //
+typedef struct _Whisker_Seg       //
 { int id;             //
   int time;           //
   int len;            //

@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include "image_lib.h"
 
-typedef struct 
+typedef struct _SeqReader 
 { unsigned int     width;        /* Image width  in pixels                   */
   unsigned int     height;       /*       height in pixels                   */ 
   unsigned int     bitdepth;     /* significant bits per pixel               */  

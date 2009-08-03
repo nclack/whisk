@@ -19,7 +19,7 @@
 
 /* Drawing routines for level sets and contours.  */
 
-typedef struct              //  Specification of how to paint a pixel
+typedef struct _Paint_Brush              //  Specification of how to paint a pixel
   { float   red;            //  If a channel is < 0. then that channel is not painted
     float   green;          //  For GREY(16) and FLOAT32 images, only the red channel is drawn
     float   blue;

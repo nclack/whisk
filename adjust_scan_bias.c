@@ -11,7 +11,7 @@
  * Image based interface - operates on an image series
  */
 
-typedef struct 
+typedef struct _Statistic
 { double sum;
   double sumsq;
   size_t count;

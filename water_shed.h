@@ -13,7 +13,7 @@
 
 #include "image_lib.h"
 
-typedef struct
+typedef struct _Watershed_2D
   { int    nlabels;   // The number of distinct catchment basin (CB) labels (1..nlabels)
     Image *labels;    // A GREY image whose values are the CB labels
     int    nbasins;   // The number of CBs in the partition
@@ -43,7 +43,7 @@ int           Watershed_2D_Usage();
 
 // 3D Watershed (untested !!)
 
-typedef struct
+typedef struct _Watershed_3D
   { int    nlabels;   // The number of distinct catchment basin (CB) labels (1..nlabels)
     Stack *labels;    // A GREY stack whose values are the CB labels
     int    nbasins;   // The number of CBs in the partition

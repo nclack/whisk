@@ -30,9 +30,10 @@
 //#include "distance.h"
 #include "eval.h"
 #include "seed.h"
-
+   
 
 #if 0
+#define DEBUG_READ_LINE_DETECTOR_BANK
 #define SHOW_LINE_DETECTOR
 #define DEBUG_SEEDING_FIELDS
 #define DEBUG_DETECTOR_BANK
@@ -468,9 +469,9 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
               (int) 100 * sin( tha[i] ) };
 
           line = line_param_from_seed( &seed );
-          
+
           scores[j  ].score = eval_line( &line, image, i );
-    
+
           scores[j  ].idx   = i;
           j++;
         }
@@ -712,35 +713,50 @@ int  write_line_detector_bank( char *filename, Array *bank, Range *off, Range *w
     fclose(fp);
     return 1;
   } else {
-    fprintf(stderr, "Couldn't write line detector bank.\n\tUnable to open file for writing.\n");
+    warning( "Couldn't write line detector bank.\n\tUnable to open file for writing.\n");
     return 0;
   }
 }
 
 SHARED_EXPORT
 int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *wid, Range *ang )
-{ FILE *fp = fopen(filename,"r+b");
-//  printf("%s %p\n",filename,fp);
-//  printf("pointer to banks pointer: %p\n",bank);
-//  printf("           banks pointer: %p\n",*bank);
+{ FILE *fp;
+
+  fp = fopen(filename,"rb");
+
+#ifdef DEBUG_READ_LINE_DETECTOR_BANK
+  progress("%s %p\n"
+           "pointer to banks pointer: %p\n"
+           "           banks pointer: %p\n",filename,fp,bank,*bank);
+#endif  
   if(fp)
-  { fseek(fp,0,SEEK_SET);
-//    printf("seek 0\n");
+  { int n = fseek(fp,0,SEEK_SET);
+#ifdef DEBUG_READ_LINE_DETECTOR_BANK
+  progress("seek 0: result %d\n",n);
+#endif
     Read_Range(fp, off);
-//    printf("read off, ");
-//    Print_Range(stdout, off);    
+#ifdef DEBUG_READ_LINE_DETECTOR_BANK
+    progress("read off, ");
+    Print_Range(stdout, off);    
+#endif
     Read_Range(fp, wid);
-//    printf("read wid, ");
-//    Print_Range(stdout, wid);
+#ifdef DEBUG_READ_LINE_DETECTOR_BANK
+    progress("read wid, ");
+    Print_Range(stdout, wid);
+#endif
     Read_Range(fp, ang);
-//    printf("read ang, ");
-//    Print_Range(stdout, ang);
+#ifdef DEBUG_READ_LINE_DETECTOR_BANK
+    progress("read ang, ");
+    Print_Range(stdout, ang);
+#endif
     *bank = Read_Array(fp);
-//    printf("read bank\n");
+#ifdef DEBUG_READ_LINE_DETECTOR_BANK
+    progress("read bank\n");
+#endif
     fclose(fp);
     return 1;
   } else {
-    fprintf(stderr, "Couldn't read line detector bank.\n");
+    warning("Couldn't read line detector bank.\n");
     *bank = (NULL);
     return 0;
   }
@@ -749,15 +765,15 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
 SHARED_EXPORT
 Array *get_line_detector_bank(Range *off, Range *wid, Range *ang)
 { static Array *bank = (NULL);
-  static Range o,a,w;
+  static Range o,a,w;    
   if( !bank )
   { if( read_line_detector_bank( "line.detectorbank", &bank, &o, &w, &a ) )
-    { fprintf(stderr,"Line detector bank loaded from file.\n");
+    { progress("Line detector bank loaded from file.\n");
     } else {
       Range v[3] = {{ -1.0,       1.0,         OFFSET_STEP },          //offset
                     { -M_PI/4.0,  M_PI/4.0,    M_PI/4.0/ANGLE_STEP },  //angle
                     {  0.4,       6.5,         WIDTH_STEP  }};         //width
-      fprintf(stderr,"Computing line detector bank.\n");
+      progress("Computing line detector bank.\n");
       o = v[0];
       a = v[1];
       w = v[2];
@@ -769,7 +785,7 @@ Array *get_line_detector_bank(Range *off, Range *wid, Range *ang)
   *off = o; *ang = a; *wid = w;
   return bank;
 error:
-  fprintf(stderr,"Warning: Couldn't build bank of line detectors!\n");
+  warning("Couldn't build bank of line detectors!\n");
   return (NULL);
 }
 
@@ -1473,6 +1489,7 @@ float  eval_line(Line_Params *line, Image *image, int p)
   // compute a nearby anchor
   coff      = round_anchor_and_offset( line, &p, image->width );
   pxlist    = get_offset_list( image, support, line->angle, p, &npxlist );
+
   weights   = get_nearest_from_line_detector_bank ( coff, line->width, line->angle );
 
 #ifdef SHOW_LINE_DETECTOR

@@ -24,7 +24,7 @@ typedef void           (*pf_wf_append_segments)  (FILE* file, Whisker_Seg *w, in
 typedef void           (*pf_wf_write_segments)   (FILE* file, Whisker_Seg *w, int n);
 typedef Whisker_Seg*   (*pf_wf_read_segments)    (FILE* file, int *n);                        // Gets all the segements
 
-typedef struct
+typedef struct __WhiskerFile
 { FILE                   *fp;
   // Interface
   pf_wf_detect            detect;
@@ -218,12 +218,12 @@ int main(int argc, char *argv[]) {
   int i;
   Process_Arguments(argc,argv,Spec,0);
   if( Is_Arg_Matched("-help") )
-  { printf("\n");
-    printf("This is a utility for converting between the different formats available for\n");
-    printf("whisker files.  The `source` is the input file for reading.  It's format is \n");
-    printf("determined automatically.  The `destination` is the output file for writing.\n");
-    printf("It's format should be specified as the `format` string.\n");
-    printf("\n\tAvailable formats are:\n");
+  { printf("\n"  
+           "This is a utility for converting between the different formats available for\n"
+           "whisker files.  The `source` is the input file for reading.  It's format is \n"
+           "determined automatically.  The `destination` is the output file for writing.\n"
+           "It's format should be specified as the `format` string.\n"
+           "\n\tAvailable formats are:\n");
 
     for( i=0; i < Whisker_File_Format_Count; i++ )
     {   printf("\t%2d. %s\n",i+1,Whisker_File_Formats[i]);

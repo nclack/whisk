@@ -15,6 +15,10 @@
 #include "aip.h"
 #include "utilities.h"
 
+#if 0
+#define DEBUG_READ_RANGE
+#endif
+
 #ifndef MAX
 #define MAX(a,b) (a>b)?a:b
 #endif
@@ -28,7 +32,16 @@ void Print_Range( FILE *fp, Range *r)
 }
 
 void  Read_Range( FILE *fp, Range *r )
-{ fread( r, sizeof(Range), 1, fp );
+{ int n = 0;
+#ifdef DEBUG_READ_RANGE
+  progress("READ RANGE: fp = %p\n"
+           "             r = %p\n"
+           " sizeof(Range) = %d\n", fp, r, sizeof(Range) );
+#endif
+  n = fread( r, sizeof(Range), 1, fp );  
+#ifdef DEBUG_READ_RANGE
+  progress("READ RANGE (done): Read %d items.\n",n);
+#endif
 }
 
 void Write_Range( FILE *fp, Range *r )

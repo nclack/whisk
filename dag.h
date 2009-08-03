@@ -6,7 +6,7 @@
 
 typedef struct _Edge Edge;
 
-typedef struct
+typedef struct _Node
 { Edge         *e;
   void         *data;
   char         *msg;

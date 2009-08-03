@@ -67,7 +67,7 @@ int  Compute_Circumscribed_Circle(  double x0, double y0,
  * LEVEL SETS
  */
 
-typedef struct
+typedef struct _bar_param
 { int width;
   int height;
   int gap;

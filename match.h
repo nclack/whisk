@@ -14,7 +14,7 @@
 
 #include "compat.h"
 
-typedef struct  
+typedef struct _Assignment
 { double  *assignment; 
   double  cost;
   int     n;

@@ -6,7 +6,7 @@
 #include "compat.h"
 #include <stdio.h>
 
-typedef struct 
+typedef struct _Measurements
 { int row;
   int fid;
   int wid;
@@ -23,7 +23,7 @@ typedef struct
   double *velocity; // array of n elements - change in data/time
 } Measurements;
 
-typedef struct
+typedef struct _Distributions
 { int n_measures;
   int n_states;
   int n_bins;

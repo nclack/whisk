@@ -39,12 +39,12 @@ typedef float          float32;
 
 /* IMAGE ABSTRACTION  */
 
-typedef struct
+typedef struct _TIFF
 { Tiff_Reader *reader;
 	Tiff_Writer *writer;
 } TIFF;
 
-typedef struct
+typedef struct _Image
   { int      kind;
     int      width; 
     int      height;
@@ -123,7 +123,7 @@ int    Image_Usage();
 
 /* STACK ABSTRACTION */
 
-typedef struct
+typedef struct _Stack
   { int      kind;
     int      width;
     int      height;
@@ -210,7 +210,7 @@ int          Set_Stack_Plane(Stack *a_stack, int plane, Image *a_image);
      Given the parse information, one can then read or write a file-type stack.
   */
 
-typedef struct        //  a return bundle (not an object)
+typedef struct _File_Bundle       //  a return bundle (not an object)
   { char *prefix;
     int   num_width;  //  bundle names are "%s.%0*d",prefix,num_width,first_num
     int   first_num;
@@ -242,7 +242,7 @@ void   Write_Stack_Planes(File_Bundle *bundle, Stack *stack);
         result to be shrunk then call Pack_Image on it.
   */
 
-typedef struct      //  A return bundle (not an object)
+typedef struct _Pixel_Range     //  A return bundle (not an object)
   { double maxval;
     double minval;
   } Pixel_Range;

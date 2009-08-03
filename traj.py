@@ -9,6 +9,7 @@ import warnings
 
 import pdb
 
+os.environ['PATH'] += r';.\\'
 ctraj = cdll.LoadLibrary( find_library('traj') )
 
 class cMeasurements(Structure):

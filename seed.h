@@ -9,22 +9,22 @@
 #define MIN_LENSQR 100     //  (MIN_LENGTH/2)^2
 #define MIN_LENPRJ  14     //  floor(MIN_LENGTH/sqrt(2))
 
-typedef struct
+typedef struct _Object_Map
   { int       num_objects;
     Contour **objects;
   } Object_Map;
 
-typedef struct
+typedef struct _Raster
   { short major;
     short minor;
   } Raster;
 
-typedef struct
+typedef struct _Seed
   { int  xpnt, ypnt;
     int  xdir, ydir;
   } Seed;
 
-typedef struct
+typedef struct _Seed_Vector
   { int   nseeds;
     Seed *seeds;
   } Seed_Vector;
