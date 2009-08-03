@@ -45,6 +45,10 @@ if __name__ == '__main__':
                                     "`sources` should include a whiskers file or         \
                                     a measurements file.   Optionally, a                 \
                                     trajectories file may be  included.                  \
+                                    `dest` is the output filename.  By default it is     \
+                                    written as a `MeasurementsTable` file.  However,     \
+                                    if the extenstion is `.mat` it will be written as a  \
+                                    Matlab data file.                                    \
                                                                                          \
                                     If a `whiskers` file is used,                        \
                                     Some hint must be provided to determine which        \
@@ -72,7 +76,8 @@ if __name__ == '__main__':
   if not len(args) in [1,2]:
     parser.error( "Expected 1 or 2 source files as arguments but recieved %d."%len(args) )
   if not os.path.exists(os.path.split(dst)[0]): 
-    raise IOError, "Could not find destination file %s"%dst
+    if os.path.split(dst)[0]!='':
+      raise IOError, "Could not find destination path %s"%os.path.split(dst)[0]
   if not all( map( os.path.exists, args )):
     raise IOError, "Could not find one or more input source files."
 
@@ -91,17 +96,24 @@ if __name__ == '__main__':
       summary.commit_traj_to_data_table( t, data ) 
     
   elif all(map( lambda f: os.path.splitext(f)[-1] in ['.trajectories','.measurements'], args )):  
-    if len(args) != 2:
-      parser.error( "Expected 2 source filenames. Got %d."%len(args) ) 
-    msrc, tsrc = args
-    assert os.path.splitext(msrc)[-1] == '.measurements'
-    assert os.path.splitext(tsrc)[-1] == '.trajectories'
+    sources = dict( map( lambda f: (os.path.splitext(f)[-1], f), args ) )
 
-    t,tid = load_trajectories( tsrc )
-    data = traj.MeasurementsTable( msrc ).asarray()
-    summary.commit_traj_to_data_table( t, data ) 
+    
+    try:
+      data = traj.MeasurementsTable( sources['.measurements'] ).asarray()
+    except KeyError:
+      raise UserException, "A .measurements file must be provided as one of the source files."
+
+    try:
+      t,tid = load_trajectories( sources['.trajectories'] )
+      summary.commit_traj_to_data_table( t, data ) 
+    except KeyError:
+      pass
   else:
     raise parser.error( "An unexpected combination of source file types was provided." )
 
-  table = traj.MeasurementsTable(data)
-  table.update_velocities().save(dst)
+  table = traj.MeasurementsTable(data).update_velocities()
+  if os.path.splitext(dst)[-1] == '.mat':
+    table.save_to_matlab_file( dst )
+  else:
+    table.save(dst)

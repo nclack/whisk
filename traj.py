@@ -351,6 +351,26 @@ class MeasurementsTable(object):
     ctraj.Measurements_Table_To_Filename( filename, self._measurements, self._nrows )
     return self
 
+  def save_to_matlab_file(self, filename, format = '5', do_compression = True, oned_as = 'row'):
+    """
+    Saves shape measurements to Matlab's .mat format.
+
+    This uses the `scipy.io.matlab.savemat` function.  See that functions documentation for
+    details on input options.
+
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> table.save_to_matlab_file( "data/testing/trash.mat" )    # doctest:+ELLIPSIS 
+    <...MeasurementsTable object at ...>
+    """
+    from scipy.io.matlab import savemat
+    kwargs = locals().copy()
+    for k in [ 'self', 'savemat', 'filename' ]:
+      del kwargs[k]
+    savemat( filename, 
+            { 'measurements': self.asarray() }, 
+            **kwargs)
+    return self
+
   def _load(self, filename):
     """
     Loads table from a saved file.

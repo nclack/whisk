@@ -107,8 +107,10 @@ def pipeline_standard(env, movie):
     env.Classify                                                ,
     #lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
     #( env.IdentitySolver                                        , 
+    #  env.MeasurementsAsMatlab                                  ,
     #  env.Summary
     #)                                                           ,
+    ( env.MeasurementsAsMatlab, ),
     env.Summary                             
   ]
 
@@ -131,10 +133,11 @@ def pipeline_curated(env, source):
   builders = [
     source,
     measure_and_label,
+    ( env.MeasurementsAsMatlab, ),
     env.Summary                           
   ]
   compose = lambda a,b: b(a)
-  jobs = reduce( compose, builders )
+  jobs = dfs_reduce( compose, builders )
   return jobs
 
 env  = Environment( 
@@ -158,6 +161,10 @@ env  = Environment(
                        suffix     = '.measurements',
                        src_suffix = '.whiskers'
                       ),
+    'MeasurementsAsMatlab': Builder(action = "measure.py $SOURCE $TARGET",
+                                    suffix = '.mat',
+                                    src_suffix = '.measurements'
+                                   ),
     'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT",
                         suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
