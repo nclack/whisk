@@ -113,6 +113,23 @@ class MeasurementsTable(object):
                                             );
     return data
 
+  def get_trajectories(self):
+    """
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> traj  = table.get_trajectories()
+    >>> max(traj.keys())
+    3
+    >>> max(traj[-1].keys())
+    4598
+    """
+    data = self.asarray()
+    t = {}
+    for row in data:
+      r = map(int,row[:3])
+      t.setdefault( r[0],{} ).setdefault( r[1], r[2] ) 
+    return t
+
+
   def get_state_range(self):
     """
     >>> data = numpy.load('data/testing/seq140[autotraj].npy')
@@ -352,7 +369,7 @@ class MeasurementsTable(object):
     ctraj.Measurements_Table_To_Filename( filename, self._measurements, self._nrows )
     return self
 
-  def save_to_matlab_file(self, filename, format = '5', do_compression = True, oned_as = 'row'):
+  def save_to_matlab_file(self, filename, format = '5'):
     """
     Saves shape measurements to Matlab's .mat format.
 
@@ -397,8 +414,11 @@ class Distributions(object):
     
     Initialize Distributions using a MeasurementTable:
     
-    >>> data = numpy.load('data/seq/whisker_data_0140[autotraj].npy')
+    >>> import numpy
+    >>> data = numpy.load( "data/testing/seq140[autotraj].npy" )
     >>> table = MeasurementsTable(data)
+
+    >>> table = MeasurementsTable('data/testing/seq140[autotraj].measurements')
     >>> dists = Distributions(table.update_velocities())         # doctest:+ELLIPSIS  
     ...
     """
@@ -662,9 +682,11 @@ ctraj.argtypes = [
   c_int ]                   # number of bins
 
 if __name__=='__main__':
-  testcases = [ Tests_MeasurementsTable_FromDoubles,
-                Tests_MeasurementsTable_FromFile,
-                Tests_Distributions ]
+  testcases = [ 
+                Tests_MeasurementsTable_FromDoubles,
+  #             Tests_MeasurementsTable_FromFile ,
+  #             Tests_Distributions 
+                ]
   suite = reduce( lambda a,b: a if a.addTest(b) else a, 
                   map( unittest.defaultTestLoader.loadTestsFromTestCase, testcases ) 
                 )
@@ -672,4 +694,4 @@ if __name__=='__main__':
   #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   suite.addTest( doctest.DocTestSuite() )
-  runner = unittest.TextTestRunner(verbosity=1,descriptions=0).run(suite)
+  runner = unittest.TextTestRunner(verbosity=2,descriptions=1).run(suite)
