@@ -30,6 +30,7 @@ import pdb
 #
 # dllpath = os.path.join(*os.path.split(__file__)[:-1])       #add location of this file to dll search path
 # cWhisk = CDLL(os.path.join( dllpath,"libwhisk%s"%libext) )
+os.environ['PATH'] += r';.//'
 cWhisk = CDLL( find_library("whisk") )
 
 #

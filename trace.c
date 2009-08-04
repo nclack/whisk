@@ -363,6 +363,8 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
   int max_segs= 0;
   int n_segs=0;
 
+
+
   // Prepare
   if( !h || ( sarea != area ) )
   { if(h)
@@ -696,7 +698,7 @@ void remove_duplicate_segments( Whisker_Seg *wv, int *n )
 
 SHARED_EXPORT
 int  write_line_detector_bank( char *filename, Array *bank, Range *off, Range *wid, Range *ang )
-{ FILE *fp = fopen(filename,"w+b");
+{ FILE *fp = fopen(filename,"wb");
 //  printf("%s %p\n",filename,fp);
 
   if(fp != NULL)
@@ -723,8 +725,8 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
 { FILE *fp;
 
   fp = fopen(filename,"rb");
-
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
+  progress("errno: %d\n",errno);
   progress("%s %p\n"
            "pointer to banks pointer: %p\n"
            "           banks pointer: %p\n",filename,fp,bank,*bank);
@@ -736,18 +738,18 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
 #endif
     Read_Range(fp, off);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
-    progress("read off, ");
-    Print_Range(stdout, off);    
+    progress("read off (%p), ",off);
+    Print_Range(stderr, off);    
 #endif
     Read_Range(fp, wid);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
     progress("read wid, ");
-    Print_Range(stdout, wid);
+    Print_Range(stderr, wid);
 #endif
     Read_Range(fp, ang);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
     progress("read ang, ");
-    Print_Range(stdout, ang);
+    Print_Range(stderr, ang);
 #endif
     *bank = Read_Array(fp);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
@@ -1145,10 +1147,7 @@ int *get_offset_list( Image *image, int support, float angle, int p, int *npx )
       py = p/(image->width);
   int ioob = 2*support*support; // index for out-of-bounds pixels
 
-  if( support > maxsupport )
-  { pxlist = (int*) Guarded_Realloc(pxlist, 2 * sizeof(int) * support * support, "pixel list" );
-    maxsupport = support;
-  }
+  pxlist = (int*) request_storage( pxlist, &maxsupport, sizeof(int), 2*support*support, "pixel list" );
 
   issa = is_small_angle( angle );
   if( p != lastp || issa != last_issmallangle ) //recompute only if neccessary
@@ -1485,8 +1484,9 @@ float  eval_line(Line_Params *line, Image *image, int p)
   static float lastscore = 0.0;
   static float bg     = -1.0; //background is bright
   static void *lastim = NULL;
-  
+
   // compute a nearby anchor
+
   coff      = round_anchor_and_offset( line, &p, image->width );
   pxlist    = get_offset_list( image, support, line->angle, p, &npxlist );
 

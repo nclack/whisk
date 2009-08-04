@@ -5,6 +5,7 @@
 #include "image_lib.h"
 #include "contour_lib.h"
 #include "seed.h"
+#include "eval.h"
 
 #define FRAME_DELTA 1
 
@@ -69,6 +70,9 @@ typedef struct _Whisker_Seg       //
  SHARED_EXPORT  void          Free_Whisker_Seg                      ( Whisker_Seg *w );                                  
  SHARED_EXPORT  void          Free_Whisker_Seg_Vec                  ( Whisker_Seg *wv, int n );                          
  SHARED_EXPORT  void          Estimate_Image_Shape_From_Segments    ( Whisker_Seg* wv, int n, int *width, int *height ); 
+
+ SHARED_EXPORT  Array *get_line_detector_bank   (Range *off, Range *wid, Range *ang);
+ SHARED_EXPORT  int    read_line_detector_bank  (char *filename, Array **bank, Range *off, Range *wid, Range *ang );
 
  SHARED_EXPORT  Whisker_Seg  *find_segments                 (int iFrame, Image *image, Image *bg, int *nseg );           
  SHARED_EXPORT  Image        *compute_background            (Stack *movie);                                              

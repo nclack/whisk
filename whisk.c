@@ -22,6 +22,70 @@
 #undef  WRITE_BACKGROUND
 
 #define PRINT_USAGE( object ) printf("\tUsage "#object": %5d\n", object##_Usage())
+
+
+
+// FIXME: 
+//    BUG:  Under winxp, get a crash on file operations when compiling with /MT or /MD rather than /MTd /MDd
+//          (i.e. can not get the code to work with the release version of the c runtime libraries).
+//          One guess is that I'm corrupting the runtime library with a bad pointer.  In the debug library,
+//          this happens in code that doesn't matter.  In the runtime library, it screws something up.
+//          Another guess is that I mess up the function pointers somehow so that fread/fwrite don't really
+//          point to good code.
+//
+//    TEST: Need to test displacing the code.  Can we chnage the size of the executable and get changes
+//          in behavior?  Can we bracket the problem this way?
+//
+//    TEST: Execute the infringing function earlier.
+//      
+//    NOTES: 
+//          injecting printf's changes behavior (Read_Range's will work, Read_Array will fail)
+
+//#include "eval.h"
+//double g_p = 2.0;
+//double test(double n) 
+//{ 
+//#if 0
+//  // This won't get optimized away.
+//  if ( fabs(n)<1e-3 || fabs(n-1)<1e-3 )
+//    return 1.0;
+//  else
+//    return n * test(n-1);
+//#elif 0
+//  { 
+//    FILE *fp = fopen("C:\\line.detectorbank","rb");
+//    double b[3] = {0.0, 0.0, 0.0};
+//    int n=3;
+//    if(!fp) printf("crap\n");
+//    fseek(fp,0,SEEK_SET);
+//    fread(b,sizeof(double)*3,1,fp);
+//    //printf("\n----------------\n");
+//    while(n--)
+//      g_p += b[n];
+//    return g_p;
+//  }
+//#elif 0
+//  { Array *bank;
+//    Range o,w,a;
+//    bank = get_line_detector_bank(&o, &w, &a);
+//    g_p += bank->ndim;
+//    //free(bank);
+//    return g_p;
+//  }
+//#else
+//  { Array *bank;
+//    Range o,w,a;
+//    g_p += read_line_detector_bank("line.detectorbank", &bank, &o, &w, &a );
+//    g_p += bank->ndim;
+//    free(bank);
+//    return g_p;
+//  }
+//#endif
+//}
+
+
+
+
 void check_usage(void)
 { PRINT_USAGE(Image);
   PRINT_USAGE(Stack);
@@ -201,8 +265,12 @@ int main(int argc, char *argv[])
 
   char * movie;
 
+//g_p = test(g_p); //1
+
   /* Process Arguments */
   Process_Arguments(argc,argv,Spec,0);
+
+//g_p = test(g_p); //2
 
   prefix = Get_String_Arg("prefix");
   prefix_len = strlen(prefix);
@@ -217,6 +285,7 @@ int main(int argc, char *argv[])
   sprintf( whisker_file_name, "%s.whiskers", prefix );
   sprintf(  bar_file_name, "%s.bar", prefix );
 
+//g_p = test(g_p); //3
 
   progress("Loading...\n"); fflush(stdout);
   movie = Get_String_Arg("movie");
@@ -264,7 +333,7 @@ int main(int argc, char *argv[])
     Whisker_Seg   *wv;// = (Whisker_Seg**) Guarded_Malloc( depth * sizeof(Whisker_Seg*), Program_Name());
     int wv_n; // = (int*) malloc ( depth * sizeof(int) );
     WhiskerFile wfile = Whisker_File_Open(whisker_file_name,"whiskbin1","w");
-
+//g_p = test(g_p); //4
     //fp = fopen(whisker_file_name,"w");
     if( !wfile )
     { fprintf(stderr, "Warning: couldn't open %s for writing.", whisker_file_name);
@@ -276,18 +345,24 @@ int main(int argc, char *argv[])
       //for( i=0; i<depth; i+= step )
       { //int i=76;
         int k;
+//g_p = test(g_p); //5
         image = Copy_Image( load(movie,i,NULL) );
-
+//g_p = test(g_p); //6
         progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
         //progress( "Finding segments for frame %5d of %d.\r", i, depth);
+//g_p = test(g_p); //7
         wv = find_segments(i, image, bg, &wv_n);
+//g_p = test(g_p); //9
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
                                                    image->width, image->height, 
                                                    2.0,    // scale down by this
                                                    2.0,    // distance threshold
                                                    0.8 );  // significant overlap fraction
+//g_p = test(g_p); //10
         Whisker_File_Append_Segments(wfile, wv, k);
+//g_p = test(g_p);
         Free_Whisker_Seg_Vec( wv, wv_n );
+//g_p = test(g_p);
         Free_Image(image);
       }
       printf("\n");
@@ -295,7 +370,7 @@ int main(int argc, char *argv[])
     }
   }
   load(movie,-1,NULL); // Close (and free)
-
+//progress("%f\n",g_p);
   Free_Image( bg );
   return 0;
 }

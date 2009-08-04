@@ -48,6 +48,8 @@ static inline int legal_move(int p, int d)
       return (p >= Cwidth);
     case 3:
       return (p % Cwidth > 0);
+    default:
+      exit(1);
   }
 }
 

@@ -15,20 +15,24 @@
 #include "aip.h"
 #include "utilities.h"
 
+
+
 #if 0
 #define DEBUG_READ_RANGE
+#define DEBUG_READ_ARRAY
 #endif
 
 #ifndef MAX
-#define MAX(a,b) (a>b)?a:b
+#define MAX(a,b) (((a)>(b))?(a):(b))
 #endif
 
 #ifndef MIN
-#define MIN(a,b) (a<b)?a:b
+#define MIN(a,b) (((a)<(b))?(a):(b))
 #endif
 
 void Print_Range( FILE *fp, Range *r)
 { fprintf(fp, "Range: From %5.5g to %5.5g by %g\n", r->min, r->max, r->step);
+  fflush(fp);
 }
 
 void  Read_Range( FILE *fp, Range *r )
@@ -37,8 +41,17 @@ void  Read_Range( FILE *fp, Range *r )
   progress("READ RANGE: fp = %p\n"
            "             r = %p\n"
            " sizeof(Range) = %d\n", fp, r, sizeof(Range) );
-#endif
+  progress("errno: %d\n",errno);
+  progress("ftell: %d\n",ftell(fp));
+  progress("feof : %d\n",feof(fp));
+#endif  FILE
+#if 1 
   n = fread( r, sizeof(Range), 1, fp );  
+#else
+  r->min = 0.0; r->max = 0.0; r->step = 0.0;
+  fseek(fp,sizeof(Range),SEEK_CUR);
+  progress("errno: %d\n",errno);
+#endif
 #ifdef DEBUG_READ_RANGE
   progress("READ RANGE (done): Read %d items.\n",n);
 #endif
@@ -73,9 +86,13 @@ Array *Read_Array( FILE *fp )
   int ndim;
   //printf("\there sizeof(Array) is %d\n",sizeof(Array)); fflush(stdout);
   a       = (Array   *) Guarded_Malloc ( sizeof(Array   ), "array struct" );
-  //printf("\tArray: %p\n",a); fflush(stdout);
+#ifdef DEBUG_READ_ARRAY
+  progress("\tArray: %p\n",a);
+#endif
   fread( &ndim,    sizeof(int), 1,   fp);
-  //printf("\tndim: %d\n",ndim); fflush(stdout);
+#ifdef DEBUG_READ_ARRAY
+  progress("\tndim: %d\n",ndim);
+#endif
   a->ndim = ndim;
 
   a->shape          = (     int*) Guarded_Malloc ( ndim     * sizeof(int), "array shape" );
@@ -85,14 +102,17 @@ Array *Read_Array( FILE *fp )
   fread( a->shape,         sizeof(int), ndim,       fp);
   fread( a->strides_bytes, sizeof(int), ndim+1,     fp);
   fread( a->strides_px   , sizeof(int), ndim+1,     fp);
-
+#ifdef DEBUG_READ_ARRAY
+  progress("\tnbytes: %d\n",a->strides_bytes[0]);
+#endif
   a->data = Guarded_Malloc( a->strides_bytes[0],"array data" );
 
   { int nitems;
     nitems = fread( a->data, 1, a->strides_bytes[0], fp );
     if( nitems != a->strides_bytes[0] )
-    { fprintf(stderr, "WARNING: Incorrect number of bytes read. Got %d. Expected %d\n",nitems, a->strides_bytes[0]);
-      fprintf(stderr, "\t ferror = %d\tfeof = %d\n",ferror(fp),feof(fp));
+    { error( "Incorrect number of bytes read. Got %d. Expected %d\n"
+             "\t ferror = %d\tfeof = %d\n",
+             nitems, a->strides_bytes[0], ferror(fp), feof(fp) );
     }
   }
 

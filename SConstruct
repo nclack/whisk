@@ -10,10 +10,10 @@ env = Environment(ENV = os.environ )
 if env['PLATFORM']=='win32':
   #env['CCFLAGS'] = ''
   #env.MergeFlags( env.ParseFlags('-g -lm') )
-  env.Append(CCFLAGS = r'/Od          /Ot     /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /W1 /ZI     /Gd /TC')   #Debug
-  #env.Append(CCFLAGS  = r'/Ox /Ob2 /Oi /Ot /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE     /EHsc       /MT  /W1 /Zi /Gy     /TC')   #Release - optimized compilation - BROKEN! fread problem?
+  #env.Append(CCFLAGS = r'/Od          /Ot     /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /W1 /ZI     /Gd /TC')   #Debug
+  env.Append(CCFLAGS  = r'/Ox /Ob2 /Oi /Ot /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE     /EHsc       /MT   /W1 /Zi /Gy     /TC')   #Release - optimized compilation - BROKEN! fread problem?
 else:
-  #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))
+  #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))  
   env.MergeFlags( env.ParseFlags( "-g -lm" ))
 env['no_import_lib'] = 1
 
