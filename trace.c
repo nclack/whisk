@@ -59,9 +59,9 @@
 #undef  EXPORT_COMPZONE_TIF
 #undef  APPLY_ZONE_MASK
 
-#define SEED_ON_GRID
-#if 0
 #define SEED_ON_MHAT_CONTOURS
+#if 0
+#define SEED_ON_GRID
 #endif
 
 #define SEED_ON_GRID_LATTICE_SPACING 50
@@ -2265,7 +2265,7 @@ Whisker_Seg *trace_whisker(Seed *s, Image *image)
     line.score = eval_line( &line, image, p );
     adjust_line_start(&line,image,&p,&roff,&rang,&rwid);
 
-    ldata = (record*) request_storage( ldata, &maxldata, sizeof(record), nleft+1, "trace whisker" );
+    ldata = (record*) request_storage( ldata, &maxldata, sizeof(record), nleft+1, "trace whisker 1" );
     compute_dxdy( &line, &dx, &dy);
     { record trec = {p%cwidth + dx, p/cwidth + dy, line.width, line.score };
       ldata[nleft++] = trec;
@@ -2328,7 +2328,7 @@ Whisker_Seg *trace_whisker(Seed *s, Image *image)
         }
       }
 
-      ldata = (record*) request_storage( ldata, &maxldata, sizeof(record), nleft+1, "trace whisker" );
+      ldata = (record*) request_storage( ldata, &maxldata, sizeof(record), nleft+1, "trace whisker 2" );
       compute_dxdy( &line, &dx, &dy);
       { record trec = {p%cwidth + dx, p/cwidth + dy, line.width, line.score };
         ldata[nleft++] = trec;
@@ -2398,7 +2398,7 @@ Whisker_Seg *trace_whisker(Seed *s, Image *image)
         }
       }
 
-      rdata = (record*) request_storage( rdata, &maxrdata, sizeof(record), nright+1, "trace whisker" );
+      rdata = (record*) request_storage( rdata, &maxrdata, sizeof(record), nright+1, "trace whisker 3" );
       compute_dxdy( &line, &dx, &dy);
       { record trec = {p%cwidth + dx, p/cwidth + dy, line.width, line.score };
         rdata[nright++] = trec;
