@@ -129,6 +129,33 @@ class MeasurementsTable(object):
       t.setdefault( r[0],{} ).setdefault( r[1], r[2] ) 
     return t
 
+  def commit_trajectories(self,traj):
+    """
+    >>> traj = {0: {0:0,1:0}, 1: {0:1,1:1} }
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> mn,mx = table.commit_trajectories(traj).get_state_range()
+    >>> mn
+    0
+    >>> mx
+    1
+    >>> lentraj = lambda x: len(table.get_shape_data(x))
+    >>> lentraj(0)
+    2
+    >>> add = lambda a,b:a+b
+    >>> table._nrows == reduce(add, map(lentraj,xrange(mn-1,mx+1)))
+    True
+    """
+    inv = {}
+    for tid,t in traj.iteritems():
+      for k in t.iteritems():
+        inv[k] = tid  
+
+    for i in xrange(self._nrows):  #update new
+      row = self._measurements[i]
+      s = inv.get( (row.fid,row.wid) )
+      row.state = s if (not s is None) else -1 
+
+    return self
 
   def get_state_range(self):
     """
@@ -138,7 +165,7 @@ class MeasurementsTable(object):
     0
     >>> mx
     3
-    """
+    """ 
     mn,mx = c_int(),c_int()
     sorted = (not self._sort_state is None ) and \
              ("state" in self._sort_state  )
@@ -684,14 +711,11 @@ ctraj.argtypes = [
 if __name__=='__main__':
   testcases = [ 
                 Tests_MeasurementsTable_FromDoubles,
-  #             Tests_MeasurementsTable_FromFile ,
-  #             Tests_Distributions 
+                Tests_MeasurementsTable_FromFile ,
+                Tests_Distributions 
                 ]
   suite = reduce( lambda a,b: a if a.addTest(b) else a, 
                   map( unittest.defaultTestLoader.loadTestsFromTestCase, testcases ) 
                 )
-  #suite = unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromDoubles )
-  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
-  #suite.addTest( unittest.defaultTestLoader.loadTestsFromTestCase( Tests_MeasurementsTable_FromFile ) )
   suite.addTest( doctest.DocTestSuite() )
   runner = unittest.TextTestRunner(verbosity=2,descriptions=1).run(suite)

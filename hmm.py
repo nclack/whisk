@@ -419,7 +419,7 @@ def apply_model(wvd,model):
   traj = {}
   wrowcmp = lambda a,b: wcmp(a[1],b[1])
   for fid, wv in wvd.iteritems():
-    print fid
+    #print fid
     seq = wid_sequence_from_frame( wv ) #ordered wid's
     labels,p,vp = model.viterbi_by_lookup(fid, seq )  
     tids = map( statemap.get, labels )
@@ -435,9 +435,14 @@ def apply_model(wvd,model):
 if __name__=='__main__':
   import sys, traj, trace
   name, whisker_src, measurements_src, dest = sys.argv
-  wvd = Load_Whiskers( whisker_src )
+  wvd = trace.Load_Whiskers( whisker_src )
   table = traj.MeasurementsTable( measurements_src )
 
   data = table.asarray()
-  # XXX: HERE
+  traj = table.get_trajectories()
+  model = LeftRightModel()
+  model.train(wvd,traj,data=data)
+  traj_hmm,logp,vlogp = apply_model(wvd,model)
+  table.commit_trajectories(traj)
 
+  table.save( dest )
