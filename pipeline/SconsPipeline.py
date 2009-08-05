@@ -106,11 +106,14 @@ def pipeline_standard(env, movie):
     #                                 source = j[0]) ,)          ,
     env.Classify                                                ,
     #lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
-    #( env.IdentitySolver                                        , 
-    #  env.MeasurementsAsMatlab                                  ,
-    #  env.Summary
-    #)                                                           ,
     ( env.MeasurementsAsMatlab, ),
+    ( env.IdentitySolver                                        , 
+      env.MeasurementsAsMatlab                                  ,
+      env.Summary
+    ) ,                    
+    ( env.HmmReclassifySolver,
+      env.MeasurementsAsMatlab,
+      env.Summary ),
     env.Summary                             
   ]
 
@@ -179,6 +182,7 @@ env.AppendENVPath('PATH', os.getcwd())
 
 env.AddMethod( labelled_commit_to_measurements, "CommitToMeasurements" )
 env.AddMethod( make_solver("test_traj_solve_gray_areas", "grey_v0"), "IdentitySolver" )
+env.AddMethod( make_solver("hmm.py", "hmm-reclassify"), "HmmReclassifySolver" )
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 
