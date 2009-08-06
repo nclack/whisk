@@ -468,7 +468,7 @@ inline double _diff(double a, double b)
 
 // Assumes `sorted_table` is sorted by Sort_Measurements_Table_State_Time
 SHARED_EXPORT
-void Compute_Velocities( Measurements *sorted_table, int n_rows )
+void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_rows )
 { int i;
   int n = sorted_table[0].n;
   while( n_rows-- > 1 )
@@ -1014,7 +1014,7 @@ void Solve( Measurements *table, int n_rows, int n_bins )
   
   Sort_Measurements_Table_State_Time( table, n_rows );
   nstates = _count_n_states( table, n_rows, 1, &minstate, &maxstate );
-  Compute_Velocities( table, n_rows );
+  Measurements_Table_Compute_Velocities( table, n_rows );
   shape    = Build_Distributions( table, n_rows, n_bins );
   velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // !! Changes the sort order: now table is in time order
   nframes = table[n_rows-1].fid + 1;
@@ -1147,7 +1147,7 @@ int main(int argc, char *argv[])
 
     Sort_Measurements_Table_State_Time( table, n_rows );
     nstates = _count_n_states( table, n_rows, 1, &minstate, &maxstate );
-    Compute_Velocities( table, n_rows );
+    Measurements_Table_Compute_Velocities( table, n_rows );
     shape    = Build_Distributions( table, n_rows, n_bins );
     velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // This changes the sort order, now table is in time order
     nframes = table[n_rows-1].fid + 1;
@@ -1178,7 +1178,7 @@ int main(int argc, char *argv[])
 
   Solve( table, n_rows, 32 );
   Sort_Measurements_Table_State_Time( table, n_rows );
-  Compute_Velocities( table, n_rows );
+  Measurements_Table_Compute_Velocities( table, n_rows );
   
   { int minstate, maxstate, istate;
     int nframes = table[n_rows-1].fid + 1;

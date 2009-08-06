@@ -104,11 +104,21 @@ for t in tests:
                                               'whisker_io.c',          'whisker_io_whiskbin1.c',
                                               'whisker_io_whisker1.c', 'whisker_io_whiskold.c'
                                               ] ) 
-## classift tests
+## classify tests
 tests = ["TEST_CLASSIFY_1",
          "TEST_CLASSIFY_2"
          ] 
 totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 'utilities.c', 'traj.c', 'common.c',
+                                                 'error.c','viterbi.c'
+                                               ] ) 
+
+## hmm-reclassify tests
+tests = ["TEST_HMM_RECLASSIFY_1",
+         ] 
+totestobj = lambda t: env.Object( 'hmm-reclassify_'+t.lower(), ['hmm-reclassify.c'], CPPDEFINES = t )
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',

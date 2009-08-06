@@ -38,6 +38,17 @@ void debug(char *str, ... )
 }
 
 SHARED_EXPORT
+void help(int show, char *str, ... )
+{ if(show)
+  { va_list argList;
+    va_start( argList, str );
+    vfprintf(stderr, str, argList);
+    va_end( argList );
+    fflush(NULL);
+  }
+}
+
+SHARED_EXPORT
 void progress(char *str, ... )
 { va_list argList;
   va_start( argList, str );
@@ -63,13 +74,13 @@ void progress_meter(double cur, double min, double max, int len, char *str, ...)
 
 
     n += sprintf(buf+n,"[");
-    len-=(n+2);
+    len-=(n-1);
     { 
       int nc = (len)*(cur-min)/(max-min);
-      len -= nc;
-      while(nc--  >= 0) 
+      len -= (nc+1);
+      while(nc--  > 0) 
         n+=sprintf(buf+n,"|");
-      while(len-- >= 0)
+      while(len-- > 0)
         n+=sprintf(buf+n,"-");
     }
     n+=sprintf(buf+n,"]\r");

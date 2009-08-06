@@ -99,7 +99,10 @@ SHARED_EXPORT void Sort_Measurements_Table_Time_Face( Measurements *table, int n
 SHARED_EXPORT void Sort_Measurements_Table_Time_State_Face( Measurements *table, int nrows );
 
 // Assumes `sorted_table` is sorted by Sort_Measurements_Table_State_Time
-SHARED_EXPORT void Compute_Velocities( Measurements *sorted_table, int n_rows );
+SHARED_EXPORT void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_rows );
+
+SHARED_EXPORT
+int _count_n_states( Measurements *table, int n_rows, int sorted, int *minstate, int *maxstate );
 
 SHARED_EXPORT Distributions *Alloc_Distributions_For_Sorted_Table( Measurements *sorted_table, int n_rows, int n_bins, int *minstate, int* maxstate );
 

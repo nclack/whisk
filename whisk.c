@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
     progress( "Finding bar positions\n" );
     fp = fopen( bar_file_name, "w" );
     for( i=0; i<depth; i++ )
-    { progress_meter(i, 0, depth, 79, "Locating post: [%5d/%5d]",i,depth);
+    { progress_meter(i, 0, depth-1, 79, "Locating post: [%5d/%5d]",i,depth);
       //progress( "Locating bar for frame %5d of %d.\n", i, depth);
       image = Copy_Image( load(movie,i,NULL) );
       invert_uint8( image );

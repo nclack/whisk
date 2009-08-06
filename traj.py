@@ -383,7 +383,7 @@ class MeasurementsTable(object):
     >>> vel = table.get_velocities_table()
     """
     self.sort_by_state_time()
-    ctraj.Compute_Velocities( self._measurements, self._nrows )
+    ctraj.Measurements_Table_Compute_Velocities( self._measurements, self._nrows )
     return self
 
   def save(self, filename):
