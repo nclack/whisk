@@ -15,3 +15,20 @@ void *request_storage( void *buffer, int *maxlen, int nbytes, int minindex, char
   }
   return buffer;
 }
+
+
+void maxfilt_double( double *a, int len, int support )
+{ int f = support/2;
+  double mxmx, mx;
+  int mxmx_n, mx_n;
+  int i;
+  
+  assert(support<len);
+
+  //init
+  for(i=0;i<f;i++)
+  { // XXX
+    // HERE
+    // TODO
+  }
+}
