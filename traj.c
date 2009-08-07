@@ -523,7 +523,7 @@ int _count_n_states( Measurements *table, int n_rows, int sorted, int *minstate,
 }
 
 SHARED_EXPORT
-Distributions *Alloc_Distributions_For_Sorted_Table( Measurements *sorted_table, int n_rows, int n_bins, int *minstate, int* maxstate )
+Distributions *Alloc_Distributions_For_State_Sorted_Table( Measurements *sorted_table, int n_rows, int n_bins, int *minstate, int* maxstate )
 { return Alloc_Distributions( n_bins,                                                   // n_bins
                               sorted_table[0].n,                                        // n_measures
                               _count_n_states( sorted_table, n_rows, 1, minstate, maxstate ) ); // n_states
@@ -533,7 +533,7 @@ Distributions *Alloc_Distributions_For_Sorted_Table( Measurements *sorted_table,
 SHARED_EXPORT
 Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int n_bins )
 { int minstate,maxstate;
-  Distributions *d = Alloc_Distributions_For_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
+  Distributions *d = Alloc_Distributions_For_State_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
   int i,j,k;
   int n = sorted_table[0].n;
   double *mn, *mx;
@@ -622,7 +622,7 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
 SHARED_EXPORT
 Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_rows, int n_bins )
 { int minstate,maxstate;
-  Distributions *d = Alloc_Distributions_For_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
+  Distributions *d = Alloc_Distributions_For_State_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
   int i,j,k;
   int n = sorted_table[0].n;
   double *mn, *mx;
@@ -739,6 +739,10 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
   }
 
   return d;
+}
+
+void Dilate_Distributions( Distributions* dist )
+{
 }
 
 // vec must be an array of length dist->n_measures

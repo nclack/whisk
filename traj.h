@@ -104,7 +104,7 @@ SHARED_EXPORT void Measurements_Table_Compute_Velocities( Measurements *sorted_t
 SHARED_EXPORT
 int _count_n_states( Measurements *table, int n_rows, int sorted, int *minstate, int *maxstate );
 
-SHARED_EXPORT Distributions *Alloc_Distributions_For_Sorted_Table( Measurements *sorted_table, int n_rows, int n_bins, int *minstate, int* maxstate );
+SHARED_EXPORT Distributions *Alloc_Distributions_For_State_Sorted_Table( Measurements *sorted_table, int n_rows, int n_bins, int *minstate, int* maxstate );
 
 // The range of these histograms covers the state space sampled by the movie
 SHARED_EXPORT Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int n_bins );

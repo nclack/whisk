@@ -285,6 +285,7 @@ int main(int argc, char*argv[])
   // using the approximate/incomplete trajectories.
   //
 
+  Sort_Measurements_Table_State_Time(table, nrows);
   shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
   vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
 
