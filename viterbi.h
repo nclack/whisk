@@ -1,3 +1,20 @@
+//
+//
+// -------
+// Viterbi
+// -------
+//
+// The viterbi algorithm is a dynamic programming algorithm for computing the
+// most likely path through a markov model.  In particular, it handles 
+// models where the states themselves have some weight.  
+//
+// The implimentation here is for the `forward` algorithm and assumes a
+// probabilistic model and is pretty naive (unoptimized).  It takes about
+// O(nstate^2) space and O(nstate) time.  There are very efficient
+// implimentations that have been written for error correcting codes and
+// compression, so if this becomes a bottleneck, it could be worth researching
+// those.
+//
 #ifndef H_VITERBI
 #define H_VITERBI
 
@@ -24,7 +41,7 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
                                 int nobs,               // the size of the set of observables ( need for stride )
                                 int nstates );          // number of states (size of state alphabet)
 
-// TODO: Logarithmic number system
+// DONE: Logarithmic number system
 // LNS can be ignored if P(O|Model) doesn't need to be computed
 // Without LNS, can still get P(X|O,Model)
 SHARED_EXPORT
