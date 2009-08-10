@@ -114,10 +114,10 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
                                 int nstates )           // number of states (size of state alphabet)
 { static ViterbiState  *last = NULL;  
   static ViterbiState  *next = NULL;
-  static int maxnext = 0;
-  static int maxlast = 0;
+  static size_t maxnext = 0;
+  static size_t maxlast = 0;
   static ViterbiPath  *pool = NULL;
-  static int poolsize = 0;
+  static size_t poolsize = 0;
   int npool = 0;
   int isrc,idst,iseq, iobs;
 
@@ -224,10 +224,10 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
                                        int nstates)            // number of states (size of state alphabet)
 { static ViterbiState  *last = NULL;  
   static ViterbiState  *next = NULL;
-  static int maxnext = 0;
-  static int maxlast = 0;
+  static size_t maxnext = 0;
+  static size_t maxlast = 0;
   static ViterbiPath  *pool = NULL;
-  static int poolsize = 0;
+  static size_t poolsize = 0;
   int npool = 0;
   int isrc,idst,iseq, iobs;
 

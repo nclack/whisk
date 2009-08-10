@@ -769,7 +769,7 @@ double Eval_Likelihood_Log2( Distributions *dist, double *vec, int istate )
 SHARED_EXPORT
 double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, double *next, int istate )
 { static double *vec = NULL;
-  static int maxn = 0;
+  static size_t maxn = 0;
   int i = dist->n_measures;
   vec = (double*) request_storage( vec, &maxn, sizeof(double), i, "eval transitions");
   while(i--)

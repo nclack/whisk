@@ -6,6 +6,29 @@ import os
 Progress('Scanning:  $TARGET\r',overwrite=True)
 
 env = Environment(ENV = os.environ )
+
+# Add builder for transforming .p --> .c
+awk = Builder( action = "awk -f manager.awk $SOURCE > $TARGET",
+               suffix = '.c',
+               src_suffix = '.p' )
+env.Append( BUILDERS = {'Awk' : awk} )
+
+#
+# COLORIZE 
+#
+
+try:
+  from scons_colorizer import colorizer
+  col = colorizer()
+  col.colorize(env)
+  col.colorizeBuilder(env,'Awk',"Generating Myers Managed code",True,col.cGreen)
+except ImportError,e:
+  print e
+
+##
+# PLATFORM DEPENDENT CONFIG
+#
+#
 #Tool('mingw')(env)
 if env['PLATFORM']=='win32':
   #env['CCFLAGS'] = ''
@@ -17,6 +40,10 @@ else:
   env.MergeFlags( env.ParseFlags( "-g -lm" ))
 env['no_import_lib'] = 1
 
+##
+# MAIN TARGETS
+#
+
 mains = Split( """ whisk
                    seedtest
                    test_whisker_io
@@ -27,11 +54,6 @@ excludes = set(( """ collisiontable_link_list.c
                      trajectory.c
                  """ ).split())
         
-# Add builder for transforming .p --> .c
-awk = Builder( action = "awk -f manager.awk $SOURCE > $TARGET",
-               suffix = '.c',
-               src_suffix = '.p' )
-env.Append( BUILDERS = {'Awk' : awk} )
 
 # Register files that have to be awked
 # Get a list of the resultant c files.
@@ -59,7 +81,7 @@ obj = env.Object("whisker_io_main", "whisker_io.c", CPPDEFINES = "WHISKER_IO_CON
 env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
 
 ## traj 
-libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c','viterbi.c'] )
+libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c','viterbi.c','deque.c'] )
 
 ## install - copy things around
 env.Install( 'ui/whiskerdata', ['trace.py', libwhisk] ) 
@@ -78,7 +100,7 @@ for i in range(2,6):
 
 ## viterbi tests
 viterbi_test = env.Object('viterbi_test', ['viterbi.c'], CPPDEFINES = "TEST_VITERBI")
-env.Program('test_viterbi', [viterbi_test, 'common.c', 'utilities.c','error.c'])
+env.Program('test_viterbi', [viterbi_test, 'common.c', 'utilities.c','error.c','deque.c'])
 
 ## traj tests
 tests = ["TEST_BUILD_DISTRIBUTIONS",
@@ -86,7 +108,8 @@ tests = ["TEST_BUILD_DISTRIBUTIONS",
          "TEST_SOLVE_GRAY_AREAS" ]
 totestobj = lambda t: env.Object( 'trajobj_'+t.lower(), ['traj.c'], CPPDEFINES = t)
 for t in tests:
-  env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c','utilities.c','viterbi.c'] ) 
+  env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c',
+                                            'utilities.c','viterbi.c','deque.c'] ) 
 
 ## merge tests
 tests = ["TEST_COLLISIONTABLE_1",
@@ -102,7 +125,8 @@ for t in tests:
                                               'trace.c',     'tiff_image.c','compat.c',
                                               'aip.c',       'seed.c',      'draw_lib.c',
                                               'whisker_io.c',          'whisker_io_whiskbin1.c',
-                                              'whisker_io_whisker1.c', 'whisker_io_whiskold.c'
+                                              'whisker_io_whisker1.c', 'whisker_io_whiskold.c',
+                                              'deque.c'
                                               ] ) 
 ## classify tests
 tests = ["TEST_CLASSIFY_1",
@@ -112,7 +136,7 @@ totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFI
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',
-                                                 'error.c','viterbi.c'
+                                                 'error.c','viterbi.c','deque.c'
                                                ] ) 
 
 ## hmm-reclassify tests
@@ -122,5 +146,26 @@ totestobj = lambda t: env.Object( 'hmm-reclassify_'+t.lower(), ['hmm-reclassify.
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',
-                                                 'error.c','viterbi.c'
+                                                 'error.c','viterbi.c','deque.c'
                                                ] ) 
+## Deque tests
+tests = ["TEST_DEQUE_1",
+         ] 
+totestobj = lambda t: env.Object( 'deque_'+t.lower(), ['deque.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 'utilities.c', 'common.c',
+                                                 'error.c',
+                                               ] ) 
+
+## Deque tests
+tests = ["TEST_MAX_FILT_1",
+         "TEST_MAX_FILT_2", 
+         ] 
+totestobj = lambda t: env.Object( 'common_'+t.lower(), ['common.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 'utilities.c', 'deque.c',
+                                                 'error.c',
+                                               ] ) 
+

@@ -1,6 +1,8 @@
 #ifndef _H_COMMON
 #define _H_COMMON
 
+#include <stdlib.h>
+
 // #include <vld.h> // for VC++: Visual Leak Detector (v1.9b) 
                     // - comment out if this causes problems
                     // - comment in  to check for memory leaks in an
@@ -40,7 +42,12 @@
     ...
   }
 */
-void *request_storage( void *buffer, int *maxlen, int nbytes, int minindex, char *msg );
+void *request_storage( 
+    void   *buffer  , 
+    size_t *maxlen  , 
+    size_t  nbytes  , 
+    size_t  minindex, 
+    char   *msg );
 
 #endif //_H_COMMON
 

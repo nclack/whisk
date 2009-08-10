@@ -804,7 +804,7 @@ SHARED_EXPORT
 Seed_Vector *find_seeds2( Contour *trace, Image *image )
 { static Seed_Vector sv;
   static Seed *seeds = NULL;
-  static int   maxseeds = 0;
+  static size_t   maxseeds = 0;
 
   int   maxr      = 4;
   int   width     = image->width;

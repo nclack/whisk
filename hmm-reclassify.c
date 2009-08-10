@@ -164,7 +164,7 @@ real *LRModel_Alloc_Emissions( int nwhisk, int nobs )
 
 real *LRModel_Request_Static_Resizable_Emissions( int nwhisk, int nobs )
 { int N = 2 * nwhisk + 1; 
-  static int maxsize = 0;
+  static size_t maxsize = 0;
   static real *E = NULL;
   E = request_storage(E, &maxsize, sizeof(real), nobs*N*N, "LRModel_Request_Static_Resizable_Emissions");
   return E;
@@ -204,8 +204,8 @@ void LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2( real *E, int nwhisk, 
 }
 
 int *_static_range( int n )
-{ static int maxsize = 0,
-            *buf = NULL;
+{ static size_t maxsize = 0;
+  static int *buf = NULL;
   buf = request_storage( buf, &maxsize, sizeof(int), n, "_static_range" );
   while(n--)
     buf[n] = n;

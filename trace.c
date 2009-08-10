@@ -270,7 +270,7 @@ void draw_whisker( Image *image, Whisker_Seg *w, int thick, uint8 value )
    * lattice.
    */
 { static int *rasters = NULL; // a pairs of x values for each y in image
-  static int maxrasters = 0;
+  static size_t maxrasters = 0;
   float ox,oy;
 
   rasters = (int*) request_storage( rasters, &maxrasters, 2*sizeof(int), image->height, "draw_whisker - rasters");
@@ -360,10 +360,8 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
          int  area = image->width * image->height;
   Object_Map  *omap;
   Whisker_Seg *wsegs = NULL;
-  int max_segs= 0;
+  size_t max_segs= 0;
   int n_segs=0;
-
-
 
   // Prepare
   if( !h || ( sarea != area ) )
@@ -1138,7 +1136,7 @@ int *get_offset_list( Image *image, int support, float angle, int p, int *npx )
    */
 { static int *pxlist = (NULL);
   static int snpx = 0;
-  static int maxsupport = 0;
+  static size_t maxsupport = 0;
   static int lastp = -1;
   static int last_issmallangle = -1;
   int i,j, issa;
@@ -2220,7 +2218,8 @@ SHARED_EXPORT
 Whisker_Seg *trace_whisker(Seed *s, Image *image)
 { typedef struct { float x; float y; float thick; float score; } record;
   static record *ldata, *rdata;
-  static int maxldata = 0, maxrdata = 0;
+  static size_t maxldata = 0, maxrdata = 0;
+
   int nleft = 0, nright = 0;
   float x,y,dx,dy,newoff;
   int cwidth  = image->width,

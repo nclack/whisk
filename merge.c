@@ -481,7 +481,7 @@ inline float _whisker_seg_score_sum( Whisker_Seg *w )
 int Remove_Overlapping_Whiskers_Multi_Frame( Whisker_Seg *wv, int wv_n, float scale, float dist_thresh, float overlap_thresh )
 { int i,j, w, h;
   static uint8_t *keepers = NULL;
-  static int keepers_size = 0;
+  static size_t keepers_size = 0;
   CollisionTable *table;
   
   qsort( wv, wv_n, sizeof(Whisker_Seg), &_cmp_whisker_seg_frame ); // dunno if this is strictly necessary
@@ -588,7 +588,7 @@ int Remove_Overlapping_Whiskers_One_Frame( Whisker_Seg *wv,
                                            float overlap_thresh )
 { int i,j;
   static uint8_t *keepers = NULL;
-  static int keepers_size = 0;
+  static size_t keepers_size = 0;
   static CollisionTable *table = NULL;
   static int area;
   int n;
