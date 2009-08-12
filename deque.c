@@ -9,6 +9,7 @@
  *       + If the size of the active area of the store remains constant
  *          never reallocs.
  *
+ * NOTE: This is unused right now
  */
 
 #include "compat.h"

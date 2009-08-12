@@ -49,5 +49,6 @@ void *request_storage(
     size_t  minindex, 
     char   *msg );
 
+void maxfilt_centered_double_inplace( double *a, int len, int support );
 #endif //_H_COMMON
 
