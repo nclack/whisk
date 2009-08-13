@@ -346,16 +346,26 @@ def plot_summary_measurements_table(table, px2mm=None):
   >>> table = MeasurementsTable("data/testing/seq140[autotraj].measurements")
   >>> plot_summary_measurements_table(table.update_velocities())
   """
-  time,mask = table.get_time_and_mask(0)
-  dt = diff(time)
-  idx, = where(dt>1)
-  bars = [ (time[i], dt[i] ) for i in idx ]
+  def getbars(state):
+    time,mask = table.get_time_and_mask(state)
+    dt = diff(time)
+    idx, = where(dt>1)
+    return [ (time[i], dt[i] ) for i in idx ]
+  states = range(*table.get_state_range())
+  cmap = cm.hsv
+  N = float(len(states))
   
   data = table.get_shape_table()
   th0 = floor(( data[:,2].mean() + 45)/90)*90
   vmin1,vmax1 = th0-90,th0+90
   ax = subplot(211)
-  ax.broken_barh( bars, (vmin1,vmax1-vmin1) ,edgecolors=[(0,0,0,0)],facecolors=[(0,0,0,0.5)] )
+  for i,s in enumerate(states):
+    ax.broken_barh( getbars(s), 
+                    (vmin1,vmax1-vmin1),
+                    edgecolors=[(0,0,0,0)],
+                    facecolors=[cmap(i/N,alpha=0.5)],
+                    alpha = 1.0/N 
+                    )
   xlabel('Time (frames)')
   ylabel('Angle at root (deg)')
   ax = subplot(211)
@@ -369,15 +379,23 @@ def plot_summary_measurements_table(table, px2mm=None):
   else:
     ylabel('Mean Curvature (1/mm)')
     vmin2,vmax2 = -0.4,0.4
-  ax.broken_barh( bars, (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
+  for i,s in enumerate(states):
+    ax.broken_barh( getbars(s), 
+                    (vmin1,vmax1-vmin1),
+                    edgecolors=[(0,0,0,0)],
+                    facecolors=[cmap(i/N,alpha=0.5)],
+                    alpha = 1.0/N 
+                    )
+  #ax.broken_barh( getbars(0), (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
 
-  for tid in table.iter_state():
+  #for tid in table.iter_state():
+  for i,tid in enumerate(states):
     time,mask = table.get_time_and_mask(tid)
     data = table.get_shape_data(tid)
     subplot(211)
-    plot(time,data[:,2])
+    plot(time,data[:,2],color=cmap(i/N) )
     subplot(212)
-    plot(time,data[:,3]/px2mm)
+    plot(time,data[:,3]/px2mm,color=cmap(i/N) )
 
   ax = subplot(211)
   axis((0,time.max(),vmin1,vmax1))

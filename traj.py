@@ -472,7 +472,11 @@ class Distributions(object):
     assert isinstance(table,MeasurementsTable), "Wrong type for table."
     table.sort_by_state_time()
     self._shp = ctraj.Build_Distributions         ( table._measurements, table._nrows, nbins )
+    ctraj.Distributions_Normalize( self._shp )
+    ctraj.Distributions_Apply_Log2( self._shp )
     self._vel = ctraj.Build_Velocity_Distributions( table._measurements, table._nrows, nbins ) #changes table's sort order
+    ctraj.Distributions_Normalize( self._vel )
+    ctraj.Distributions_Apply_Log2( self._vel )
     table._sort_state = 'time'
     return self
   

@@ -52,14 +52,18 @@ real *LRModel_Alloc_Transitions( int nwhisk )
 real *LRModel_Init_Uniform_Transitions( real *T, int nwhisk )
 { int i, N = 2 * nwhisk + 1; 
   memset( T, 0, sizeof(double)*N*N );
-  for( i=0; i<N; i+=2 ) // junk
-  { T[i, i  ] = 0.5;    //      to self
-    T[i, i+1] = 0.5;    //      to next whisker
+  for( i=0; i<N-1; i+=2 ) // junk
+  { T[i*N + i  ] = 0.5;      //      to self
+    T[i*N + i+1] = 0.5;      //      to next whisker
   }
-  for( i=1; i<N; i+=2 ) // whisker
-  { T[i, i+1] = 0.5;    //      to next junk
-    T[i, i+2] = 0.5;    //      to next whisker
+  for( i=1; i<N-2; i+=2 ) // whisker
+  { T[i*N + i+1] = 0.5;      //      to next junk
+    T[i*N + i+2] = 0.5;      //      to next whisker
   }
+  T[i*N+i+1] = 1;
+  // take care of last row
+  if( (N-1)%2 == 0 )
+    T[ (N-1)*N + N-1 ] = 1;
   return T;
 }
 
@@ -70,25 +74,51 @@ void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int 
   memset( T, 0, sizeof(double)*N*N );
   Sort_Measurements_Table_Time_Face( table, nrows );
 
-  for( row = table; row < table+nrows; row++ )
+  row = table;
+  //for( row = table; row < table+nrows; row++ )
+  while( row < table+nrows )
   { Measurements *bookmark = row;             //remember the frame's start
     int cur = row->fid;               //1. check if any are labelled
     for(; row->fid == cur; row++)             //iterate through segments in frame
     { if( row->state != -1 )          //2. if found labelled, then run through labelling process
       { int state = (bookmark->state != -1 ); // start at state=1 if first is a whisker (not junk)
         int last = state;                     // last is the last class (junk<0> or whisker<1>)
+#ifdef DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
+          progress("Frame: %5d  Whisker: %3d  State: %3d \n", 
+              bookmark->fid, bookmark->wid, bookmark->state);
+#endif
         for( row = bookmark+1; row->fid == cur; row++) 
         { int c = (row->state != -1);
           int delta = 1;              //delta state (1 for cases j->w and w->j)
           if( c == last ) //j->j or w->w
             delta = 2*( c&1 );  // 0 or 2
-          T[N*state +  state+delta] ++;           // aggregate
-          state+=delta;
-          last = c;
+#ifdef DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
+          progress("Frame: %5d  Whisker: %3d  State: %3d Transition: %2d -> %2d\n", 
+              row->fid, row->wid, row->state, state, state+delta );
+          assert( (state!=(N-1)) || (delta==0) );
+#endif
+          T[N*state +  state+delta] ++;  // accumulate
+          state+=delta;                  // Note: `state` is a natural number
+          last = c;                      // Note: `last`, `c` are 0 (junk) or 1(whisker) 
         }
-        row--;
+        //row--;
+        break;
       }
     }
+  }
+  //increment all allowable transitions once.
+  // don't want to disallow non-observed transitions
+  { int i;
+    for(i=0;i<N-1;i+=2)  //even rows (junk)
+    { T[i*N + i   ]++;
+      T[i*N + i+1 ]++;
+    }
+    for(i=1;i<N-2;i+=2)  //odd rows (whiskers)
+    { T[i*N + i+1 ]++;
+      T[i*N + i+2 ]++;
+    }
+    T[i*N + i+1]++; //last odd state
+    // don't really need to do last row
   }
   //row-wise norm - make T a stochastic matrix
   { real *row;
@@ -102,14 +132,16 @@ void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int 
     }
 #ifdef DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
     // Assert properly normed
-    { real *t,sum = 0.0;
-      for( row=T; row < t + N*N; row++ )
-      { if( (row-T)%N )
-        { sum += *row;
-        } else {
-          assert( fabs(sum-1.0) < 1e-3 );
+    { real sum = 1.0;
+      double *row;
+      int N = nwhisk*2 + 1;
+      for( row=T; row < T + N*N; row++ )
+      { 
+        if( ! (row-T)%N )
+        { assert( fabs(sum-1.0) < 1e-3 );
           sum = 0.0;
         }
+        sum += *row;
       }
     } 
 #endif
@@ -236,11 +268,20 @@ int main(int argc, char*argv[])
     " whiskers in each frame, the results are saved to this file.\n" );
 
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &nrows );
-  Sort_Measurements_Table_State_Time(table, nrows);
 
   //
   // Compute velocities using approximate/incomplete labelling
   //
+  Sort_Measurements_Table_State_Time(table, nrows);
+#ifdef DEBUG_HMM_RECLASSIFY
+  { int i; // check the sort
+    for(i=1;i<nrows;i++)
+    { assert(  table[i].state >= table[i-1].state);
+      assert( (table[i].state >= table[i-1].state) ||
+              (table[i].fid   >= table[i-1].fid  ) );  
+    }
+  }
+#endif
   Measurements_Table_Compute_Velocities(table,nrows);
   
   { int nstate,minstate,maxstate;
@@ -259,7 +300,23 @@ int main(int argc, char*argv[])
   //
 
   T = LRModel_Alloc_Transitions(nwhisk);
-  LRModel_Estimate_Transitions( T, nwhisk, table, nrows );
+  LRModel_Init_Uniform_Transitions(T,nwhisk);
+  //LRModel_Estimate_Transitions( T, nwhisk, table, nrows );
+#ifdef DEBUG_HMM_RECLASSIFY
+  // Assert properly normed
+  { real sum = 1.0;
+    double *row;
+    int N = nwhisk*2 + 1;
+    for( row=T; row < T + N*N; row++ )
+    { 
+      if( ! (row-T)%N )
+      { assert( fabs(sum-1.0) < 1e-3 );
+        sum = 0.0;
+      }
+      sum += *row;
+    }
+  } 
+#endif
   LRModel_Log2_Transitions(T,nwhisk, HMM_RECLASSIFY_BASELINE_LOG2);
 
   //
@@ -288,6 +345,12 @@ int main(int argc, char*argv[])
   Sort_Measurements_Table_State_Time(table, nrows);
   shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
   vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
+  Distributions_Dilate( shp_dists );
+  Distributions_Dilate( vel_dists );
+  Distributions_Normalize( shp_dists );
+  Distributions_Normalize( vel_dists );
+  Distributions_Apply_Log2( shp_dists );
+  Distributions_Apply_Log2( vel_dists );
 
   //
   // Process frames independantly
@@ -299,12 +362,20 @@ int main(int argc, char*argv[])
     real *S = LRModel_Alloc_Starts( nwhisk );
     Measurements *row;
 
-    for( row = table; row < table+nrows; row++ )
+    row = table;
+    while( row < table+nrows )
+    //for( row = table; row < table+nrows; row++ )
     { Measurements *bookmark = row;
       int fid = row->fid;
       int nobs;
-      while( (row++)->fid == fid );
-      nobs = row - bookmark - 1;
+      while( row->fid == fid && row < table+nrows ) 
+      { 
+#ifdef DEBUG_HMM_RECLASSIFY
+          progress("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
+#endif
+        ++row;
+      }
+      nobs = row - bookmark;
       
       LRModel_Compute_Starts_For_Two_Classes_Log2( S, nwhisk, bookmark, shp_dists );
 

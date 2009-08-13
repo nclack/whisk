@@ -592,21 +592,6 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
     }
   }
 
-  // Normalize
-  for( i=0; i < d->n_states; i++ )
-  { double *hists = d->data + i * state_stride;
-    for( j=0; j < d->n_measures; j++ )
-    { double *h = hists + j * measure_stride;
-      double norm = 0;
-      for( k=0; k < d->n_bins; k++ )  // Add one to each bin (make sure nothing is impossible)
-        h[k]++;
-      for( k=0; k < d->n_bins; k++ )  // Accumulate 
-        norm += h[k];
-      norm = log2(norm);
-      for( k=0; k < d->n_bins; k++ )  // Apply norm, take log2
-        h[k] = log2(h[k]) - norm;
-    }
-  }
   free(mn);
 #ifdef DEBUG_BUILD_DISTRIBUTIONS 
   printf("Returning %p\n",d);
@@ -722,28 +707,42 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
     }
   }
 
+  return d;
+}
+
+void Distributions_Normalize( Distributions *d )
+{ int i,j,k;
+  int measure_stride = d->n_bins,
+      state_stride   = d->n_bins * d->n_measures,
+      dvol           = d->n_bins * d->n_measures * d->n_states; 
   // Normalize
   for( i=0; i < d->n_states; i++ )
   { double *hists = d->data + i * state_stride;
     for( j=0; j < d->n_measures; j++ )
     { double *h = hists + j * measure_stride;
       double norm = 0;
-      for( k=0; k < d->n_bins; k++ )  // Add one to each bin (make sure nothing is impossible)
+      for( k=0; k < d->n_bins; k++ )  // Add one to each bin (want something like upper bound for probs)
         h[k]++;
       for( k=0; k < d->n_bins; k++ )  // Accumulate 
         norm += h[k];
-      norm = log2(norm);
-      for( k=0; k < d->n_bins; k++ )  // Apply norm - take log
-        h[k] = log2( h[k] ) - norm;
+      for( k=0; k < d->n_bins; k++ )  // Apply norm
+        h[k] = h[k] / norm;
     }
   }
-
-  return d;
 }
 
-void Dilate_Distributions( Distributions* dist )
-{ int stride = dist->n_bins;
+void Distributions_Apply_Log2( Distributions *d )
+{ double *data = d->data, 
+         *e = d->data + d->n_states * d->n_measures * d->n_bins;
+  while(e-- > data)
+    *e = log2(*e);
+}
 
+void Distributions_Dilate( Distributions* dist )
+{ int stride = dist->n_bins;
+  double *a = dist->data + dist->n_bins * dist->n_measures * dist->n_states;
+  while( (a-=stride) > dist->data )
+    maxfilt_centered_double_inplace( a, stride, 3 ); 
 }
 
 // vec must be an array of length dist->n_measures
@@ -1022,6 +1021,10 @@ void Solve( Measurements *table, int n_rows, int n_bins )
   Measurements_Table_Compute_Velocities( table, n_rows );
   shape    = Build_Distributions( table, n_rows, n_bins );
   velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // !! Changes the sort order: now table is in time order
+  Distributions_Normalize( shape );
+  Distributions_Normalize( velocity );
+  Distributions_Apply_Log2( shape );
+  Distributions_Apply_Log2( velocity );
   nframes = table[n_rows-1].fid + 1;
 
 #ifdef DEBUG_SOLVE_GRAY_AREAS
@@ -1155,6 +1158,10 @@ int main(int argc, char *argv[])
     Measurements_Table_Compute_Velocities( table, n_rows );
     shape    = Build_Distributions( table, n_rows, n_bins );
     velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // This changes the sort order, now table is in time order
+    Distributions_Normalize( shape );
+    Distributions_Normalize( velocity );
+    Distributions_Apply_Log2( shape );
+    Distributions_Apply_Log2( velocity );
     nframes = table[n_rows-1].fid + 1;
 
     Free_Distributions( shape );
