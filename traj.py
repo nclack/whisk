@@ -129,6 +129,43 @@ class MeasurementsTable(object):
       t.setdefault( r[0],{} ).setdefault( r[1], r[2] ) 
     return t
 
+  def save_trajectories(self, filename):
+    """  Saves to a trajectories file.
+
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> table.save_trajectories( "data/testing/trash.trajectories" ) # doctest:+ELLIPSIS 
+    <...MeasurementsTable object at ...>
+    """
+    trajectories = self.get_trajectories()
+    f = open( filename, 'w' )
+    for k,v in trajectories.iteritems():
+      for s,t in v.iteritems():
+        print >> f, '%d,%d,%d'%(k,s,t)
+    return self
+
+  def load_trajectories(self,filename ):
+    """  Loads trajectories and saves them to the table.
+    Trajectory id's correspond to the `state` label.
+
+    >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+    >>> table.save_trajectories( "data/testing/trash.trajectories" )  # doctest:+ELLIPSIS 
+    <...MeasurementsTable object at ...>
+    >>> table.load_trajectories( "data/testing/trash.trajectories" )  # doctest:+ELLIPSIS 
+    <...MeasurementsTable object at ...>
+    """
+    trajectories = {}
+    f = open( filename, 'r' )
+
+    cur = 0;
+    for line in f:
+      t = [int(x) for x in line.split(',')[:3]]
+      if not t[0] in trajectories:
+        trajectories[t[0]] = {}
+      trajectories[ t[0] ][ t[1] ] = t[2];
+
+    self.commit_trajectories( trajectories )
+    return self
+
   def commit_trajectories(self,traj):
     """
     >>> traj = {0: {0:0,1:0}, 1: {0:1,1:1} }

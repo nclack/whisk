@@ -12,7 +12,7 @@
 #if 0
 #endif
 
-#define HMM_RECLASSIFY_DISTS_NBINS   (32)
+#define HMM_RECLASSIFY_DISTS_NBINS   (16)
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
 void _doubles_to_filename(char* filename, double* a, int n)
@@ -170,8 +170,10 @@ real *LRModel_Alloc_Starts( int nwhisk )
 
 void LRModel_Compute_Starts_For_Two_Classes_Log2( real *S, int nwhisk, Measurements *first, Distributions *shp_dists )
 { int N = 2 * nwhisk + 1;
+  double v[2] = { Eval_Likelihood_Log2( shp_dists, first->data, 0 ),
+                  Eval_Likelihood_Log2( shp_dists, first->data, 1 ) }; 
   while(N--)
-    S[N] = Eval_Likelihood_Log2( shp_dists, first->data, N&1 );
+    S[N] = v[ N%2 ];
 }
 
 void LRModel_Compute_Starts_For_Distinct_Whiskers_Log2( real *S, int nwhisk, Measurements *first, Distributions *shp_dists )

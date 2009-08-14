@@ -340,25 +340,41 @@ def plot_summary_data(wvd,traj,data):
   ax = subplot(212)
   axis((0,tmax,vmin2,vmax2))
 
-def plot_summary_measurements_table(table, px2mm=None):
+def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   """
   >>> from traj import MeasurementsTable
   >>> table = MeasurementsTable("data/testing/seq140[autotraj].measurements")
   >>> plot_summary_measurements_table(table.update_velocities())
   """
+  defaults = {'scatter' : {'s':0.5,
+                           'c':'k',
+                           'alpha':0.1,
+                           'marker':'x'},
+              'lines'   : {}
+             }
+  for k,v in defaults.iteritems():
+    v.update( options.get(k,{}) )
+
+  ioff()
   def getbars(state):
     time,mask = table.get_time_and_mask(state)
     dt = diff(time)
     idx, = where(dt>1)
     return [ (time[i], dt[i] ) for i in idx ]
-  states = range(*table.get_state_range())
+  incrange = lambda a,b: range(a,b+1)
+  states = incrange(*table.get_state_range())
   cmap = cm.hsv
   N = float(len(states))
   
   data = table.get_shape_table()
   th0 = floor(( data[:,2].mean() + 45)/90)*90
   vmin1,vmax1 = th0-90,th0+90
+
+
   ax = subplot(211)
+  scatter( array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )),
+           data[:,2],
+           **defaults['scatter'] )
   for i,s in enumerate(states):
     ax.broken_barh( getbars(s), 
                     (vmin1,vmax1-vmin1),
@@ -371,6 +387,9 @@ def plot_summary_measurements_table(table, px2mm=None):
   ax = subplot(211)
   
   ax = subplot(212)
+  scatter( array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )),
+           data[:,3],
+           **defaults['scatter'] )
   xlabel('Time (frames)')
   if px2mm is None:
     ylabel('Mean Curvature (1/px)')
@@ -392,15 +411,18 @@ def plot_summary_measurements_table(table, px2mm=None):
   for i,tid in enumerate(states):
     time,mask = table.get_time_and_mask(tid)
     data = table.get_shape_data(tid)
+    defaults['lines']['color'] = cmap(i/N)
     subplot(211)
-    plot(time,data[:,2],color=cmap(i/N) )
+    plot(time,data[:,2], **defaults['lines'] )
     subplot(212)
-    plot(time,data[:,3]/px2mm,color=cmap(i/N) )
+    plot(time,data[:,3]/px2mm, **defaults['lines'] )
 
   ax = subplot(211)
   axis((0,time.max(),vmin1,vmax1))
   ax = subplot(212)
   axis((0,time.max(),vmin2,vmax2))
+  ion()                                               
+  if( doshow ): show()
 
 def plot_summary(wvd,traj,side=0):
   clf()
@@ -525,10 +547,12 @@ if 1:
     assert os.path.exists(_nice( os.path.split(dst)[0] )), "Output directory doesn't exist"
 
     t = MeasurementsTable(src).update_velocities()
-
+  
+    rc('savefig',dpi=300)
     f = figure()
     plot_summary_measurements_table(t, 
-                                    px2mm = options.px2mm if options.px2mm else None)
+                                    px2mm = options.px2mm if options.px2mm else None,
+                                    doshow=0)
     savefig(dst)
     close(f)
 

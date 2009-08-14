@@ -1021,6 +1021,8 @@ void Solve( Measurements *table, int n_rows, int n_bins )
   Measurements_Table_Compute_Velocities( table, n_rows );
   shape    = Build_Distributions( table, n_rows, n_bins );
   velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // !! Changes the sort order: now table is in time order
+  Distributions_Dilate( shape );
+  Distributions_Dilate( velocity );
   Distributions_Normalize( shape );
   Distributions_Normalize( velocity );
   Distributions_Apply_Log2( shape );

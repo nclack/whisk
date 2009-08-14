@@ -679,10 +679,10 @@ unwanted changes.  """
     options, args = parser.parse_args()
     if len(args) == 0:
       parser.error("Path to movie file is required.");
-
+    
     # The prefix_label arg will only be used if not "" and no specific prefix is supplied (len(args)==1)
     if options.prefix_label:
-      whiskers_file_name = os.path.splitext( args[0] )[0] + "[%s]"%options.prefix_label
+      whiskers_file_name = os.path.splitext( args[-1] )[0] + "[%s]"%options.prefix_label
       print whiskers_file_name
       del options.__dict__['prefix_label'] #consume
     else:

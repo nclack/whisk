@@ -113,6 +113,7 @@ def pipeline_standard(env, movie):
     ) ,                    
     ( env.HmmReclassifySolver,
       (env.MeasurementsAsMatlab,),
+      (env.MeasurementsAsTrajectories,),
       env.Summary ),
     env.Summary                             
   ]
@@ -168,6 +169,9 @@ env  = Environment(
                                     suffix = '.mat',
                                     src_suffix = '.measurements'
                                    ),
+    'MeasurementsAsTrajectories': Builder(action = lambda source,target,env: 0 if MeasurementsTable(source[0].path).save_trajectories(target[0].path) else 1,
+                                          suffix = '.trajectories',
+                                          src_suffix = '.measurements'),
     'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT",
                         suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
