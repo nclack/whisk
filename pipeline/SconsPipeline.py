@@ -92,6 +92,24 @@ def dfs_reduce(f,tree):
   #  print e
   return res
 
+def pipeline_production(env, movie):
+  def alter(j,subdir,ext):
+    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
+
+  builders = [ 
+    movie                                                       ,
+    env.Whisk                                                   ,
+    env.Measure                                                 ,
+    env.Classify                                                ,
+    (env.MeasurementsAsMatlab,),
+    (env.MeasurementsAsTrajectories,),
+    env.Summary
+  ]
+
+  compose = lambda a,b: b(a)
+  jobs = dfs_reduce( compose, builders )                         
+  return jobs
+
 def pipeline_standard(env, movie):
   def alter(j,subdir,ext):
     return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
@@ -102,16 +120,19 @@ def pipeline_standard(env, movie):
                               source = j) ,)                    ,
     env.Whisk                                                   ,
     env.Measure                                                 ,
-    #( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
-    #                                 source = j[0]) ,)          ,
+    ( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
+                                     source = j[0]) ,)          ,
     env.Classify                                                ,
-    #lambda j: env.CommitToMeasurements( j, label = "autotraj" ) ,
     ( env.MeasurementsAsMatlab, ),
     ( env.IdentitySolver                                        , 
       ( env.MeasurementsAsMatlab,)                              ,
       env.Summary
     ) ,                    
-    ( env.HmmReclassifySolver,
+    ( env.HmmLRSolver,
+      (env.MeasurementsAsMatlab,),
+      (env.MeasurementsAsTrajectories,),
+      env.Summary ),
+    ( env.HmmLRDelSolver,
       (env.MeasurementsAsMatlab,),
       (env.MeasurementsAsTrajectories,),
       env.Summary ),
@@ -186,7 +207,8 @@ env.AppendENVPath('PATH', os.getcwd())
 
 env.AddMethod( labelled_commit_to_measurements, "CommitToMeasurements" )
 env.AddMethod( make_solver("test_traj_solve_gray_areas", "grey_v0"), "IdentitySolver" )
-env.AddMethod( make_solver("test_hmm_reclassify_1", "hmm-reclassify"), "HmmReclassifySolver" )
+env.AddMethod( make_solver("test_hmm_reclassify_1", "hmm-lr-reclassify"), "HmmLRSolver" )
+env.AddMethod( make_solver("test_hmm_reclassify_2", "hmm-lrdel-reclassify"), "HmmLRDelSolver" )
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 

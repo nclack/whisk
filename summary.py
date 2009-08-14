@@ -387,9 +387,6 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   ax = subplot(211)
   
   ax = subplot(212)
-  scatter( array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )),
-           data[:,3],
-           **defaults['scatter'] )
   xlabel('Time (frames)')
   if px2mm is None:
     ylabel('Mean Curvature (1/px)')
@@ -398,6 +395,9 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   else:
     ylabel('Mean Curvature (1/mm)')
     vmin2,vmax2 = -0.4,0.4
+  scatter( array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )),
+           data[:,3]/px2mm,
+           **defaults['scatter'] )
   for i,s in enumerate(states):
     ax.broken_barh( getbars(s), 
                     (vmin1,vmax1-vmin1),

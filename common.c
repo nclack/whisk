@@ -5,6 +5,13 @@
 #define DEBUG_REQUEST_STORAGE
 #endif
 
+//for debugging
+void dump_doubles(char* filename, double* a, int n)
+{ FILE *fp = fopen(filename,"wb");
+  fwrite(a, sizeof(double), n, fp);
+  fclose(fp);
+}
+
 void *request_storage( void *buffer, size_t *maxlen, size_t nbytes, size_t minindex, char *msg )
 { if( (nbytes*minindex) > *maxlen )
   {

@@ -140,13 +140,16 @@ for t in tests:
                                                ] ) 
 
 ## hmm-reclassify tests
-tests = ["TEST_HMM_RECLASSIFY_1",
+tests = [ "TEST_HMM_RECLASSIFY_1",
+          "TEST_HMM_RECLASSIFY_2",
          ] 
 totestobj = lambda t: env.Object( 'hmm-reclassify_'+t.lower(), ['hmm-reclassify.c'], CPPDEFINES = t )
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',
                                                  'error.c','viterbi.c',
+                                                 'hmm-reclassify-lrmodel.c',
+                                                 'hmm-reclassify-lrmodel-w-deletions.c'
                                                ] ) 
 ## Deque tests
 tests = ["TEST_DEQUE_1",

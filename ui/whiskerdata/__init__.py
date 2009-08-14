@@ -18,6 +18,7 @@ import trace
 from trace import Save_Whiskers as save_whiskers
 from trace import Load_Whiskers 
 from copy import deepcopy
+import os
 
 import pdb
 
@@ -51,29 +52,60 @@ def copy_trajectories( trajectories ):
       newthing[s][u] = v
   return newthing
 
-def __save_state(precursor, whiskers ,trajectories):
-  if whiskers:
-    save_whiskers( precursor+'.whiskers', whiskers )
-  if trajectories:
-    save_trajectories( precursor+'.trajectories', trajectories )
-  if _g_autosave_scheduler:
-    scheduler.time.sleep(1.0) # this forces a pause between successive autosaves
-
-def save_state( precursor, whiskers, trajectories ):
-  global _g_autosave_scheduler
-  print "save state: "+precursor
-  if _g_autosave_scheduler:
-    w = copy_whiskers(whiskers)
-    t = copy_trajectories(trajectories)
-    _g_autosave_scheduler.pushjob( lambda: __save_state(precursor, w, t) )
+def __save_state(precursor_or_names, whiskers ,trajectories):
+  objs = {'.whiskers': whiskers,
+          '.trajectories': trajectories }
+  savers = {'.whiskers':     save_whiskers,
+            '.trajectories': save_trajectories }
+  names = dict([ (k,None) for k in objs.iterkeys() ])
+  if not isinstance(precursor_or_names, str ) and hasattr( precursor_or_names, '__iter__' ):
+    #multiple names...try to find names for the different filetypes, otherwise guess
+    for fn,(p,e) in zip( precursor_or_names, map( os.path.splitext, precursor_or_names ) ):
+      names[e] = fn
+    precursor = p
+    for e,fn in names.iteritems():
+      if fn is None:
+        names[e] = precursor +  e
+  elif isinstance(precursor_or_names,str): 
+    #single valued, assume it's a filename or precursor
+    precursor = os.path.splitext(precursor_or_names)[0]
+    for e in names.iteritems():
+      names[e] = precursor + e
   else:
-    __save_state(precursor,whiskers,trajectories)
+    raise TypeError(" precursor_or_names must be string or iterable ")
 
-def load_state( precursor ):
-  whiskers,segid = load_whiskers( precursor+'.whiskers' )
-  trajectories,tid = load_trajectories( precursor+'.trajectories' )
-  centers = load_bar_centers( precursor + '.bar' )
-  return whiskers, trajectories, centers, tid
+  for e in names.iterkeys():
+    savers[e](names[e],objs[e]) 
+
+def save_state( precursor_or_names, whiskers, trajectories ):
+  print "save state: "+str(precursor_or_names)
+  __save_state(precursor_or_names,whiskers,trajectories)
+
+def load_state( precursor_or_names ):
+  order = ['.whiskers', '.trajectories', '.bar' ]
+  loaders = {'.whiskers':     load_whiskers,
+             '.trajectories': load_trajectories,
+             '.bar':          load_bar_centers } 
+  names = dict([ (k,None) for k in order ])
+
+  if not isinstance(precursor_or_names, str ) and hasattr( precursor_or_names, '__iter__' ):
+    #multiple names...try to find names for the different filetypes, otherwise guess
+    for fn,(p,e) in zip( precursor_or_names, map( os.path.splitext, precursor_or_names ) ):
+      names[e] = fn
+    precursor = p
+    for e,fn in names.iteritems():
+      if fn is None:
+        names[e] = precursor +  e
+  elif isinstance(precursor_or_names,str): #single valued, assume it's a filename or precursor
+    precursor = os.path.splitext(precursor_or_names)[0]
+    for e in names.iteritems():
+      names[e] = precursor + e
+  else:
+    raise TypeError(" precursor_or_names must be string or iterable ")
+
+  objs = [loaders[e](names[e])[0] for e in order]
+  objs.append(0) #append a legit trajectory id....assuming 0...this should probably get taken out later
+  return objs
  
 def load_whiskers( filename ):
   try:
@@ -121,7 +153,7 @@ def load_bar_centers( filename ):
       centers[fid] = (x,y)
   except:
     pass
-  return centers
+  return centers,0
 
 
 

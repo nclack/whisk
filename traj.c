@@ -873,12 +873,6 @@ Measurements **Find_Path_old( Measurements *sorted_table,
   return path;
 }
 
-void dump_doubles(char *filename, double *array, int n)
-{ FILE *fp = fopen(filename,"wb");
-  fwrite(array,sizeof(double),n,fp);
-  fclose(fp);
-}
-
 // sorted_table must be sorted in ascending time order (i.e. ascending fid)
 // Start and end should have the same `state` property.  Uses the viterbi
 // algorithm to find the most probable markov path joining the start and end

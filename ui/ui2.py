@@ -471,7 +471,7 @@ def main( filename,
           return whiskers, trajectories
         
         elif (event.key == pygame.K_s) and event.mod & pygame.KMOD_CTRL:
-          print "Saving to " + whiskers_file_name
+          print "Saving to " + str(whiskers_file_name)
           save_state( whiskers_file_name, whiskers, trajectories );
           DIRTY = 0
 
@@ -681,15 +681,15 @@ unwanted changes.  """
       parser.error("Path to movie file is required.");
     
     # The prefix_label arg will only be used if not "" and no specific prefix is supplied (len(args)==1)
-    if options.prefix_label:
-      whiskers_file_name = os.path.splitext( args[-1] )[0] + "[%s]"%options.prefix_label
-      print whiskers_file_name
-      del options.__dict__['prefix_label'] #consume
+    if len(args) in [0,1]:
+      if options.prefix_label:
+        whiskers_file_name = os.path.splitext( args[-1] )[0] + "[%s]"%options.prefix_label
+        print str(whiskers_file_name)
+        del options.__dict__['prefix_label'] #consume
+      else:
+        whiskers_file_name = os.path.splitext( args[-1] )[0]
     else:
-      whiskers_file_name = os.path.splitext( args[0] )[0]
-  
-    if len(args) > 1:
-      whiskers_file_name = args[1]
+      whiskers_file_name = args[1:]
      
     #whiskerdata.start_autosave()
     whiskers = main(args[0],
