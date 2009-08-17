@@ -15,6 +15,7 @@ typedef signed long int32_t;
 typedef unsigned char uint8_t; 
 typedef unsigned short uint16_t; 
 typedef unsigned long uint32_t; 
+typedef unsigned long long uint64_t;
 
 #ifndef log2                          // no log2 in xp
 #define log2(x) (log(x)/log(2))       // there are fast tricks for finding int(log2(x))

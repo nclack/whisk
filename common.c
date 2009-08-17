@@ -1,5 +1,6 @@
 #include "utilities.h"
 #include <assert.h>
+#include "compat.h"
 
 #if 0
 #define DEBUG_REQUEST_STORAGE

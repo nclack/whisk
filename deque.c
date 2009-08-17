@@ -34,6 +34,7 @@ Deque *Deque_Alloc(int size_hint)
   self->size_bytes  = size_hint*sizeof(void*);
   self->front = size_hint/2-1; //when empty front points just behind back
   self->back  = size_hint/2;
+  return self;
 }
 
 SHARED_EXPORT

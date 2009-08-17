@@ -19,9 +19,10 @@ env.Append( BUILDERS = {'Awk' : awk} )
 
 try:
   from scons_colorizer import colorizer
-  col = colorizer()
-  col.colorize(env)
-  col.colorizeBuilder(env,'Awk',"Generating Myers Managed code",True,col.cGreen)
+  if env['PLATFORM']!='win32':
+    col = colorizer()
+    col.colorize(env)
+    col.colorizeBuilder(env,'Awk',"Generating Myers Managed code",True,col.cGreen)
 except ImportError,e:
   print e
 
