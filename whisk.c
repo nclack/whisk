@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
                                                    image->width, image->height, 
                                                    2.0,    // scale down by this
                                                    2.0,    // distance threshold
-                                                   0.8 );  // significant overlap fraction
+                                                   0.5 );  // significant overlap fraction
         Whisker_File_Append_Segments(wfile, wv, k);
         Free_Whisker_Seg_Vec( wv, wv_n );
         Free_Image(image);

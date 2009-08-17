@@ -9,8 +9,8 @@
 
 #include "hmm-reclassify-lrmodel.h"
 
-#define DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
 #if 0
+#define DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
 #endif
 
 
@@ -41,6 +41,10 @@
 //             W0----W1----W2     -+ emissions evaled as whisker
 //            /  \  /  \  /  \  
 //          J0    J1    J2    J3  -+ emissions evaled as junk/other
+
+int   LRModel_State_Count ( int nwhisk )
+{ return 2*nwhisk+1;
+}
 
 real *LRModel_Alloc_Transitions( int nwhisk )
 { int N = 2 * nwhisk + 1;
@@ -235,3 +239,6 @@ void LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2( real *E, int nwhisk, 
   }
 }
 
+int LRModel_State_Decode( int s )
+{ return (s&1) ? (s-1)/2  : -1;// decode viterbi state to whisker label {-1:junk, 0..n:whiskers}  
+}

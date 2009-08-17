@@ -2,6 +2,7 @@
 
 #include "traj.h"
 
+int   LRModel_State_Count                                   ( int nwhisk );
 real *LRModel_Alloc_Transitions                             ( int nwhisk );
 real *LRModel_Init_Uniform_Transitions                      ( real *T, int nwhisk );
 void  LRModel_Estimate_Transitions                          ( real *T, int nwhisk, Measurements *table, int nrows );
@@ -13,5 +14,6 @@ real *LRModel_Alloc_Emissions                               ( int nwhisk, int no
 real *LRModel_Request_Static_Resizable_Emissions            ( int nwhisk, int nobs );
 void  LRModel_Compute_Emissions_For_Two_Classes_Log2        ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
 void  LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2  ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
+int   LRModel_State_Decode                                  ( int state );
 
 #endif

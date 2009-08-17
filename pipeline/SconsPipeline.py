@@ -126,6 +126,7 @@ def pipeline_standard(env, movie):
     ( env.MeasurementsAsMatlab, ),
     ( env.IdentitySolver                                        , 
       ( env.MeasurementsAsMatlab,)                              ,
+      ( env.MeasurementsAsTrajectories,),
       env.Summary
     ) ,                    
     ( env.HmmLRSolver,
@@ -203,6 +204,7 @@ env  = Environment(
   }
 )
 
+env.Decider('timestamp-newer')
 env.AppendENVPath('PATH', os.getcwd())
 
 env.AddMethod( labelled_commit_to_measurements, "CommitToMeasurements" )

@@ -11,13 +11,14 @@
 #include "common.h"
 
 
-#define DEBUG_HMM_RECLASSIFY
 #if 0
+#define DEBUG_HMM_RECLASSIFY
 #endif
 
 #define HMM_RECLASSIFY_DISTS_NBINS   (16)
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
+typedef int   (*Tpf_State_Count)                                   ( int nwhisk );
 typedef real* (*Tpf_Alloc_Transitions)                             ( int nwhisk );
 typedef real* (*Tpf_Init_Uniform_Transitions)                      ( real *T, int nwhisk );
 typedef void  (*Tpf_Estimate_Transitions)                          (real *T, int nwhisk, Measurements *table, int nrows );
@@ -29,6 +30,7 @@ typedef real* (*Tpf_Alloc_Emissions)                               ( int nwhisk,
 typedef real* (*Tpf_Request_Static_Resizable_Emissions)            ( int nwhisk, int nobs );
 typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_Log2)        ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
 typedef void  (*Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2)  ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
+typedef int   (*Tpf_State_Decode)                                  ( int state );
 
 int* _static_range( int n )
 { static size_t maxsize = 0;
@@ -42,6 +44,7 @@ int* _static_range( int n )
 #ifdef TEST_HMM_RECLASSIFY_1
 #define TEST_HMM_RECLASSIFY
 #include "hmm-reclassify-lrmodel.h"
+Tpf_State_Count                                   pf_State_Count                                    =  LRModel_State_Count;
 Tpf_Alloc_Transitions                             pf_Alloc_Transitions                              =  LRModel_Alloc_Transitions                              ;   
 Tpf_Init_Uniform_Transitions                      pf_Init_Uniform_Transitions                       =  LRModel_Init_Uniform_Transitions                       ;   
 Tpf_Estimate_Transitions                          pf_Estimate_Transitions                           =  LRModel_Estimate_Transitions                           ;   
@@ -53,11 +56,13 @@ Tpf_Alloc_Emissions                               pf_Alloc_Emissions            
 Tpf_Request_Static_Resizable_Emissions            pf_Request_Static_Resizable_Emissions             =  LRModel_Request_Static_Resizable_Emissions             ;   
 Tpf_Compute_Emissions_For_Two_Classes_Log2        pf_Compute_Emissions_For_Two_Classes_Log2         =  LRModel_Compute_Emissions_For_Two_Classes_Log2         ;   
 Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2  pf_Compute_Emissions_For_Distinct_Whiskers_Log2   =  LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2   ;   
+Tpf_State_Decode                                  pf_State_Decode                                   =  LRModel_State_Decode;
 #endif                                                                                                                                                           
                                                                                                                                                                  
 #ifdef TEST_HMM_RECLASSIFY_2                                                                                                                                     
 #define TEST_HMM_RECLASSIFY                                                                                                                                      
 #include "hmm-reclassify-lrmodel-w-deletions.h"
+Tpf_State_Count                                   pf_State_Count                                    =  LRDelModel_State_Count;
 Tpf_Alloc_Transitions                             pf_Alloc_Transitions                              =  LRDelModel_Alloc_Transitions                              ;
 Tpf_Init_Uniform_Transitions                      pf_Init_Uniform_Transitions                       =  LRDelModel_Init_Uniform_Transitions                       ;
 Tpf_Estimate_Transitions                          pf_Estimate_Transitions                           =  LRDelModel_Estimate_Transitions                           ;
@@ -69,6 +74,7 @@ Tpf_Alloc_Emissions                               pf_Alloc_Emissions            
 Tpf_Request_Static_Resizable_Emissions            pf_Request_Static_Resizable_Emissions             =  LRDelModel_Request_Static_Resizable_Emissions             ;
 Tpf_Compute_Emissions_For_Two_Classes_Log2        pf_Compute_Emissions_For_Two_Classes_Log2         =  LRDelModel_Compute_Emissions_For_Two_Classes_Log2         ;
 Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2  pf_Compute_Emissions_For_Distinct_Whiskers_Log2   =  LRDelModel_Compute_Emissions_For_Distinct_Whiskers_Log2   ;
+Tpf_State_Decode                                  pf_State_Decode                                   =  LRDelModel_State_Decode;
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY
@@ -208,7 +214,7 @@ int main(int argc, char*argv[])
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
       (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
 
-      { int N = 2*nwhisk + 1;
+      { int N = (*pf_State_Count)(nwhisk);
         ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
 
         // Commit the result
@@ -220,15 +226,22 @@ int main(int argc, char*argv[])
             result->prob,                     // log2 prob(path|obs)            //?
             result->total - result->prob );                                     //?
         assert( nobs == result->n );
-        { int i = nobs;  //result should be strictly increasing
-          while(--i) assert( result->sequence[i] - result->sequence[i-1] >=0 );
-        }
+        //{ int i = nobs;  //result should be strictly increasing (upper trangular)
+        //  while(--i) assert( result->sequence[i] - result->sequence[i-1] >=0 );
+        //}
 #endif
         { int i = nobs;
           int *seq = result->sequence;
           while(i--)
           { int s = seq[i];
-            bookmark[i].state = (s&1) ? (s-1)/2  : -1; // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
+            bookmark[i].state = (*pf_State_Decode)(s);   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
+#ifdef DEBUG_HMM_RECLASSIFY
+            progress("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
+                bookmark[i].fid, 
+                bookmark[i].wid, 
+                s,         
+                bookmark[i].state);
+#endif
           }
         } // end commit viterbi result
         Free_Viterbi_Result(result);  // FIXME: thrashing the heap

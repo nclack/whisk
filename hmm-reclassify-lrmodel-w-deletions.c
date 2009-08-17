@@ -1,3 +1,5 @@
+// TODO: Refactor - what are labelled as `deletions` now should be called
+// `insertions`
 #include "compat.h"
 #include <assert.h>
 #include <string.h>
@@ -8,10 +10,11 @@
 #include "hmm-reclassify-lrmodel-w-deletions.h" 
 #include "viterbi.h"
 
-#define DEBUG_LRMODEL_W_DELETIONS_ESTIMATE_TRANSITIONS
+#define DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY 0.001
 #if 0
+#define DEBUG_LRMODEL_W_DELETIONS_ESTIMATE_TRANSITIONS
+#define DEBUG_LRMODEL_W_DELETIONS_DISALLOW_DELETIONS
 #endif
-
 
 //
 // Build the transition state model
@@ -62,6 +65,9 @@
 // natural.  One doesn't know apriori whether the 'delete' node should look 
 // like the previous or next whisker.
 //
+int LRDelModel_State_Count( int nwhisk )
+{ return 3*nwhisk+1; }
+
 real *LRDelModel_Alloc_Transitions( int nwhisk )
 { int N = 3 * nwhisk + 1;
   return Guarded_Malloc( sizeof(real)*N*N, "transition state matrix" );
@@ -78,9 +84,16 @@ real *LRDelModel_Init_Uniform_Transitions( real *T, int nwhisk )
 
   // Following rows
   for( i=1; i<N-3; i+=3 ) // whisker
-  { T[i*N + i+1] = third;   //      to this delete
+  { 
     T[i*N + i+2] = third;   //      to next junk     
     T[i*N + i+3] = third;   //      to next whisker
+#ifdef DEBUG_LRMODEL_W_DELETIONS_DISALLOW_DELETIONS
+    T[i*N + i+1]=0;         //erase to this delete
+#elif defined(DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY)
+    T[i*N + i+1] = third * DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY; // to this delete
+#else
+    T[i*N + i+1] = third;   //      to this delete
+#endif
   }
   T[i*N + i+2] = 1.0;       //      to end  junk     // Notice there is no path to the end delete state
   
@@ -94,8 +107,42 @@ real *LRDelModel_Init_Uniform_Transitions( real *T, int nwhisk )
   { T[i*N + i+1] = third; //      to next whisker
     T[i*N + i  ] = third; //      to self          
     T[i*N + i-1] = third; //      to last delete
+#ifdef DEBUG_LRMODEL_W_DELETIONS_DISALLOW_DELETIONS
+    T[i*N + i-1]=0;        //erase to last delete
+#elif defined(DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY)
+    T[i*N + i-1] = third * DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY; // to this delete
+#else
+    T[i*N + i-1] = third;        //      to last delete
+#endif
   }
   T[i*N + i  ] = 1.0;     //      to self          
+  
+  //row-wise norm - make T a stochastic matrix
+  { real *row;
+    for(row = T+N*(N-1); row >= T; row -= N )
+    { real *s,*t; 
+      real sum = 0.0;
+      s = t = row+N;
+      while(t-- > row) sum += *t;
+      if( sum )
+        while(s-- > row) *s /= sum;
+    }
+  }
+#ifdef DEBUG_LRMODEL_W_DELETIONS_ESTIMATE_TRANSITIONS
+  // Assert properly normed
+  { real sum = 1.0;
+    double *row;
+    int N = nwhisk*2 + 1;
+    for( row=T; row < T + N*N; row++ )
+    { 
+      if( ! (row-T)%N )
+      { assert( fabs(sum-1.0) < 1e-3 );
+        sum = 0.0;
+      }
+      sum += *row;
+    }
+  } 
+#endif
   return T;
 }
 
@@ -106,7 +153,7 @@ void LRDelModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, i
   //
   // FIXME
 { Measurements *row;
-  int N = 3 * nwhisk + 1; 
+  int N = 3 * nwhisk + 1;
 
   memset( T, 0, sizeof(double)*N*N );
   Sort_Measurements_Table_Time_Face( table, nrows );
@@ -125,7 +172,7 @@ void LRDelModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, i
 #endif                                                                                // j->w   1     0  1   1       
         for( row = bookmark+1; row->fid == cur; row++)                                // w->j   2     1  0   2       
         { int c = (row->state != -1); // either junk<0> or whisker<1>                 // j->j   0     0  0   0       
-          int delta = last<<2 + c;    //delta state (1 for cases j->w and w->j)       // w->w   3     1  1   3                 
+          int delta = (last<<1) + c;    //delta state (1 for cases j->w and w->j)     // w->w   3     1  1   3                 
 #ifdef DEBUG_LRMODEL_W_DELETIONS_ESTIMATE_TRANSITIONS
           progress("Frame: %5d  Whisker: %3d  State: %3d Transition: %2d -> %2d\n",            
               row->fid, row->wid, row->state, state, state+delta );
@@ -150,22 +197,35 @@ void LRDelModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, i
     T[0]++;       //      to self          
     // Following rows
     for( i=1; i<N-3; i+=3 ) // whisker
-    { T[i*N + i+1]++;        //      to this delete
+    { 
       T[i*N + i+2]++;        //      to next junk     
       T[i*N + i+3]++;        //      to next whisker
+#ifdef DEBUG_LRMODEL_W_DELETIONS_DISALLOW_DELETIONS
+      T[i*N + i+1]=0;        //erase to this delete
+#elif defined(DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY)
+      T[i*N + i+1] = T[i*N + (i+3)] * DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY; // to this delete
+#else
+      T[i*N + i+1]++;        //      to this delete
+#endif
     }
     T[i*N + i+2]++;           //      to end  junk     // Notice there is no path to the end delete state
 
-    for( i=2; i<N-2; i+=3 ) // delete
-    { T[i*N + i+1]++;        //      to next junk
-      T[i*N + i+2]++;        //      to next whisker
+    for( i=2; i<N-2; i+=3 ) // delete - copy exit probs from this whisker
+    { T[i*N + i+1] = T[(i-1)*N + i+1];        //      to next junk
+      T[i*N + i+2] = T[(i-1)*N + i+2];        //      to next whisker
     }
     T[i*N+i+1]++;             //      to end  junk
 
     for( i=3; i<N-1; i+=3 ) // junk
     { T[i*N + i+1]++;      //      to next whisker
       T[i*N + i  ]++;      //      to self          
-      T[i*N + i-1]++;      //      to last delete
+#ifdef DEBUG_LRMODEL_W_DELETIONS_DISALLOW_DELETIONS
+      T[i*N + i-1]=0;        //erase to last delete
+#elif defined(DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY)
+      T[i*N + i-1] = T[i*N + (i+1)] * DEBUG_LRMODEL_W_DELETIONS_CONSTANT_TRANSITION_PROBABILITY; // to this delete
+#else
+      T[i*N + i-1]++;        //      to last delete
+#endif
     }
     T[i*N + i  ]++;         //      to self          
   }
@@ -223,7 +283,7 @@ void LRDelModel_Compute_Starts_For_Two_Classes_Log2( real *S, int nwhisk, Measur
 { int N = 3 * nwhisk + 1;
   double v[3] = { Eval_Likelihood_Log2( shp_dists, first->data, 0 ),
                   Eval_Likelihood_Log2( shp_dists, first->data, 1 ),
-                  Eval_Likelihood_Log2( shp_dists, first->data, 1 ) }; 
+                  -500.0                                            }; 
   while(N--)
     S[N] = v[ N%3 ];
 }
@@ -248,7 +308,7 @@ void LRDelModel_Compute_Starts_For_Distinct_Whiskers_Log2( real *S, int nwhisk, 
 
 real *LRDelModel_Alloc_Emissions( int nwhisk, int nobs )
 { int N = 3 * nwhisk + 1;
-  return Guarded_Malloc( sizeof(real)*N*nobs, "LRModel_Alloc_Emmisions" );
+  return Guarded_Malloc( sizeof(real)*N*nobs, "LRModel_Alloc_Emissions" );
 }
 
 real *LRDelModel_Request_Static_Resizable_Emissions( int nwhisk, int nobs )
@@ -295,3 +355,7 @@ void LRDelModel_Compute_Emissions_For_Distinct_Whiskers_Log2( real *E, int nwhis
   }
 }
 
+int LRDelModel_State_Decode( int s )
+{ int sm = s%3;
+  return (sm==1) ? (s-1)/3 : -1 ;// decode viterbi state to whisker label {-1:junk, 0..n:whiskers}  
+}
