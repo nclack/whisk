@@ -396,8 +396,8 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
     ylabel('Mean Curvature (1/mm)')
     vmin2,vmax2 = -0.4,0.4
   scatter( array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )),
-           data[:,3]/px2mm,
-           **defaults['scatter'] )
+          data[:,3]/px2mm,
+          **defaults['scatter'] )
   for i,s in enumerate(states):
     ax.broken_barh( getbars(s), 
                     (vmin1,vmax1-vmin1),
@@ -552,7 +552,8 @@ if 1:
     f = figure()
     plot_summary_measurements_table(t, 
                                     px2mm = options.px2mm if options.px2mm else None,
-                                    doshow=0)
+                                    doshow=0,
+                                    options = {'lines':{'alpha':0.7}})
     savefig(dst)
     close(f)
 

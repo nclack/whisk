@@ -78,7 +78,7 @@ Tpf_State_Decode                                  pf_State_Decode               
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY
-char *Spec[] = {"[-h|--help] <source:string> <dest:string>",NULL};
+char *Spec[] = {"[-h|--help] <source:string> <dest:string> -n <int>",NULL};
 int main(int argc, char*argv[])
 { int nrows;
   int nwhisk;
@@ -93,11 +93,17 @@ int main(int argc, char*argv[])
     "HMM-Reclassify\n"
     "--------------\n"
     " <source> should be the filename of a `measurements` file where an initial guess has been made as\n"
-    " to the identity of many of the whiskers.  These initial assignments are used to build a \n"
-    " probabalistic model of the process by which whiskers are identified as one travels along the face\n"
+    "          to the identity of many of the whiskers.  These initial assignments are used to build a \n"
+    "          probabalistic model of the process by which whiskers are identified as one travels along\n"
+    "          the face\n"
     "\n"
-    " <dest> should be the destination filename.  After applying the probibalistic model to identify\n"
-    " whiskers in each frame, the results are saved to this file.\n" );
+    " <dest>   should be the destination filename.  After applying the probibalistic model to identify\n"
+    "          whiskers in each frame, the results are saved to this file.\n"
+    "\n"
+    " -n <int> Optionally specify the number of whiskers to identify.  The default behavior is to use\n"
+    "          the initial guess provided by <source>.  Specifying a number less than one results in\n"
+    "          the default behavior.\n"
+    "\n");
 
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &nrows );
 
@@ -116,6 +122,10 @@ int main(int argc, char*argv[])
 #endif
   Measurements_Table_Compute_Velocities(table,nrows);
   
+  nwhisk = -1;
+  if( Is_Arg_Matched("-n") )
+    nwhisk = Get_Int_Arg("-n");
+  if( nwhisk < 1 )
   { int nstate,minstate,maxstate;
     nstate = _count_n_states(table,nrows,1,&minstate,&maxstate);
     nwhisk = nstate - 1; //subtract the dummy state, which is minstate

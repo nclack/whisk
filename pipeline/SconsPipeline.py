@@ -124,11 +124,11 @@ def pipeline_standard(env, movie):
                                      source = j[0]) ,)          ,
     env.Classify                                                ,
     ( env.MeasurementsAsMatlab, ),
-    ( env.IdentitySolver                                        , 
-      ( env.MeasurementsAsMatlab,)                              ,
-      ( env.MeasurementsAsTrajectories,),
-      env.Summary
-    ) ,                    
+##  ( env.IdentitySolver                                        , 
+##    ( env.MeasurementsAsMatlab,)                              ,
+##    ( env.MeasurementsAsTrajectories,),
+##    env.Summary
+##  ) ,                    
     ( env.HmmLRSolver,
       (env.MeasurementsAsMatlab,),
       (env.MeasurementsAsTrajectories,),
@@ -194,7 +194,7 @@ env  = Environment(
     'MeasurementsAsTrajectories': Builder(action = lambda source,target,env: 0 if MeasurementsTable(source[0].path).save_trajectories(target[0].path) else 1,
                                           suffix = '.trajectories',
                                           src_suffix = '.measurements'),
-    'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT",
+    'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT",
                         suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
                        ),
@@ -206,11 +206,13 @@ env  = Environment(
 
 env.Decider('timestamp-newer')
 env.AppendENVPath('PATH', os.getcwd())
+env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movie
+                           # a count >= 1 will identify that many whiskers in each movie
 
 env.AddMethod( labelled_commit_to_measurements, "CommitToMeasurements" )
 env.AddMethod( make_solver("test_traj_solve_gray_areas", "grey_v0"), "IdentitySolver" )
-env.AddMethod( make_solver("test_hmm_reclassify_1", "hmm-lr-reclassify"), "HmmLRSolver" )
-env.AddMethod( make_solver("test_hmm_reclassify_2", "hmm-lrdel-reclassify"), "HmmLRDelSolver" )
+env.AddMethod( make_solver("test_hmm_reclassify_1 -n $WHISKER_COUNT", "hmm-lr-reclassify"), "HmmLRSolver" )
+env.AddMethod( make_solver("test_hmm_reclassify_2 -n $WHISKER_COUNT", "hmm-lrdel-reclassify"), "HmmLRDelSolver" )
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 

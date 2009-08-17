@@ -107,6 +107,43 @@ double Measurements_Table_Estimate_Best_Threshold( Measurements *table, int n_ro
   return argmax;
 }
 
+//assumes measurements table sorted by time
+double Measurements_Table_Estimate_Best_Threshold_For_Known_Count( Measurements *table, int n_rows, int column, double low, double high, int target_count )
+{ double thresh;
+  int best = -1.0;
+  double argmax;
+  assert(low<high);
+  for( thresh = low; thresh < high; thresh ++ )
+  { int n_frames_w_target=0, n;
+    Measurements_Table_Label_By_Threshold( table, n_rows, column, thresh );
+    // count number of frames with exactly `target_count` segments above threshold
+    { Measurements *row = table+n_rows;
+      int n_seg_above_thresh = 0;
+      int last = table->fid;
+      while( row-- > table )
+      { int fid = row->fid;
+        if( fid - last != 0 )
+        { last = fid;
+          if(n_seg_above_thresh == target_count) n_frames_w_target++;
+          n_seg_above_thresh=0;
+        }
+#ifdef DEBUG_ESTIMATE_BEST_LENGTH_THRESHOLD_FOR_KNOWN_COUNT
+        assert(row->state == 0 || row->state == 1);
+#endif
+        n_seg_above_thresh += row->state; // row->state is either 0 or 1;
+      }
+    }
+#ifdef DEBUG_ESTIMATE_BEST_LENGTH_THRESHOLD_FOR_KNOWN_COUNT
+    printf("%4d  %3d  %3d\n", thresh, n_frames_w_target, n );
+#endif
+    if( n_frames_w_target > best && n>0)
+    { best = n_frames_w_target;
+      argmax = thresh;
+    }
+  }
+  return argmax;
+}
+
 void Measurements_Table_Label_By_Order( Measurements *table, int n_rows, int target_count )
 { Sort_Measurements_Table_Time_State_Face( table, n_rows );
   assert(n_rows);
@@ -128,25 +165,48 @@ void Measurements_Table_Label_By_Order( Measurements *table, int n_rows, int tar
 }
 
 #ifdef TEST_CLASSIFY_1
-char *Spec[] = {"<source:string> <dest:string> (<face:string> | <x:int> <y:int>)", NULL};
+char *Spec[] = {"[-h|--help] | <source:string> <dest:string> (<face:string> | <x:int> <y:int>) -n <int>", NULL};
 int main(int argc, char* argv[])
 { int n_rows, count;
   Measurements *table;
   double thresh;
   int face_x, face_y;
 
-  printf("-----------------                                                             \n"
-         " Classify test 1                                                              \n"
-         "-----------------                                                             \n"
-         "                                                                              \n"
-         "  Uses a length threshold to seperate hair/microvibrissae from main whiskers. \n"
-         "  Then, for frames where the expected number of whiskers are found,           \n"
-         "  label the whiskers according to their order on the face.                    \n"
-         "--                                                                            \n");
-
   Process_Arguments( argc, argv, Spec, 0);
+
+  if( Is_Arg_Matched("-h") | Is_Arg_Matched("--help") )
+  { Print_Argument_Usage(stdout,0);
+    printf("--------------------------                                                   \n"
+          " Classify test 1 (autotraj)                                                   \n"
+          "---------------------------                                                   \n"
+          "                                                                              \n"
+          "  Uses a length threshold to seperate hair/microvibrissae from main whiskers. \n"
+          "  Then, for frames where the expected number of whiskers are found,           \n"
+          "  label the whiskers according to their order on the face.                    \n"
+          "\n"
+          "  <source> Filename with Measurements table.\n"
+          "  <dest>   Filename to which labelled Measurements will be saved.\n"
+          "           This can be the same as <source>.\n"
+          "  <face>\n"
+          "  <x> <y>  These are used for determining the order of whisker segments along \n"
+          "           the face.  This requires an approximate position for the center of \n"
+          "           the face and can be specified in pixel coordinates with <x> and <y>.\n"
+          "           If the face is located along the edge of the frame then specify    \n"
+          "           that edge with 'left', 'right', 'top' or 'bottom'.                 \n"
+          "  -n <int> (Optional) Optimize the threshold to find this number of whiskers. \n"
+          "           If this isn't specified, or if this is set to a number less than 1 \n"
+          "           then the number of whiskers is automatically determined.           \n"
+          "--                                                                            \n");
+    return 0;
+  }
+
   table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), &n_rows );
-  thresh = Measurements_Table_Estimate_Best_Threshold( table, n_rows, 0 /*length column*/, 50.0, 200.0, &count );
+  if( Is_Arg_Matched("-n") )
+  { count = Get_Int_Arg("-n");
+    thresh = Measurements_Table_Estimate_Best_Threshold_For_Known_Count( table, n_rows, 0 /*length column*/, 50.0, 200.0, count );
+  } else 
+  { thresh = Measurements_Table_Estimate_Best_Threshold( table, n_rows, 0 /*length column*/, 50.0, 200.0, &count );
+  }
   Measurements_Table_Label_By_Threshold              ( table, n_rows, 0 /*length column*/, thresh );
   
   printf("Length threshold: %f\n",thresh ); 

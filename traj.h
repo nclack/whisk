@@ -122,7 +122,7 @@ SHARED_EXPORT double Eval_Likelihood_Log2( Distributions *dist, double *vec, int
 // prev and next must be arrays of length dist->n_measures
 // Assumes distributions encodes densities as log2 probability
 // Distributions should be functions of the differences between next and prev
-SHARED_EXPORT double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, double *next, int istate );
+SHARED_EXPORT double Eval_Velocity_Likelihood_Log2( Distributions *dist, double *prev, double *next, int istate );
 
 // sorted_table must be sorted in ascending time order (i.e. ascending fid)
 // Start and end should have the same `state` property.

@@ -463,7 +463,8 @@ void Sort_Measurements_Table_Time_State_Face( Measurements *table, int nrows )
 }
 
 inline double _diff(double a, double b) 
-{ return (a - b);
+{ double c = a-b;
+  return c*c;
 }
 
 // Assumes `sorted_table` is sorted by Sort_Measurements_Table_State_Time
@@ -767,7 +768,7 @@ double Eval_Likelihood_Log2( Distributions *dist, double *vec, int istate )
 // Assumes distributions encodes densities as log2 probability
 // Distributions should be functions of the differences between next and prev
 SHARED_EXPORT
-double Eval_Transition_Likelihood_Log2( Distributions *dist, double *prev, double *next, int istate )
+double Eval_Velocity_Likelihood_Log2( Distributions *dist, double *prev, double *next, int istate )
 { static double *vec = NULL;
   static size_t maxn = 0;
   int i = dist->n_measures;
@@ -840,7 +841,7 @@ Measurements **Find_Path_old( Measurements *sorted_table,
     valmax = -DBL_MAX;
     for(j=0; j<nthis; j++)  
     { double *tdata = this[j].data;
-      double p = Eval_Transition_Likelihood_Log2( velocity, ldata, tdata, istate );
+      double p = Eval_Velocity_Likelihood_Log2( velocity, ldata, tdata, istate );
       if( p > valmax )
       { valmax = p;
         path[istep] = this + j;
@@ -931,10 +932,10 @@ Measurements **Find_Path( Measurements *sorted_table,
       // sprob
       for(a = row; a->fid==row->fid; a++)
         sprob[a-first] = 
-          Eval_Transition_Likelihood_Log2( velocity, 
-                                           start->data, 
-                                           a->data, 
-                                           target );
+          Eval_Velocity_Likelihood_Log2( velocity, 
+                                         start->data, 
+                                         a->data, 
+                                         target );
       for(i=a-first;i<nstate;i++)
         sprob[i] = baseline_log2p;
 
@@ -950,20 +951,20 @@ Measurements **Find_Path( Measurements *sorted_table,
           if( a->fid != end->fid )
             for(b=a ; b->fid == a->fid; b++ )
               tprob[ off + b-first ] =
-                Eval_Transition_Likelihood_Log2( velocity, 
-                                                row->data, 
-                                                b->data, 
-                                                target );
+                Eval_Velocity_Likelihood_Log2( velocity, 
+                                               row->data, 
+                                               b->data, 
+                                               target );
         }
       }
       // do probs for end
       eprob[nstate-1] = 0; //log2(1.0)
       for( ; c <= last; c++ )
         tprob[ (c-first)*nstate + nstate - 1 ] = 
-          Eval_Transition_Likelihood_Log2( velocity, 
-                                           c->data, 
-                                           end->data, 
-                                           target );
+          Eval_Velocity_Likelihood_Log2( velocity, 
+                                         c->data, 
+                                         end->data, 
+                                         target );
     }
       
     { ViterbiResult *res = Forward_Viterbi_Log2( sequence, pathlength+1, sprob, tprob, eprob, 1, nstate );
@@ -1201,10 +1202,10 @@ int main(int argc, char *argv[])
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
   Free_Measurements_Table(table);
 
-  if(err)
-    printf("\tTest FAILED.\n");
-  else
-    printf("\tTest passed.\n");
+//if(err)
+//  printf("\tTest FAILED.\n");
+//else
+//  printf("\tTest passed.\n");
   return err;
 }
 #endif // TEST_SOLVE_GRAY_AREAS 

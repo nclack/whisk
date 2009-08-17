@@ -279,10 +279,10 @@ int main(int argc, char *argv[])
       //for( i=0; i<depth; i+= step )
       { //int i=76;
         int k;
-        image = Copy_Image( load(movie,i,NULL) );
+        image = Copy_Image( load(movie,i,NULL) );                                               // Is this necessary? Thrashing heap
         progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
         //progress( "Finding segments for frame %5d of %d.\r", i, depth);
-        wv = find_segments(i, image, bg, &wv_n);
+        wv = find_segments(i, image, bg, &wv_n);                                                // Is this necessary?
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
                                                    image->width, image->height, 
                                                    2.0,    // scale down by this

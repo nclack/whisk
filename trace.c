@@ -494,7 +494,6 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
             w->time = iFrame;
             w->id  = n_segs;
             wsegs[n_segs++] = *w;
-            //draw_whisker( image, w, 2, (int)fill); //
             draw_whisker( mask , w, 2, 3 ); // set to 3 for debug, could be anything but 1
             free(w);
 #ifdef DEBUG_SEEDING_MASK
@@ -507,38 +506,6 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
       }
       free(scores);
     }
-
-#if 0
-    // trace
-    { //Seed seed;
-      int      i = sarea;
-      int stride = image->width;
-      while(i--)
-      { if( maska[i]==1 )
-        { Whisker_Seg *w;
-          Seed seed = { i%stride,
-            i/stride,
-            (int) 100 * cos( tha[i] ),
-            (int) 100 * sin( tha[i] ) };
-          w = trace_whisker( &seed, image );
-          if (w != NULL)
-          { wsegs = (Whisker_Seg*) request_storage( wsegs, &max_segs, sizeof(Whisker_Seg), n_segs+1, "find segments" );
-            w->time = iFrame;
-            w->id  = n_segs;
-            wsegs[n_segs++] = *w;
-            //draw_whisker( image, w, 2, (int)fill); //
-            draw_whisker( mask , w, 2, 3 ); // set to 3 for debug, could be anything but 1
-            free(w);
-#ifdef DEBUG_SEEDING_MASK
-            //Write_Image("trace_seed_mask.tif",mask);
-            Write_Image( "trace_seed_image.tif", image );
-            breakme();
-#endif
-          } // ... if w
-        } // ... if maska[i]
-      } // ... while i--
-    } // end context - trace
-#endif
   } // end context
   *pnseg = n_segs;
   return wsegs;
