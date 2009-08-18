@@ -44,7 +44,7 @@ void  Read_Range( FILE *fp, Range *r )
   progress("errno: %d\n",errno);
   progress("ftell: %d\n",ftell(fp));
   progress("feof : %d\n",feof(fp));
-#endif  FILE
+#endif
 #if 1 
   n = fread( r, sizeof(Range), 1, fp );  
 #else

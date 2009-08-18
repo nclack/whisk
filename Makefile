@@ -1,11 +1,12 @@
 CC = gcc
 LDFLAGS = -lm #-lSaturn
-CFLAGS = -g -O3 -ftree-vectorize #-Wall  #-finstrument-functions
+CFLAGS = -g -O3 #-ftree-vectorize #-Wall  #-finstrument-functions
 pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contour_lib.o\
 					 water_shed.o
-cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o distance.o dag.o\
-					 trajectory.o match.o bar.o image_adapt.o error.o adjust_scan_bias.o\
-					 seed.o whisker_io.o whisker_io_whisker1.o whisker_io_whiskbin1.o viterbi.o
+cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
+					 match.o bar.o image_adapt.o error.o adjust_scan_bias.o\
+					 seed.o whisker_io.o whisker_io_whisker1.o whisker_io_whiskbin1.o\
+					 whisker_io_whiskold.o viterbi.o traj.o compat.o merge.o
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
 APPS  = whisk whisker_convert

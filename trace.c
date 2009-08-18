@@ -59,9 +59,9 @@
 #undef  EXPORT_COMPZONE_TIF
 #undef  APPLY_ZONE_MASK
 
-#define SEED_ON_MHAT_CONTOURS
-#if 0
 #define SEED_ON_GRID
+#if 0
+#define SEED_ON_MHAT_CONTOURS
 #endif
 
 #define SEED_ON_GRID_LATTICE_SPACING 50
