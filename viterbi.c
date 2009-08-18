@@ -168,14 +168,7 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
         if( vprob > valmax )        // Look for most likely source path to dst
         { ViterbiPath *this;
           valmax = vprob;
-          if( npool >= poolsize )
-            error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
-          //pool = (ViterbiPath*) request_storage( pool,
-          //                                      &poolsize, 
-          //                                      sizeof(ViterbiPath), 
-          //                                      npool+1, 
-          //                                      "Forward Viterbi - argmax" );
-          this = pool + (npool++);  // Append dst to src->path 
+          this = pool +  nstates * iseq + idst;
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;
           argmax->path  = this;
@@ -234,7 +227,7 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
   assert(nseq>=1);
 
   // prealloc request for minimum required space
-  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath), nstates*nstates*(nseq+1), "Forward Vitirbi LogP - init pool" );
+  pool = (ViterbiPath*) request_storage( pool, &poolsize, sizeof(ViterbiPath),  nstates*(nseq+1), "Forward Vitirbi LogP - init pool" );
   next = (ViterbiState*) request_storage( next, &maxnext, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init next" );
   last = (ViterbiState*) request_storage( last, &maxlast, sizeof(ViterbiState), nstates, "Forward Vitirbi LogP - init last" );
 
@@ -277,14 +270,10 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
         argmax->total = prob; 
         { ViterbiPath *this;
           valmax = vprob;
-          if( npool+1 >= poolsize )
-            error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
-          //pool = (ViterbiPath*) request_storage( pool,
-          //                                      &poolsize, 
-          //                                      sizeof(ViterbiPath), 
-          //                                      npool+1, 
-          //                                      "Forward Viterbi - argmax - 1" );
-          this = pool + (npool++);  // Append dst to src->path 
+//        if( npool+1 >= poolsize )
+//          error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
+//        this = pool + (npool++);  // Append dst to src->path 
+          this = pool +  nstates * iseq + idst;
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;
           argmax->path  = this;
@@ -311,14 +300,10 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
         if( vprob > valmax )        // Look for most likely source path to dst
         { ViterbiPath *this;
           valmax = vprob;
-          if( npool+1 >= poolsize )
-            error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
-          //pool = (ViterbiPath*) request_storage( pool,
-          //                                      &poolsize, 
-          //                                      sizeof(ViterbiPath), 
-          //                                      npool+1, 
-          //                                      "Forward Viterbi - argmax - 2" );
-          this = pool + (npool++);  // Append dst to src->path 
+//        if( npool+1 >= poolsize )
+//          error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
+//        this = pool + (npool++);  // Append dst to src->path 
+          this = pool +  nstates * iseq + idst;
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;
           argmax->path  = this;

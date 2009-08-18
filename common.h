@@ -49,6 +49,13 @@ void *request_storage(
     size_t  minindex, 
     char   *msg );
 
+void *request_storage_pow2items( 
+    void *buffer, 
+    size_t *maxlen_bytes, 
+    size_t nbytes, 
+    size_t minindex, 
+    char *msg );
+
 //for debugging
 void dump_doubles(char* filename, double* a, int n);
 

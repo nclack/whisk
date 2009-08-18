@@ -124,11 +124,11 @@ def pipeline_standard(env, movie):
                                      source = j[0]) ,)          ,
     env.Classify                                                ,
     ( env.MeasurementsAsMatlab, ),
-##  ( env.IdentitySolver                                        , 
-##    ( env.MeasurementsAsMatlab,)                              ,
-##    ( env.MeasurementsAsTrajectories,),
-##    env.Summary
-##  ) ,                    
+    ( env.IdentitySolver                                        , 
+      ( env.MeasurementsAsMatlab,)                              ,
+      ( env.MeasurementsAsTrajectories,),
+      env.Summary
+    ) ,                    
     ( env.HmmLRSolver,
       (env.MeasurementsAsMatlab,),
       (env.MeasurementsAsTrajectories,),

@@ -349,7 +349,7 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   defaults = {'scatter' : {'s':0.5,
                            'c':'k',
                            'alpha':0.1,
-                           'marker':'x'},
+                           'marker':'o'},
               'lines'   : {}
              }
   for k,v in defaults.iteritems():
