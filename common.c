@@ -94,7 +94,7 @@ void maxfilt_centered_double_inplace( double *a, int len, int support )
   unsigned int    iUf,iUb,iRf,iRb;
   static double *R = NULL;
   static size_t maxRbytes = 0;
-  double *e, v;
+  double *e;
   int off = support;
   int c = support/2+1;
   double this,last;

@@ -5,7 +5,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "whisk", "whisk\whisk.vcproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "whisker_convert", "whisker_convert\whisker_convert.vcproj", "{D4174ADE-2CAF-4E94-B70D-D131E67F6112}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcproj", "{4142B20C-78E6-4B05-AD20-8ADA4ACFA630}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_hmm_reclassify_1", "test_hmm_reclassify_1\test_hmm_reclassify_1.vcproj", "{EB3E05B8-B07B-4CEA-952A-E48882ED5AFA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,10 +21,10 @@ Global
 		{D4174ADE-2CAF-4E94-B70D-D131E67F6112}.Debug|Win32.Build.0 = Debug|Win32
 		{D4174ADE-2CAF-4E94-B70D-D131E67F6112}.Release|Win32.ActiveCfg = Release|Win32
 		{D4174ADE-2CAF-4E94-B70D-D131E67F6112}.Release|Win32.Build.0 = Release|Win32
-		{4142B20C-78E6-4B05-AD20-8ADA4ACFA630}.Debug|Win32.ActiveCfg = Debug|Win32
-		{4142B20C-78E6-4B05-AD20-8ADA4ACFA630}.Debug|Win32.Build.0 = Debug|Win32
-		{4142B20C-78E6-4B05-AD20-8ADA4ACFA630}.Release|Win32.ActiveCfg = Release|Win32
-		{4142B20C-78E6-4B05-AD20-8ADA4ACFA630}.Release|Win32.Build.0 = Release|Win32
+		{EB3E05B8-B07B-4CEA-952A-E48882ED5AFA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EB3E05B8-B07B-4CEA-952A-E48882ED5AFA}.Debug|Win32.Build.0 = Debug|Win32
+		{EB3E05B8-B07B-4CEA-952A-E48882ED5AFA}.Release|Win32.ActiveCfg = Release|Win32
+		{EB3E05B8-B07B-4CEA-952A-E48882ED5AFA}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

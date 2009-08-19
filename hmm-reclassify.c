@@ -78,12 +78,12 @@ Tpf_State_Decode                                  pf_State_Decode               
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY
-char *Spec[] = {"[-h|--help] <source:string> <dest:string> -n <int>",NULL};
+char *Spec[] = {"[-h|--help] | <source:string> <dest:string> -n <int>",NULL};
 int main(int argc, char*argv[])
 { int nrows;
   int nwhisk;
   Measurements *table;
-  Distributions *shp_dists, *vel_dists;
+  Distributions *shp_dists;//, *vel_dists;
   real *T;
 
   Process_Arguments( argc, argv, Spec, 0 );
@@ -120,8 +120,8 @@ int main(int argc, char*argv[])
     }
   }
 #endif
-  Measurements_Table_Compute_Velocities(table,nrows);
-  
+  //Measurements_Table_Compute_Velocities(table,nrows);
+
   nwhisk = -1;
   if( Is_Arg_Matched("-n") )
     nwhisk = Get_Int_Arg("-n");
@@ -141,9 +141,10 @@ int main(int argc, char*argv[])
   // Compute transitions matrix for model
   //
 
-  T = (*pf_Alloc_Transitions)(nwhisk);
+  T = (*pf_Alloc_Transitions)(nwhisk);  
   //(*pf_Init_Uniform_Transitions)(T,nwhisk);
   (*pf_Estimate_Transitions)( T, nwhisk, table, nrows );
+
 #ifdef DEBUG_HMM_RECLASSIFY
   // Assert properly normed
   { real sum = 1.0;
@@ -159,6 +160,7 @@ int main(int argc, char*argv[])
     }
   } 
 #endif
+
   (*pf_Log2_Transitions)(T,nwhisk, HMM_RECLASSIFY_BASELINE_LOG2);
 
   //
@@ -186,13 +188,13 @@ int main(int argc, char*argv[])
 
   Sort_Measurements_Table_State_Time(table, nrows);
   shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
-  vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
+  //vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
   Distributions_Dilate( shp_dists );
-  Distributions_Dilate( vel_dists );
+  //Distributions_Dilate( vel_dists );
   Distributions_Normalize( shp_dists );
-  Distributions_Normalize( vel_dists );
+  //Distributions_Normalize( vel_dists );
   Distributions_Apply_Log2( shp_dists );
-  Distributions_Apply_Log2( vel_dists );
+  //Distributions_Apply_Log2( vel_dists );
 
   //
   // Process frames independantly
@@ -210,7 +212,7 @@ int main(int argc, char*argv[])
     { Measurements *bookmark = row;
       int fid = row->fid;
       int nobs;
-      while( row->fid == fid && row < table+nrows ) 
+      while(row < table+nrows && row->fid == fid  ) 
       { 
 #ifdef DEBUG_HMM_RECLASSIFY
           progress("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
@@ -274,7 +276,7 @@ int main(int argc, char*argv[])
   // Cleanup
   //
   free(T);
-  Free_Distributions(vel_dists);
+  //Free_Distributions(vel_dists);
   Free_Distributions(shp_dists);
   Free_Measurements_Table(table);
 

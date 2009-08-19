@@ -81,7 +81,7 @@ void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int 
   while( row < table+nrows )
   { Measurements *bookmark = row;             //remember the frame's start
     int cur = row->fid;               //1. check if any are labelled
-    for(; row->fid == cur; row++)             //iterate through segments in frame
+    for(; (row < table+nrows)&&(row->fid == cur); row++)             //iterate through segments in frame
     { if( row->state != -1 )          //2. if found labelled, then run through labelling process
       { int state = (bookmark->state != -1 ); // start at state=1 if first is a whisker (not junk)
         int last = state;                     // last is the last class (junk<0> or whisker<1>)
@@ -89,7 +89,7 @@ void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int 
           progress("Frame: %5d  Whisker: %3d  State: %3d \n", 
               bookmark->fid, bookmark->wid, bookmark->state);
 #endif
-        for( row = bookmark+1; row->fid == cur; row++) 
+        for( row = bookmark+1; (row < table+nrows)&&(row->fid == cur); row++) 
         { int c = (row->state != -1);
           int delta = 1;              //delta state (1 for cases j->w and w->j)
           if( c == last ) //j->j or w->w

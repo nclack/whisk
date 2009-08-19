@@ -109,6 +109,10 @@ SHARED_EXPORT Distributions *Alloc_Distributions_For_State_Sorted_Table( Measure
 // The range of these histograms covers the state space sampled by the movie
 SHARED_EXPORT Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int n_bins );
 
+SHARED_EXPORT void Distributions_Dilate( Distributions* dist );
+SHARED_EXPORT void Distributions_Normalize( Distributions *d );
+SHARED_EXPORT void Distributions_Apply_Log2( Distributions *d );
+
 // Builds histograms using the precompted valid velocties.
 // This changes the sort order of the table.  The input should be sorted in
 //   state,time order.

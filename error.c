@@ -45,6 +45,7 @@ void help(int show, char *str, ... )
     vfprintf(stderr, str, argList);
     va_end( argList );
     fflush(NULL);
+	exit(0);
   }
 }
 

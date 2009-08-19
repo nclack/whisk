@@ -8,6 +8,7 @@
 
 SHARED_EXPORT void error(char *str, ... );
 SHARED_EXPORT void warning(char *str, ... );
+SHARED_EXPORT void help(int show, char *str, ... );
 SHARED_EXPORT void debug(char *str, ... );
 SHARED_EXPORT void progress(char *str, ... );
 SHARED_EXPORT void progress_meter(double cur, double min, double max, int len, char *str, ...);

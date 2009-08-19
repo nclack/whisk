@@ -535,7 +535,7 @@ SHARED_EXPORT
 Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int n_bins )
 { int minstate,maxstate;
   Distributions *d = Alloc_Distributions_For_State_Sorted_Table( sorted_table, n_rows, n_bins, &minstate, &maxstate );
-  int i,j,k;
+  int i,j;
   int n = sorted_table[0].n;
   double *mn, *mx;
   double *delta;
@@ -691,7 +691,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       int istate   = mrow->state - minstate;
       double *hist = d->data + istate * state_stride;
       for( j=0; j<n; j++ )
-      { int ibin = floor(  (data[j] - mn[j]) / delta[j]  );
+      { int ibin = (int) floor(  (data[j] - mn[j]) / delta[j]  );
         hist[ j*measure_stride + ibin  ] ++;
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
         if(  !( ibin >= 0 && ibin < n_bins ) )
@@ -758,7 +758,7 @@ double Eval_Likelihood_Log2( Distributions *dist, double *vec, int istate )
   int i;
 
   for(i=0; i < dist->n_measures; i++)
-  { ibin = floor( ( vec[i] - dist->bin_min[i] ) / ( dist->bin_delta[i] ) );
+  { ibin = (int) floor( ( vec[i] - dist->bin_min[i] ) / ( dist->bin_delta[i] ) );
     acc += hists[measure_stride*i + ibin]; // addition here bc probs are in log space
   }
   return acc;
@@ -1077,12 +1077,12 @@ void Solve( Measurements *table, int n_rows, int n_bins )
           {
             int npath;
             //if( start && end )
-            {
+            { Measurements **path;
 #ifdef DEBUG_SOLVE_GRAY_AREAS
               assert(start && end);
               printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
 #endif
-              Measurements **path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
+              path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
               memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
 #ifdef DEBUG_SOLVE_GRAY_AREAS
               assert( start->fid == path[0]->fid      - 1 );
