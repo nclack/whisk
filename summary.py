@@ -368,7 +368,7 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   
   data = table.get_shape_table()
   th0 = floor(( data[:,2].mean() + 45)/90)*90
-  vmin1,vmax1 = th0-90,th0+90
+  vmin1,vmax1 = th0-50,th0+50
 
 
   ax = subplot(211)
@@ -379,8 +379,9 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
     ax.broken_barh( getbars(s), 
                     (vmin1,vmax1-vmin1),
                     edgecolors=[(0,0,0,0)],
+                    linewidth = 0,
                     facecolors=[cmap(i/N,alpha=0.5)],
-                    alpha = 1.0/N 
+                    alpha = 1.0/N
                     )
   xlabel('Time (frames)')
   ylabel('Angle at root (deg)')
@@ -400,9 +401,10 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
           **defaults['scatter'] )
   for i,s in enumerate(states):
     ax.broken_barh( getbars(s), 
-                    (vmin1,vmax1-vmin1),
+                    (vmin2,vmax2-vmin2),
                     edgecolors=[(0,0,0,0)],
                     facecolors=[cmap(i/N,alpha=0.5)],
+                    linewidth = 0.1,
                     alpha = 1.0/N 
                     )
   #ax.broken_barh( getbars(0), (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
@@ -417,11 +419,15 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
     subplot(212)
     plot(time,data[:,3]/px2mm, **defaults['lines'] )
 
-  ax = subplot(211)
-  axis((0,time.max(),vmin1,vmax1))
-  ax = subplot(212)
-  axis((0,time.max(),vmin2,vmax2))
-  ion()                                               
+  try:
+    ax = subplot(211)
+    axis((0,time.max(),vmin1,vmax1))
+    ax = subplot(212)
+    axis((0,time.max(),vmin2,vmax2))
+  except ValueError:
+    pass
+    
+  ion()
   if( doshow ): show()
 
 def plot_summary(wvd,traj,side=0):
