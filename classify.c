@@ -201,16 +201,15 @@ int main(int argc, char* argv[])
   }
 
   table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), &n_rows );
-  if( Is_Arg_Matched("-n") )
-  { count = Get_Int_Arg("-n");
-    thresh = Measurements_Table_Estimate_Best_Threshold_For_Known_Count( table, n_rows, 0 /*length column*/, 50.0, 200.0, count );
+  if( Is_Arg_Matched("-n") && ( (count = Get_Int_Arg("-n"))>=1 ) )
+  { thresh = Measurements_Table_Estimate_Best_Threshold_For_Known_Count( table, n_rows, 0 /*length column*/, 50.0, 200.0, count );
   } else 
   { thresh = Measurements_Table_Estimate_Best_Threshold( table, n_rows, 0 /*length column*/, 50.0, 200.0, &count );
   }
   Measurements_Table_Label_By_Threshold              ( table, n_rows, 0 /*length column*/, thresh );
   
-  printf("Length threshold: %f\n",thresh ); 
-  printf("    Target count: %d\n",count ); 
+  progress("Length threshold: %f\n"
+           "    Target count: %d\n",thresh,count ); 
 
   if( Is_Arg_Matched("face") )
   { int maxx,maxy;
@@ -222,7 +221,7 @@ int main(int argc, char* argv[])
     face_y = Get_Int_Arg("y");
   }
 
-  printf("   Face Position: ( %3d, %3d )\n", face_x, face_y);
+  progress("   Face Position: ( %3d, %3d )\n", face_x, face_y);
   Measurements_Table_Set_Constant_Face_Position     ( table, n_rows, face_x, face_y);
   Measurements_Table_Set_Follicle_Position_Indices  ( table, n_rows, 4, 5 );
 
