@@ -125,15 +125,20 @@ def pipeline_standard(env, movie):
     env.Classify                                                ,
     ( env.MeasurementsAsMatlab, ),
     ( env.IdentitySolver                                        , 
+      (env.MeasurementsAsTrajectories,),
       env.Summary
     ) ,                    
     ( env.HmmLRSolver,
+      (env.MeasurementsAsTrajectories,),
       env.Summary ),
     ( env.HmmLRDelSolver,
+      (env.MeasurementsAsTrajectories,),
       env.Summary ),
     ( env.HmmLRTimeSolver,
+      (env.MeasurementsAsTrajectories,),
       env.Summary ),
     ( env.HmmLRDelTimeSolver,
+      (env.MeasurementsAsTrajectories,),
       env.Summary ),
     env.Summary                             
   ]
@@ -189,7 +194,7 @@ env  = Environment(
                                     suffix = '.mat',
                                     src_suffix = '.measurements'
                                    ),
-    'MeasurementsAsTrajectories': Builder(action = lambda source,target,env: 0 if MeasurementsTable(source[0].path).save_trajectories(target[0].path) else 1,
+    'MeasurementsAsTrajectories': Builder(action = lambda source,target,env: 0 if MeasurementsTable(source[0].path).save_trajectories(target[0].path,excludes=[-1]) else 1,
                                           suffix = '.trajectories',
                                           src_suffix = '.measurements'),
     'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT",

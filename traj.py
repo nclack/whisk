@@ -129,7 +129,7 @@ class MeasurementsTable(object):
       t.setdefault( r[0],{} ).setdefault( r[1], r[2] ) 
     return t
 
-  def save_trajectories(self, filename):
+  def save_trajectories(self, filename, excludes=[]):
     """  Saves to a trajectories file.
 
     >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
@@ -139,8 +139,9 @@ class MeasurementsTable(object):
     trajectories = self.get_trajectories()
     f = open( filename, 'w' )
     for k,v in trajectories.iteritems():
-      for s,t in v.iteritems():
-        print >> f, '%d,%d,%d'%(k,s,t)
+      if not k in excludes:
+        for s,t in v.iteritems():
+          print >> f, '%d,%d,%d'%(k,s,t)
     return self
 
   def load_trajectories(self,filename ):
