@@ -192,14 +192,11 @@ Image *load(char *path, int index, int *nframes)
  */
 static char *Spec[] = { "<movie:string> <prefix:string> [--no-whisk] [--no-bar]", NULL };
 int main(int argc, char *argv[])
-{ //Stack *movie;
-  //Zone  *mask;
-  char  *whisker_file_name, *bar_file_name, *prefix;
+{ char  *whisker_file_name, *bar_file_name, *prefix;
   size_t prefix_len;
   FILE  *fp;
   Image *bg, *image;
   int    i,depth;
-  //int    transpose = 0;
 
   char * movie;
 
@@ -218,8 +215,6 @@ int main(int argc, char *argv[])
 
   sprintf( whisker_file_name, "%s.whiskers", prefix );
   sprintf(  bar_file_name, "%s.bar", prefix );
-
-
 
   progress("Loading...\n"); fflush(stdout);
   movie = Get_String_Arg("movie");
@@ -264,25 +259,23 @@ int main(int argc, char *argv[])
    */
   if( !Is_Arg_Matched("--no-whisk") )
   { int           nTotalSegs = 0;
-    Whisker_Seg   *wv;// = (Whisker_Seg**) Guarded_Malloc( depth * sizeof(Whisker_Seg*), Program_Name());
-    int wv_n; // = (int*) malloc ( depth * sizeof(int) );
+    Whisker_Seg   *wv;
+    int wv_n; 
     WhiskerFile wfile = Whisker_File_Open(whisker_file_name,"whiskbin1","w");
 
-    //fp = fopen(whisker_file_name,"w");
     if( !wfile )
     { fprintf(stderr, "Warning: couldn't open %s for writing.", whisker_file_name);
     } else
     { //int step = (int) pow(10,round(log10(depth/100)));
-
       for( i=0; i<depth; i++ )
       //for( i=450; i<460; i++ )
       //for( i=0; i<depth; i+= step )
       { //int i=76;
         int k;
-        image = Copy_Image( load(movie,i,NULL) );                                               // Is this necessary? Thrashing heap
+        image = Copy_Image( load(movie,i,NULL) );                                               // Not Thrashing since managed
         progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
         //progress( "Finding segments for frame %5d of %d.\r", i, depth);
-        wv = find_segments(i, image, bg, &wv_n);                                                // Is this necessary?
+        wv = find_segments(i, image, bg, &wv_n);                                                // Thrashing heap
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
                                                    image->width, image->height, 
                                                    2.0,    // scale down by this

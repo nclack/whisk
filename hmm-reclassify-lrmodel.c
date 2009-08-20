@@ -217,6 +217,60 @@ void LRModel_Compute_Emissions_For_Two_Classes_Log2( real *E, int nwhisk, Measur
   }
 }
 
+void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
+    real *E, 
+    int nwhisk, 
+    Measurements *obs, 
+    int nobs, 
+    Measurements** history, 
+    int nhist, 
+    Distributions *shp_dists,
+    Distributions *vel_dists )
+{ int N = 2 * nwhisk + 1;
+  int i,j;
+  real min_logp_delta = 0.0,
+       max_logp_delta = -FLT_MAX;
+  Measurements *prev;
+
+  for(j=0;j<nobs;j++)
+  { double logp_delta;
+    if( obs[j].state >= 0 )
+    { if( prev = history[ obs[j].state ] )
+      { logp_delta = Eval_Velocity_Likelihood_Log2( vel_dists,
+                                                    prev->data,
+                                                    obs[j].data,
+                                                    1 );
+        min_logp_delta = MIN( min_logp_delta, logp_delta );
+      }
+    } else // junk
+    { logp_delta = Eval_Velocity_Likelihood_Log2( vel_dists,
+                                                  prev->data,
+                                                  obs[j].data,
+                                                  0 );
+      max_logp_delta = MAX( min_logp_delta, logp_delta );
+    }
+  } // end max/min computation
+
+  for(i=0;i<N;i++)
+  { real *row = E + i*nobs;
+    int state = i&1;
+    for(j=0;j<nobs;j++)
+    { real shp,vel;
+      shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
+
+      if( prev = history[ obs[j].state ] ) // state must be 0 (junk) or 1 (whisker)
+      { vel = Eval_Velocity_Likelihood_Log2( vel_dists,
+                                            prev->data,
+                                            obs[j].data,
+                                            obs[j].state );
+      } else // missing a previous
+      { vel = (obs[j].state) ? min_logp_delta : max_logp_delta;
+      }
+      row[j] = shp + vel;
+    }
+  }
+}
+
 void LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists ) 
 { int N = 2 * nwhisk + 1;
   int i,j, iwhisk;
