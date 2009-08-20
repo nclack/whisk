@@ -235,8 +235,7 @@ int main(int argc, char *argv[])
     progress( "Finding bar positions\n" );
     fp = fopen( bar_file_name, "w" );
     for( i=0; i<depth; i++ )
-    { progress_meter(i, 0, depth-1, 79, "Locating post: [%5d/%5d]",i,depth);
-      //progress( "Locating bar for frame %5d of %d.\n", i, depth);
+    { progress_meter(i, 0, depth-1, 79, "Finding     post: [%5d/%5d]",i,depth);
       image = Copy_Image( load(movie,i,NULL) );
       invert_uint8( image );
       Compute_Bar_Location(   image,
@@ -274,7 +273,6 @@ int main(int argc, char *argv[])
         int k;
         image = Copy_Image( load(movie,i,NULL) );                                               // Not Thrashing since managed
         progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
-        //progress( "Finding segments for frame %5d of %d.\r", i, depth);
         wv = find_segments(i, image, bg, &wv_n);                                                // Thrashing heap
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
                                                    image->width, image->height, 

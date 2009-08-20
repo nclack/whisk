@@ -346,10 +346,11 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   >>> table = MeasurementsTable("data/testing/seq140[autotraj].measurements")
   >>> plot_summary_measurements_table(table.update_velocities())
   """
-  defaults = {'scatter' : {'s':0.5,
-                           'c':'k',
+  defaults = {'scatter' : {'markersize':1,
+                           'color':'k',
+                           'linewidth': 0,
                            'alpha':0.1,
-                           'marker':'o'},
+                           'marker':'.'},
               'lines'   : {}
              }
   for k,v in defaults.iteritems():
@@ -366,14 +367,17 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   cmap = cm.hsv
   N = float(len(states))
   
-  data = table.get_shape_table()
-  th0 = floor(( data[:,2].mean() + 45)/90)*90
-  vmin1,vmax1 = th0-50,th0+50
+  time = array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )) 
+  angl = array(map( lambda i: table._measurements[i].data[2], xrange(table._nrows) ))  
+  curv = array(map( lambda i: table._measurements[i].data[3], xrange(table._nrows) ))  
+  #data = table.get_shape_table()
+  th0 = floor(( angl.mean() + 45)/90)*90
+  vmin1,vmax1 = th0-70,th0+70
 
 
   ax = subplot(211)
-  scatter( array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )),
-           data[:,2],
+  plot   ( time,
+           angl,
            **defaults['scatter'] )
   for i,s in enumerate(states):
     ax.broken_barh( getbars(s), 
@@ -396,8 +400,8 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   else:
     ylabel('Mean Curvature (1/mm)')
     vmin2,vmax2 = -0.4,0.4
-  scatter( array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )),
-          data[:,3]/px2mm,
+  plot  ( time,
+          curv/px2mm, #data[:,3]/px2mm,
           **defaults['scatter'] )
   for i,s in enumerate(states):
     ax.broken_barh( getbars(s), 

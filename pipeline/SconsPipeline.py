@@ -125,17 +125,15 @@ def pipeline_standard(env, movie):
     env.Classify                                                ,
     ( env.MeasurementsAsMatlab, ),
     ( env.IdentitySolver                                        , 
-      ( env.MeasurementsAsMatlab,)                              ,
-      ( env.MeasurementsAsTrajectories,),
       env.Summary
     ) ,                    
     ( env.HmmLRSolver,
-      (env.MeasurementsAsMatlab,),
-      (env.MeasurementsAsTrajectories,),
       env.Summary ),
     ( env.HmmLRDelSolver,
-      (env.MeasurementsAsMatlab,),
-      (env.MeasurementsAsTrajectories,),
+      env.Summary ),
+    ( env.HmmLRTimeSolver,
+      env.Summary ),
+    ( env.HmmLRDelTimeSolver,
       env.Summary ),
     env.Summary                             
   ]
@@ -210,9 +208,11 @@ env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movi
                            # a count >= 1 will identify that many whiskers in each movie
 
 env.AddMethod( labelled_commit_to_measurements, "CommitToMeasurements" )
-env.AddMethod( make_solver("test_traj_solve_gray_areas", "grey_v0"), "IdentitySolver" )
-env.AddMethod( make_solver("test_hmm_reclassify_1 -n $WHISKER_COUNT", "hmm-lr-reclassify"), "HmmLRSolver" )
-env.AddMethod( make_solver("test_hmm_reclassify_2 -n $WHISKER_COUNT", "hmm-lrdel-reclassify"), "HmmLRDelSolver" )
+env.AddMethod( make_solver("test_traj_solve_gray_areas"             , "grey_v0"       ), "IdentitySolver"     )
+env.AddMethod( make_solver("test_hmm_reclassify_1 -n $WHISKER_COUNT", "hmm-lr"        ), "HmmLRSolver"        )
+env.AddMethod( make_solver("test_hmm_reclassify_2 -n $WHISKER_COUNT", "hmm-lrdel"     ), "HmmLRDelSolver"     )
+env.AddMethod( make_solver("test_hmm_reclassify_3 -n $WHISKER_COUNT", "hmm-lr-time"   ), "HmmLRTimeSolver"    )
+env.AddMethod( make_solver("test_hmm_reclassify_4 -n $WHISKER_COUNT", "hmm-lrdel-time"), "HmmLRDelTimeSolver" )
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 

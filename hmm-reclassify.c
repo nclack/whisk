@@ -1,5 +1,8 @@
 //
 // TODO: FIXME: how to handle duplicate long segments in the middle of the sequence?
+// TODO: What are termed "deletions" should be "insertions."  Also "junk"
+//       states are essentially repeated insertions states.  Maybe there is a
+//       better name than "junk" (i.e. other)
 //
 #include "compat.h"
 #include <assert.h>
@@ -10,12 +13,30 @@
 #include "viterbi.h"
 #include "common.h"
 
+#if 1  // setup tests
+
+#if defined( TEST_HMM_RECLASSIFY_1 )
+#define TEST_HMM_RECLASSIFY_LR_MODEL
+#define  TEST_HMM_RECLASSIFY_NO_DELTAS
+
+#elif defined( TEST_HMM_RECLASSIFY_2 ) 
+#define TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
+#define TEST_HMM_RECLASSIFY_NO_DELTAS
+
+#elif defined( TEST_HMM_RECLASSIFY_3 ) 
+#define TEST_HMM_RECLASSIFY_LR_MODEL
+#define TEST_HMM_RECLASSIFY_W_DELTAS
+
+#elif defined( TEST_HMM_RECLASSIFY_4 ) 
+#define TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
+#define TEST_HMM_RECLASSIFY_W_DELTAS
+#endif
+
+#endif
 
 #if 0
 #define DEBUG_HMM_RECLASSIFY
 #endif
-
-
 
 #define HMM_RECLASSIFY_DISTS_NBINS   (16)
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
@@ -44,9 +65,7 @@ int* _static_range( int n )
   return buf;
 }
 
-#ifdef TEST_HMM_RECLASSIFY_1
-#define TEST_HMM_RECLASSIFY
-//#define TEST_HMM_RECLASSIFY_W_DELTAS
+#ifdef TEST_HMM_RECLASSIFY_LR_MODEL
 #include "hmm-reclassify-lrmodel.h"
 Tpf_State_Count                                       pf_State_Count                                       =  LRModel_State_Count;
 Tpf_Alloc_Transitions                                 pf_Alloc_Transitions                                 =  LRModel_Alloc_Transitions;
@@ -64,9 +83,7 @@ Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2  pf_Compute_Emissions_For_T
 Tpf_State_Decode                                      pf_State_Decode                                      =  LRModel_State_Decode;
 #endif
 
-#ifdef TEST_HMM_RECLASSIFY_2
-#define TEST_HMM_RECLASSIFY
-//#define TEST_HMM_RECLASSIFY_W_DELTAS
+#ifdef  TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
 #include "hmm-reclassify-lrmodel-w-deletions.h"
 Tpf_State_Count                                       pf_State_Count                                       =  LRDelModel_State_Count;
 Tpf_Alloc_Transitions                                 pf_Alloc_Transitions                                 =  LRDelModel_Alloc_Transitions;
@@ -84,8 +101,8 @@ Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2  pf_Compute_Emissions_For_T
 Tpf_State_Decode                                      pf_State_Decode                                      =  LRDelModel_State_Decode;
 #endif
 
-#ifdef TEST_HMM_RECLASSIFY
-char *Spec[] = {"[-h|--help] | <source:string> <dest:string> -n <int>",NULL};
+#ifdef TEST_HMM_RECLASSIFY_NO_DELTAS
+char *Spec[] = {"[-h|--help] | <source:string> <dest:string> [-n <int>]",NULL};
 int main(int argc, char*argv[])
 { int nrows;
   int nwhisk;
@@ -204,7 +221,7 @@ int main(int argc, char*argv[])
       while( row->fid == fid && row < table+nrows ) 
       { 
 #ifdef DEBUG_HMM_RECLASSIFY
-          progress("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
+          debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
 #endif
         ++row;
       }
@@ -220,7 +237,7 @@ int main(int argc, char*argv[])
 
         // Commit the result
 #ifdef DEBUG_HMM_RECLASSIFY
-        progress("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
+        debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
             fid,                              // frame id
             table[nrows-1].fid+1,             // total frames
             result->total,                    // log2 prob(obs|model)           //?
@@ -237,7 +254,7 @@ int main(int argc, char*argv[])
           { int s = seq[i];
             bookmark[i].state = (*pf_State_Decode)(s);   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
 #ifdef DEBUG_HMM_RECLASSIFY
-            progress("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
+            debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
                 bookmark[i].fid, 
                 bookmark[i].wid, 
                 s,         
@@ -274,7 +291,7 @@ int main(int argc, char*argv[])
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY_W_DELTAS
-char *Spec[] = {"[-h|--help] <source:string> <dest:string> -n <int>",NULL};
+char *Spec[] = {"[-h|--help] <source:string> <dest:string> [-n <int>]",NULL};
 int main(int argc, char*argv[])
 { int nrows;
   int nwhisk;
@@ -368,7 +385,7 @@ int main(int argc, char*argv[])
       while(row < table+nrows && row->fid == fid  ) 
       { 
 #ifdef DEBUG_HMM_RECLASSIFY
-          progress("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
+          debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
 #endif
         ++row;
       }
@@ -378,14 +395,22 @@ int main(int argc, char*argv[])
 
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
       //(*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
-      (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E, nwhisk, bookmark, nobs, shp_dists, last, nwhisk );
+#ifdef DEBUG_HMM_RECLASSIFY
+      { int i;
+        debug("Last\n");
+        for(i=0; i<nwhisk; i++)
+          debug("\t%p", last[i]);
+        debug("\n");
+      }
+#endif
+      (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E, nwhisk, bookmark, nobs, last, nwhisk, shp_dists, vel_dists );
 
       { int N = (*pf_State_Count)(nwhisk);
         ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
 
         // Commit the result
 #ifdef DEBUG_HMM_RECLASSIFY
-        progress("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
+        debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
             fid,                              // frame id
             table[nrows-1].fid+1,             // total frames
             result->total,                    // log2 prob(obs|model)           //?
@@ -403,7 +428,7 @@ int main(int argc, char*argv[])
             if(lbl>-1)
               last[lbl] = bookmark+i;
 #ifdef DEBUG_HMM_RECLASSIFY
-            progress("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
+            debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
                 bookmark[i].fid, 
                 bookmark[i].wid, 
                 s,         

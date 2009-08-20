@@ -11,6 +11,7 @@
 
 #if 0
 #define DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
+#define DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
 #endif
 
 
@@ -228,45 +229,62 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
     Distributions *vel_dists )
 { int N = 2 * nwhisk + 1;
   int i,j;
-  real min_logp_delta = 0.0,
-       max_logp_delta = -FLT_MAX;
+  real max_logp_delta = -FLT_MAX;
   Measurements *prev;
 
-  for(j=0;j<nobs;j++)
-  { double logp_delta;
-    if( obs[j].state >= 0 )
-    { if( prev = history[ obs[j].state ] )
-      { logp_delta = Eval_Velocity_Likelihood_Log2( vel_dists,
-                                                    prev->data,
-                                                    obs[j].data,
-                                                    1 );
-        min_logp_delta = MIN( min_logp_delta, logp_delta );
+  // over all observables and all states
+  // compute max delta probability.
+  // ...this will be used as the default delta prob when a
+  //    previous observation for a state is missing
+  { int any = 0;
+    for (i=0; i<N; i++ )
+    { double logp_delta;
+      int st = LRModel_State_Decode(i);
+      if( (st>-1) && (prev = history[ st ]) )
+      { any = 1;
+        for(j=0;j<nobs;j++)
+        { logp_delta = Eval_Velocity_Likelihood_Log2( vel_dists,
+                                                      prev->data,
+                                                      obs[j].data,
+                                                      i&1 );
+          max_logp_delta = MAX( max_logp_delta, logp_delta );
+        }
       }
-    } else // junk
-    { logp_delta = Eval_Velocity_Likelihood_Log2( vel_dists,
-                                                  prev->data,
-                                                  obs[j].data,
-                                                  0 );
-      max_logp_delta = MAX( min_logp_delta, logp_delta );
     }
-  } // end max/min computation
+    if( !any )
+      max_logp_delta = 0;
+  }
 
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
+  debug("  j st   shp      vel\n"
+        " -- -- -------  ------\n");
+#endif
   for(i=0;i<N;i++)
   { real *row = E + i*nobs;
+    real shp,vel;
     int state = i&1;
-    for(j=0;j<nobs;j++)
-    { real shp,vel;
-      shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
-
-      if( prev = history[ obs[j].state ] ) // state must be 0 (junk) or 1 (whisker)
-      { vel = Eval_Velocity_Likelihood_Log2( vel_dists,
-                                            prev->data,
-                                            obs[j].data,
-                                            obs[j].state );
-      } else // missing a previous
-      { vel = (obs[j].state) ? min_logp_delta : max_logp_delta;
+    int st = LRModel_State_Decode(i); 
+    if( st > -1 && (prev = history[ st ]) ) 
+    { for(j=0;j<nobs;j++)
+      { shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
+        vel = Eval_Velocity_Likelihood_Log2( vel_dists,
+                                              prev->data,
+                                              obs[j].data,
+                                              state );
+        row[j] = shp + vel;
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
+        debug(" %2d %2d % 5.3f % 5.3f\n",j,st,shp,vel);
+#endif
       }
-      row[j] = shp + vel;
+    } else // missing a previous
+    { for(j=0;j<nobs;j++)
+      { shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
+        vel = max_logp_delta;
+        row[j] = shp + vel;
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
+        debug(" %2d %2d % 5.3f % 5.3f * \n",j,st,shp,vel);
+#endif
+      }
     }
   }
 }
