@@ -153,7 +153,7 @@ def pipeline_curated(env, source):
         generated target is a measurements file
         returns target node
     """
-    target  = change_ext( node, '.measurements' )
+    target  = change_ext( node, '[curated].measurements' )
     sources = map( lambda e: change_ext(node, e),['.whiskers',
                                                   '.trajectories'] )
     out = env.Command( target, sources, "measure.py $SOURCES $TARGET" )

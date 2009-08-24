@@ -384,7 +384,7 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
                     (vmin1,vmax1-vmin1),
                     edgecolors=[(0,0,0,0)],
                     linewidth = 0,
-                    facecolors=[cmap(i/N,alpha=0.5)],
+                    facecolors=[cmap(i/N,alpha=0.7)],
                     alpha = 1.0/N
                     )
   xlabel('Time (frames)')
@@ -407,7 +407,7 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
     ax.broken_barh( getbars(s), 
                     (vmin2,vmax2-vmin2),
                     edgecolors=[(0,0,0,0)],
-                    facecolors=[cmap(i/N,alpha=0.5)],
+                    facecolors=[cmap(i/N,alpha=0.7)],
                     linewidth = 0.1,
                     alpha = 1.0/N 
                     )
@@ -563,7 +563,8 @@ if 1:
     plot_summary_measurements_table(t, 
                                     px2mm = options.px2mm if options.px2mm else None,
                                     doshow=0,
-                                    options = {'lines':{'alpha':0.7}})
+                                    options = {'lines':{'alpha':0.7},
+                                               'scatter':{'markersize':0} })
     savefig(dst)
     close(f)
 

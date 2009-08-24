@@ -1185,7 +1185,7 @@ int main(int argc, char *argv[])
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &n_rows);
 
-  Solve( table, n_rows, 32 );
+  Solve( table, n_rows, 256 );
   Sort_Measurements_Table_State_Time( table, n_rows );
   Measurements_Table_Compute_Velocities( table, n_rows );
   

@@ -164,7 +164,7 @@ for t in tests:
                                                  'error.c',
                                                ] ) 
 
-## Deque tests
+## Running maxima filter tests
 tests = ["TEST_MAX_FILT_1",
          "TEST_MAX_FILT_2", 
          "TEST_MAX_FILT_3", 
@@ -174,5 +174,15 @@ for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c',
                                                  'error.c',
+                                               ] ) 
+
+## report tests
+tests = ["TEST_REPORT_COMPARE_TRAJECTORIES",
+         ] 
+totestobj = lambda t: env.Object( 'report_'+t.lower(), ['report.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 'utilities.c', 'common.c',
+                                                 'error.c', 'traj.c', 'viterbi.c'
                                                ] ) 
 
