@@ -15,6 +15,9 @@
 
 #include "viterbi.h"
 
+#define  IDENTITY_SOLVER_VELOCITY_NBINS   8096
+#define  IDENTITY_SOLVER_SHAPE_NBINS      16
+
 // TESTS
 #if 0  
 #undef   TEST_MEASUREMENT_TABLE_IO_1
@@ -23,9 +26,9 @@
 #endif
 
 // DEBUG OUTPUT
-#if 0
 #define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_FIND_PATH
+#if 0
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
@@ -780,108 +783,27 @@ double Eval_Velocity_Likelihood_Log2( Distributions *dist, double *prev, double 
 }
 
 // sorted_table must be sorted in ascending time order (i.e. ascending fid)
-// Start and end should have the same `state` property.
-// Algorithm here is to just take the transition with maximum liklihood at 
-// each step.  This will be the most probable markov path joining the start
-// and end states. 
-//
-// Returns a vector of pointers into the table that trace out the best path
-// This vector will need to be freed later.
-//
-// FIXME: This algorithm is stupid
-//        Should do some kind of path finding...this is just greedy.
-SHARED_EXPORT
-Measurements **Find_Path_old( Measurements *sorted_table, 
-                          int n_rows,
-                         Distributions *shape, 
-                         Distributions *velocity,
-                         Measurements *start,
-                         Measurements *end,
-                         int minstate,
-                         int *npath)
-{ int lastfid;
-  int path_length;
-  Measurements **path;
-  double valmax = -DBL_MAX;
-  int istep = 0;
-  int fid;
-  int istate = start->state - minstate; 
-  double *ldata = start->data;
-  Measurements *last = sorted_table,
-               *this = sorted_table,
-               *next = NULL;
-  int nlast, nthis;
-#ifdef DEBUG_FIND_PATH
-  printf("*****************************     DEBUG_FIND_PATH\n");
-#endif
-
-
-  lastfid = end->fid;
-  path_length = end->fid - start->fid - 1;
-
-  assert(path_length > 0);
-  *npath = path_length;
-#ifdef DEBUG_FIND_PATH
-  printf("Path length: %d \n", path_length );
-#endif
-  path = (Measurements**) Guarded_Malloc( sizeof(Measurements*)*path_length, "find path - allocate path");
-
-  fid = start->fid;
-  while( (++last)->fid != fid && last - sorted_table < n_rows ); // advance `last` till start fid is found
-  this = last;
-  while( (++this)->fid == fid && this - sorted_table < n_rows ); // advance `this` to next frame
-  nlast = this - last;
-  next = this;
-  fid = this->fid;
-  while( (++next)->fid == fid && next - sorted_table < n_rows ); // advance `next` to next-next frame
-  nthis = next - this;
-
-  while( ((next - sorted_table) < n_rows) && ( fid < lastfid ) )
-  { int j;
-    valmax = -DBL_MAX;
-    for(j=0; j<nthis; j++)  
-    { double *tdata = this[j].data;
-      double p = Eval_Velocity_Likelihood_Log2( velocity, ldata, tdata, istate );
-      if( p > valmax )
-      { valmax = p;
-        path[istep] = this + j;
-#ifdef DEBUG_FIND_PATH
-        printf("\t%3d: Updating argmax: p = %7.7f (%5d,%2d)\n",istep,p,this[j].fid,this[j].wid);
-#endif
-      }
-    }
-    ldata = path[istep++]->data; // replace argmax 
-
-    this = next; // advance `this` to next frame
-
-    fid = this->fid;
-    while( (++next)->fid == fid && next - sorted_table < n_rows); //advance `next` to next-next frame
-    nthis = next-this;
-  }
-
-#ifdef DEBUG_FIND_PATH
-  printf("Path:\n");
-  printf("(%5d,%2d)<-", end->fid, end->wid );
-  while(path_length--)
-    printf("(%5d,%2d)<-", path[path_length]->fid, path[path_length]->wid );
-  printf("(%5d,%2d)\n\n", start->fid, start->wid );
-#endif
-
-#ifdef DEBUG_FIND_PATH
-  printf("***  Leaving  ***************     DEBUG_FIND_PATH\n");
-#endif
-
-  return path;
-}
-
-// sorted_table must be sorted in ascending time order (i.e. ascending fid)
 // Start and end should have the same `state` property.  Uses the viterbi
 // algorithm to find the most probable markov path joining the start and end
 // states. 
 //
 // Returns a vector of pointers into the table that trace out the best path
-// This vector will need to be freed later.
+// This vector is statically allocated...which is a bit silly since we know
+// where to put the data...should just pass in a pointer.  doing it this 
+// way requires a copy and additional memory management.
 //
+// Another try - for reals this time
+// Need some simple objects for the lattice
+//
+
+typedef struct _LatticeNode {
+  Measurements        *row;
+  struct _LatticeNode *argmax;
+  double               max;
+  struct _LatticeNode *children;    // these are in the lattice and all the children are
+  unsigned int         nchildren;   //    sequential in memory
+} LatticeNode;
+
 SHARED_EXPORT
 Measurements **Find_Path( Measurements *sorted_table, 
                           int n_rows,
@@ -895,10 +817,16 @@ Measurements **Find_Path( Measurements *sorted_table,
   int pathlength = end->fid - start->fid - 1;
   int *sequence  = calloc( pathlength+1, sizeof(int) );
   Measurements *first, *last; //marks edge of gray area in sorted_table
+  Measurements *eot = sorted_table + n_rows; //end of table
   int target = start->state;
-  int nstate;
+  int nnode;
   static const double baseline_log2p = -1e7;
-  Measurements **path = (Measurements**) Guarded_Malloc( sizeof(Measurements*)*(pathlength+1), "Find_Path");
+  static LatticeNode *lattice = NULL;
+  static size_t lattice_size = 0;
+  static Measurements **result    = NULL;
+  static size_t         result_size = 0;
+  
+
 #ifdef DEBUG_FIND_PATH 
   assert(start->state == end->state );
   assert(pathlength>0);   // end should come after start
@@ -907,89 +835,114 @@ Measurements **Find_Path( Measurements *sorted_table,
 
   if(npath) *npath = pathlength;
   
+  //
   // count number of nodes (includes start and end)
+  // 
   { Measurements *row = start;
-    while( row->fid == start->fid ) row++; // scroll to first frame after
+    while( row->fid == start->fid && row < eot) row++; // scroll to first frame after
     first = row;
-    while( row->fid != end->fid   ) row++; // scroll to last item in gray area
+    while( row->fid != end->fid && row < eot ) row++; // scroll to last item in gray area
     last = row - 1;
+#ifdef DEBUG_FIND_PATH 
+    assert( last > first );
+#endif
   }
-  nstate = last - first + 2; //one extra for the end state
+  nnode  = last - first + 3; //one extra for the end state, and one for the start
 
-  // setup up for generic forward viterbi (inefficient!)
-  { double *sprob = malloc( sizeof(double) * nstate );
-    double *tprob = malloc( sizeof(double) * nstate * nstate );
-    double *eprob = malloc( sizeof(double) * nstate );
-    int i,j;
+  lattice = request_storage( lattice, &lattice_size, sizeof(LatticeNode), nnode, "alloc lattice" );
 
-    //transition prob - init
-    for(i=0;i<nstate;i++)
-      for(j=0;j<nstate;j++)
-        tprob[ i*nstate + j ] = baseline_log2p;
-    //compute start, transition and emission probs
-    { Measurements *row = first,
-                   *a, *b, *c;
-      // sprob
-      for(a = row; a->fid==row->fid; a++)
-        sprob[a-first] = 
-          Eval_Velocity_Likelihood_Log2( velocity, 
-                                         start->data, 
-                                         a->data, 
-                                         target );
-      for(i=a-first;i<nstate;i++)
-        sprob[i] = baseline_log2p;
+  //
+  // init lattice
+  // 
+  { Measurements *row, *next, *nextnext; 
+    LatticeNode  *cur = lattice + 1;
 
-      // eprob, tprob
-      while( row <= last )
-      { c = a = row;
-        while( a->fid == row->fid) a++;
-        for( ; row < a; row ++ )
-        { int off = (row-first)*nstate;
-          eprob[row-first] = Eval_Likelihood_Log2( shape, 
-                                                   row->data, 
-                                                   target );
-          if( a->fid != end->fid )
-            for(b=a ; b->fid == a->fid; b++ )
-              tprob[ off + b-first ] =
-                Eval_Velocity_Likelihood_Log2( velocity, 
-                                               row->data, 
-                                               b->data, 
-                                               target );
+    memset(lattice, 0, sizeof(lattice)*nnode);
+
+    for( cur = lattice; cur < lattice + nnode; cur++ )
+      cur->max = baseline_log2p;
+
+
+    cur = lattice + 1;
+    row = first;
+    next = row;
+    while( next->fid == row->fid && next < eot) 
+      next++; // scroll to first frame after   
+
+    lattice[nnode-1].row = end;
+    lattice[0].row = start;
+    lattice[0].children  = lattice + 1;
+    lattice[0].nchildren = next - first;
+    while(next <= last && next < eot)
+    { nextnext = next;
+      while( nextnext->fid == next->fid && nextnext < eot) 
+        nextnext++; // scroll to second frame after (for child count)
+  
+      for( ; row < next; row++ )
+      { cur->row       = row;
+        cur->children  = lattice + (next-first + 1); 
+        cur->nchildren = nextnext - next;
+        cur++;
+      }
+#ifdef DEBUG_FIND_PATH 
+      assert( row == next );
+#endif
+      next = nextnext;
+    }
+    while(row <= last && row < eot) // last row all point to end
+    { for( ; row < next; row++ )
+      { cur->row       = row;
+        cur->children  = lattice + nnode - 1; // (next-first + 1); 
+        cur->nchildren = 1;
+        cur++;
+      }
+#ifdef DEBUG_FIND_PATH 
+      assert( next-first+1 == nnode-1 );
+      assert( row == next );
+#endif
+      next = nextnext;
+    }
+  }
+
+  //
+  // Find best path through lattice
+  // Note that nodes in array are already in topological order
+  //
+  { LatticeNode *cur;
+    for( cur = lattice; cur < lattice + nnode - 1; cur++ ) //resist the urge to do the end
+    { Measurements *currow = cur->row;
+      LatticeNode *child;
+      double self_likelihood = Eval_Likelihood_Log2( shape, currow->data, start->state );
+      for(child = cur->children;
+          child < cur->children + cur->nchildren;
+          child++)
+      { double logp = Eval_Velocity_Likelihood_Log2( velocity, currow->data, child->row->data, start->state )
+                    + self_likelihood;
+        if( logp > child->max )
+        { child->max    = logp;
+          child->argmax = cur;
         }
       }
-      // do probs for end
-      eprob[nstate-1] = 0; //log2(1.0)
-      for( ; c <= last; c++ )
-        tprob[ (c-first)*nstate + nstate - 1 ] = 
-          Eval_Velocity_Likelihood_Log2( velocity, 
-                                         c->data, 
-                                         end->data, 
-                                         target );
     }
-      
-    { ViterbiResult *res = Forward_Viterbi_Log2( sequence, pathlength+1, sprob, tprob, eprob, 1, nstate );
-#ifdef DEBUG_FIND_PATH
-      assert( res->n == pathlength + 1 );
-      printf("Viterbi Result:\n"
-             "        Length: %d\n"
-             "          Prob: %f\n"
-             "         Total: %f\n"
-             "    Likelihood: %g\n", res->n, res->prob, res->total, 1.0-pow(2.0,res->prob-res->total) );
-      {int x = res->n; while(--x) assert( first[res->sequence[x]].fid == first[res->sequence[x-1]].fid + 1 ); }
-#endif
-      for( i=0; i<res->n; i++ )
-        path[i] = first + res->sequence[i];
-      Free_Viterbi_Result(res);
-    }
-
-    free(sprob);
-    free(tprob);
-    free(eprob);
   }
 
+  //
+  // trace back
+  //
+  result = request_storage( 
+      result, 
+      &result_size, 
+      sizeof(Measurements*), 
+      pathlength, 
+      "alloc result in find paths (solve gray areas)" );
+  { LatticeNode  *node = lattice + nnode - 1;
+    Measurements **cur = result + pathlength;
+    while( (node = node->argmax) != lattice )
+      *(--cur) = node->row;
+  }
 
-  free(sequence);
-  return path;
+  return result;
+
 }
 
 // This function takes a table of measurements where some subset of the frames
@@ -1002,7 +955,7 @@ Measurements **Find_Path( Measurements *sorted_table,
 // For unlabelled frames (gray areas), Find_Path will be called to link the labeled
 // observations on either side of the gray area.
 SHARED_EXPORT
-void Solve( Measurements *table, int n_rows, int n_bins )
+void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
 { Distributions *shape, *velocity;
   int minstate, maxstate, nstates;
   int nframes;
@@ -1014,8 +967,8 @@ void Solve( Measurements *table, int n_rows, int n_bins )
   Sort_Measurements_Table_State_Time( table, n_rows );
   nstates = _count_n_states( table, n_rows, 1, &minstate, &maxstate );
   Measurements_Table_Compute_Velocities( table, n_rows );
-  shape    = Build_Distributions( table, n_rows, n_bins );
-  velocity = Build_Velocity_Distributions( table, n_rows, n_bins ); // !! Changes the sort order: now table is in time order
+  shape    = Build_Distributions( table, n_rows, n_shape_bins );
+  velocity = Build_Velocity_Distributions( table, n_rows, n_vel_bins ); // !! Changes the sort order: now table is in time order
   Distributions_Dilate( shape );
   Distributions_Dilate( velocity );
   Distributions_Normalize( shape );
@@ -1088,9 +1041,8 @@ void Solve( Measurements *table, int n_rows, int n_bins )
               assert( start->fid == path[0]->fid      - 1 );
               assert( end->fid   == path[npath-1]->fid + 1);
               printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);
-              { int x = npath; while(--x) assert( path[x]->fid == path[x-1]->fid + 1 ); } //check frames increment as aexpected
+              { int x = npath; while(--x) assert( path[x]->fid == path[x-1]->fid + 1 ); } //check frames increment as expected
 #endif
-              free(path);
             }
           }
         }
@@ -1185,7 +1137,7 @@ int main(int argc, char *argv[])
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &n_rows);
 
-  Solve( table, n_rows, 256 );
+  Solve( table, n_rows, IDENTITY_SOLVER_SHAPE_NBINS, IDENTITY_SOLVER_VELOCITY_NBINS );
   Sort_Measurements_Table_State_Time( table, n_rows );
   Measurements_Table_Compute_Velocities( table, n_rows );
   

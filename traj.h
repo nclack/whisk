@@ -157,6 +157,6 @@ SHARED_EXPORT Measurements **Find_Path( Measurements *sorted_table,
 //
 // For unlabelled frames (gray areas), Find_Path will be called to link the labeled
 // observations on either side of the gray area.
-SHARED_EXPORT void Solve( Measurements *table, int n_rows, int n_bins );
+SHARED_EXPORT void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins );
 
 #endif//H_TRAJ
