@@ -10,8 +10,11 @@
 //
 // Setting this too low results in cases where two choices occasionally
 // look equally probable when only one is correct.
+//
+// For the task here, want to have way too many bins.  Treat distributions
+// more like a hash table (?).  So only equal whiskers fall into same bin.
 // 
-#define COMPARE_IDENTITIE_DISTS_NBINS 256
+#define COMPARE_IDENTITIE_DISTS_NBINS 8092
 
 // Planning:
 // 1. Assume measurements files are from same movie
@@ -222,7 +225,7 @@ int main(int argc, char* argv[])
     
     rowA++;
   }
-  printf("\nHistogram of mistakes per frame.\n");
+  printf("\nHistogram of # differences per frame.\n");
   print_hist(hist,mismatch_max+1);
   free(counts);
   return 0;
