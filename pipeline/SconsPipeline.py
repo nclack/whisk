@@ -116,29 +116,36 @@ def pipeline_standard(env, movie):
 
   builders = [ 
     movie                                                       ,
-    ( lambda j: env.Thumbnail(target = alter(j,'firstframe','[frm0].png'),
-                              source = j) ,)                    ,
+#   ( lambda j: env.Thumbnail(target = alter(j,'firstframe','[frm0].png'),
+#                             source = j) ,)                    ,
     env.Whisk                                                   ,
     env.Measure                                                 ,
     ( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
                                      source = j[0]) ,)          ,
     env.Classify                                                ,
     ( env.MeasurementsAsMatlab, ),
-    ( env.IdentitySolver                                        , 
-      (env.MeasurementsAsTrajectories,),
+    ( env.GreyAreaSolver, 
       env.Summary
     ) ,                    
     ( env.HmmLRSolver,
-      (env.MeasurementsAsTrajectories,),
+      ( env.GreyAreaSolver, 
+        env.Summary
+      ) ,                    
       env.Summary ),
     ( env.HmmLRDelSolver,
-      (env.MeasurementsAsTrajectories,),
+      ( env.GreyAreaSolver, 
+        env.Summary
+      ) ,                    
       env.Summary ),
     ( env.HmmLRTimeSolver,
-      (env.MeasurementsAsTrajectories,),
+      ( env.GreyAreaSolver, 
+        env.Summary
+      ) ,                    
       env.Summary ),
     ( env.HmmLRDelTimeSolver,
-      (env.MeasurementsAsTrajectories,),
+      ( env.GreyAreaSolver, 
+        env.Summary
+      ) ,                    
       env.Summary ),
     env.Summary                             
   ]
@@ -168,6 +175,9 @@ def pipeline_curated(env, source):
   compose = lambda a,b: b(a)
   jobs = dfs_reduce( compose, builders )
   return jobs
+
+def lit(s):
+  return lambda env,sources: s
 
 env  = Environment( 
   PX2MM = 0,
@@ -203,7 +213,22 @@ env  = Environment(
                        ),
     'Summary': Builder(action = "summary.py $SOURCE $TARGET --px2mm=$PX2MM",
                        src_suffix = ".measurements",
-                       suffix = ".png")
+                       suffix = ".png"),
+    'GreyAreaSolver': Builder(action = "test_traj_solve_gray_areas $SOURCE $TARGET",
+                              src_suffix = ".measurements",
+                              suffix = lit( "[grey_v0].measurements") ),
+    'HmmLRSolver': Builder(action = "test_hmm_reclassify_1 -n $WHISKER_COUNT $SOURCE $TARGET",
+                              src_suffix = ".measurements",
+                              suffix = lit( "[hmm-lr].measurements")),
+    'HmmLRDelSolver': Builder(action = "test_hmm_reclassify_2 -n $WHISKER_COUNT $SOURCE $TARGET",
+                              src_suffix = ".measurements",
+                              suffix = lit( "[hmm-lrdel].measurements")),
+    'HmmLRTimeSolver': Builder(action = "test_hmm_reclassify_3 -n $WHISKER_COUNT $SOURCE $TARGET",
+                              src_suffix = ".measurements",
+                              suffix = lit( "[hmm-lr-time].measurements")),
+    'HmmLRDelTimeSolver': Builder(action = "test_hmm_reclassify_4 -n $WHISKER_COUNT $SOURCE $TARGET",
+                              src_suffix = ".measurements",
+                              suffix = lit( "[hmm-lrdel-time].measurements")),
   }
 )
 
@@ -213,11 +238,11 @@ env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movi
                            # a count >= 1 will identify that many whiskers in each movie
 
 env.AddMethod( labelled_commit_to_measurements, "CommitToMeasurements" )
-env.AddMethod( make_solver("test_traj_solve_gray_areas"             , "grey_v0"       ), "IdentitySolver"     )
-env.AddMethod( make_solver("test_hmm_reclassify_1 -n $WHISKER_COUNT", "hmm-lr"        ), "HmmLRSolver"        )
-env.AddMethod( make_solver("test_hmm_reclassify_2 -n $WHISKER_COUNT", "hmm-lrdel"     ), "HmmLRDelSolver"     )
-env.AddMethod( make_solver("test_hmm_reclassify_3 -n $WHISKER_COUNT", "hmm-lr-time"   ), "HmmLRTimeSolver"    )
-env.AddMethod( make_solver("test_hmm_reclassify_4 -n $WHISKER_COUNT", "hmm-lrdel-time"), "HmmLRDelTimeSolver" )
+# env.AddMethod( make_solver("test_traj_solve_gray_areas"             , "grey_v0"       ), "GreyAreaSolver"     )
+# env.AddMethod( make_solver("test_hmm_reclassify_1 -n $WHISKER_COUNT", "hmm-lr"        ), "HmmLRSolver"        )
+# env.AddMethod( make_solver("test_hmm_reclassify_2 -n $WHISKER_COUNT", "hmm-lrdel"     ), "HmmLRDelSolver"     )
+# env.AddMethod( make_solver("test_hmm_reclassify_3 -n $WHISKER_COUNT", "hmm-lr-time"   ), "HmmLRTimeSolver"    )
+# env.AddMethod( make_solver("test_hmm_reclassify_4 -n $WHISKER_COUNT", "hmm-lrdel-time"), "HmmLRDelTimeSolver" )
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 

@@ -371,7 +371,7 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   angl = array(map( lambda i: table._measurements[i].data[2], xrange(table._nrows) ))  
   curv = array(map( lambda i: table._measurements[i].data[3], xrange(table._nrows) ))  
   #data = table.get_shape_table()
-  th0 = floor(( angl.mean() + 45)/90)*90
+  th0 = angl.mean() #floor(( angl.mean() + 45)/90)*90
   vmin1,vmax1 = th0-70,th0+70
 
 
@@ -558,13 +558,13 @@ if 1:
 
     t = MeasurementsTable(src).update_velocities()
   
-    rc('savefig',dpi=300)
+    rc('savefig',dpi=150)
     f = figure()
     plot_summary_measurements_table(t, 
                                     px2mm = options.px2mm if options.px2mm else None,
                                     doshow=0,
                                     options = {'lines':{'alpha':0.7},
-                                               'scatter':{'markersize':0} })
+                                               'scatter':{'markersize':0.5} })
     savefig(dst)
     close(f)
 

@@ -26,9 +26,9 @@
 #endif
 
 // DEBUG OUTPUT
+#if 0
 #define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_FIND_PATH
-#if 0
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
@@ -1029,7 +1029,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
           if( gray_areas[j] != 0 && gray_areas[j+1] != nframes-1 )
           {
             int npath;
-            //if( start && end )
+            if( start && end )
             { Measurements **path;
 #ifdef DEBUG_SOLVE_GRAY_AREAS
               assert(start && end);
