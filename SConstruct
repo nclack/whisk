@@ -186,3 +186,26 @@ for t in tests:
                                                  'error.c', 'traj.c', 'viterbi.c'
                                                ] ) 
 
+## svd tests
+tests = ["TEST_SVD_1",
+         "TEST_SVD_2",
+         "TEST_SVD_3"
+         ] 
+totestobj = lambda t: env.Object( 'svd_'+t.lower(), ['svd.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 'utilities.c', 'common.c',
+                                                 'error.c', 'compat.c', 'mat.c'
+                                               ] ) 
+
+## polyfit tests
+tests = ["TEST_POLYFIT_1",
+         "TEST_POLYFIT_2", 
+         ] 
+totestobj = lambda t: env.Object( 'polyfit_'+t.lower(), ['poly.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 'utilities.c', 'common.c', 'svd.c',
+                                                 'error.c', 'compat.c', 'mat.c'
+                                               ] ) 
+
