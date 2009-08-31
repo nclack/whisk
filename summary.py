@@ -371,7 +371,7 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   angl = array(map( lambda i: table._measurements[i].data[2], xrange(table._nrows) ))  
   curv = array(map( lambda i: table._measurements[i].data[3], xrange(table._nrows) ))  
   #data = table.get_shape_table()
-  th0 = angl.mean() #floor(( angl.mean() + 45)/90)*90
+  th0 = floor(( angl.mean() + 45/2.0)/45)*45
   vmin1,vmax1 = th0-70,th0+70
 
 

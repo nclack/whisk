@@ -907,20 +907,26 @@ Measurements **Find_Path( Measurements *sorted_table,
   //
   // Find best path through lattice
   // Note that nodes in array are already in topological order
+  // Update children's parent pointer to point to the parent maximizing
+  // probability.
   //
   { LatticeNode *cur;
+    int st = start->state;
     for( cur = lattice; cur < lattice + nnode - 1; cur++ ) //resist the urge to do the end
     { Measurements *currow = cur->row;
       LatticeNode *child;
-      double self_likelihood = Eval_Likelihood_Log2( shape, currow->data, start->state );
-      for(child = cur->children;
-          child < cur->children + cur->nchildren;
-          child++)
-      { double logp = Eval_Velocity_Likelihood_Log2( velocity, currow->data, child->row->data, start->state )
-                    + self_likelihood;
-        if( logp > child->max )
-        { child->max    = logp;
-          child->argmax = cur;
+      double self_likelihood = Eval_Likelihood_Log2( shape, currow->data, st );
+      if((currow->state == -1) || (currow->state == st))
+      { for(child = cur->children;
+            child < cur->children + cur->nchildren;
+            child++)
+        { double logp;
+          logp = Eval_Velocity_Likelihood_Log2( velocity, currow->data, child->row->data, st )
+              + self_likelihood;
+          if( logp > child->max )
+          { child->max    = logp;
+            child->argmax = cur;
+          }
         }
       }
     }

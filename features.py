@@ -64,12 +64,23 @@ def median_score(w):
 def median_thick(w):
   return np.median(w.thick)
 
-def root_angle_rad(w, side, dx, n=16):
+def root_angle_rad_old(w, side, dx, n=16):
   n = min(n, len(w.x)/2)
   if side == 0:
     return np.arctan2( dx*np.diff(w.y[n:(2*n)]), dx*np.diff(w.x[n:(2*n)]) ).mean()
   elif side == -1:
     return np.arctan2( dx*np.diff(w.y[(-2*n):-n]), dx*np.diff(w.x[(-2*n):-n]) ).mean()
+
+def root_angle_rad(w,side,dx, n=16):
+  n = min(n, len(w.x)/4)
+  L = cumulative_path_length(w)
+  tt = L/L.max()
+  teval = tt[n] if side==0 else tt[-n]
+  px = np.polyfit(tt[n:-n],w.x[n:-n],2)
+  py = np.polyfit(tt[n:-n],w.y[n:-n],2)
+  xp  = np.polyder( px, 1 )
+  yp  = np.polyder( py, 1 )
+  return np.arctan2( dx*np.polyval(yp,teval), dx*np.polyval(xp,teval) )
 
 def root_angle_deg(w, side, dx, n=16):
   n = min(n, len(w.x)/2)

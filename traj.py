@@ -533,7 +533,7 @@ class Distributions(object):
     return self._shp[0].bins_as_array(), self._shp[0].asarray()  
 
 def solve( table ):
-  ctraj.Solve( table._measurements, table._nrows, 32 )
+  ctraj.Solve( table._measurements, table._nrows, 32, 8096 )
   table._sort_state = "time"
   return table
 

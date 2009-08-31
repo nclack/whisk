@@ -16,22 +16,6 @@ def change_ext( node, newext ):
   target = env.File( os.path.split(prefix)[1] + newext )
   return target
                                       
-def labelled_commit_to_measurements(env, target, label):
-  target = str(target[0])
-  source = map( lambda ext: os.path.splitext(target)[0] + ext, [ ".trajectories", ".measurements" ] )
-  target = change_label( target , label )
-  target = os.path.splitext(target)[0] + ".measurements"
-  return env.Command(target,source, "measure.py $SOURCES $TARGET")
-
-def make_solver(command, label):
-  def solver(env, target, suffix = ".measurements", src_suffix = ".measurements"):
-    target = str(target[0])
-    source = os.path.splitext(target)[0] + src_suffix
-    target = change_label( target , label )
-    target = os.path.splitext(target)[0] + suffix
-    return env.Command(target,source, "%s $SOURCE $TARGET"%command)
-  return solver
-
 def thumbnail(target, source, env):
   import Image
   Image.fromarray( Reader(source[0].path)[0] ).save( target[0].path )
@@ -116,27 +100,15 @@ def pipeline_standard(env, movie):
 
   builders = [ 
     movie                                                       ,
-#   ( lambda j: env.Thumbnail(target = alter(j,'firstframe','[frm0].png'),
-#                             source = j) ,)                    ,
     env.Whisk                                                   ,
     env.Measure                                                 ,
-    ( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
-                                     source = j[0]) ,)          ,
+#   ( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
+#                                    source = j[0]) ,)          ,
     env.Classify                                                ,
     ( env.MeasurementsAsMatlab, ),
     ( env.GreyAreaSolver, 
       env.Summary
     ) ,                    
-    ( env.HmmLRSolver,
-      ( env.GreyAreaSolver, 
-        env.Summary
-      ) ,                    
-      env.Summary ),
-    ( env.HmmLRDelSolver,
-      ( env.GreyAreaSolver, 
-        env.Summary
-      ) ,                    
-      env.Summary ),
     ( env.HmmLRTimeSolver,
       ( env.GreyAreaSolver, 
         env.Summary
@@ -237,12 +209,6 @@ env.AppendENVPath('PATH', os.getcwd())
 env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movie
                            # a count >= 1 will identify that many whiskers in each movie
 
-env.AddMethod( labelled_commit_to_measurements, "CommitToMeasurements" )
-# env.AddMethod( make_solver("test_traj_solve_gray_areas"             , "grey_v0"       ), "GreyAreaSolver"     )
-# env.AddMethod( make_solver("test_hmm_reclassify_1 -n $WHISKER_COUNT", "hmm-lr"        ), "HmmLRSolver"        )
-# env.AddMethod( make_solver("test_hmm_reclassify_2 -n $WHISKER_COUNT", "hmm-lrdel"     ), "HmmLRDelSolver"     )
-# env.AddMethod( make_solver("test_hmm_reclassify_3 -n $WHISKER_COUNT", "hmm-lr-time"   ), "HmmLRTimeSolver"    )
-# env.AddMethod( make_solver("test_hmm_reclassify_4 -n $WHISKER_COUNT", "hmm-lrdel-time"), "HmmLRDelTimeSolver" )
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 
