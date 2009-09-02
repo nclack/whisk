@@ -48,7 +48,7 @@ void mat_print( double *M, int nrows, int ncols )
 { int i,j;
   for(i=0;i<nrows;i++)
   { for(j=0; j<ncols; j++)
-      printf("% 5.5g   ",M[i*ncols+j]);
+      printf("% -5.5g   ",M[i*ncols+j]);
     printf("\n");
   }
 }
@@ -92,7 +92,7 @@ void matmul( double *a, int nar, int nac, double *b, int nbr, int nbc, double *d
 
 MATMUL_CREATE_STATIC_WRAPPER_HEAD(matmul, double* a, int nar, int nac, double* b, int nbr, int nbc)
 { 
-  MATMUL_CREATE_STATIC_WRAPPER_BODY(matmul, nac*nbc, a, nar, nac, b, nbr, nbc);
+  MATMUL_CREATE_STATIC_WRAPPER_BODY(matmul, nar*nbc, a, nar, nac, b, nbr, nbc);
 }
 
 // A x transpose(B) in O( nar * nac * nbc ) 
@@ -118,7 +118,7 @@ MATMUL_CREATE_STATIC_WRAPPER_HEAD(matmul_right_transpose,
                                   double* a, int nar, int nac, 
                                   double* b, int nbr, int nbc)
 { MATMUL_CREATE_STATIC_WRAPPER_BODY(matmul_right_transpose, 
-                                    nac*nbc, 
+                                    nar*nbr, 
                                     a, nar, nac, 
                                     b, nbr, nbc);
 }
@@ -198,7 +198,7 @@ MATMUL_CREATE_STATIC_WRAPPER_HEAD(matmul_right_vec_as_diag,
                                   double* a, int nar, int nac,
                                   double* b, int nbc)
 { MATMUL_CREATE_STATIC_WRAPPER_BODY(matmul_right_vec_as_diag,
-                                    nac*nbc, 
+                                    nar*nbc, 
                                     a, nar, nac,
                                     b, nbc);
 }

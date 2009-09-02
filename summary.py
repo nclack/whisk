@@ -367,11 +367,14 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   cmap = cm.hsv
   N = float(len(states))
   
-  time = array(map( lambda i: table._measurements[i].fid, xrange(table._nrows) )) 
-  angl = array(map( lambda i: table._measurements[i].data[2], xrange(table._nrows) ))  
-  curv = array(map( lambda i: table._measurements[i].data[3], xrange(table._nrows) ))  
-  #data = table.get_shape_table()
-  th0 = floor(( angl.mean() + 45/2.0)/45)*45
+  time = array(map( lambda i: table._measurements[i].fid       , xrange(table._nrows) ))
+  angl = array(map( lambda i: table._measurements[i].data[2]   , xrange(table._nrows) ))
+  curv = array(map( lambda i: table._measurements[i].data[3]   , xrange(table._nrows) ))
+  smask= array(map( lambda i: table._measurements[i].state >= 0, xrange(table._nrows) ))
+  if smask.any():
+    th0 = floor(( median(angl[smask]) + 45/2.0)/45)*45
+  else:
+    th0 = floor(( median(angl) + 45/2.0)/45)*45
   vmin1,vmax1 = th0-70,th0+70
 
 

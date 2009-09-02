@@ -49,7 +49,7 @@ inline void svd_backsub( double *u, double *w, double *v, int nrows, int ncols, 
       *e-- /= *we--;
   }
   // V ( U'b/W )
-  matmul(v  , ncols, ncols, 
+  matmul (v  , ncols, ncols, 
          utb, ncols, 1,
          x  );
   return;
@@ -121,8 +121,6 @@ int svd(double **a, int nrows, int ncols, double *w, double **v)
                 a[i][l] = (f - g);
                 for (k = l; k <  ncols ; k++) 
                     rv1[k] = a[i][k] / h;
-//              if (i != nrows - 1) 
-//              {
                 for (j = l; j < nrows; j++) 
                 {
                     for (s = 0.0, k = l; k <  ncols ; k++) 
@@ -130,7 +128,6 @@ int svd(double **a, int nrows, int ncols, double *w, double **v)
                     for (k = l; k <  ncols ; k++) 
                         a[j][k] += (s * rv1[k]);
                 }
-//              }
                 for (k = l; k <  ncols ; k++) 
                     a[i][k] *= scale;
             }
@@ -244,6 +241,9 @@ int svd(double **a, int nrows, int ncols, double *w, double **v)
                 }
                 break;
             }
+#ifdef DEBUG_SVD
+            debug("Iterations: %d\n",its);
+#endif
             if (its >= 30) {
                 warning("SVD: No convergence after 30,000! iterations \n");
                 return(0);

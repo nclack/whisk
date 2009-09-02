@@ -79,9 +79,10 @@ Distributions *Alloc_Distributions( int n_bins, int n_measures, int n_states )
   double *data = Guarded_Malloc( sizeof(double)*nvol, "allocate distributions - data block" );
   double *bindata = Guarded_Malloc( sizeof(double)*n_measures*2, "allocate distributions - bin block" );
 #ifdef DEBUG_DISTRIBUTIONS_ALLOC
-  printf("\nAlloc Distributions: nvol: %d\n",nvol);
-  printf("\tdata: %p\n", data );
-  printf("\tbindata: %p\n", bindata );
+  debug("\nAlloc Distributions:\n"
+        "\tnvol   : %d\n"
+        "\tdata   : %p\n"
+        "\tbindata: %p\n",nvol,data, bindata );
 #endif
   this->n_measures = n_measures;
   this->n_states   = n_states;
@@ -302,7 +303,7 @@ Measurements *Measurements_Table_From_File( FILE *fp, int *n_rows)
   table = Alloc_Measurements_Table( *n_rows, n_measures );
   ref = table[0].data; // head of newly allocated data block
 #ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
-  printf("\tLoad -            ref: %p\n",ref);
+  debug("\tLoad -           ref: %p\n",ref);
 #endif
   fread( table, sizeof(Measurements), *n_rows, fp); 
   old = table[0].data - table[0].row * n_measures; // head of old (nonexistent) data block
@@ -316,8 +317,8 @@ Measurements *Measurements_Table_From_File( FILE *fp, int *n_rows)
     row->velocity = ref + ( row->velocity - old );
   }
 #ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
-  printf("\tLoad - table[0].data: %p\n",table[0].data);
-  printf("\tLoad - table[0].row : %d\n",table[0].row );
+  debug("\tLoad - table[0].data: %p\n",table[0].data);
+  debug("\tLoad - table[0].row : %d\n",table[0].row );
 #endif
 
   return table;
@@ -471,6 +472,7 @@ inline double _diff(double a, double b)
 }
 
 // Assumes `sorted_table` is sorted by Sort_Measurements_Table_State_Time
+// Computes velocities only for states >= 0
 SHARED_EXPORT
 void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_rows )
 { int i;
@@ -478,7 +480,7 @@ void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_ro
   while( n_rows-- > 1 )
   { Measurements *a = sorted_table + n_rows - 1,
                  *b = sorted_table + n_rows;
-    if( (b->fid - a->fid) == 1 )
+    if( (b->state >= 0) && (b->fid - a->fid) == 1 )
     { double *d  = b->velocity,
              *bd = b->data,
              *ad = a->data;;
@@ -489,7 +491,7 @@ void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_ro
     { b->valid_velocity = 0;
     }
   }
-  // Handle the first row:
+  // Handle the first row: (remember the sort)
   if( sorted_table[1].valid_velocity )
   { memcpy( sorted_table[0].velocity, sorted_table[1].velocity, sizeof(double)*n );
     sorted_table[0].valid_velocity = 1;
@@ -606,7 +608,7 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
 
 // Builds histograms using the precompted valid velocties.
 // This changes the sort order of the table.  The input should be sorted in
-//   state,time order.
+//   state,time order.  The table is in time order after.
 // These histograms cover the required state space
 SHARED_EXPORT
 Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_rows, int n_bins )
@@ -621,7 +623,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       dvol           = d->n_bins * d->n_measures * d->n_states; 
 
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
-  printf("\n\n********************** DEBUG_BUILD_VELOCITY_DISTRIBUTIONS  \n\n");
+  debug("\n\n********************** DEBUG_BUILD_VELOCITY_DISTRIBUTIONS  \n\n");
 #endif
 
   mn = (double*) Guarded_Malloc( 2 * sizeof(double) * n, "Build distributions - alloc mn and mx" );
@@ -650,12 +652,12 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
 
     while( next - sorted_table < n_rows )
     {
-#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
-      printf("        fid     n\n");
-      printf("last: %5d %5d\n",last->fid,nlast);
-      printf("this: %5d %5d\n",this->fid,nthis);
-      printf("next: %5d    \n",next->fid);
-      printf("\n");
+#if 0 //def DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+      debug("        fid     n\n");
+      debug("last: %5d %5d\n",last->fid,nlast);
+      debug("this: %5d %5d\n",this->fid,nthis);
+      debug("next: %5d    \n",next->fid);
+      debug("\n");
 #endif
 
       for(i=0; i<nlast; i++)
@@ -698,12 +700,12 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
         hist[ j*measure_stride + ibin  ] ++;
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
         if(  !( ibin >= 0 && ibin < n_bins ) )
-        { printf("ibin:  %d\n",ibin);
-          printf("nbins: %d\n",n_bins);
-          printf(" data[%d]: %f\n", j,  data[j] );
-          printf("   mn[%d]: %f\n", j,    mn[j] );
-          printf("   mx[%d]: %f\n", j,    mx[j] );
-          printf("delta[%d]: %f\n", j, delta[j] );
+        { debug("ibin:  %d\n",ibin);
+          debug("nbins: %d\n",n_bins);
+          debug(" data[%d]: %f\n", j,  data[j] );
+          debug("   mn[%d]: %f\n", j,    mn[j] );
+          debug("   mx[%d]: %f\n", j,    mx[j] );
+          debug("delta[%d]: %f\n", j, delta[j] );
         }
         assert( ibin >= 0 && ibin < n_bins );
 #endif
@@ -815,7 +817,6 @@ Measurements **Find_Path( Measurements *sorted_table,
                          int *npath)
 {
   int pathlength = end->fid - start->fid - 1;
-  int *sequence  = calloc( pathlength+1, sizeof(int) );
   Measurements *first, *last; //marks edge of gray area in sorted_table
   Measurements *eot = sorted_table + n_rows; //end of table
   int target = start->state;
@@ -916,7 +917,7 @@ Measurements **Find_Path( Measurements *sorted_table,
     { Measurements *currow = cur->row;
       LatticeNode *child;
       double self_likelihood = Eval_Likelihood_Log2( shape, currow->data, st );
-      if((currow->state == -1) || (currow->state == st))
+      //if((currow->state == -1) || (currow->state == st))
       { for(child = cur->children;
             child < cur->children + cur->nchildren;
             child++)
@@ -1025,7 +1026,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
           }
         }
 #ifdef DEBUG_SOLVE_GRAY_AREAS
-        printf("Label %3d: Found %d gray areas\n"
+        debug("Label %3d: Found %d gray areas\n"
                "           Solving for %d whiskers in %d frames.\n", i, ngray, nstates, nframes);
 #endif
 
@@ -1046,7 +1047,11 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
 #ifdef DEBUG_SOLVE_GRAY_AREAS
               assert( start->fid == path[0]->fid      - 1 );
               assert( end->fid   == path[npath-1]->fid + 1);
-              printf("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", t[gray_areas[j]-1]->state, t[gray_areas[j]]->fid, t[gray_areas[j]]->wid, npath);
+              debug("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", 
+                  t[gray_areas[j]-1]->state, 
+                  t[gray_areas[j]]->fid, 
+                  t[gray_areas[j]]->wid, 
+                  npath);
               { int x = npath; while(--x) assert( path[x]->fid == path[x-1]->fid + 1 ); } //check frames increment as expected
 #endif
             }

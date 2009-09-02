@@ -5,13 +5,27 @@
 #include <assert.h>
 #include "mat.h"
 #include "svd.h"
+#include "poly.h"
 
 #define POLYFIT_SINGULAR_THRESHOLD (1e-6)
 
 #if 0
+#define DEBUG_POLYFIT
 #define DEBUG_POLYADD_IP 
 #define DEBUG_POLYFIT_REUSE
 #endif
+
+inline double polyval(double *p, int degree, double x)
+{ double acc  = 0.0,
+         xton = 1.0,
+         *end = p + degree + 1; // #coeffs = degree + 1
+  //coefficient for smallest value is first
+  while(p < end)
+  { acc  += xton * (*p++);
+    xton *= x;
+  }
+  return acc;
+}
 
 inline int polymul_nelem_dest(int na, int nb)
 { return na + nb - 1;
@@ -20,8 +34,6 @@ inline int polymul_nelem_dest(int na, int nb)
 //
 // Multiplies polynomials by convolution.  Expects destination to be
 // pre-allocated with na+nb+1 # of elements (see: polymul_nelem_dest).
-//
-// TODO: TEST
 //
 inline void polymul(double *a, int na, double *b, int nb, double* dest )
 { int j,k;
@@ -44,13 +56,37 @@ inline void polymul(double *a, int na, double *b, int nb, double* dest )
 // In place addition of two polynomials.
 // Requires na > nb.
 //
-inline void polyadd_ip(double *a, int na, double *b, int nb )
+inline void polyadd_ip_left(double *a, int na, double *b, int nb )
 { 
 #ifdef DEBUG_POLYADD_IP
   assert(na>nb);
 #endif
   while( nb-- )
     a[nb] += b[nb];
+}
+
+inline void polyadd ( double *a, int na, double *b, int nb, double *dest )
+{ 
+  while( na > nb )
+    dest[--na] = a[na];
+  while( nb > na )
+    dest[--nb] = b[nb];
+  assert(na==nb);
+  while( na-- )
+    dest[na] = a[na] + b[na];
+}
+
+//
+// Derivative of polynomial
+//
+inline void polyder_ip( double *a, int na, int times )
+{ int i;
+  if(times>0)
+  { for(i=1;i<na;i++)
+      a[i-1] = i * a[i];
+    a[na-1] = 0.0;
+    polyder_ip( a, na-1, times-1 );
+  }
 }
 
 //
@@ -189,7 +225,7 @@ double Vandermonde_Determinant( double *x, int n )
 }
 
 //
-// Vandermonde matrix determinant 
+// Vandermonde matrix determinant (Log2)
 //
 double Vandermonde_Determinant_Log2( double *x, int n )
 { int i,j;
@@ -206,9 +242,14 @@ double Vandermonde_Determinant_Log2( double *x, int n )
 // POLYFIT
 //
 
+inline int polyfit_size_workspace(int n, int degree )
+{ int ncoeffs = degree+1;
+  return (n + 1 + ncoeffs)*ncoeffs;
+}
+
 double *polyfit_alloc_workspace( int n, int degree )
 { degree += 1; // e.g. for degree 2 need 3 coefficients
-  return Guarded_Malloc( sizeof(double)*( (n + 1 + degree)*degree), "polyfit workspace" );
+  return Guarded_Malloc( sizeof(double)*( polyfit_size_workspace(n,degree) ), "polyfit workspace" );
 }
 
 void polyfit_free_workspace( double *workspace )
@@ -217,15 +258,11 @@ void polyfit_free_workspace( double *workspace )
 
 // Use SVD to solve linear least squares problem
 // result is statically allocated
-double *polyfit_reuse( double *y, int n, int degree, double *workspace )
-{ static double *coeffs = NULL;    // degree
-  static size_t  coeffs_size = 0;
-  int ncoeffs = degree + 1;
+void polyfit_reuse( double *y, int n, int degree, double *coeffs, double *workspace )
+{ int ncoeffs = degree + 1;
   double *u = workspace,
          *w = u + n*ncoeffs,
          *v = w + ncoeffs;
-
-  coeffs = request_storage( coeffs, &coeffs_size, sizeof(double), ncoeffs, "polyfit");
 
 #ifdef DEBUG_POLYFIT_REUSE
   printf("\n---Got---\n");
@@ -245,11 +282,9 @@ double *polyfit_reuse( double *y, int n, int degree, double *workspace )
       n, ncoeffs);
 #endif
   svd_backsub( u, w, v, n, ncoeffs, y, coeffs );
-
-  return coeffs;
 }
 
-double *polyfit( double *x, double *y, int n, int degree, double *workspace )
+void polyfit( double *x, double *y, int n, int degree, double *coeffs, double *workspace )
 { int ncoeffs = degree + 1;
   double *u = workspace,   
          *w = u + n*ncoeffs,
@@ -284,7 +319,7 @@ double *polyfit( double *x, double *y, int n, int degree, double *workspace )
       n, ncoeffs);
 #endif
 
-  return polyfit_reuse( y, n, degree, workspace );
+  polyfit_reuse( y, n, degree, coeffs, workspace );
 }
 
 #ifdef TEST_POLYFIT_1
@@ -303,22 +338,29 @@ double X[10] = { 0.03291276,  0.09627405,  0.18842924,  0.21204188,  0.23496295,
                  0.58224002,  0.84938189,  0.89690195,  0.90761286,  0.9866041  };
 double Y[10] = { 0.32217143,  0.32532814,  0.33199861,  0.33410435,  0.33630316,
                  0.38826886,  0.45205618,  0.46557221,  0.46870917,  0.49287179 };
-double P[3]  = { 0.14507914,  0.03107847,  0.3209914 }; 
+double P[3]  = { 0.3209914 ,  0.03107847,  0.14507914 }; 
 int N   = 10,
     DEG = 2;
 #endif
 
 #ifdef TEST_POLYFIT_MAIN
 int main(int argc, char* argv[])
-{ double *p, *workspace;
+{ double p[10], *workspace;
   workspace = polyfit_alloc_workspace( N, DEG );
-  p  = polyfit( X, Y, N, DEG, workspace );
+  polyfit( X, Y, N, DEG, p, workspace );
   polyfit_free_workspace(workspace);
 
   printf("--Expected--\n");
   mat_print( P, DEG+1, 1 );
   printf("--   Got  --\n");
   mat_print( p, DEG+1, 1 );
+
+  { //do polyval check
+    int i;
+    double tol = 1e-6;
+    for(i=0; i<N; i++)
+      assert( fabs( Y[i] - polyval(p,DEG,X[i]) ) < tol );
+  }
   return 0;
 }
 #endif

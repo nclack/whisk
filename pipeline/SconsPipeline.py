@@ -99,25 +99,20 @@ def pipeline_standard(env, movie):
     return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
 
   builders = [ 
-    movie                                                       ,
-    env.Whisk                                                   ,
-    env.Measure                                                 ,
-#   ( lambda j: env.LengthVScorePlot(target = alter(j[0],'LengthVScore','.png'),
-#                                    source = j[0]) ,)          ,
-    env.Classify                                                ,
-    ( env.MeasurementsAsMatlab, ),
+    movie,
+#    env.Whisk,
+    lambda j: change_ext(j,'.whiskers'),
+    env.Measure,
+    env.Classify,
     ( env.GreyAreaSolver, 
       env.Summary
     ) ,                    
     ( env.HmmLRTimeSolver,
       ( env.GreyAreaSolver, 
+        ( env.MeasurementsAsTrajectories,),
         env.Summary
       ) ,                    
-      env.Summary ),
-    ( env.HmmLRDelTimeSolver,
-      ( env.GreyAreaSolver, 
-        env.Summary
-      ) ,                    
+      ( env.MeasurementsAsTrajectories,),
       env.Summary ),
     env.Summary                             
   ]
@@ -168,7 +163,11 @@ env  = Environment(
                       suffix = '.whiskers',
                       src_suffix = '.whiskers'
                      ),
-    'Measure': Builder(action = "measure.py $SOURCE $TARGET --face=$FACEHINT",
+    'Measure': Builder(action = "test_measure_1 $SOURCE $TARGET --face $FACEHINT",
+                       suffix     = '.measurements',
+                       src_suffix = '.whiskers'
+                      ),
+    'MeasureOld': Builder(action = "measure.py $SOURCE $TARGET --face=$FACEHINT",
                        suffix     = '.measurements',
                        src_suffix = '.whiskers'
                       ),
