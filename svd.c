@@ -14,14 +14,13 @@
  *   w = returns the vector of singular values of a
  *   v = returns the right orthogonal transformation matrix
 */
-
+#include "compat.h"
 #include <math.h>
 #include <assert.h>
 #include <string.h>
 #include "utilities.h"
 #include "common.h"
 #include "error.h"
-#include "compat.h"
 #include "mat.h"
 
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))

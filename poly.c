@@ -1,3 +1,4 @@
+#include "compat.h"
 #include <string.h>
 #include "common.h"
 #include "utilities.h"
