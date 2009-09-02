@@ -20,7 +20,8 @@
 // pixel (see asserts flipped on by defining 
 // DEBUG_MEASURE_POLYFIT_ERROR).
 //
-#define MEASURE_POLY_FIT_DEGREE 3
+#define MEASURE_POLY_FIT_DEGREE  3
+#define MEASURE_POLY_END_PADDING 16
 
 #if 0
 #define DEBUG_MEASURE_POLYFIT_ERROR 
@@ -143,6 +144,7 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
     static double *workspace = NULL;
     static size_t  workspace_size = 0;
     int i;
+    const int pad = MIN( MEASURE_POLY_END_PADDING, len/4 );
 
     // parameter for parametric polynomial representation
     t = request_storage(t, &t_size, sizeof(double), len, "measure");
@@ -168,8 +170,8 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
                                  sizeof(double), 
                                  polyfit_size_workspace( len, 2*MEASURE_POLY_FIT_DEGREE ), //need 2*degree for curvature eval later
                                  "measure: polyfit workspace" );
-    polyfit(    t, xd, len, MEASURE_POLY_FIT_DEGREE, px, workspace );
-    polyfit_reuse( yd, len, MEASURE_POLY_FIT_DEGREE, py, workspace );
+    polyfit( t+pad, xd+pad, len-2*pad, MEASURE_POLY_FIT_DEGREE, px, workspace );
+    polyfit_reuse(  yd+pad, len-2*pad, MEASURE_POLY_FIT_DEGREE, py, workspace );
 
 #ifdef DEBUG_MEASURE_POLYFIT_ERROR
     { double err = 0.0;
@@ -197,7 +199,7 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
 
     // Root angle
     // ----------
-    { double teval = t[idx_follicle];
+    { double teval = (idx_follicle == 0) ? t[pad] : t[len-pad-1];
       static const double rad2deg = 180.0/M_PI;
       root_angle_deg = atan2( dx*polyval(yp, MEASURE_POLY_FIT_DEGREE, teval ),
                               dx*polyval(xp, MEASURE_POLY_FIT_DEGREE, teval ) ) * rad2deg;
@@ -211,11 +213,12 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
                     *evalden = NULL;
       static size_t evalnum_size = 0,
                     evalden_size = 0;
+      size_t npoints = len-2*pad;
   
-      evalnum = request_storage( evalnum, &evalnum_size, sizeof(double), len, "numerator" );
-      evalden = request_storage( evalden, &evalden_size, sizeof(double), len, "denominator" );
+      evalnum = request_storage( evalnum, &evalnum_size, sizeof(double), npoints, "numerator" );
+      evalden = request_storage( evalden, &evalden_size, sizeof(double), npoints, "denominator" );
   
-      Vandermonde_Build( t, len, 2*MEASURE_POLY_FIT_DEGREE, V ); // used for polynomial evaluation
+      Vandermonde_Build( t+pad, npoints, 2*MEASURE_POLY_FIT_DEGREE, V ); // used for polynomial evaluation
   
       // numerator
       memset( mul1, 0, 2*MEASURE_POLY_FIT_DEGREE*sizeof(double) );
@@ -244,18 +247,18 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
                den );
   
       // Eval
-      matmul(   V, len,                       MEASURE_POLY_FIT_DEGREE*2,
+      matmul(   V, npoints,                   MEASURE_POLY_FIT_DEGREE*2,
               num, MEASURE_POLY_FIT_DEGREE*2, 1,
               evalnum );
-      matmul(   V, len,                       MEASURE_POLY_FIT_DEGREE*2,
+      matmul(   V, npoints,                   MEASURE_POLY_FIT_DEGREE*2,
               den, MEASURE_POLY_FIT_DEGREE*2, 1,
               evalden );
       // compute kappa at each t
       { int i;
-        for(i=0; i<len; i++ )
+        for(i=0; i<npoints; i++ )
           evalnum[i] /= pow( evalden[i], 3.0/2.0 )*dx; //dx is 1 or -1 so dx = 1/dx;
         mean_curvature = evalnum[0] * (t[1]-t[0]);
-        for(i=1; i<len; i++ )
+        for(i=1; i<npoints; i++ )
           mean_curvature += evalnum[i] * ( t[i]-t[i-1] );
       }
     }
