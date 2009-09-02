@@ -20,7 +20,7 @@
 // pixel (see asserts flipped on by defining 
 // DEBUG_MEASURE_POLYFIT_ERROR).
 //
-#define MEASURE_POLY_FIT_DEGREE  3
+#define MEASURE_POLY_FIT_DEGREE  2
 #define MEASURE_POLY_END_PADDING 16
 
 #if 0
@@ -176,7 +176,7 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
 #ifdef DEBUG_MEASURE_POLYFIT_ERROR
     { double err = 0.0;
       int i;
-      for( i=0; i<len; i++ )
+      for( i=pad; i<len-2*pad; i++ )
         err += hypot( xd[i] - polyval( px, MEASURE_POLY_FIT_DEGREE, t[i] ),
                       yd[i] - polyval( py, MEASURE_POLY_FIT_DEGREE, t[i] ) );
       err /= ((float)len);
