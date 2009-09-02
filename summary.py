@@ -372,9 +372,9 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   curv = array(map( lambda i: table._measurements[i].data[3]   , xrange(table._nrows) ))
   smask= array(map( lambda i: table._measurements[i].state >= 0, xrange(table._nrows) ))
   if smask.any():
-    th0 = floor(( median(angl[smask]) + 45/2.0)/45)*45
+    th0 = round(( median(angl[smask]) + 45/2.0)/45)*45
   else:
-    th0 = floor(( median(angl) + 45/2.0)/45)*45
+    th0 = round(( median(angl) + 45/2.0)/45)*45
   vmin1,vmax1 = th0-70,th0+70
 
 

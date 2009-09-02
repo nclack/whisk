@@ -27,13 +27,15 @@
 
 // DEBUG OUTPUT
 #if 0
-#define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_FIND_PATH
+#define  DEBUG_TEST_SOLVE_GRAY_AREAS 
+#define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
 #define  DEBUG_MEASUREMENTS_TABLE_ALLOC
 #define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
+#define  DEBUG_EVAL_LIKELIHOOD_LOG2 
 #endif
 
 SHARED_EXPORT
@@ -42,7 +44,7 @@ Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
   double *dataspace   = Guarded_Malloc( 2*sizeof(double)*n_measurements*n_rows, "allocate measurements table" ); 
   double *velocityspace  = dataspace + n_measurements*n_rows;
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
-  printf("\nMeasurements table alloc: %d rows of data at %p\n",n_rows,dataspace);
+  debug("\nMeasurements table alloc: %d rows of data at %p\n",n_rows,dataspace);
 #endif
   while( n_rows-- )
   { Measurements *row = table     + n_rows;
@@ -63,10 +65,10 @@ SHARED_EXPORT
 void Free_Measurements_Table( Measurements *table )
 { if( !table ) return;
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
-  printf("Measurements table free : data at %p\n",table[0].data - table[0].row * table[0].n);
-  printf("\tdata: %p\n",table[0].data);
-  printf("\t row: %d\n",table[0].row );
-  printf("\t   n: %d\n",table[0].n   );
+  debug("Measurements table free : data at %p\n",table[0].data - table[0].row * table[0].n);
+  debug("\tdata: %p\n",table[0].data);
+  debug("\t row: %d\n",table[0].row );
+  debug("\t   n: %d\n",table[0].n   );
 #endif
   free( table[0].data - table[0].row * table[0].n); // frees the data/velocities for all rows
   free(table);
@@ -97,9 +99,9 @@ SHARED_EXPORT
 void Free_Distributions( Distributions *this )
 { if( !this ) return;
 #ifdef DEBUG_DISTRIBUTIONS_ALLOC
-  printf("\nFree Distributions:\n");
-  printf("\tdata: %p\n", this->data );
-  printf("\tbindata: %p\n", this->bin_min );
+  debug("\nFree Distributions:\n");
+  debug("\tdata: %p\n", this->data );
+  debug("\tbindata: %p\n", this->bin_min );
 #endif
   if( this->bin_min ) free( this->bin_min ); // also frees bin_delta
   if( this->data    ) free( this->data    );
@@ -549,7 +551,7 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
       dvol           = d->n_bins * d->n_measures * d->n_states; 
 
 #ifdef DEBUG_BUILD_DISTRIBUTIONS 
-  printf("\n\n********************** DEBUG_BUILD_DISTRIBUTIONS\n\n");
+  debug("\n\n********************** DEBUG_BUILD_DISTRIBUTIONS\n\n");
 #endif
 
   mn = (double*) Guarded_Malloc( 2 * sizeof(double) * n, "Build distributions - alloc mn and mx" );
@@ -586,12 +588,12 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
       hist[ j*measure_stride + ibin ] ++;
 #ifdef DEBUG_BUILD_DISTRIBUTIONS 
       if(  !( ibin >= 0 && ibin < n_bins ) )
-      { printf("ibin:  %d\n",ibin);
-        printf("nbins: %d\n",n_bins);
-        printf(" data[%d]: %f\n", j,  data[j] );
-        printf("   mn[%d]: %f\n", j,    mn[j] );
-        printf("   mx[%d]: %f\n", j,    mx[j] );
-        printf("delta[%d]: %f\n", j, delta[j] );
+      { debug("ibin:  %d\n",ibin);
+        debug("nbins: %d\n",n_bins);
+        debug(" data[%d]: %f\n", j,  data[j] );
+        debug("   mn[%d]: %f\n", j,    mn[j] );
+        debug("   mx[%d]: %f\n", j,    mx[j] );
+        debug("delta[%d]: %f\n", j, delta[j] );
       }
       assert( ibin >= 0 && ibin < n_bins );
 #endif
@@ -600,8 +602,8 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
 
   free(mn);
 #ifdef DEBUG_BUILD_DISTRIBUTIONS 
-  printf("Returning %p\n",d);
-  printf("**** Leaving ********* DEBUG_BUILD_DISTRIBUTIONS\n\n");
+  debug("Returning %p\n",d);
+  debug("**** Leaving ********* DEBUG_BUILD_DISTRIBUTIONS\n\n");
 #endif
   return d;
 }
@@ -765,7 +767,13 @@ double Eval_Likelihood_Log2( Distributions *dist, double *vec, int istate )
   for(i=0; i < dist->n_measures; i++)
   { ibin = (int) floor( ( vec[i] - dist->bin_min[i] ) / ( dist->bin_delta[i] ) );
     acc += hists[measure_stride*i + ibin]; // addition here bc probs are in log space
+#ifdef DEBUG_EVAL_LIKELIHOOD_LOG2
+    debug("\t%5d %f\n", ibin, hists[measure_stride*i + ibin]);
+#endif
   }
+#ifdef DEBUG_EVAL_LIKELIHOOD_LOG2
+    debug("\t\t%f\n", acc);
+#endif
   return acc;
 }
 
@@ -785,17 +793,14 @@ double Eval_Velocity_Likelihood_Log2( Distributions *dist, double *prev, double 
 }
 
 // sorted_table must be sorted in ascending time order (i.e. ascending fid)
-// Start and end should have the same `state` property.  Uses the viterbi
-// algorithm to find the most probable markov path joining the start and end
-// states. 
+// Start and end should have the same `state` property.  Uses the Dijkstra
+// algorithm (which is simplified for the lattice structure used here )
+// to find the most likely markov path between start and end.
 //
 // Returns a vector of pointers into the table that trace out the best path
 // This vector is statically allocated...which is a bit silly since we know
 // where to put the data...should just pass in a pointer.  doing it this 
 // way requires a copy and additional memory management.
-//
-// Another try - for reals this time
-// Need some simple objects for the lattice
 //
 
 typedef struct _LatticeNode {
@@ -916,14 +921,17 @@ Measurements **Find_Path( Measurements *sorted_table,
     for( cur = lattice; cur < lattice + nnode - 1; cur++ ) //resist the urge to do the end
     { Measurements *currow = cur->row;
       LatticeNode *child;
-      double self_likelihood = Eval_Likelihood_Log2( shape, currow->data, st );
+      double self_likelihood = Eval_Likelihood_Log2( shape, currow->data, st-minstate );
       //if((currow->state == -1) || (currow->state == st))
       { for(child = cur->children;
             child < cur->children + cur->nchildren;
             child++)
         { double logp;
-          logp = Eval_Velocity_Likelihood_Log2( velocity, currow->data, child->row->data, st )
-              + self_likelihood;
+          logp = Eval_Velocity_Likelihood_Log2( velocity, currow->data, child->row->data, st-minstate );
+                + self_likelihood;
+#ifdef DEBUG_FIND_PATH
+          debug("State: %2d Max: %7.7f Cur: %7.7f %p %p\n", st, child->max, logp, currow->data, child->row->data );
+#endif
           if( logp > child->max )
           { child->max    = logp;
             child->argmax = cur;
@@ -968,7 +976,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
   int nframes;
   int i,j;
 #ifdef DEBUG_SOLVE_GRAY_AREAS
-  printf("*****************************     DEBUG_SOLVE_GRAY_AREAS\n");
+  debug("*****************************     DEBUG_SOLVE_GRAY_AREAS\n");
 #endif
   
   Sort_Measurements_Table_State_Time( table, n_rows );
@@ -1040,7 +1048,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
             { Measurements **path;
 #ifdef DEBUG_SOLVE_GRAY_AREAS
               assert(start && end);
-              printf("Running find path from frame %5d to %5d\n", start->fid, end->fid);
+              debug("Running find path from frame %5d to %5d\n", start->fid, end->fid);
 #endif
               path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
               memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
@@ -1073,7 +1081,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
     free( gray_areas );
   }
 #ifdef DEBUG_SOLVE_GRAY_AREAS
-  printf("***  Leaving  ***************     DEBUG_SOLVE_GRAY_AREAS\n");
+  debug("***  Leaving  ***************     DEBUG_SOLVE_GRAY_AREAS\n");
 #endif
 
   Free_Distributions( shape );
@@ -1085,13 +1093,13 @@ int main(int argc, char *argv[])
 { int nrows = 40000;
   int ret;
   Measurements *table = Alloc_Measurements_Table(nrows,6);
-  printf("Test: Write an empty table to file and read it back in.\n");
+  debug("Test: Write an empty table to file and read it back in.\n");
   ret = test_Measurements_Table_FileIO( "tmp.measurements", table, nrows );
   Free_Measurements_Table(table);
   if(ret)
-    printf("\tTest passed.\n");
+    debug("\tTest passed.\n");
   else
-    printf("\tTest FAILED.\n");
+    debug("\tTest FAILED.\n");
   return ret;
 }
 #endif // TEST_MEASUREMENT_TABLE_IO_1
@@ -1104,7 +1112,7 @@ int main(int argc, char *argv[])
   int n_bins = 32;
   int ret = 1;
   
-  printf("Test: Load measurements and compute distributions.\n");
+  debug("Test: Load measurements and compute distributions.\n");
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("filename"), &n_rows);
 
@@ -1130,9 +1138,9 @@ int main(int argc, char *argv[])
   Free_Measurements_Table(table);
 
   if(ret)
-    printf("\tTest passed.\n");
+    debug("\tTest passed.\n");
   else
-    printf("\tTest FAILED.\n");
+    debug("\tTest FAILED.\n");
   return ret;
 }
 #endif // TEST_BUILD_DISTRIBUTIONS
@@ -1144,7 +1152,7 @@ int main(int argc, char *argv[])
   int n_rows = 0;
   int err = 0;
   
-  printf("Test: Load measurements, run solve, and save result.\n");
+  debug("Test: Load measurements, run solve, and save result.\n");
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &n_rows);
 
@@ -1157,8 +1165,10 @@ int main(int argc, char *argv[])
     _count_n_states( table, n_rows, 1, &minstate, &maxstate );
     for( istate = minstate; istate <= maxstate; istate++ )
     { int sz = Measurements_Table_Size_Select_State( table, n_rows, istate );
-      printf("State %3d has size %d\n",istate, sz );
+#ifdef DEBUG_TEST_SOLVE_GRAY_AREAS
+      debug("State %3d has size %d\n",istate, sz );
       assert( istate<0 || sz <= nframes );
+#endif
     }
   }
 
@@ -1166,9 +1176,9 @@ int main(int argc, char *argv[])
   Free_Measurements_Table(table);
 
 //if(err)
-//  printf("\tTest FAILED.\n");
+//  debug("\tTest FAILED.\n");
 //else
-//  printf("\tTest passed.\n");
+//  debug("\tTest passed.\n");
   return err;
 }
 #endif // TEST_SOLVE_GRAY_AREAS 
