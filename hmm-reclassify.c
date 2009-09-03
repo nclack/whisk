@@ -39,7 +39,7 @@
 #endif
 
 #define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
-#define HMM_RECLASSIFY_VEL_DISTS_NBINS   (256)
+#define HMM_RECLASSIFY_VEL_DISTS_NBINS   (128)
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
 typedef int   (*Tpf_State_Count)                                       ( int nwhisk );
