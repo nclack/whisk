@@ -922,7 +922,6 @@ Measurements **Find_Path( Measurements *sorted_table,
     { Measurements *currow = cur->row;
       LatticeNode *child;
       double self_likelihood = Eval_Likelihood_Log2( shape, currow->data, st-minstate );
-      //if((currow->state == -1) || (currow->state == st))
       { for(child = cur->children;
             child < cur->children + cur->nchildren;
             child++)

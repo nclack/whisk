@@ -20,7 +20,9 @@
 
 #include "compat.h"
 
+#ifndef real
 typedef double real;
+#endif
 
 typedef struct _ViterbiResult
 { real total;          // Probability of observation given model                                

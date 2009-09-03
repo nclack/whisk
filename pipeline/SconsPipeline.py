@@ -100,8 +100,8 @@ def pipeline_standard(env, movie):
 
   builders = [ 
     movie,
-    env.Whisk,
- #   lambda j: change_ext(j,'.whiskers'),
+ #   env.Whisk,
+    lambda j: change_ext(j,'.whiskers'),
     env.Measure,
     env.Classify,
     ( env.GreyAreaSolver, 
@@ -114,6 +114,13 @@ def pipeline_standard(env, movie):
       ) ,                    
       ( env.MeasurementsAsTrajectories,),
       env.Summary ),
+#   ( env.HmmLRDelTimeSolver,
+#     ( env.GreyAreaSolver, 
+#       ( env.MeasurementsAsTrajectories,),
+#       env.Summary
+#     ) ,                    
+#     ( env.MeasurementsAsTrajectories,),
+#     env.Summary ),
     env.Summary                             
   ]
 

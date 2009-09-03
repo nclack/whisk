@@ -38,17 +38,18 @@
 #define DEBUG_HMM_RECLASSIFY
 #endif
 
-#define HMM_RECLASSIFY_DISTS_NBINS   (16)
+#define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
+#define HMM_RECLASSIFY_VEL_DISTS_NBINS   (256)
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
 typedef int   (*Tpf_State_Count)                                       ( int nwhisk );
 typedef real* (*Tpf_Alloc_Transitions)                                 ( int nwhisk );
 typedef real* (*Tpf_Init_Uniform_Transitions)                          ( real *T, int nwhisk );
-typedef void  (*Tpf_Estimate_Transitions)                              (real *T, int nwhisk, Measurements *table, int nrows );
+typedef void  (*Tpf_Estimate_Transitions)                              ( real *T, int nwhisk, Measurements *table, int nrows );
 typedef void  (*Tpf_Log2_Transitions)                                  ( real *T, int nwhisk, real baseline_log2 );
 typedef real* (*Tpf_Alloc_Starts)                                      ( int nwhisk );
-typedef void  (*Tpf_Compute_Starts_For_Two_Classes_Log2)               ( real *S, int nwhisk, Measurements *first, Distributions *shp_dists );
-typedef void  (*Tpf_Compute_Starts_For_Distinct_Whiskers_Log2)         ( real *S, int nwhisk, Measurements *first, Distributions *shp_dists );
+typedef void  (*Tpf_Compute_Starts_For_Two_Classes_Log2)               ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );
+typedef void  (*Tpf_Compute_Starts_For_Distinct_Whiskers_Log2)         ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );
 typedef real* (*Tpf_Alloc_Emissions)                                   ( int nwhisk, int nobs );
 typedef real* (*Tpf_Request_Static_Resizable_Emissions)                ( int nwhisk, int nobs );
 typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_Log2)            ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
@@ -197,7 +198,7 @@ int main(int argc, char*argv[])
   //
 
   Sort_Measurements_Table_State_Time(table, nrows);
-  shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
+  shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_SHP_DISTS_NBINS );
   Distributions_Dilate( shp_dists );
   Distributions_Normalize( shp_dists );
   Distributions_Apply_Log2( shp_dists );
@@ -227,7 +228,7 @@ int main(int argc, char*argv[])
       }
       nobs = row - bookmark;
       
-      (*pf_Compute_Starts_For_Two_Classes_Log2)( S, nwhisk, bookmark, shp_dists );
+      (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T,  nwhisk, bookmark, shp_dists );
 
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
       (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
@@ -357,8 +358,8 @@ int main(int argc, char*argv[])
   //
 
   Sort_Measurements_Table_State_Time(table, nrows);
-  shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
-  vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_DISTS_NBINS );
+  shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_SHP_DISTS_NBINS );
+  vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_VEL_DISTS_NBINS );
   Distributions_Dilate( shp_dists );
   Distributions_Dilate( vel_dists );
   Distributions_Normalize( shp_dists );
@@ -391,7 +392,7 @@ int main(int argc, char*argv[])
       }
       nobs = row - bookmark;
       
-      (*pf_Compute_Starts_For_Two_Classes_Log2)( S, nwhisk, bookmark, shp_dists );
+      (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, bookmark, shp_dists );
 
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
       //(*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );

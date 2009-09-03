@@ -10,8 +10,8 @@
 #include "hmm-reclassify-lrmodel.h"
 
 #if 0
-#define DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
 #define DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
+#define DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
 #endif
 
 
@@ -171,15 +171,17 @@ real *LRModel_Alloc_Starts( int nwhisk )
   return Guarded_Malloc( N*sizeof(real), " LRModel_Alloc_Starts " );
 }
 
-void LRModel_Compute_Starts_For_Two_Classes_Log2( real *S, int nwhisk, Measurements *first, Distributions *shp_dists )
+void LRModel_Compute_Starts_For_Two_Classes_Log2( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists )
 { int N = 2 * nwhisk + 1;
   double v[2] = { Eval_Likelihood_Log2( shp_dists, first->data, 0 ),
                   Eval_Likelihood_Log2( shp_dists, first->data, 1 ) }; 
+  double t[2] = { T[0], T[1] };
+  double log2p_missing = -3.0;
   while(N--)
-    S[N] = v[ N%2 ];
+    S[N] = v[ N%2 ] + t[ N%2 ] + (N/2)*log2p_missing;
 }
 
-void LRModel_Compute_Starts_For_Distinct_Whiskers_Log2( real *S, int nwhisk, Measurements *first, Distributions *shp_dists )
+void LRModel_Compute_Starts_For_Distinct_Whiskers_Log2( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists )
 { int N = 2 * nwhisk + 1;
   int i,iwhisk;
   double *shp = first->data;

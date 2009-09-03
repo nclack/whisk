@@ -281,16 +281,18 @@ real *LRDelModel_Alloc_Starts( int nwhisk )
   return Guarded_Malloc( N*sizeof(real), " LRModel_Alloc_Starts " );
 }
 
-void LRDelModel_Compute_Starts_For_Two_Classes_Log2( real *S, int nwhisk, Measurements *first, Distributions *shp_dists )
+void LRDelModel_Compute_Starts_For_Two_Classes_Log2( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists )
 { int N = 3 * nwhisk + 1;
   double v[3] = { Eval_Likelihood_Log2( shp_dists, first->data, 0 ),
                   Eval_Likelihood_Log2( shp_dists, first->data, 1 ),
                   -500.0                                            }; 
+  double t[3] = { T[0], T[1], T[1] };
+  double log2p_missing = -3.0;
   while(N--)
-    S[N] = v[ N%3 ];
+    S[N] = v[ N%3 ] + t[ N%3 ] - (N/3)*log2p_missing;
 }
 
-void LRDelModel_Compute_Starts_For_Distinct_Whiskers_Log2( real *S, int nwhisk, Measurements *first, Distributions *shp_dists )
+void LRDelModel_Compute_Starts_For_Distinct_Whiskers_Log2( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists )
 { int N = 3 * nwhisk + 1;
   int i,iwhisk;
   double *shp = first->data;
