@@ -176,7 +176,6 @@ int main(int argc, char* argv[])
       }
     }
   
-    //rowA++;
   }
 
 #ifdef  DEBUG_REPORT_1
@@ -196,18 +195,6 @@ int main(int argc, char* argv[])
   // Build mapping from A identities to B identities
   // Greedily
   //
-//{ int i,j,max;
-//  for(i=1;i<nAst;i++)
-//  { max = 0;
-//    for(j=1;j<nBst;j++)
-//    { int v = counts[nAst*j + i];
-//      if( v > max )
-//      { max = v;
-//        map[i-1] = j-1; // want states, not index  (so subtract 1)
-//      }
-//    }
-//  }
-//}
   { int i,j,max;
     for(i=0;i<nAst;i++)
     { max = 0;
@@ -224,7 +211,9 @@ int main(int argc, char* argv[])
 #ifdef  DEBUG_REPORT_1
   { // print mapping of identities in A to B
     int i;
-    debug("  A      B\n"
+    debug("\n"
+          "Identity correspondance\n"
+          "  A      B\n"
           " ---    ---\n");
     for( i=0; i<nAst; i++ )
       debug("%3d  ->%3d\n", i-1, map[i]-1);
@@ -265,7 +254,12 @@ int main(int argc, char* argv[])
       if( match && ( map[ rowA->state ] != match->state ) ) 
       { mismatch++;
 #ifdef DEBUG_REPORT_1
-        debug("Mismatch on frame %-5d (%3d, %3d)\n", cur, rowA->state, match->state );
+        if(match->state != -1 )
+          debug("Frame %5d. Mismatch\tident:(%3d, %-3d) wid:(%3d, %-3d)\n", cur, 
+              rowA->state, 
+              match->state,
+              rowA->wid,
+              match->wid);
 #endif
       }
     }
