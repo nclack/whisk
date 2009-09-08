@@ -35,6 +35,9 @@ credit is given to the author.  All other rights reserved.
 """
 from numpy import *
 import numpy
+if __name__=='__main__':
+  import matplotlib
+  matplotlib.use('Agg')
 from pylab import *
 from features import *
 import os
