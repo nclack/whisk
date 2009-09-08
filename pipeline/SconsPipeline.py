@@ -100,20 +100,30 @@ def pipeline_standard(env, movie):
 
   builders = [ 
     movie,
-    env.Whisk,
-#    lambda j: change_ext(j,'.whiskers'),
+#    env.Whisk,
+    ( env.Bar, ),
+    lambda j: change_ext(j,'.whiskers'),
     env.Measure,
     env.Classify,
     ( env.GreyAreaSolver, 
       env.Summary
     ) ,                    
+    ( env.HmmLRSolver,
+      ( env.GreyAreaSolver, 
+        ( env.MeasurementsAsTrajectories,),
+        env.Summary
+      ) ,
+      ( env.MeasurementsAsTrajectories,),
+      env.Summary 
+    ),
     ( env.HmmLRTimeSolver,
       ( env.GreyAreaSolver, 
         ( env.MeasurementsAsTrajectories,),
         env.Summary
       ) ,                    
       ( env.MeasurementsAsTrajectories,),
-      env.Summary ),
+      env.Summary 
+    ),
 #   ( env.HmmLRDelTimeSolver,
 #     ( env.GreyAreaSolver, 
 #       ( env.MeasurementsAsTrajectories,),
@@ -146,7 +156,8 @@ def pipeline_curated(env, source):
     env.Measure,
     measure_and_label,
     ( env.MeasurementsAsMatlab, ),
-    env.Summary                           
+    ( env.SummaryPDF ),
+    env.Summary
   ]
   compose = lambda a,b: b(a)
   jobs = dfs_reduce( compose, builders )
@@ -194,6 +205,9 @@ env  = Environment(
     'Summary': Builder(action = "summary.py $SOURCE $TARGET --px2mm=$PX2MM",
                        src_suffix = ".measurements",
                        suffix = ".png"),
+    'SummaryPDF': Builder(action = "summary.py $SOURCE $TARGET --px2mm=$PX2MM",
+                       src_suffix = ".measurements",
+                       suffix = ".pdf"),
     'GreyAreaSolver': Builder(action = "test_traj_solve_gray_areas $SOURCE $TARGET",
                               src_suffix = ".measurements",
                               suffix = lit( "[grey_v0].measurements") ),

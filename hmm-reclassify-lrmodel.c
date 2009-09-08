@@ -176,7 +176,7 @@ void LRModel_Compute_Starts_For_Two_Classes_Log2( real *S, real *T, int nwhisk, 
   double v[2] = { Eval_Likelihood_Log2( shp_dists, first->data, 0 ),
                   Eval_Likelihood_Log2( shp_dists, first->data, 1 ) }; 
   double t[2] = { T[0], T[1] };
-  double log2p_missing = -3.0;
+  static const double log2p_missing = -10.0; // ~ 1/1000
   while(N--)
     S[N] = v[ N%2 ] + t[ N%2 ] + (N/2)*log2p_missing;
 }

@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
   //
   { int i,j,max;
     for(i=0;i<nAst;i++)
-    { max = 0;
+    { max = -1;
       for(j=0;j<nBst;j++)
       { int v = counts[nAst*j + i];
         if( v > max )
@@ -256,7 +256,7 @@ int main(int argc, char* argv[])
 #ifdef DEBUG_REPORT_1
         if(match->state != -1 )
           debug("Frame %5d. Mismatch\tident:(%3d, %-3d) wid:(%3d, %-3d)\n", cur, 
-              rowA->state, 
+              map[rowA->state], 
               match->state,
               rowA->wid,
               match->wid);

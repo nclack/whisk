@@ -287,7 +287,7 @@ void LRDelModel_Compute_Starts_For_Two_Classes_Log2( real *S, real *T, int nwhis
                   Eval_Likelihood_Log2( shp_dists, first->data, 1 ),
                   -500.0                                            }; 
   double t[3] = { T[0], T[1], T[1] };
-  double log2p_missing = -3.0;
+  double log2p_missing = -10.0; // ~1/1000
   while(N--)
     S[N] = v[ N%3 ] + t[ N%3 ] - (N/3)*log2p_missing;
 }

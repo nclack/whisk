@@ -19,6 +19,8 @@
   + (a01)*(a12)*(a20) - (a01)*(a10)*(a22) \
   + (a02)*(a10)*(a21) - (a02)*(a11)*(a20) )
 
+#define IMOD(a,b) ( ((a) + b*(1+(a)/(b)) )%(b) ) //argh...there's got to be a better way
+
 int  Compute_Circumscribed_Circle(  double x0, double y0,
                                     double x1, double y1,  
                                     double x2, double y2,  
@@ -125,7 +127,7 @@ int  bar_on_lvlset( Level_Set *self,
     res = 1;
     for( i = 0; i < c->length; i++ )
     { /* Sample contour */
-      idx = c->tour[(i-gap)%len];
+      idx = c->tour[IMOD(i-gap,len)]; //(i-gap)%len];
       x0  = idx % stride;
       y0  = idx / stride;
 
@@ -133,7 +135,7 @@ int  bar_on_lvlset( Level_Set *self,
       x1  = idx % stride;
       y1  = idx / stride;
       
-      idx = c->tour[(i+gap)%len];
+      idx = c->tour[IMOD(i+gap,len)]; //(i+gap)%len];
       x2  = idx % stride;
       y2  = idx / stride;
 

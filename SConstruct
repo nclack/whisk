@@ -1,5 +1,5 @@
 # vi:ft=python:et:ts=2
-#
+# 
 from glob import glob
 import os
 
