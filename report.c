@@ -275,6 +275,11 @@ int main(int argc, char* argv[])
   printf("\nHistogram of # differences per frame.\n");
   print_hist(hist,mismatch_max+1);
   free(counts);
+  Free_Distributions( distA );
+  Free_Distributions( distB );
+  Free_Measurements_Table( A );
+  Free_Measurements_Table( B );
+
   return 0;
 }
 
