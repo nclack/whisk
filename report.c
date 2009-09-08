@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define DEBUG_REPORT_1
+
 // The number of bins was set by taking the minimum power of two such that
 // comparison of two identical files resulted in no differences.
 //
@@ -14,7 +16,7 @@
 // For the task here, want to have way too many bins.  Treat distributions
 // more like a hash table (?).  So only equal whiskers fall into same bin.
 // 
-#define COMPARE_IDENTITIE_DISTS_NBINS 8092
+#define COMPARE_IDENTITIES_DISTS_NBINS 8096
 
 // Planning:
 // 1. Assume measurements files are from same movie
@@ -43,6 +45,7 @@ Measurements* find_match( Distributions *query_change_dist,
                           Distributions *domain_change_dist, 
                           Measurements *domain, 
                           int ndomain, 
+                          int minstate,
                           double thresh )
 { double max = -DBL_MAX;
   int argmax = -1;
@@ -51,8 +54,14 @@ Measurements* find_match( Distributions *query_change_dist,
   // Find most probable match
   for(i=0; i<ndomain; i++)
   { Measurements *c = domain + i;
-    double logp = Eval_Velocity_Likelihood_Log2( domain_change_dist, query->data, c->data, c->state )
-                + Eval_Velocity_Likelihood_Log2( query_change_dist  , c->data, query->data, query->state );
+    double logp = Eval_Velocity_Likelihood_Log2( domain_change_dist, 
+                                                 query->data, 
+                                                 c->data, 
+                                                 c->state - minstate )
+                + Eval_Velocity_Likelihood_Log2( query_change_dist, 
+                                                 c->data, 
+                                                 query->data, 
+                                                 query->state - minstate );
     if( logp > max )
     { max = logp;
       argmax = i;
@@ -105,15 +114,21 @@ int main(int argc, char* argv[])
   //
   
   Sort_Measurements_Table_State_Time(A, nA);
-  distA = Build_Velocity_Distributions( A, nA, COMPARE_IDENTITIE_DISTS_NBINS );
+  distA = Build_Velocity_Distributions( A, nA, COMPARE_IDENTITIES_DISTS_NBINS );
   Distributions_Normalize( distA );
   Distributions_Apply_Log2( distA );
+  nAst = _count_n_states( A, nA, 0, NULL, NULL);
   
   Sort_Measurements_Table_State_Time(B, nB);
-  distB = Build_Velocity_Distributions( B, nB, COMPARE_IDENTITIE_DISTS_NBINS );
+  distB = Build_Velocity_Distributions( B, nB, COMPARE_IDENTITIES_DISTS_NBINS );
   Distributions_Normalize( distB );
   Distributions_Apply_Log2( distB );
+  nBst = _count_n_states( B, nB, 0, NULL, NULL);
  
+#ifdef  DEBUG_REPORT_1
+  debug("nAst: %d\n"
+        "nBst: %d\n", nAst, nBst );
+#endif
   //
   // Check for differences in identification
   // =======================================
@@ -121,8 +136,6 @@ int main(int argc, char* argv[])
   Sort_Measurements_Table_Time_State_Face( A, nA );
   Sort_Measurements_Table_Time_State_Face( B, nB );
   
-  nAst = _count_n_states( A, nA, 1, NULL, NULL);
-  nBst = _count_n_states( B, nB, 1, NULL, NULL);
   counts = Guarded_Malloc( nAst*nBst*sizeof(int), "alloc counts");
   memset( counts, 0, nAst*nBst*sizeof(int) );
   map = Guarded_Malloc( nAst*sizeof(int), "alloc counts");
@@ -155,33 +168,69 @@ int main(int argc, char* argv[])
       if( rowA->state == -1 ) // skip these
         continue;
   
-      match = find_match( distA, rowA, distB, markB, nframeB, -5000.0 );
+      match = find_match( distA, rowA, distB, markB, nframeB, -1, -5000.0 );
       if(match)                                       //assumes minstate == -1
       { counts[ nAst*(match->state+1) + (rowA->state+1) ]++;
       } else {
-        counts[0]++;
+        counts[ (rowA->state+1) ]++;
       }
     }
   
-    rowA++;
+    //rowA++;
   }
+
+#ifdef  DEBUG_REPORT_1
+  { //print the counts matrix
+    int i,j;
+    int *c = counts;
+    debug("Identity correspondance matrix:\n");
+    for(j=0; j<nBst; j++)
+    { for(i=0; i<nAst; i++)
+        debug("%5d ",*c++);
+      debug("\n");
+    }
+  }
+#endif
 
   //
   // Build mapping from A identities to B identities
   // Greedily
   //
+//{ int i,j,max;
+//  for(i=1;i<nAst;i++)
+//  { max = 0;
+//    for(j=1;j<nBst;j++)
+//    { int v = counts[nAst*j + i];
+//      if( v > max )
+//      { max = v;
+//        map[i-1] = j-1; // want states, not index  (so subtract 1)
+//      }
+//    }
+//  }
+//}
   { int i,j,max;
-    for(i=1;i<nAst;i++)
+    for(i=0;i<nAst;i++)
     { max = 0;
-      for(j=1;j<nBst;j++)
+      for(j=0;j<nBst;j++)
       { int v = counts[nAst*j + i];
         if( v > max )
         { max = v;
-          map[i-1] = j-1; // want states, not index  (so subtract 1)
+          map[i] = j; // want states, not index  (so subtract 1)
         }
       }
     }
   }
+
+#ifdef  DEBUG_REPORT_1
+  { // print mapping of identities in A to B
+    int i;
+    debug("  A      B\n"
+          " ---    ---\n");
+    for( i=0; i<nAst; i++ )
+      debug("%3d  ->%3d\n", i-1, map[i]-1);
+  }
+#endif
+
 
   //
   // Second pass
@@ -212,9 +261,13 @@ int main(int argc, char* argv[])
       if( rowA->state == -1 ) // skip these
         continue;
     
-      match = find_match( distA, rowA, distB, markB, nframeB, -5000.0 );
+      match = find_match( distA, rowA, distB, markB, nframeB, -1, -5000.0 );
       if( match && ( map[ rowA->state ] != match->state ) ) 
-        mismatch++;
+      { mismatch++;
+#ifdef DEBUG_REPORT_1
+        debug("Mismatch on frame %-5d (%3d, %3d)\n", cur, rowA->state, match->state );
+#endif
+      }
     }
     
     hist = request_storage( hist, &hist_size, sizeof(int), mismatch+1, "request bin for hist" );

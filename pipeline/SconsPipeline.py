@@ -100,8 +100,8 @@ def pipeline_standard(env, movie):
 
   builders = [ 
     movie,
- #   env.Whisk,
-    lambda j: change_ext(j,'.whiskers'),
+    env.Whisk,
+#    lambda j: change_ext(j,'.whiskers'),
     env.Measure,
     env.Classify,
     ( env.GreyAreaSolver, 
@@ -134,14 +134,16 @@ def pipeline_curated(env, source):
         generated target is a measurements file
         returns target node
     """
-    target  = change_ext( node, '[curated].measurements' )
-    sources = map( lambda e: change_ext(node, e),['.whiskers',
+    node = node[0]
+    target  = change_ext( node, '[traj].measurements' )
+    sources = map( lambda e: change_ext(node, e),['.measurements',
                                                   '.trajectories'] )
     out = env.Command( target, sources, "measure.py $SOURCES $TARGET" )
     return out
 
   builders = [
-    source,
+    source,  
+    env.Measure,
     measure_and_label,
     ( env.MeasurementsAsMatlab, ),
     env.Summary                           

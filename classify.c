@@ -202,11 +202,24 @@ int main(int argc, char* argv[])
 
   table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), &n_rows );
   if( Is_Arg_Matched("-n") && ( (count = Get_Int_Arg("-n"))>=1 ) )
-  { thresh = Measurements_Table_Estimate_Best_Threshold_For_Known_Count( table, n_rows, 0 /*length column*/, 50.0, 200.0, count );
+  { thresh = Measurements_Table_Estimate_Best_Threshold_For_Known_Count( table, 
+                                                                         n_rows, 
+                                                                         0 /*length column*/, 
+                                                                         50.0, 
+                                                                         200.0, 
+                                                                         count );
   } else 
-  { thresh = Measurements_Table_Estimate_Best_Threshold( table, n_rows, 0 /*length column*/, 50.0, 200.0, &count );
+  { thresh = Measurements_Table_Estimate_Best_Threshold( table, 
+                                                         n_rows, 
+                                                         0 /*length column*/, 
+                                                         50.0, 
+                                                         200.0, 
+                                                         &count );
   }
-  Measurements_Table_Label_By_Threshold              ( table, n_rows, 0 /*length column*/, thresh );
+  Measurements_Table_Label_By_Threshold ( table, 
+                                          n_rows, 
+                                          0 /*length column*/, 
+                                          thresh );
   
   progress("Length threshold: %f\n"
            "    Target count: %d\n",thresh,count ); 

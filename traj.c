@@ -330,6 +330,8 @@ SHARED_EXPORT
 Measurements *Measurements_Table_From_Filename( const char *filename, int *n_rows)
 { Measurements *t = NULL;
   FILE *fp = fopen( filename, "rb" );
+  if(!fp) error("Could not open file as Measurements Table.\n"
+                "\tFrom: %s\n",filename);
   t = Measurements_Table_From_File( fp, n_rows );
   fclose(fp);
   return t;
