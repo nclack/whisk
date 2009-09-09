@@ -155,7 +155,7 @@ def plot_frame_by_ident(movie, wvd, traj, iframe, cmap = cm.hsv, params = {}):
           'junk'    : { 'linewidth': 6,
                         'color'    :'k',
                         'linestyle':'-',
-                        'alpha'    : 0.3}
+                        'alpha'    : 0.2}
          }
   for k,v in attr.iteritems():
     v.update( params.get(k,{}) )
@@ -164,7 +164,7 @@ def plot_frame_by_ident(movie, wvd, traj, iframe, cmap = cm.hsv, params = {}):
   ioff()
   cla()
   imshow(movie[iframe],hold=0, cmap=cm.gray);
-  for wid,w in wvd[iframe].iteritems():
+  for wid,w in wvd.get(iframe,{}).iteritems():
     i = -1
     for k,t in traj.iteritems():
       if wid == t.get(iframe,{}):
@@ -185,14 +185,29 @@ def render_identity_differences( movie, wA, tableA, wB, tableB, destpath ):
 
   def do(i):
     clf()
-    subplot(121)
-    plot_frame_by_ident( movie, wA, trajA, i )
-    title('Curated')
-    subplot(122)
-    plot_frame_by_ident( movie, wB, trajB, i )
-    title('Solution')
-    savefig( os.path.join(destpath, "%d.png"%i ) )
 
+    subplot(321)
+    plot_frame_by_ident( movie, wA, trajA, i-1 )
+    title('Curated')
+    subplot(322)
+    plot_frame_by_ident( movie, wB, trajB, i-1 )
+    title('Solution')
+
+    subplot(323)
+    plot_frame_by_ident( movie, wA, trajA, i )
+    subplot(324)
+    plot_frame_by_ident( movie, wB, trajB, i )
+
+    subplot(325)
+    plot_frame_by_ident( movie, wA, trajA, i+1 )
+    subplot(326)
+    plot_frame_by_ident( movie, wB, trajB, i+1 )
+
+    savefig(os.path.join(destpath, "%d.png"%i ),
+            orientation = 'portrait',
+           )
+           
+  figure(figsize = (4,9))
   frames = tableA.diff_identity(tableB)
   for i,fid in enumerate(frames):
     print '[%5d of %5d]'%(i,len(frames))
@@ -594,7 +609,7 @@ def render_summary_to_file(whiskername,figurename):
   close(f)
   return w,traj,data
 
-if 1:
+if 0:
   import optparse
   from traj import MeasurementsTable
 
