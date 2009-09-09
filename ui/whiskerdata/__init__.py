@@ -98,8 +98,8 @@ def load_state( precursor_or_names ):
         names[e] = precursor +  e
   elif isinstance(precursor_or_names,str): #single valued, assume it's a filename or precursor
     precursor = os.path.splitext(precursor_or_names)[0]
-    for e in names.iteritems():
-      names[e] = precursor + e
+    for k,v in names.iteritems():
+      names[k] = precursor + k
   else:
     raise TypeError(" precursor_or_names must be string or iterable ")
 

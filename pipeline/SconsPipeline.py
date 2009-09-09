@@ -104,9 +104,12 @@ def pipeline_standard(env, movie):
 
   builders = [ 
     movie,
-#    env.Whisk,
-    ( env.Bar, ),
-    lambda j: change_ext(j,'.whiskers'),
+    ( env.Bar, 
+      (env.Precious,),
+    ),
+    env.Whisk,
+    (env.Precious,),
+#    lambda j: change_ext(j,'.whiskers'),
     env.Measure,
     env.Classify,
     ( env.GreyAreaSolver, 
@@ -143,7 +146,7 @@ def pipeline_standard(env, movie):
   return jobs
 
 def pipeline_curated(env, source):
-  def measure_and_label(node):
+  def commit_traj(node):
     """ expects source to be a curated whiskers file 
         generated target is a measurements file
         returns target node
@@ -158,9 +161,8 @@ def pipeline_curated(env, source):
   builders = [
     source,  
     env.Measure,
-    measure_and_label,
-    ( env.MeasurementsAsMatlab, ),
-    ( env.SummaryPDF ),
+    ( env.MeasurementsAsTrajectories, ),
+    commit_traj,
     env.Summary
   ]
   compose = lambda a,b: b(a)
@@ -176,21 +178,23 @@ def whisk_generator( source, target, env, for_signature ):
 	else:
 		return Action("")
 
-def whisk_action( source, target, env ):
-	#import pdb; pdb.set_trace()
+def bar_generator( source, target, env, for_signature ):
 	if not target[0].exists():
-		env.Command(target,source,"whisk $SOURCE $TARGET --no-bar")
-		
+		return Action("whisk $SOURCE $TARGET --no-whisk")
+	else:
+		return Action("")
+
 env  = Environment( 
   PX2MM = 0,
   BUILDERS = {
     'Thumbnail' : Builder(action = thumbnail),
     'LengthVScorePlot': Builder(action = length_v_score_plot),
-    'Whisk' : Builder(generator = whisk_generator, #action = whisk_action, #"whisk $SOURCE $TARGET --no-bar",
+    'Whisk' : Builder(generator = whisk_generator, 
                       suffix  = '.whiskers',
                       src_suffix = '.seq'
                      ),
-    'Bar'   : Builder(action = "whisk $SOURCE $TARGET --no-whisk",
+    'Bar'   : Builder(generator = bar_generator,
+                      #action = "whisk $SOURCE $TARGET --no-whisk",
                       suffix  = '.bar',
                       src_suffix = '.seq'
                      ),
@@ -246,8 +250,8 @@ env.AppendENVPath('PATH', os.getcwd())
 env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movie
                            # a count >= 1 will identify that many whiskers in each movie
 
-env.AddMethod( pipeline_production, "Pipeline" )
-env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
+env.AddMethod( pipeline_standard, "Pipeline" )
+env.AddMethod( pipeline_curated,    "CuratedPipeline" ) 
 
 Export('env')
 

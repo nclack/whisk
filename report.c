@@ -45,10 +45,11 @@
 
 Measurements* find_match( Distributions *query_change_dist, 
                           Measurements *query, 
+                          int minstate_query,
                           Distributions *domain_change_dist, 
                           Measurements *domain, 
                           int ndomain, 
-                          int minstate,
+                          int minstate_domain,
                           double thresh )
 { double max = -DBL_MAX;
   int argmax = -1;
@@ -60,11 +61,11 @@ Measurements* find_match( Distributions *query_change_dist,
     double logp = Eval_Velocity_Likelihood_Log2( domain_change_dist, 
                                                  query->data, 
                                                  c->data, 
-                                                 c->state - minstate )
+                                                 c->state - minstate_domain )
                 + Eval_Velocity_Likelihood_Log2( query_change_dist, 
                                                  c->data, 
                                                  query->data, 
-                                                 query->state - minstate );
+                                                 query->state - minstate_query );
     if( logp > max )
     { max = logp;
       argmax = i;
@@ -98,7 +99,7 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
       mismatch=0;
   static int *frames = NULL;
   size_t frames_size = 0;
-  int minstateA, minstateB, minstate;
+  int minstateA, minstateB;
 
   //
   // Now build distributions. (Conditioned on whisker or not)
@@ -118,8 +119,6 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
   Distributions_Apply_Log2( distB );
   nBst = _count_n_states( B, nB, 0, &minstateB, NULL);
 
-  minstate = MIN( minstateA, minstateB);
- 
 #ifdef  DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
   debug("nAst: %d\n"
         "nBst: %d\n", nAst, nBst );
@@ -166,11 +165,11 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
       if( rowA->state == -1 ) // skip these
         continue;
   
-      match = find_match( distA, rowA, distB, markB, nframeB, minstate, -5000.0 );
+      match = find_match( distA, rowA, minstateA, distB, markB, nframeB, minstateB, -5000.0 );
       if(match)                                    
-      { counts[ nAst*(match->state-minstate) + (rowA->state-minstate) ]++;
+      { counts[ nAst*(match->state-minstateB) + (rowA->state-minstateA) ]++;
       } else {
-        counts[ (rowA->state-minstate) ]++;
+        counts[ (rowA->state-minstateA) ]++;
       }
     }
   
@@ -214,7 +213,7 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
           "  A      B\n"
           " ---    ---\n");
     for( i=0; i<nAst; i++ )
-      debug("%3d  ->%3d\n", i+minstate, map[i]+minstate);
+      debug("%3d  ->%3d\n", i+minstateA, map[i]+minstateB);
   }
 #endif
 
@@ -244,13 +243,13 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
     for(;  ( rowA < A + nA ) && (rowA->fid == cur); rowA++ )
     { Measurements *match;
     
-      if( rowA->state == minstate ) // skip these
+      if( rowA->state == minstateA ) // skip these
         continue;
 
       if( cur == last )       // skip ahead if a mistake has been found on
         continue;             //      this frame
     
-      match = find_match( distA, rowA, distB, markB, nframeB, minstate, -5000.0 );
+      match = find_match( distA, rowA, minstateA, distB, markB, nframeB, minstateB, -5000.0 );
       if( match && ( map[ rowA->state ] != match->state ) ) 
       { frames = request_storage( frames,
                                  &frames_size,
@@ -261,7 +260,7 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
         last = cur;
                                   
 #ifdef DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
-        if(match->state != minstate )
+        if(match->state != minstateB )
           debug("Frame %5d. Mismatch\tident:(%3d, %-3d) wid:(%3d, %-3d)\n", cur, 
               map[rowA->state], 
               match->state,
@@ -320,6 +319,7 @@ int main(int argc, char* argv[])
   int mismatch_total = 0,
       mismatch_max   = 0;
   int *map;
+  int minstateA, minstateB;
 
   hist = Guarded_Malloc( sizeof(int) * hist_size, "alloc hist");
   memset( hist, 0, hist_size );
@@ -334,16 +334,19 @@ int main(int argc, char* argv[])
   //
   
   Sort_Measurements_Table_State_Time(A, nA);
+  Measurements_Table_Compute_Velocities(A, nA);
   distA = Build_Velocity_Distributions( A, nA, COMPARE_IDENTITIES_DISTS_NBINS );
   Distributions_Normalize( distA );
   Distributions_Apply_Log2( distA );
-  nAst = _count_n_states( A, nA, 0, NULL, NULL);
+  nAst = _count_n_states( A, nA, 0, &minstateA, NULL);
   
   Sort_Measurements_Table_State_Time(B, nB);
+  Measurements_Table_Compute_Velocities(A, nA);
+
   distB = Build_Velocity_Distributions( B, nB, COMPARE_IDENTITIES_DISTS_NBINS );
   Distributions_Normalize( distB );
   Distributions_Apply_Log2( distB );
-  nBst = _count_n_states( B, nB, 0, NULL, NULL);
+  nBst = _count_n_states( B, nB, 0, &minstateB, NULL);
  
 #ifdef  DEBUG_REPORT_1
   debug("nAst: %d\n"
@@ -385,14 +388,14 @@ int main(int argc, char* argv[])
     for(;  ( rowA < A + nA ) && (rowA->fid == cur); rowA++ )
     { Measurements *match;
   
-      if( rowA->state == -1 ) // skip these
+      if( rowA->state == minstateA ) // skip these
         continue;
   
-      match = find_match( distA, rowA, distB, markB, nframeB, -1, -5000.0 );
-      if(match)                                       //assumes minstate == -1
-      { counts[ nAst*(match->state+1) + (rowA->state+1) ]++;
+      match = find_match( distA, rowA, minstateA, distB, markB, nframeB, minstateB, -5000.0 );
+      if(match)                                       
+      { counts[ nAst*(match->state-minstateB) + (rowA->state-minstateA) ]++;
       } else {
-        counts[ (rowA->state+1) ]++;
+        counts[ (rowA->state-minstateA) ]++;
       }
     }
   
@@ -436,7 +439,7 @@ int main(int argc, char* argv[])
           "  A      B\n"
           " ---    ---\n");
     for( i=0; i<nAst; i++ )
-      debug("%3d  ->%3d\n", i-1, map[i]-1);
+      debug("%3d  ->%3d\n", i+minstateA, map[i]+minstateB);
   }
 #endif
 
@@ -467,10 +470,10 @@ int main(int argc, char* argv[])
     for(;  ( rowA < A + nA ) && (rowA->fid == cur); rowA++ )
     { Measurements *match;
     
-      if( rowA->state == -1 ) // skip these
+      if( rowA->state == minstateA ) // skip these
         continue;
     
-      match = find_match( distA, rowA, distB, markB, nframeB, -1, -5000.0 );
+      match = find_match( distA, rowA, minstateA, distB, markB, nframeB, minstateB, -5000.0 );
       if( match && ( map[ rowA->state ] != match->state ) ) 
       { mismatch++;
 #ifdef DEBUG_REPORT_1
@@ -492,7 +495,7 @@ int main(int argc, char* argv[])
     
     rowA++;
   }
-  printf("\nHistogram of # differences per frame.\n");
+  printf("\nHistogram of mismatched whiskers per frame.\n");
   print_hist(hist,mismatch_max+1);
   free(counts);
   Free_Distributions( distA );

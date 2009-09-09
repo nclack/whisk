@@ -150,6 +150,55 @@ def plot_frame_by_class(movie, wvd, datadict, iframe):
   ion()
   show()
 
+def plot_frame_by_ident(movie, wvd, traj, iframe, cmap = cm.hsv, params = {}):
+  attr = {'whiskers': { 'linewidth':2 },
+          'junk'    : { 'linewidth': 6,
+                        'color'    :'k',
+                        'linestyle':'-',
+                        'alpha'    : 0.3}
+         }
+  for k,v in attr.iteritems():
+    v.update( params.get(k,{}) )
+
+  ntraj = float(len(traj))
+  ioff()
+  cla()
+  imshow(movie[iframe],hold=0, cmap=cm.gray);
+  for wid,w in wvd[iframe].iteritems():
+    i = -1
+    for k,t in traj.iteritems():
+      if wid == t.get(iframe,{}):
+        i=k
+        break
+    if i > -1:
+      plot(w.x,w.y, color = cmap(i/ntraj), **attr['whiskers'] )
+    else:
+      plot(w.x,w.y, **attr['junk'] )
+  map(axis,["tight","image","off"])
+  subplots_adjust(0,0,1,1,0,0)
+  ion()
+  draw()
+
+def render_identity_differences( movie, wA, tableA, wB, tableB, destpath ):
+  trajA = tableA.get_trajectories()
+  trajB = tableB.get_trajectories()
+
+  def do(i):
+    clf()
+    subplot(121)
+    plot_frame_by_ident( movie, wA, trajA, i )
+    title('Curated')
+    subplot(122)
+    plot_frame_by_ident( movie, wB, trajB, i )
+    title('Solution')
+    savefig( os.path.join(destpath, "%d.png"%i ) )
+
+  frames = tableA.diff_identity(tableB)
+  for i,fid in enumerate(frames):
+    print '[%5d of %5d]'%(i,len(frames))
+    do(fid)
+  
+
 def render_classes(path,movie,wvd,datadict):
   for iframe in range(len(movie)):
     print "%4d of %d"%(iframe, len(movie))
