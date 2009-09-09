@@ -609,7 +609,7 @@ def render_summary_to_file(whiskername,figurename):
   close(f)
   return w,traj,data
 
-if 0:
+if 1:
   import optparse
   from traj import MeasurementsTable
 
