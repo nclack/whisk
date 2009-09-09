@@ -161,7 +161,6 @@ def pipeline_curated(env, source):
   builders = [
     source,  
     env.Measure,
-    ( env.MeasurementsAsTrajectories, ),
     commit_traj,
     env.Summary
   ]
