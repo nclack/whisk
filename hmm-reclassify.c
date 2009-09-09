@@ -315,7 +315,7 @@ int main(int argc, char*argv[])
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY_W_DELTAS
-char *Spec[] = {"[-h|--help] | ( -n <int> <source:string> <dest:string>  )",NULL};
+char *Spec[] = {"[-h|--help] [-n <int>] <source:string> <dest:string>",NULL};
 int main(int argc, char*argv[])
 {
   int nrows;

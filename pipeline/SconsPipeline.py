@@ -79,10 +79,11 @@ def dfs_reduce(f,tree):
 def pipeline_production(env, movie):
   def alter(j,subdir,ext):
     return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
-
+  
   builders = [ 
     movie                                                       ,
     env.Whisk                                                   ,
+	(env.Precious,),
 #	(env.Bar),
     env.Measure                                                 ,
     env.Classify                                                ,
@@ -169,12 +170,17 @@ def pipeline_curated(env, source):
 def lit(s):
   return lambda env,sources: s
 
+def whisk_action( source, target, env ):
+	#import pdb; pdb.set_trace()
+	if not target[0].exists():
+		env.Command(source,target,"whisk $SOURCE $TARGET --no-whisk")
+		
 env  = Environment( 
   PX2MM = 0,
   BUILDERS = {
     'Thumbnail' : Builder(action = thumbnail),
     'LengthVScorePlot': Builder(action = length_v_score_plot),
-    'Whisk' : Builder(action = "whisk $SOURCE $TARGET --no-bar",
+    'Whisk' : Builder(action = whisk_action, #"whisk $SOURCE $TARGET --no-bar",
                       suffix  = '.whiskers',
                       src_suffix = '.seq'
                      ),

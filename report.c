@@ -88,6 +88,7 @@ void print_hist( int *hist, int n)
   printf("Total: %8d\n",ttl);
 }
 
+SHARED_EXPORT
 int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements *B, int nB, int *nframes )
 { int nAst, nBst;
   Measurements *rowA, *rowB, *markA, *markB;
