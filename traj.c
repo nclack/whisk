@@ -27,11 +27,12 @@
 
 // DEBUG OUTPUT
 #if 0
+#define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+#define  DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
 #define  DEBUG_FIND_PATH
 #define  DEBUG_TEST_SOLVE_GRAY_AREAS 
 #define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_DISTRIBUTIONS_ALLOC
-#define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_DISTRIBUTIONS 
 #define  DEBUG_MEASUREMENTS_TABLE_ALLOC
 #define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
@@ -481,6 +482,10 @@ SHARED_EXPORT
 void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_rows )
 { int i;
   int n = sorted_table[0].n;
+#ifdef DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
+  int nr = n_rows;
+  debug("\nCompute velocities for table at %p with %d rows.\n", sorted_table, n_rows );
+#endif
   while( n_rows-- > 1 )
   { Measurements *a = sorted_table + n_rows - 1,
                  *b = sorted_table + n_rows;
@@ -495,6 +500,14 @@ void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_ro
     { b->valid_velocity = 0;
     }
   }
+#ifdef DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
+  debug("\tCheck for any valid velocities after computation.\n");
+  while(nr--)
+    if( sorted_table[nr].valid_velocity )
+      break;
+  if( nr<0 ) warning("No valid velocities.\n");
+  else       debug("\tok\n");
+#endif
   // Handle the first row: (remember the sort)
   if( sorted_table[1].valid_velocity )
   { memcpy( sorted_table[0].velocity, sorted_table[1].velocity, sizeof(double)*n );
@@ -627,7 +640,9 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       dvol           = d->n_bins * d->n_measures * d->n_states; 
 
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
-  debug("\n\n********************** DEBUG_BUILD_VELOCITY_DISTRIBUTIONS  \n\n");
+  debug("\n\n********************** DEBUG_BUILD_VELOCITY_DISTRIBUTIONS\n"
+            "For table at %p with %d rows.  Will use %d bins.\n\n", 
+            sorted_table, n_rows, n_bins);
 #endif
 
   mn = (double*) Guarded_Malloc( 2 * sizeof(double) * n, "Build distributions - alloc mn and mx" );
@@ -692,6 +707,15 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
   delta = d->bin_delta;
 
   // Accumulate
+#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
+  // Requires some valid velocities 
+  // (see: Measurements_Table_Compute_Velocities to compute)
+  debug("Checking to see if there are any valid computed velocities to histogram\n");
+  for( i=0; i < n_rows; i++ )
+    if( sorted_table[i].valid_velocity )
+      break;
+  assert( i != n_rows ); // fails if no valid velocities
+#endif
   memset( d->data, 0, sizeof(double) * dvol );
   for( i=0; i < n_rows; i++ )
   { Measurements *mrow = sorted_table + i;

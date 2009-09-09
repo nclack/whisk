@@ -82,7 +82,8 @@ obj = env.Object("whisker_io_main", "whisker_io.c", CPPDEFINES = "WHISKER_IO_CON
 env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
 
 ## traj 
-libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c','utilities.c','viterbi.c',] )
+libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c',
+                                      'utilities.c','viterbi.c','report.c'] )
 
 ## install - copy things around
 env.Install( 'ui/whiskerdata', ['trace.py', libwhisk] ) 
@@ -178,6 +179,7 @@ for t in tests:
 
 ## report tests
 tests = ["TEST_REPORT_COMPARE_TRAJECTORIES",
+         "TEST_REPORT_1",
          ] 
 totestobj = lambda t: env.Object( 'report_'+t.lower(), ['report.c'], CPPDEFINES = t )
 for t in tests:

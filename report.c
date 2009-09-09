@@ -5,7 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#if 0
 #define DEBUG_REPORT_1
+#define DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
+#endif
 
 // The number of bins was set by taking the minimum power of two such that
 // comparison of two identical files resulted in no differences.
@@ -84,6 +87,222 @@ void print_hist( int *hist, int n)
   }
   printf("Total: %8d\n",ttl);
 }
+
+int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements *B, int nB, int *nframes )
+{ int nAst, nBst;
+  Measurements *rowA, *rowB, *markA, *markB;
+  Distributions *distA, *distB;
+  int *counts, 
+      *map,
+      mismatch=0;
+  static int *frames = NULL;
+  size_t frames_size = 0;
+  int minstateA, minstateB, minstate;
+
+  //
+  // Now build distributions. (Conditioned on whisker or not)
+  //
+  
+  Sort_Measurements_Table_State_Time(A, nA);
+  Measurements_Table_Compute_Velocities(A, nA);
+  distA = Build_Velocity_Distributions( A, nA, COMPARE_IDENTITIES_DISTS_NBINS );
+  Distributions_Normalize( distA );
+  Distributions_Apply_Log2( distA );
+  nAst = _count_n_states( A, nA, 0, &minstateA, NULL);
+  
+  Sort_Measurements_Table_State_Time(B, nB);
+  Measurements_Table_Compute_Velocities(B, nB);
+  distB = Build_Velocity_Distributions( B, nB, COMPARE_IDENTITIES_DISTS_NBINS );
+  Distributions_Normalize( distB );
+  Distributions_Apply_Log2( distB );
+  nBst = _count_n_states( B, nB, 0, &minstateB, NULL);
+
+  minstate = MIN( minstateA, minstateB);
+ 
+#ifdef  DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
+  debug("nAst: %d\n"
+        "nBst: %d\n", nAst, nBst );
+  debug("minA: %d\n"
+        "minB: %d\n", minstateA, minstateB);
+#endif
+  //
+  // Check for differences in identification
+  // =======================================
+  
+  Sort_Measurements_Table_Time_State_Face( A, nA );
+  Sort_Measurements_Table_Time_State_Face( B, nB );
+  
+  counts = Guarded_Malloc( nAst*nBst*sizeof(int), "alloc counts");
+  memset( counts, 0, nAst*nBst*sizeof(int) );
+  map = Guarded_Malloc( nAst*sizeof(int), "alloc counts");
+
+  //
+  // First pass
+  // solve correspondence between trajectories
+  //
+  rowA = A;
+  rowB = B;
+  while( rowA < A + nA )
+  { 
+    int cur = rowA->fid;
+    int nframeB;
+    
+    mismatch = 0;
+  
+    markA = rowA;
+    markB = rowB;
+  
+    // count number in current frame in B
+    while( (rowB < B+nB) && (rowB->fid == cur ) )
+      rowB++;
+    nframeB = rowB - markB;
+  
+    // iterate over current frame in A
+    // Compute # of mismatches
+    for(;  ( rowA < A + nA ) && (rowA->fid == cur); rowA++ )
+    { Measurements *match;
+  
+      if( rowA->state == -1 ) // skip these
+        continue;
+  
+      match = find_match( distA, rowA, distB, markB, nframeB, minstate, -5000.0 );
+      if(match)                                    
+      { counts[ nAst*(match->state-minstate) + (rowA->state-minstate) ]++;
+      } else {
+        counts[ (rowA->state-minstate) ]++;
+      }
+    }
+  
+  }
+
+#ifdef  DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
+  { //print the counts matrix
+    int i,j;
+    int *c = counts;
+    debug("Identity correspondance matrix:\n");
+    for(j=0; j<nBst; j++)
+    { for(i=0; i<nAst; i++)
+        debug("%5d ",*c++);
+      debug("\n");
+    }
+  }
+#endif
+
+  //
+  // Build mapping from A identities to B identities
+  // Greedily
+  //
+  { int i,j,max;
+    for(i=0;i<nAst;i++)
+    { max = -1;
+      for(j=0;j<nBst;j++)
+      { int v = counts[nAst*j + i];
+        if( v > max )
+        { max = v;
+          map[i] = j;
+        }
+      }
+    }
+  }
+
+#ifdef  DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
+  { // print mapping of identities in A to B
+    int i;
+    debug("\n"
+          "Identity correspondance\n"
+          "  A      B\n"
+          " ---    ---\n");
+    for( i=0; i<nAst; i++ )
+      debug("%3d  ->%3d\n", i+minstate, map[i]+minstate);
+  }
+#endif
+
+  //
+  // Second pass
+  // Collect frames where there is a mismatch
+  //
+  rowA = A;
+  rowB = B;
+  mismatch = 0;
+  while( rowA < A + nA )
+  { 
+    int cur = rowA->fid,
+        nframeB,
+        last = -1;
+  
+    markA = rowA;
+    markB = rowB;
+  
+    // count number in current frame in B
+    while( (rowB < B+nB) && (rowB->fid == cur ) )
+      rowB++;
+    nframeB = rowB - markB;
+  
+    // iterate over current frame in A
+    // Compute # of mismatches
+    for(;  ( rowA < A + nA ) && (rowA->fid == cur); rowA++ )
+    { Measurements *match;
+    
+      if( rowA->state == minstate ) // skip these
+        continue;
+
+      if( cur == last )       // skip ahead if a mistake has been found on
+        continue;             //      this frame
+    
+      match = find_match( distA, rowA, distB, markB, nframeB, minstate, -5000.0 );
+      if( match && ( map[ rowA->state ] != match->state ) ) 
+      { frames = request_storage( frames,
+                                 &frames_size,
+                                  sizeof(int),
+                                  mismatch+1,
+                                  "measurements diff" );
+        frames[ mismatch++ ] = cur;
+        last = cur;
+                                  
+#ifdef DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
+        if(match->state != minstate )
+          debug("Frame %5d. Mismatch\tident:(%3d, %-3d) wid:(%3d, %-3d)\n", cur, 
+              map[rowA->state], 
+              match->state,
+              rowA->wid,
+              match->wid);
+#endif
+      } //end aggregate difference
+    } //end iterate over rows with const frame
+  } // end iterate over rows
+  free(counts);
+  free(map);
+  Free_Distributions( distA );
+  Free_Distributions( distB );
+
+  *nframes = mismatch;
+  return frames;
+}
+
+#ifdef TEST_REPORT_1
+char* Spec[] = {"<measurements1:string> <measurements2:string>",NULL};
+int main(int argc, char* argv[])
+{ Measurements *A, *B;
+  int nA, nB, nframes, *frames;
+
+  Process_Arguments(argc, argv, Spec, 0);
+  
+  A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), &nA );
+  B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), &nB );
+  
+  frames = Measurements_Tables_Get_Diff_Frames( A, nA, B, nB, &nframes );
+
+  { debug("frames vec at %p\n"
+          "         size %d\n",frames, nframes);
+    while(nframes--)
+      debug("%5d\n",nframes);
+  }
+
+  Free_Measurements_Table(A);
+  Free_Measurements_Table(B);
+  return 0;
+}
+#endif
 
 #ifdef TEST_REPORT_COMPARE_TRAJECTORIES
 
