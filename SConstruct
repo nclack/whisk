@@ -69,6 +69,7 @@ main_cfiles = set([n+".c" for n in mains]) # Assume main() is in a c-file with t
 cfiles = cfiles.difference(main_cfiles)    # Seperate c-files with and without mains
 cfiles.remove("evaltest.c")
 
+
 #
 # Builds
 #
@@ -200,16 +201,16 @@ for t in tests:
                                                  'error.c', 'compat.c', 'mat.c'
                                                ] ) 
 
-## polyfit tests
-tests = ["TEST_POLYFIT_1",
-         "TEST_POLYFIT_2", 
-         ] 
-totestobj = lambda t: env.Object( 'polyfit_'+t.lower(), ['poly.c'], CPPDEFINES = t )
-for t in tests:
-  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
-                                                 'utilities.c', 'common.c', 'svd.c',
-                                                 'error.c', 'compat.c', 'mat.c'
-                                               ] ) 
+# polyfit tests
+# tests = ["TEST_POLYFIT_1",
+         # "TEST_POLYFIT_2", 
+         # ] 
+# totestobj = lambda t: env.Object( 'polyfit_'+t.lower(), ['poly.c'], CPPDEFINES = t )
+# for t in tests:
+  # env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                                 # 'utilities.c', 'common.c', 'svd.c',
+                                                 # 'error.c', 'compat.c', 'mat.c'
+                                               # ] ) 
 
 ## measure tests
 tests = ["TEST_MEASURE_1",

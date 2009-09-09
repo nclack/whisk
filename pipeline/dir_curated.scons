@@ -2,6 +2,7 @@
 #
 Import('env')
 local = env.Clone()
-local['PX2MM'] = 0.5/22.677 # Assuming the pixels are half the size of O'Connors
+local['PX2MM'] = 0.014/0.36 # from camera pixel size and lens magnification - NX
 local['FACEHINT'] = 'left'
+local['WHISKER_COUNT'] = -1
 jobs = map( local.CuratedPipeline, env.Glob('*.whiskers') )

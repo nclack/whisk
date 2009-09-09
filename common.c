@@ -1,3 +1,6 @@
+#pragma warning(disable : 4996)
+#pragma warning(disable : 4244)
+
 #include "utilities.h"
 #include <assert.h>
 #include "compat.h"

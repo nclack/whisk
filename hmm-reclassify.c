@@ -13,7 +13,8 @@
 #include "viterbi.h"
 #include "common.h"
 
-#if 1  // setup tests
+
+#if 0  // setup tests
 
 #if defined( TEST_HMM_RECLASSIFY_1 )
 #define TEST_HMM_RECLASSIFY_LR_MODEL
@@ -31,6 +32,11 @@
 #define TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
 #define TEST_HMM_RECLASSIFY_W_DELTAS
 #endif
+
+#else
+
+#define TEST_HMM_RECLASSIFY_LR_MODEL
+#define TEST_HMM_RECLASSIFY_W_DELTAS
 
 #endif
 
@@ -292,7 +298,7 @@ int main(int argc, char*argv[])
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY_W_DELTAS
-char *Spec[] = {"[-h|--help] <source:string> <dest:string> [-n <int>]",NULL};
+char *Spec[] = {"[-h|--help] | ( <source:string> <dest:string> [-n <int>] )",NULL};
 int main(int argc, char*argv[])
 { int nrows;
   int nwhisk;
@@ -445,7 +451,6 @@ int main(int argc, char*argv[])
     } // end loop over observations
     free(last);
     free(S);
-    free(E);
   } // end re-classification
 
   //
@@ -457,7 +462,7 @@ int main(int argc, char*argv[])
   // 
   // Cleanup
   //
-  free(T);
+  //free(T);
   Free_Distributions(vel_dists);
   Free_Distributions(shp_dists);
   Free_Measurements_Table(table);

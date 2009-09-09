@@ -1,3 +1,6 @@
+#pragma warning(disable : 4996)
+#pragma warning(disable : 4244) //type conversion
+
 #include "error.h"
 #include <stdarg.h>
 #include <stdio.h>

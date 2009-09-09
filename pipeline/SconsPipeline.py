@@ -83,8 +83,11 @@ def pipeline_production(env, movie):
   builders = [ 
     movie                                                       ,
     env.Whisk                                                   ,
+#	(env.Bar),
     env.Measure                                                 ,
     env.Classify                                                ,
+	env.HmmLRTimeSolver,
+    env.GreyAreaSolver,       
     (env.MeasurementsAsMatlab,),
     (env.MeasurementsAsTrajectories,),
     env.Summary
@@ -231,7 +234,7 @@ env.AppendENVPath('PATH', os.getcwd())
 env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movie
                            # a count >= 1 will identify that many whiskers in each movie
 
-env.AddMethod( pipeline_standard, "Pipeline" )
+env.AddMethod( pipeline_production, "Pipeline" )
 env.AddMethod( pipeline_curated,  "CuratedPipeline" ) 
 
 Export('env')

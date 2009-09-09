@@ -1,5 +1,7 @@
 // TODO: change the name of this file to something else, like identity.c
 // TODO: make the .h
+#pragma warning(disable : 4996)
+
 
 #include "compat.h"
 #include "traj.h"
@@ -952,7 +954,7 @@ Measurements **Find_Path( Measurements *sorted_table,
             child < cur->children + cur->nchildren;
             child++)
         { double logp;
-          logp = Eval_Velocity_Likelihood_Log2( velocity, currow->data, child->row->data, st-minstate );
+          logp = Eval_Velocity_Likelihood_Log2( velocity, currow->data, child->row->data, st-minstate )
                 + self_likelihood;
 #ifdef DEBUG_FIND_PATH
           debug("State: %2d Max: %7.7f Cur: %7.7f %p %p\n", st, child->max, logp, currow->data, child->row->data );
