@@ -73,12 +73,12 @@ real *LRModel_Init_Uniform_Transitions( real *T, int nwhisk )
 void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int nrows )
 { Measurements *row;
   int N = 2 * nwhisk + 1; 
-
+// FIXME: What if nwhisk is a different # than what was expected?
+//        Need to integrate over all paths supported by model...?
   memset( T, 0, sizeof(double)*N*N );
   Sort_Measurements_Table_Time_Face( table, nrows );
 
   row = table;
-  //for( row = table; row < table+nrows; row++ )
   while( row < table+nrows )
   { Measurements *bookmark = row;             //remember the frame's start
     int cur = row->fid;               //1. check if any are labelled
@@ -95,6 +95,8 @@ void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int 
           int delta = 1;              //delta state (1 for cases j->w and w->j)
           if( c == last ) //j->j or w->w
             delta = 2*( c&1 );  // 0 or 2
+		  if( state+delta == N ) //FIXME: HACK: this is necessary when trying to use a 3 whisker model when there are 4 whiskers
+			  delta = 0;
 #ifdef DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
           progress("Frame: %5d  Whisker: %3d  State: %3d Transition: %2d -> %2d\n", 
               row->fid, row->wid, row->state, state, state+delta );
@@ -104,7 +106,6 @@ void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int 
           state+=delta;                  // Note: `state` is a natural number
           last = c;                      // Note: `last`, `c` are 0 (junk) or 1(whisker) 
         }
-        //row--;
         break;
       }
     }
