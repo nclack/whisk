@@ -14,7 +14,7 @@
 #include "common.h"
 
 
-#if 0  // setup tests
+#if 1  // setup tests
 
 #if defined( TEST_HMM_RECLASSIFY_1 )
 #define TEST_HMM_RECLASSIFY_LR_MODEL
