@@ -14,7 +14,7 @@
 #include "common.h"
 
 
-#if 1  // setup tests
+#if 1 // setup tests
 
 #if defined( TEST_HMM_RECLASSIFY_1 )
 #define TEST_HMM_RECLASSIFY_LR_MODEL
@@ -42,6 +42,7 @@
 
 #if 0
 #define DEBUG_HMM_RECLASSIFY
+#define DEBUG_HMM_RECLASSIFY_EXTRA
 #endif
 
 #define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
@@ -109,7 +110,7 @@ Tpf_State_Decode                                      pf_State_Decode           
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY_NO_DELTAS
-char *Spec[] = {"[-h|--help] | <source:string> <dest:string> [-n <int>]",NULL};
+char *Spec[] = {"[-h|--help] | (<source:string> <dest:string> [-n <int>])",NULL};
 int main(int argc, char*argv[])
 { int nrows;
   int nwhisk;
@@ -181,6 +182,22 @@ int main(int argc, char*argv[])
 
   (*pf_Log2_Transitions)(T,nwhisk, HMM_RECLASSIFY_BASELINE_LOG2);
 
+#ifdef DEBUG_HMM_RECLASSIFY
+  // Assert properly normed
+  { real sum = 1.0;
+    double *row;
+    int N = nwhisk*2 + 1;
+    for( row=T; row < T + N*N; row++ )
+    { 
+      if( ! (row-T)%N )
+      { assert( fabs(sum-1.0) < 1e-3 );
+        sum = 0.0;
+      }
+      sum += *row;
+    }
+  } 
+#endif
+
   //
   // Want to condition distributions over whether it's a whisker or not,
   // so encode input identities.
@@ -227,7 +244,7 @@ int main(int argc, char*argv[])
       int nobs;
       while( row->fid == fid && row < table+nrows ) 
       { 
-#ifdef DEBUG_HMM_RECLASSIFY
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
           debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
 #endif
         ++row;
@@ -243,7 +260,7 @@ int main(int argc, char*argv[])
         ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
 
         // Commit the result
-#ifdef DEBUG_HMM_RECLASSIFY
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
         debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
             fid,                              // frame id
             table[nrows-1].fid+1,             // total frames
@@ -260,7 +277,7 @@ int main(int argc, char*argv[])
           while(i--)
           { int s = seq[i];
             bookmark[i].state = (*pf_State_Decode)(s);   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
-#ifdef DEBUG_HMM_RECLASSIFY
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
             debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
                 bookmark[i].fid, 
                 bookmark[i].wid, 
@@ -298,9 +315,10 @@ int main(int argc, char*argv[])
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY_W_DELTAS
-char *Spec[] = {"[-h|--help] | ( <source:string> <dest:string> [-n <int>] )",NULL};
+char *Spec[] = {"[-h|--help] | ( -n <int> <source:string> <dest:string>  )",NULL};
 int main(int argc, char*argv[])
-{ int nrows;
+{
+  int nrows;
   int nwhisk;
   Measurements *table, *row;
   Distributions *shp_dists, *vel_dists;
@@ -340,8 +358,17 @@ int main(int argc, char*argv[])
   { int nstate,minstate,maxstate;
     nstate = _count_n_states(table,nrows,1,&minstate,&maxstate);
     nwhisk = nstate - 1; //subtract the dummy state, which is minstate
+#ifdef DEBUG_HMM_RECLASSIFY
+    assert(minstate<maxstate);
+    assert(minstate==-1);
+    assert(maxstate>=0);
+    assert(nstate>0);
+#endif 
   }
 
+#ifdef DEBUG_HMM_RECLASSIFY
+	debug("nwhisk: %d\n",nwhisk);
+#endif
   //
   // Compute transitions matrix for model
   //
@@ -391,7 +418,7 @@ int main(int argc, char*argv[])
       int nobs;
       while(row < table+nrows && row->fid == fid  ) 
       { 
-#ifdef DEBUG_HMM_RECLASSIFY
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
           debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
 #endif
         ++row;
@@ -402,7 +429,7 @@ int main(int argc, char*argv[])
 
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
       //(*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
-#ifdef DEBUG_HMM_RECLASSIFY
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
       { int i;
         debug("Last\n");
         for(i=0; i<nwhisk; i++)
@@ -416,7 +443,7 @@ int main(int argc, char*argv[])
         ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
 
         // Commit the result
-#ifdef DEBUG_HMM_RECLASSIFY
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
         debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
             fid,                              // frame id
             table[nrows-1].fid+1,             // total frames
@@ -434,7 +461,7 @@ int main(int argc, char*argv[])
             bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
             if(lbl>-1)
               last[lbl] = bookmark+i;
-#ifdef DEBUG_HMM_RECLASSIFY
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
             debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
                 bookmark[i].fid, 
                 bookmark[i].wid, 

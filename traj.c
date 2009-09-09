@@ -678,6 +678,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       debug("last: %5d %5d\n",last->fid,nlast);
       debug("this: %5d %5d\n",this->fid,nthis);
       debug("next: %5d    \n",next->fid);
+	  debug("row [%7d/%-7d]\n",next - sorted_table, n_rows);
       debug("\n");
 #endif
 
@@ -697,7 +698,8 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       this = next;
 
       fid = this->fid;
-      while( (++next)->fid == fid && next - sorted_table < n_rows);
+      while( (next - sorted_table < n_rows) && next->fid == fid ) 
+		  next++;
       nthis = next-this;
     }
   } // end context - get extents

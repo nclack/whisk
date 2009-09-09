@@ -114,7 +114,7 @@ double Measurements_Table_Estimate_Best_Threshold_For_Known_Count( Measurements 
   double argmax;
   assert(low<high);
   for( thresh = low; thresh < high; thresh ++ )
-  { int n_frames_w_target=0, n;
+  { int n_frames_w_target=0;
     Measurements_Table_Label_By_Threshold( table, n_rows, column, thresh );
     // count number of frames with exactly `target_count` segments above threshold
     { Measurements *row = table+n_rows;
@@ -134,9 +134,9 @@ double Measurements_Table_Estimate_Best_Threshold_For_Known_Count( Measurements 
       }
     }
 #ifdef DEBUG_ESTIMATE_BEST_LENGTH_THRESHOLD_FOR_KNOWN_COUNT
-    printf("%4d  %3d  %3d\n", thresh, n_frames_w_target, n );
+    printf("%4d  %3d\n", thresh, n_frames_w_target );
 #endif
-    if( n_frames_w_target > best && n>0)
+    if( n_frames_w_target > best )
     { best = n_frames_w_target;
       argmax = thresh;
     }

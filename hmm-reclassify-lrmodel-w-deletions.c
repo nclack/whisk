@@ -174,7 +174,8 @@ void LRDelModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, i
 #endif                                                                                // j->w   1     0  1   1       
         for( row = bookmark+1; row->fid == cur; row++)                                // w->j   2     1  0   2       
         { int c = (row->state != -1); // either junk<0> or whisker<1>                 // j->j   0     0  0   0       
-          int delta = (last<<1) + c;    //delta state (1 for cases j->w and w->j)     // w->w   3     1  1   3                 
+          int delta = (last<<1) + c;    //delta state (1 for cases j->w and w->j)     // w->w   3     1  1   3  
+		  if( state+delta >= N ) delta = 0; // FIXME: HACK: see LRModel_Estimate_Transitions
 #ifdef DEBUG_LRMODEL_W_DELETIONS_ESTIMATE_TRANSITIONS
           progress("Frame: %5d  Whisker: %3d  State: %3d Transition: %2d -> %2d\n",            
               row->fid, row->wid, row->state, state, state+delta );
