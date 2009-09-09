@@ -170,17 +170,23 @@ def pipeline_curated(env, source):
 def lit(s):
   return lambda env,sources: s
 
+def whisk_generator( source, target, env, for_signature ):
+	if not target[0].exists():
+		return Action("whisk $SOURCE $TARGET --no-bar")
+	else:
+		return Action("")
+
 def whisk_action( source, target, env ):
 	#import pdb; pdb.set_trace()
 	if not target[0].exists():
-		env.Command(source,target,"whisk $SOURCE $TARGET --no-whisk")
+		env.Command(target,source,"whisk $SOURCE $TARGET --no-bar")
 		
 env  = Environment( 
   PX2MM = 0,
   BUILDERS = {
     'Thumbnail' : Builder(action = thumbnail),
     'LengthVScorePlot': Builder(action = length_v_score_plot),
-    'Whisk' : Builder(action = whisk_action, #"whisk $SOURCE $TARGET --no-bar",
+    'Whisk' : Builder(generator = whisk_generator, #action = whisk_action, #"whisk $SOURCE $TARGET --no-bar",
                       suffix  = '.whiskers',
                       src_suffix = '.seq'
                      ),
