@@ -155,7 +155,8 @@ def plot_frame_by_ident(movie, wvd, traj, iframe, cmap = cm.hsv, params = {}):
           'junk'    : { 'linewidth': 6,
                         'color'    :'k',
                         'linestyle':'-',
-                        'alpha'    : 0.2}
+                        'alpha'    : 0.2},
+          'text'    : { 'color'    :'w'},
          }
   for k,v in attr.iteritems():
     v.update( params.get(k,{}) )
@@ -174,8 +175,9 @@ def plot_frame_by_ident(movie, wvd, traj, iframe, cmap = cm.hsv, params = {}):
       plot(w.x,w.y, color = cmap(i/ntraj), **attr['whiskers'] )
     else:
       plot(w.x,w.y, **attr['junk'] )
+  shape = movie[iframe].shape
+  text( 0.05 * shape[1], 0.05* shape[0], str(iframe), **attr['text'] )
   map(axis,["tight","image","off"])
-  subplots_adjust(0,0,1,1,0,0)
   ion()
   draw()
 
@@ -183,32 +185,52 @@ def render_identity_differences( movie, wA, tableA, wB, tableB, destpath ):
   trajA = tableA.get_trajectories()
   trajB = tableB.get_trajectories()
 
+  good = {'text': {'color':'g'}}
+  bad  = {'text': {'color':'r'}}
+  
+  frames = tableA.diff_identity(tableB)
+
   def do(i):
     clf()
 
+    subplots_adjust(left    = 0.0      ,
+                    right   = 1.0      ,
+                    bottom  = 0        ,
+                    top     = 1.0      ,
+                    wspace  = 0        ,
+                    hspace  = 0        );
+
+
+    shape = movie[i].shape
+    ttl = lambda s: text( 0.66 * shape[1], 0.05* shape[0], s, color='w' )
+
+    attr = bad if i-1 in frames else good
     subplot(321)
-    plot_frame_by_ident( movie, wA, trajA, i-1 )
-    title('Curated')
+    plot_frame_by_ident( movie, wA, trajA, i-1, params=attr )
+    ttl('Curated')
     subplot(322)
-    plot_frame_by_ident( movie, wB, trajB, i-1 )
-    title('Solution')
+    plot_frame_by_ident( movie, wB, trajB, i-1, params=attr )
+    ttl('Solution')
 
+    attr = bad if i   in frames else good
     subplot(323)
-    plot_frame_by_ident( movie, wA, trajA, i )
+    plot_frame_by_ident( movie, wA, trajA, i, params=attr )
     subplot(324)
-    plot_frame_by_ident( movie, wB, trajB, i )
+    plot_frame_by_ident( movie, wB, trajB, i, params=attr )
 
+    attr = bad if i+1 in frames else good
     subplot(325)
-    plot_frame_by_ident( movie, wA, trajA, i+1 )
+    plot_frame_by_ident( movie, wA, trajA, i+1, params=attr )
     subplot(326)
-    plot_frame_by_ident( movie, wB, trajB, i+1 )
+    plot_frame_by_ident( movie, wB, trajB, i+1, params=attr )
 
     savefig(os.path.join(destpath, "%d.png"%i ),
             orientation = 'portrait',
            )
            
-  figure(figsize = (4,9))
-  frames = tableA.diff_identity(tableB)
+  shape = movie[0].shape
+  aspect = shape[1]/float(shape[0]) # width / height
+  figure(figsize = (9*aspect*(2.0/3.0),9))
   for i,fid in enumerate(frames):
     print '[%5d of %5d]'%(i,len(frames))
     do(fid)

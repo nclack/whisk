@@ -126,6 +126,7 @@ def pipeline_standard(env, movie):
     ( env.HmmLRTimeSolver,
       ( env.GreyAreaSolver, 
         ( env.MeasurementsAsTrajectories,),
+        ( env.MeasurementsAsMatlab,),
         env.Summary
       ) ,                    
       ( env.MeasurementsAsTrajectories,),

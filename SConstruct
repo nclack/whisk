@@ -147,6 +147,7 @@ tests = [ "TEST_HMM_RECLASSIFY_1",
           "TEST_HMM_RECLASSIFY_2",
           "TEST_HMM_RECLASSIFY_3",
           "TEST_HMM_RECLASSIFY_4",
+          "TEST_HMM_RECLASSIFY_5",
          ] 
 totestobj = lambda t: env.Object( 'hmm-reclassify_'+t.lower(), ['hmm-reclassify.c'], CPPDEFINES = t )
 for t in tests:

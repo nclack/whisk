@@ -1,7 +1,7 @@
-/*
- * FIXME: realloc break linked list pointers in Forward_Viterbi_Log2
- * FIXME: realloc break linked list pointers in Forward_Viterbi
- */
+// FIXME: there are probably bugs when the sequence is not just 1,2,3,4,...
+//        that is, need to make sure <sequence> mapping to observables is
+//        honored.
+
 #include "compat.h"
 #include <stdlib.h>
 #include <math.h> //for fabs, log, exp
@@ -12,6 +12,9 @@
 #include "assert.h"
          
 #include "viterbi.h"
+
+#include <float.h> // for -DBL_MAX
+#define LOG2_ADD(x,y) ( (x) + log2( 1.0 + pow(2.0, (y)-(x) ) ) ) // this works b.c. x and y are always same sign (negative)
 
 typedef struct _ViterbiNode
 { int                  state;
@@ -94,6 +97,180 @@ ViterbiResult *Make_Viterbi_Result_From_State( ViterbiState *state )
   }
 
   return out;
+}
+
+/********************************************************************************
+ * Compute forward probilities for the specified <sequence> according to the HMM
+ * specified by the start, transition and emmission matrices.
+ *
+ * This returns a matrix (in row major order) with <nseq> rows and <nstate>
+ * columns.
+ * 
+ * In general the sequence may sample only a subset of the observables, and
+ * some observables may occur twice.  However, much of the testing was done
+ * when <nobs> == <nseq>.
+ *
+ * Transition and emmission probabilities must be precomputed.
+ *
+ * For reference, these are the alphas in [Rabiner 1989] eq. 18.
+ */
+SHARED_EXPORT
+void *HMM_Forward_Log2( int  *sequence,         // size: nobs
+                        int   nseq,             // number of observations (size of seqeunce)
+                        real *start_prob,       // size: nstates
+                        real *transition_prob,  // size: nstates*nstates, destintion state-major order
+                        real *emmission_prob,   // size: nstates * nobs, state-major order (stride is nobs)
+                        int nobs,               // the size of the set of observables ( need for stride )
+                        int nstates,            // number of states (size of state alphabet)
+                        real *result )          // Results ruturned here.  Expect: <nstate> by <nseq> space 
+{ //Initialization
+  { int i = nstates,
+        j = sequence[0];
+    while(i--)
+      result[i*nobs] = start_prob[i] + emmission_prob[ i*nobs + j ]; // log arithmatic
+  }
+
+  //Induction
+  { int iseq, isrc, idst;
+    for( iseq = 1; iseq<nseq; iseq++ )
+    { int obs = sequence[iseq];
+      for( idst = 0; idst < nstates; idst++ )
+      { real acc = result[0] + transition_prob[idst]; // init: isrc = 0
+        for( isrc = 1; isrc < nstates; isrc++ )
+          acc = LOG2_ADD( acc, 
+                          result[isrc*nobs + iseq-1] + transition_prob[idst + nstates*isrc] );
+        acc += emmission_prob[idst * nobs + obs];
+        result[idst*nobs + iseq] = acc;
+      }
+    }
+  }
+}
+
+/********************************************************************************
+ * Compute backward probilities for the specified <sequence> according to the HMM
+ * specified by the start, transition and emmission matrices.
+ *
+ * This returns a matrix (in row major order) with <nseq> rows and <nstate>
+ * columns.
+ * 
+ * In general the sequence may sample only a subset of the observables, and
+ * some observables may occur twice.  However, much of the testing was done
+ * when <nobs> == <nseq>.
+ *
+ * Transition and emmission probabilities must be precomputed.
+ *
+ * For reference, these are the betas in [Rabiner 1989] eq. 23
+ */
+SHARED_EXPORT
+void *HMM_Backward_Log2( int  *sequence,         // size: nobs
+                         int   nseq,             // number of observations (size of seqeunce)
+                         real *start_prob,       // size: nstates
+                         real *transition_prob,  // size: nstates*nstates, destintion state-major order
+                         real *emmission_prob,   // size: nstates * nobs, state-major order (stride is nobs)
+                         int nobs,               // the size of the set of observables ( need for stride )
+                         int nstates,            // number of states (size of state alphabet)
+                         real *result )          // Results ruturned here.  Expect: <nseq> by <nstate> space 
+{ //Initialization [Rabiner 1989, eq 24]
+  { int i = nstates;
+    while(i--)
+      result[i*nobs + (nseq-1)] = -1e-6; // log2(1-7e-7) - want something near zero but negative 
+      result[i*nobs + (nseq-1)] = 0.0;   // log2(1.0) 
+  }
+
+  //Induction
+  { int iseq, isrc, idst;
+    for( iseq = nseq-2; iseq>=0; iseq-- )
+    { int obs = sequence[iseq+1];
+      for( isrc = 0; isrc < nstates; isrc++ )
+      { real acc = result[ iseq+1 ] 
+                   + transition_prob[nstates*isrc] 
+                   + emmission_prob[obs]; // init: idst=0
+        for( idst = 1; idst < nstates; idst++ )
+          acc = LOG2_ADD( acc, result[ idst*nseq + iseq+1 ] + transition_prob[idst + nstates*isrc] + emmission_prob[idst*nobs + obs] );
+        result[isrc*nseq + iseq] = acc;
+      }
+    }
+  }
+}
+
+/********************************************************************************
+ * Compute the matrix of probabilities that observable i in a sequence
+ * correspons to state j for the specified <sequence> according to the HMM
+ * specified by the start, transition and emmission matrices.
+ *
+ * This returns a matrix (in row major order) with <nseq> rows and <nstate>
+ * columns.
+ * 
+ * In general the sequence may sample only a subset of the observables, and
+ * some observables may occur twice.  However, much of the testing was done
+ * when <nobs> == <nseq>.
+ *
+ * Transition and emmission probabilities must be precomputed.
+ *
+ * For reference, these are the gammas in [Rabiner 1989] eq. 27 and are 
+ * computed according to eq. 28.
+ */
+SHARED_EXPORT
+void *HMM_Correspondance_Probabilities_Log2( 
+                         int  *sequence,         // size: nobs
+                         int   nseq,             // number of observations (size of seqeunce)
+                         real *start_prob,       // size: nstates
+                         real *transition_prob,  // size: nstates*nstates, destintion state-major order
+                         real *emmission_prob,   // size: nstates * nobs, state-major order (stride is nobs)
+                         int nobs,               // the size of the set of observables ( need for stride )
+                         int nstates,            // number of states (size of state alphabet)
+                         real *result )          // Results ruturned here.  Expect: <nseq> by <nstate> space 
+{ static real *beta  = NULL;
+  static size_t size_beta  = 0;
+  beta = request_storage(beta , &size_beta , sizeof(real), nstates*nseq, 
+                          "correspondance - betas");
+
+  // compute forward and backward probs
+  HMM_Forward_Log2( sequence, nseq, 
+                    start_prob, transition_prob, emmission_prob, 
+                    nobs, nstates, 
+                    result);
+  HMM_Backward_Log2( sequence, nseq, 
+                    start_prob, transition_prob, emmission_prob, 
+                    nobs, nstates, 
+                    beta);
+
+  // compute ( forward .* backward )
+  { int iseq, istate;
+    for( iseq = 0; iseq<nseq; iseq++ )
+    { real *rrow = result + iseq*nstates,
+           *brow = beta   + iseq*nstates;
+      for( istate = 0; istate<nstates; istate++ )
+        rrow[istate] += brow[istate]; //log2 arithmetic
+    }
+  }
+
+  // col-wise norm
+  { int iseq, istate;
+    for( iseq = 0; iseq<nseq; iseq++ )
+    { real *col = result + iseq,
+            acc = *col; //init with result[istate=0,iseq]
+      for( istate = 1; istate<nstates; istate++ )
+        acc = LOG2_ADD( acc, col[istate*nseq] );
+      // apply norm
+      for( istate = 0; istate<nstates; istate++ )
+        col[istate*nseq] -= acc;
+    }
+  }
+
+// DONE: norm on cols not rows
+//// row-wise norm
+//{ int iseq, istate;
+//  for( iseq = 0; iseq<nseq; iseq++ )
+//  { real *row = result + iseq*nstates,
+//         acc = *row; //init with row[istate=0]
+//    for( istate = 1; istate<nstates; istate++ )
+//      acc = LOG2_ADD( acc, row[istate] );
+//    // apply norm
+//    for( istate = 0; istate<nstates; istate++ )
+//      row[istate] -= acc;
+//  }
+//}
 }
 
 /********************************************************************************
@@ -204,8 +381,6 @@ ViterbiResult *Forward_Viterbi( int  *sequence,         // size: nobs
   }
 }
 
-#include <float.h> // for -DBL_MAX
-#define LOG2_ADD(x,y) ( (x) + log2( 1.0 + pow(2.0, (y)-(x) ) ) ) // this works b.c. x and y are always same sign (negative)
 
 SHARED_EXPORT
 ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
@@ -270,9 +445,6 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
         argmax->total = prob; 
         { ViterbiPath *this;
           valmax = vprob;
-//        if( npool+1 >= poolsize )
-//          error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
-//        this = pool + (npool++);  // Append dst to src->path 
           this = pool +  nstates * iseq + idst;
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;
@@ -300,9 +472,6 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
         if( vprob > valmax )        // Look for most likely source path to dst
         { ViterbiPath *this;
           valmax = vprob;
-//        if( npool+1 >= poolsize )
-//          error("Not enough space allocated for the pool. Need %d items.  Have space for %d items.\n", npool, poolsize);
-//        this = pool + (npool++);  // Append dst to src->path 
           this = pool +  nstates * iseq + idst;
           this->state   = idst;     //   src->path points to end of path (the append point)
           this->next    = vpath;

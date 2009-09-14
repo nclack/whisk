@@ -5,14 +5,16 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
- 
+
+#define ERR_STREAM stdout
+
 SHARED_EXPORT
 void error(char *str, ... )
 {
   va_list argList;
   va_start( argList, str );
-  fprintf(stderr, "*** ERROR: ");
-  vfprintf(stderr, str, argList);
+  fprintf(ERR_STREAM, "*** ERROR: ");
+  vfprintf(ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);
   exit(-1);
@@ -23,8 +25,8 @@ void warning(char *str, ... )
 {
   va_list argList;
   va_start( argList, str );
-  fprintf(stderr, "--- Warning: ");
-  vfprintf(stderr, str, argList);
+  fprintf(ERR_STREAM, "--- Warning: ");
+  vfprintf(ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);
 }
@@ -35,7 +37,7 @@ void debug(char *str, ... )
   va_list argList;
   va_start( argList, str );
   if( SHOW_DEBUG_MESSAGES )
-    vfprintf(stderr, str, argList);
+    vfprintf(ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);
 }
@@ -45,7 +47,7 @@ void help(int show, char *str, ... )
 { if(show)
   { va_list argList;
     va_start( argList, str );
-    vfprintf(stderr, str, argList);
+    vfprintf(ERR_STREAM, str, argList);
     va_end( argList );
     fflush(NULL);
 	exit(0);
@@ -57,7 +59,7 @@ void progress(char *str, ... )
 { va_list argList;
   va_start( argList, str );
   if( SHOW_PROGRESS_MESSAGES )
-    vfprintf( stderr, str, argList);
+    vfprintf( ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);
 }
@@ -90,7 +92,7 @@ void progress_meter(double cur, double min, double max, int len, char *str, ...)
     n+=sprintf(buf+n,"]\r");
     buf[n] = '\0';
 
-    fprintf(stderr,buf);
+    fprintf(ERR_STREAM,buf);
     fflush(NULL);
   }
 }

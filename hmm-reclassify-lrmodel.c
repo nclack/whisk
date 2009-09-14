@@ -9,8 +9,8 @@
 
 #include "hmm-reclassify-lrmodel.h"
 
-#if 0
 #define DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
+#if 0
 #define DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
 #endif
 
