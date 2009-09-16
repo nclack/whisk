@@ -30,6 +30,7 @@
 // DEBUG OUTPUT
 #if 0
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+#define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
 #define  DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
 #define  DEBUG_FIND_PATH
 #define  DEBUG_TEST_SOLVE_GRAY_AREAS 
@@ -656,11 +657,13 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
     int nlast, nthis;
     int fid = last->fid;
 
-    while( (++this)->fid == fid && this - sorted_table < n_rows );
+    while( (this - sorted_table < n_rows) && (this->fid == fid) ) 
+      ++this;
     nlast = this-last;
     next = this;
     fid = this->fid;
-    while( (++next)->fid == fid && next - sorted_table < n_rows );
+    while( (next - sorted_table < n_rows) &&  (next->fid == fid)  ) 
+      ++next;
     nthis = next-this;
 
     for( j=0; j < n; j++ )
@@ -669,14 +672,14 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       mn[j] = v;
     }
 
-    while( next - sorted_table < n_rows )
+    while( this - sorted_table < n_rows )
     {
-#if 0 //def DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
       debug("        fid     n\n");
       debug("last: %5d %5d\n",last->fid,nlast);
       debug("this: %5d %5d\n",this->fid,nthis);
       debug("next: %5d    \n",next->fid);
-	  debug("row [%7d/%-7d]\n",next - sorted_table, n_rows);
+	    debug("row [%7d/%-7d]\n",next - sorted_table, n_rows);
       debug("\n");
 #endif
 
@@ -697,7 +700,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
 
       fid = this->fid;
       while( (next - sorted_table < n_rows) && next->fid == fid ) 
-		  next++;
+		    next++;
       nthis = next-this;
     }
   } // end context - get extents

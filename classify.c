@@ -232,8 +232,9 @@ char *Spec[] = {"[-h|--help] |",
                 "<source:string> <dest:string>",
                 "(<face:string> | <x:int> <y:int>)",
                 "--px2mm <double>",
-                "[-limit<double(1.0)>:<double(5.0)>]",
                 "-n <int>", 
+                "[--limit<double(1.0)>:<double(5.0)>]",
+                "[--follicle <int>]",
                 NULL};
 int main(int argc, char* argv[])
 { int n_rows, count;
@@ -276,13 +277,18 @@ int main(int argc, char* argv[])
           "  -n <int> (Optional) Optimize the threshold to find this number of whiskers. \n"
           "           If this isn't specified, or if this is set to a number less than 1 \n"
           "           then the number of whiskers is automatically determined.           \n"
+          "  --follicle <int>\n"
+          "           Only count follicles that lie on one side of the line specified by \n"
+          "           this threshold (in pixels).  The direction of the line points      \n"
+          "           along the x or y axis depending which is closer to the orientation \n"
+          "           of the mouse's face.\n"
           "--                                                                            \n");
     return 0;
   }
 
   px2mm   = Get_Double_Arg("--px2mm");
-  low_px  = Get_Double_Arg("-limit",1) / px2mm;
-  high_px = Get_Double_Arg("-limit",2) / px2mm;
+  low_px  = Get_Double_Arg("--limit",1) / px2mm;
+  high_px = Get_Double_Arg("--limit",2) / px2mm;
 #ifdef DEBUG_CLASSIFY_1
   debug("px/mm %f\n"
         "  low %f\n"
@@ -298,34 +304,16 @@ int main(int argc, char* argv[])
     Helper_Get_Face_Point( Get_String_Arg("face"), maxx, maxy, &face_x, &face_y);
     Helper_Get_Follicle_Const_Axis( Get_String_Arg("face"), maxx, maxy, 
                                     &follicle_col, &is_gt, &follicle_high);
-    // Follicle location threshold
-    if( Is_Arg_Matched("-n") && ( (count = Get_Int_Arg("-n"))>=1 ) )
-    { follicle_thresh
-          = Measurements_Table_Estimate_Best_Threshold_For_Known_Count( 
-                                                        table, 
-                                                        n_rows, 
-                                                        follicle_col,
-                                                        0, /* lower bound for search */ 
-                                                        follicle_high,
-                                                        is_gt,
-                                                        count);
-    } else
-    { 
-      follicle_thresh
-          = Measurements_Table_Estimate_Best_Threshold( table, 
-                                                        n_rows, 
-                                                        follicle_col,
-                                                        0, /* lower bound for search */ 
-                                                        follicle_high,
-                                                        is_gt,
-                                                        &count);
-    }
+    follicle_thresh = (is_gt) ? 0 : follicle_high;
   } else 
   {
     face_x = Get_Int_Arg("x");
     face_y = Get_Int_Arg("y");
     // Follicle location threshold - no op (just set all states to 1)
   }
+  // Follicle location threshold
+  if( Is_Arg_Matched("--follicle") )
+    follicle_thresh = Get_Int_Arg("--follicle");
   Measurements_Table_Label_By_Threshold    ( table, 
                                              n_rows, 
                                              follicle_col,

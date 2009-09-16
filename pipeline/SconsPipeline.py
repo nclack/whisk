@@ -157,8 +157,9 @@ def pipeline_oconnor(env, movie):
     env.Whisk,
     (env.Precious,),
     env.Measure,
-    ( env.LengthVScorePlot, ),
     env.Classify,
+    ( env.Summary, ),
+    env.HmmLRTimeSolver,
     ( env.MeasurementsAsTrajectories,),
     env.Summary 
   ]
@@ -238,7 +239,7 @@ env  = Environment(
     'MeasurementsAsTrajectories': Builder(action = lambda source,target,env: 0 if MeasurementsTable(source[0].path).save_trajectories(target[0].path,excludes=[-1]) else 1,
                                           suffix = '.trajectories',
                                           src_suffix = '.measurements'),
-    'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT --px2mm $PX2MM",
+    'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT --px2mm $PX2MM --follicle $FOLLICLE_THRESH",
                         suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
                        ),
@@ -270,6 +271,9 @@ env  = Environment(
 env.AppendENVPath('PATH', os.getcwd())
 env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movie
                            # a count >= 1 will identify that many whiskers in each movie
+env['FOLLICLE_THRESH'] = 0 # all the follicle positions fall on one side of this line
+                           # whether the line lies in `x` or `y` depends on the
+                           # face orientation which is infered 
 
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,    "CuratedPipeline" ) 

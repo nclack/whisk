@@ -69,8 +69,12 @@ static float _side( Whisker_Seg *w, int cx, int cy, int *idx_follicle, int* idx_
 //
 // Measure Whisker Segment Features
 // --------------------------------
+// <face_axis> indicates the orientation of the mouse head with respect to 
+//             the image.
+// <face_axis> == 'x' --> horizontally (along x axis)
+// <face_axis> == 'y' --> vertically   (along y axis)
 //
-void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
+void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey, char face_axis )
 { float path_length,     //               
         median_score,    //
         root_angle_deg,  // side  poly
@@ -202,8 +206,22 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
     // ----------
     { double teval = (idx_follicle == 0) ? t[pad] : t[len-pad-1];
       static const double rad2deg = 180.0/M_PI;
-      root_angle_deg = atan2( dx*polyval(yp, MEASURE_POLY_FIT_DEGREE, teval ),
-                              dx*polyval(xp, MEASURE_POLY_FIT_DEGREE, teval ) ) * rad2deg;
+      switch(face_axis)
+      { case 'h':
+        case 'x':
+          root_angle_deg = atan2( dx*polyval(yp, MEASURE_POLY_FIT_DEGREE, teval ),
+                                  dx*polyval(xp, MEASURE_POLY_FIT_DEGREE, teval ) ) * rad2deg;
+          break;
+        case 'v':
+        case 'y':
+          root_angle_deg = atan2( dx*polyval(xp, MEASURE_POLY_FIT_DEGREE, teval ),
+                                  dx*polyval(yp, MEASURE_POLY_FIT_DEGREE, teval ) ) * rad2deg;
+          break;
+        default:
+          error("In Whisker_Seg_Measure\n"
+                "\tParameter <face_axis> must take on a value of 'x' or 'y'\n"
+                "\tGot value %c\n",face_axis);
+      }
     }
 
     // Mean curvature
@@ -276,7 +294,7 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey )
   dest[7] = tip_y;
 }
 
-Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int facey )
+Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int facey, char face_axis )
 { Measurements *table = Alloc_Measurements_Table( wvn /* #rows */, 8/* #measurments */ ); 
   while(wvn--)
   { Measurements *row = table + wvn; 
@@ -290,12 +308,12 @@ Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int
     row->col_follicle_y = 5;
     row->valid_velocity = 0;
     row->n = 8;
-    Whisker_Seg_Measure( wv+wvn, row->data, facex, facey );  
+    Whisker_Seg_Measure( wv+wvn, row->data, facex, facey, face_axis );  
   }
   return table;
 }
 
-void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y )
+void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y, char *face_axis )
 { float maxx = 0.0, 
         maxy = 0.0;
 
@@ -321,21 +339,25 @@ void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y 
     case 'R':
       *x = 3*maxx/2;
       *y =   maxy/2;
+      *face_axis = 'y';
       break;
     case 'l':
     case 'L':
       *x =  -maxx/2;
       *y =   maxy/2;
+      *face_axis = 'y';
       break;
     case 't':
     case 'T':
       *x =   maxx/2;
       *y =  -maxy/2;
+      *face_axis = 'x';
       break;
     case 'b':
     case 'B':
       *x =   maxx/2;
       *y = 3*maxy/2;
+      *face_axis = 'x';
       break;
     default:
       error("Did not recognize face hint (%s)\n"
@@ -354,24 +376,26 @@ void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y 
 }
 
 #ifdef TEST_MEASURE_1
-char *Spec[] = {"<whiskers:string> <dest:string> --face (<x:int> <y:int>|<hint:string>)",NULL};
+char *Spec[] = {"<whiskers:string> <dest:string> --face (<x:int> <y:int> <axis:string> |<hint:string>)",NULL};
 int main( int argc, char* argv[] )
 { Whisker_Seg *wv;
   int wvn;
   Measurements *table;
   int facex, facey;
+  char face_axis;
   
   Process_Arguments( argc, argv, Spec, 0 );
   wv = Load_Whiskers( Get_String_Arg("whiskers"), NULL, &wvn);
 
   if( Is_Arg_Matched("hint") )
-  { face_point_from_hint( wv, wvn,  Get_String_Arg("hint"), &facex, &facey );
+  { face_point_from_hint( wv, wvn,  Get_String_Arg("hint"), &facex, &facey, &face_axis );
   } else {
     facex = Get_Int_Arg("x");
     facey = Get_Int_Arg("y");
+    face_axis = Get_String_Arg("axis")[0];
   }
 
-  table = Whisker_Segments_Measure( wv, wvn, facex, facey );
+  table = Whisker_Segments_Measure( wv, wvn, facex, facey, face_axis );
 
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, wvn );
 

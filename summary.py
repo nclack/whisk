@@ -657,7 +657,9 @@ if 1:
                                     px2mm = options.px2mm if options.px2mm else None,
                                     doshow=0,
                                     options = {'lines':{'alpha':0.7},
-                                               'scatter':{'markersize':0.5} })
+                                               'scatter':{'markersize':0.5,
+                                                          'alpha':1} 
+                                              })
     savefig(dst)
     close(f)
 
