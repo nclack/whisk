@@ -43,15 +43,19 @@
 #define TEST_HMM_RECLASSIFY_W_DELTAS
 
 #endif
+               
+#define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
+#define HMM_RECLASSIFY_VEL_DISTS_NBINS   (128)
+#define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
-#if 1
+//
+// DEBUG DEFINES
+//
+#if 0
 #define DEBUG_HMM_RECLASSIFY
 #define DEBUG_HMM_RECLASSIFY_EXTRA
 #endif
 
-#define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
-#define HMM_RECLASSIFY_VEL_DISTS_NBINS   (128)
-#define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
 typedef int   (*Tpf_State_Count)                                       ( int nwhisk );
 typedef real* (*Tpf_Alloc_Transitions)                                 ( int nwhisk );
@@ -502,6 +506,12 @@ int main(int argc, char*argv[])
 #endif
 
 #ifdef TEST_HMM_RECLASSIFY_FILTER
+
+typedef struct _Lattice
+{ struct _Lattice* argmax;
+  real             max;
+} LatticeNode;
+
 char *Spec[] = {"[-h|--help] | ( [-n <int>] <source:string> <dest:string> )",NULL};
 int main(int argc, char*argv[])
 {
@@ -515,7 +525,7 @@ int main(int argc, char*argv[])
   
   help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
     "----------------------------\n"
-    "HMM-Reclassify ( ????????? )\n"
+    "HMM-Reclassify ( Voting )\n"
     "----------------------------\n"
     " <source> should be the filename of a `measurements` file where an initial guess has been made as\n"
     "          to the identity of many of the whiskers.  These initial assignments are used to build a \n"
@@ -588,7 +598,7 @@ int main(int argc, char*argv[])
   Distributions_Apply_Log2( vel_dists );
 
   //
-  // Process frames independantly
+  // Process frames 
   //
   Sort_Measurements_Table_Time_Face( table, nrows );
   { real *E = (*pf_Request_Static_Resizable_Emissions)( 
@@ -599,10 +609,13 @@ int main(int argc, char*argv[])
                  **last = Guarded_Malloc( sizeof(Measurements*)*nwhisk, "alloc array for last identified whiskers" );
     memset(last,0, sizeof(Measurements*)*nwhisk );
     row = table;
+    // Advance over rows
     while( row < table+nrows )
     { Measurements *bookmark = row;
       int fid = row->fid;
       int nobs;
+      // Advance over chunks of rows in same frame 
+      // (since sorted, this is the whole frame)
       while(row < table+nrows && row->fid == fid  ) 
       { 
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
@@ -612,8 +625,10 @@ int main(int argc, char*argv[])
       }
       nobs = row - bookmark;
       
+      // 
+      // Compute starts and emissions for frame
+      //
       (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, bookmark, shp_dists );
-
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
       { int i;
@@ -624,9 +639,10 @@ int main(int argc, char*argv[])
       }
 #endif
       (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
-      //(*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E, nwhisk, bookmark, nobs, last, nwhisk, shp_dists, vel_dists );
 
-      // Forward-Backward probs
+      // 
+      // Process Frame
+      //
       { real *gamma = (*pf_Alloc_Emissions)( nwhisk, nobs ); // nobs == nseq, emissions are same size as result
         int N = (*pf_State_Count)(nwhisk);
         HMM_Correspondance_Probabilities_Log2( _static_range(nobs), nobs,
@@ -635,39 +651,7 @@ int main(int argc, char*argv[])
         // XXX: to be continued...
         free(gamma);
       }
-      { int N = (*pf_State_Count)(nwhisk);
-        ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
 
-        // Commit the result
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-        debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
-            fid,                              // frame id
-            table[nrows-1].fid+1,             // total frames
-            result->total,                    // log2 prob(obs|model)           //?
-            result->prob,                     // log2 prob(path|obs)            //?
-            result->total - result->prob );                                     //?
-        assert( nobs == result->n );
-#endif
-        { int i = nobs;
-          int *seq = result->sequence;
-          memset(last,0, sizeof(Measurements*)*nwhisk );
-          while(i--)
-          { int s = seq[i],
-                lbl = (*pf_State_Decode)(s);
-            bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
-            if(lbl>-1)
-              last[lbl] = bookmark+i;
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-            debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
-                bookmark[i].fid, 
-                bookmark[i].wid, 
-                s,         
-                bookmark[i].state);
-#endif
-          }
-        } // end commit viterbi result
-        Free_Viterbi_Result(result);  // FIXME: thrashing the heap
-      } // end viterbi solution
 #ifdef DEBUG_HMM_RECLASSIFY
       assert(row!=bookmark);
 #endif

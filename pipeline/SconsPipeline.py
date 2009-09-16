@@ -21,6 +21,8 @@ def thumbnail(target, source, env):
   Image.fromarray( Reader(source[0].path)[0] ).save( target[0].path )
 
 def length_v_score_plot(target,source,env):
+  import matplotlib
+  matplotlib.use('Agg')
   from pylab import plot, savefig, figure, close
   data = MeasurementsTable( source[0].path ).get_shape_table()
   f = figure()
@@ -83,11 +85,11 @@ def pipeline_production(env, movie):
   builders = [ 
     movie                                                       ,
     env.Whisk                                                   ,
-	(env.Precious,),
-#	(env.Bar),
+  (env.Precious,),
+#  (env.Bar),
     env.Measure                                                 ,
     env.Classify                                                ,
-	env.HmmLRTimeSolver,
+  env.HmmLRTimeSolver,
     env.GreyAreaSolver,       
     (env.MeasurementsAsMatlab,),
     (env.MeasurementsAsTrajectories,),
@@ -146,6 +148,25 @@ def pipeline_standard(env, movie):
   jobs = dfs_reduce( compose, builders )                         
   return jobs
 
+def pipeline_oconnor(env, movie):
+  def alter(j,subdir,ext):
+    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
+
+  builders = [ 
+    movie,
+    env.Whisk,
+    (env.Precious,),
+    env.Measure,
+    ( env.LengthVScorePlot, ),
+    env.Classify,
+    ( env.MeasurementsAsTrajectories,),
+    env.Summary 
+  ]
+
+  compose = lambda a,b: b(a)
+  jobs = dfs_reduce( compose, builders )                         
+  return jobs
+
 def pipeline_curated(env, source):
   def commit_traj(node):
     """ expects source to be a curated whiskers file 
@@ -173,16 +194,16 @@ def lit(s):
   return lambda env,sources: s
 
 def whisk_generator( source, target, env, for_signature ):
-	if not target[0].exists():
-		return Action("whisk $SOURCE $TARGET --no-bar")
-	else:
-		return Action("")
+  if not target[0].exists():
+    return Action("whisk $SOURCE $TARGET --no-bar")
+  else:
+    return Action("")
 
 def bar_generator( source, target, env, for_signature ):
-	if not target[0].exists():
-		return Action("whisk $SOURCE $TARGET --no-whisk")
-	else:
-		return Action("")
+  if not target[0].exists():
+    return Action("whisk $SOURCE $TARGET --no-whisk")
+  else:
+    return Action("")
 
 env  = Environment( 
   PX2MM = 0,
@@ -217,7 +238,7 @@ env  = Environment(
     'MeasurementsAsTrajectories': Builder(action = lambda source,target,env: 0 if MeasurementsTable(source[0].path).save_trajectories(target[0].path,excludes=[-1]) else 1,
                                           suffix = '.trajectories',
                                           src_suffix = '.measurements'),
-    'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT",
+    'Classify': Builder(action = "test_classify_1 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT --px2mm $PX2MM",
                         suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
                        ),
@@ -245,13 +266,14 @@ env  = Environment(
   }
 )
 
-env.Decider('timestamp-newer')
+#env.Decider('timestamp-newer')
 env.AppendENVPath('PATH', os.getcwd())
 env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movie
                            # a count >= 1 will identify that many whiskers in each movie
 
 env.AddMethod( pipeline_standard, "Pipeline" )
 env.AddMethod( pipeline_curated,    "CuratedPipeline" ) 
+env.AddMethod( pipeline_oconnor, "OConnorPipeline" )
 
 Export('env')
 

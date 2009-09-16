@@ -401,20 +401,26 @@ int cmp_sort_time( const void* a, const void* b )
   return (rowa->fid - rowb->fid);
 }
     
-inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
+static inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
 { int ix = a->col_follicle_x, 
       iy = a->col_follicle_y;
+  error("Don't use...use ccw test instead\n");
   return atan2( a->data[iy] - a->face_y,
                 a->data[ix] - a->face_x );
 }
 
+static inline double _cmp_sort_face__ccw_test( Measurements *a, Measurements *b )
+{ int ix = a->col_follicle_x, 
+      iy = a->col_follicle_y;  
+  double ax = a->data[ix] - a->face_x,
+         ay = a->data[iy] - a->face_y,
+         bx = b->data[ix] - b->face_x,
+         by = b->data[iy] - b->face_y;
+  return ax*by - ay*bx;
+}
+
 int cmp_sort_face_order( const void* a, const void* b )
-{ Measurements *rowa = (Measurements*)a,
-               *rowb = (Measurements*)b;
-  double anglea = _cmp_sort_face_order__angle_wrt_face( rowa ),
-         angleb = _cmp_sort_face_order__angle_wrt_face( rowb );
-  static const double rad2quanta = 100.0 * 180.0 / M_PI; // Multiply 180/pi by 100 to set tolerance to 0.01 deg 
-  return (int) ((anglea-angleb)*rad2quanta);
+{ return (int) _cmp_sort_face__ccw_test((Measurements*)a,(Measurements*)b);
 }
 
 int cmp_sort_time_face_order( const void* a, const void* b )
@@ -422,11 +428,7 @@ int cmp_sort_time_face_order( const void* a, const void* b )
                *rowb = (Measurements*)b;
   int dt = rowa->fid - rowb->fid;
   if(dt==0)
-  { double anglea = _cmp_sort_face_order__angle_wrt_face( rowa ),
-           angleb = _cmp_sort_face_order__angle_wrt_face( rowb );
-    static const double rad2quanta = 100.0 * 180.0 / M_PI; // Multiply 180/pi by 100 to set tolerance to 0.01 deg 
-    return (int) ((anglea-angleb)*rad2quanta);
-  } 
+    return (int) _cmp_sort_face__ccw_test(rowa,rowb); 
   return dt;
 }
 
@@ -437,11 +439,7 @@ int cmp_sort_time_state_face_order( const void* a, const void *b )
   if(d==0)
   { d = rowa->state - rowb->state;
     if(d==0)
-    { double anglea = _cmp_sort_face_order__angle_wrt_face( rowa ),
-            angleb = _cmp_sort_face_order__angle_wrt_face( rowb );
-      static const double rad2quanta = 100.0 * 180.0 / M_PI; // Multiply 180/pi by 100 to set tolerance to 0.01 deg 
-      return (int) ((anglea-angleb)*rad2quanta);
-    }
+      return (int) _cmp_sort_face__ccw_test(rowa,rowb); 
   }
   return d;
 }
