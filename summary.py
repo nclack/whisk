@@ -486,13 +486,15 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
   
   ax = subplot(212)
   xlabel('Time (frames)')
+  data = table.get_shape_table()
+  lim = max( data[:,3].max(), - data[:,3].max() )
   if px2mm is None:
     ylabel('Mean Curvature (1/px)')
     px2mm = 1.0
-    vmin2,vmax2 = -0.01,0.01
+    vmin2,vmax2 = -lim,lim
   else:
     ylabel('Mean Curvature (1/mm)')
-    vmin2,vmax2 = -0.4,0.4
+    vmin2,vmax2 = -lim/px2mm,lim/px2mm
   plot  ( time,
           curv/px2mm, #data[:,3]/px2mm,
           **defaults['scatter'] )
