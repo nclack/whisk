@@ -306,6 +306,10 @@ int main(int argc, char* argv[])
     Helper_Get_Follicle_Const_Axis( Get_String_Arg("face"), maxx, maxy, 
                                     &follicle_col, &is_gt, &follicle_high);
     follicle_thresh = (is_gt) ? 0 : follicle_high;
+#ifdef DEBUG_CLASSIFY_1
+	debug("maxx: %d\n"
+		  "maxy: %d\n", maxx, maxy );
+#endif
   } else 
   {
     face_x = Get_Int_Arg("x");
@@ -313,7 +317,7 @@ int main(int argc, char* argv[])
     // Follicle location threshold - no op (just set all states to 1)
   }
   // Follicle location threshold
-  if( Is_Arg_Matched("--follicle") )
+  if( Is_Arg_Matched("--follicle") && Get_Int_Arg("--follicle")>0 )
     follicle_thresh = Get_Int_Arg("--follicle");
   Measurements_Table_Label_By_Threshold    ( table, 
                                              n_rows, 
