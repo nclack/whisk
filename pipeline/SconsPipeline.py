@@ -89,7 +89,7 @@ def pipeline_production(env, movie):
 #  (env.Bar),
     env.Measure                                                 ,
     env.Classify                                                ,
-  env.HmmLRTimeSolver,
+    env.HmmLRTimeSolver,
     env.GreyAreaSolver,       
     (env.MeasurementsAsMatlab,),
     (env.MeasurementsAsTrajectories,),
@@ -157,9 +157,11 @@ def pipeline_oconnor(env, movie):
     env.Whisk,
     (env.Precious,),
     env.Measure,
-    env.Classify,
-    ( env.Summary, ),
-    env.HmmLRTimeSolver,
+    env.ClassifyNoHairs,
+#    ( env.Summary, ),
+#    ( env.HmmLRTimeSolver,
+#      env.Summary ),
+#    env.HmmLRSolver,
     ( env.MeasurementsAsTrajectories,),
     env.Summary 
   ]
@@ -243,6 +245,10 @@ env  = Environment(
                         suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
                        ),
+    'ClassifyNoHairs': Builder(action = "test_classify_3 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT",
+                        suffix = { '.measurements' : "[autotraj].measurements" },
+                        src_suffix = ".measurements"
+                       ),    
     'Summary': Builder(action = "summary.py $SOURCE $TARGET --px2mm=$PX2MM",
                        src_suffix = ".measurements",
                        suffix = ".png"),

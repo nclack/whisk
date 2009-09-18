@@ -133,7 +133,8 @@ for t in tests:
                                               ] ) 
 ## classify tests
 tests = ["TEST_CLASSIFY_1",
-         "TEST_CLASSIFY_2"
+         "TEST_CLASSIFY_2",
+	   "TEST_CLASSIFY_3"
          ] 
 totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFINES = t )
 for t in tests:

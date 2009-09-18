@@ -7,6 +7,7 @@
 #include "traj.h"
 
 #define DEBUG_CLASSIFY_1
+#define DEBUG_CLASSIFY_3
 #if 0
 #define DEBUG_MEAN_SEGMENTS_PER_FRAME_BY_TYPE
 #define DEBUG_ESTIMATE_BEST_LENGTH_THRESHOLD_FOR_KNOWN_COUNT
@@ -422,6 +423,100 @@ int main(int argc, char* argv[])
     }
   }
   Free_Measurements_Table(table);
+}
+#endif
+
+#ifdef TEST_CLASSIFY_3
+char *Spec[] = {"[-h|--help] |",
+                "<source:string> <dest:string>",
+                "(<face:string> | <x:int> <y:int>)",
+                "-n <int>", 
+                NULL};
+int main(int argc, char* argv[])
+{ int n_rows, count;
+  Measurements *table;
+  int face_x, face_y;
+
+  Process_Arguments( argc, argv, Spec, 0);
+
+  if( Is_Arg_Matched("-h") | Is_Arg_Matched("--help") )
+  { Print_Argument_Usage(stdout,0);
+    printf("-----------------------------------------                                    \n"
+          " Classify test 3 (autotraj - no threshold)                                    \n"
+          "------------------------------------------                                    \n"
+          "                                                                              \n"
+          "  For frames where the expected number of whiskers are found,                 \n"
+          "  label the whiskers according to their order on the face.                    \n"
+          "\n"
+          "  <source> Filename with Measurements table.\n"
+          "  <dest>   Filename to which labelled Measurements will be saved.\n"
+          "           This can be the same as <source>.\n"
+          "  <face>\n"
+          "  <x> <y>  These are used for determining the order of whisker segments along \n"
+          "           the face.  This requires an approximate position for the center of \n"
+          "           the face and can be specified in pixel coordinates with <x> and <y>.\n"
+          "           If the face is located along the edge of the frame then specify    \n"
+          "           that edge with 'left', 'right', 'top' or 'bottom'.                 \n"
+          "  -n <int> (Optional) Expect this number of whiskers.                         \n"
+          "           If this isn't specified, or if this is set to a number less than 1 \n"
+          "           then the number of whiskers is automatically determined.           \n"
+          "--                                                                            \n");
+    return 0;
+  }
+
+  table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), &n_rows );
+  Sort_Measurements_Table_Time(table,n_rows);
+
+  if( Is_Arg_Matched("face") )
+  { int maxx,maxy;
+    Measurements_Table_Pixel_Support( table, n_rows, &maxx, &maxy );
+    Helper_Get_Face_Point( Get_String_Arg("face"), maxx, maxy, &face_x, &face_y);
+  } else 
+  {
+    face_x = Get_Int_Arg("x");
+    face_y = Get_Int_Arg("y");
+  }
+#ifdef DEBUG_CLASSIFY_3
+  debug("   Face Position: ( %3d, %3d )\n", face_x, face_y);
+#endif
+ 
+  // Initialize
+  Measurements_Table_Label_By_Threshold    ( table,
+                                             n_rows,
+                                             0, // length column
+                                             0, // threshold
+                                             1);// require greater than threshold
+  //
+  // Estimate whisker count if neccessary
+  // 
+  if( !Is_Arg_Matched("-n") || ( (count = Get_Int_Arg("-n"))<2 ) )
+  { int n_good_frames;
+    n_good_frames = Measurements_Table_Best_Frame_Count_By_State( table, n_rows, 1, &count );
+	#ifdef DEBUG_CLASSIFY_3
+		debug(
+			  "   Frames with count: %d\n"
+			  ,n_good_frames ); 
+	#endif
+  } 
+#ifdef DEBUG_CLASSIFY_3
+	debug("        Target count: %d\n"
+		  ,count ); 
+#endif
+#ifdef DEBUG_CLASSIFY_3
+  { Measurements *row = table + n_rows; //Assert all state==1
+    while(row-- > table)
+      assert(row->state == 1);
+  }
+#endif
+
+  Measurements_Table_Set_Constant_Face_Position     ( table, n_rows, face_x, face_y);
+  Measurements_Table_Set_Follicle_Position_Indices  ( table, n_rows, 4, 5 );
+
+  Measurements_Table_Label_By_Order(table, n_rows, count ); //resorts
+
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
+  Free_Measurements_Table(table);
+  return 0;
 }
 #endif
 
