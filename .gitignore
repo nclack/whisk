@@ -6,15 +6,23 @@
 *.dll
 
 .sconsign.dblite
+data
+
 contour_lib.c
 draw_lib.c
 image_filters.c
 image_lib.c
 level_set.c
+utilities.c
+water_shed.c
+
+whisk
+whisker_convert
 seedtest
 stripetest
 test_classify_1
 test_classify_2
+test_classify_3
 test_deque_1
 test_eval2
 test_eval3
@@ -42,9 +50,6 @@ test_traj_measurement_table_io_1
 test_traj_solve_gray_areas
 test_viterbi
 test_whisker_io
+
 ui/trace.py
 ui/whiskerdata/trace.py
-utilities.c
-water_shed.c
-whisk
-whisker_convert
