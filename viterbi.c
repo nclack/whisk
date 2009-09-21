@@ -115,7 +115,7 @@ ViterbiResult *Make_Viterbi_Result_From_State( ViterbiState *state )
  * For reference, these are the alphas in [Rabiner 1989] eq. 18.
  */
 SHARED_EXPORT
-void *HMM_Forward_Log2( int  *sequence,         // size: nobs
+void  HMM_Forward_Log2( int  *sequence,         // size: nobs
                         int   nseq,             // number of observations (size of seqeunce)
                         real *start_prob,       // size: nstates
                         real *transition_prob,  // size: nstates*nstates, destintion state-major order
@@ -162,7 +162,7 @@ void *HMM_Forward_Log2( int  *sequence,         // size: nobs
  * For reference, these are the betas in [Rabiner 1989] eq. 23
  */
 SHARED_EXPORT
-void *HMM_Backward_Log2( int  *sequence,         // size: nobs
+void  HMM_Backward_Log2( int  *sequence,         // size: nobs
                          int   nseq,             // number of observations (size of seqeunce)
                          real *start_prob,       // size: nstates
                          real *transition_prob,  // size: nstates*nstates, destintion state-major order
@@ -211,7 +211,7 @@ void *HMM_Backward_Log2( int  *sequence,         // size: nobs
  * computed according to eq. 28.
  */
 SHARED_EXPORT
-void *HMM_Correspondance_Probabilities_Log2( 
+void  HMM_Correspondance_Probabilities_Log2( 
                          int  *sequence,         // size: nobs
                          int   nseq,             // number of observations (size of seqeunce)
                          real *start_prob,       // size: nstates
