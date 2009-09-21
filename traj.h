@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 typedef struct _Measurements
-{ int row;
+{ int row;           // offset from head of data buffer ... Note: the type limits size of table
   int fid;
   int wid;
   int state;

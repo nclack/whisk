@@ -226,6 +226,30 @@ void Measurements_Table_Copy_Velocities( Measurements *table, int n_rows, double
   memcpy( buffer, table[0].data - n*table[0].row + n*n_rows, n*n_rows*sizeof(double) );
 }
 
+// This does not initialize memory in added rows
+// Velocities need to be recomputed after this
+void Measurements_Table_Append_Columns_In_Place( Measurements *table, int n_rows, int n_cols_to_add )
+{ int n    = table[0].n,        //original number of columns
+      ncol = n + n_cols_to_add; //new      number of columns
+  double *buffer = table[0].data - n*table[0].row; //row gives offset from head of data buffer
+  // 0. Realloc data buffer - invalidates all table[i].data and velocity pointers!
+  buffer = Guarded_Realloc( buffer, sizeof(double)*(n+n_cols_to_add)*n_rows, "Measurements_Table_Append_Columns_In_Place" );
+  // 1. copy data from back to front through expanded buffer
+  { double *row = buffer +    n*n_rows,
+           *dst = buffer + ncol*n_rows;
+    while( (row-=n) >= buffer )
+      memcpy( dst -= ncol, row, n*sizeof(double) );
+  }
+  // 2. update row pointers
+  { Measurements *row = table  + n_rows;
+    while( row-- > table )
+    { int offset = row->row;
+      row->data     = buffer +          offset * ncol;
+      row->velocity = buffer + (n_rows+offset) * ncol;
+    }
+  }
+}
+
 // Returns the number of rows with the queried state
 // Scans once over the table.
 SHARED_EXPORT
