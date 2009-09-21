@@ -20,7 +20,7 @@ inline Bar *Bar_Static_Cast( int time, float x, float y)
 // 
 // Bar File IO - basic operations
 //
-typedef BarFile FILE;
+typedef FILE BarFile;
 
 //
 // Bar File IO - main api
