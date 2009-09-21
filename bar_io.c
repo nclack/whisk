@@ -44,5 +44,17 @@ void Bar_File_Append_Bar( BarFile *file,  Bar* b )
 }
 
 Bar *Read_Bars( BarFile *file, int *n )
-{
+{ size_t nch;
+  rewind(file);
+  while( fskipline( file, &nch ) )
+    *n++;
+
+  { Bar *bars = (Bar*) Guarded_Malloc( sizeof(Bar)*(*n), "Read bars" );
+    int i;
+    for(i=0; i<*n; ++i)
+    { Bar *b = bars[i];
+      fscanf( file, "%d%*[ ]%d%*[ ]%d", &b->time, &b->x, &b-y );
+    }
+    return bars;
+  }
 }
