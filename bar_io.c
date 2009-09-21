@@ -55,13 +55,15 @@ Bar *Read_Bars( BarFile *file, int *n )
   rewind(file);
   *n=0;
   while( fskipline( file, &nch ) )
-    *n++;
+    n[0]++;
 
+  rewind(file);
   { Bar *bars = (Bar*) Guarded_Malloc( sizeof(Bar)*(*n), "Read bars" );
     int i;
     for(i=0; i<*n; ++i)
     { Bar *b = bars + i;
-      fscanf( file, "%d%*[ ]%g%*[ ]%g", &b->time, &b->x, &b->y );
+      int nitems = fscanf( file, "%d%*[ ]%g%*[ ]%g", &b->time, &b->x, &b->y );
+      assert(nitems == 3 );
     }
     return bars;
   }
