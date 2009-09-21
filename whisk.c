@@ -12,6 +12,7 @@
 #include "seq.h"
 
 #include "bar.h"
+#include "bar_io.h"
 #include "merge.h"
 
 #include "adjust_scan_bias.h"
@@ -231,8 +232,8 @@ int main(int argc, char *argv[])
    */
   if( !Is_Arg_Matched("--no-bar") )
   { double x,y;
+    BarFile *bfile = Bar_File_Open( bar_file_name, "w" );
     progress( "Finding bar positions\n" );
-    fp = fopen( bar_file_name, "w" );
     for( i=0; i<depth; i++ )
     { progress_meter(i, 0, depth-1, 79, "Finding     post: [%5d/%5d]",i,depth);
       image = Copy_Image( load(movie,i,NULL) );
@@ -246,10 +247,10 @@ int main(int argc, char *argv[])
                               255,            // maximum intentity of interest
                               10.0,           // minimum radius of interest
                               30.0          );// maximum radius of interest
-      fprintf(fp,"%d %g %g\n",i,x,y);
+      Bar_File_Append_Bar( bfile, Bar_Static_Cast(i,x,y) );
       Free_Image(image);
     }
-    fclose( fp );
+    Bar_File_Close( bfile );
   }
 
   /*
