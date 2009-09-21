@@ -12,7 +12,6 @@
 #include "seq.h"
 
 #include "bar.h"
-#include "trajectory.h"
 #include "merge.h"
 
 #include "adjust_scan_bias.h"
