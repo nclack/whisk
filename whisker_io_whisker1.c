@@ -2,15 +2,8 @@
 #include <stdlib.h>
 #include "error.h"
 #include "trace.h"
+#include "common.h"
 
-int fskipline(FILE* fp, size_t *nch)
-{ //return fgetln(fp,nch)!=NULL; // not available on windows :(
-  size_t i = 0;
-  int c;
-  do { c = fgetc(fp); i++; } while( c!=EOF && c!='\n' );
-  *nch = i;
-  return (c=='\n');
-}
 
 void write_whisk1_header( FILE *file )
 { fprintf(file, "whisker1 (frame,id,time,n,x1,y1,thick1,score1...,xn,yn,thickn,scoren)\n");

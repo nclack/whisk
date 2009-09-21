@@ -1,6 +1,7 @@
 #ifndef _H_COMMON
 #define _H_COMMON
 
+#include <stdio.h>
 #include <stdlib.h>
 
 // #include <vld.h> // for VC++: Visual Leak Detector (v1.9b) 
@@ -55,6 +56,11 @@ void *request_storage_pow2items(
     size_t nbytes, 
     size_t minindex, 
     char *msg );
+
+/*
+ * FILE IO
+ */
+int fskipline(FILE* fp, size_t *nch);
 
 //for debugging
 void dump_doubles(char* filename, double* a, int n);

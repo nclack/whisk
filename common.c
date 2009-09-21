@@ -66,6 +66,19 @@ void *request_storage_pow2items( void *buffer, size_t *maxlen_bytes, size_t nbyt
 }
 
 /**
+ * FILE IO
+ */
+
+int fskipline(FILE* fp, size_t *nch)
+{ //return fgetln(fp,nch)!=NULL; // not available on windows :(
+  size_t i = 0;
+  int c;
+  do { c = fgetc(fp); i++; } while( c!=EOF && c!='\n' );
+  *nch = i;
+  return (c=='\n');
+}
+
+/**
  * Based on:
  * Daniel Lemire, "Streaming Maximum-minimum filter using no more than
  * three comparisons per element', Nordic Journal of Computing, 13(4) pp. 328-339, 2006.
