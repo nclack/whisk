@@ -53,6 +53,7 @@ void Bar_File_Append_Bar( BarFile *file,  Bar* b )
 Bar *Read_Bars( BarFile *file, int *n )
 { size_t nch;
   rewind(file);
+  *n=0;
   while( fskipline( file, &nch ) )
     *n++;
 
@@ -91,38 +92,39 @@ void bar_minmax(Bar *bars, int n_bars, Bar *lowbar, Bar* highbar)
 
 void printbar(Bar *b, char *name, void (*print_fun)(char *,...))
 { print_fun("%s\n"
-            "\tTime (frames): %d\n",
-            "\t       x (px): %f\n",
+            "\tTime (frames): %d\n" 
+            "\t       x (px): %f\n" 
             "\t       y (px): %f\n", name, b->time, b->x, b->y );
 }
 
 // Just do a read write cycle
-char *filename = "data/testing/test.bar";
+char *filename = "data/testing/test.bar",
+     *outfile  = "data/testing/trash.bar";
 int main(int argc, char* argv[])
 { BarFile *file = Bar_File_Open(filename,"r");
   assert(file); //should not fail here, should fail in open
 
-  { int n_bars;
+  { int n_bars=0;
     Bar *bars = Read_Bars(file, &n_bars),
         low,high;
     Bar_File_Close(file);
     assert(bars);
 
-    debug( "Read - $s\n"
+    debug( "Read - %s\n"
            "Number of bars: %d\n", filename, n_bars);
     bar_minmax(bars, n_bars, &low, &high);
     printbar( &low,  "Min", debug );
     printbar( &high, "Max", debug );
 
     //write - writes over test data file!!
-    file = Bar_File_Open( filename, "w" );
+    file = Bar_File_Open( outfile, "w" );
     assert(file); //should not fail here, should fail in open
     { int i;
       for( i=0; i<n_bars; i++ )
         Bar_File_Append_Bar( file, bars+i );
     }
     Bar_File_Close(file);
-    debug("Wrote out bars to %s\n",filename);
+    debug("Wrote out bars to %s\n",outfile);
   }
   return 0;
 }
