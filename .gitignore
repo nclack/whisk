@@ -20,6 +20,7 @@ whisk
 whisker_convert
 seedtest
 stripetest
+test_bar_io_1
 test_classify_1
 test_classify_2
 test_classify_3
