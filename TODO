@@ -1,0 +1,28 @@
+Vague Objectives
+================
+[ ] [!!!] - unify facial ordering priors and temporal coherence priors
+[ ] [!! ] - multidimensional histogramming for conditional probability estimation
+[ ] [!  ] - revamp ui
+[ ] [!  ] - refactor and cleanup
+
+Current
+=======
+[x] [!!!] measure.c  - utility to update measurements table with bar measurement
+[ ] [!!!] - incorporate occlusion related measurements into pipeline
+
+Table
+=====
+[ ] [   ] poly.c     - polynomial stack object for stack based polynomial arithmetic
+[ ] [   ] mat.c      - matrix stack object for matrix arithmetic
+[ ] [!! ] classify.c - better autotraj for o'connor - allow for range of whisker count
+
+User Interface
+==============
+[ ] [   ] - redo in qt/opengl
+[ ] [!! ] - editable segments
+[ ] [   ] - drag-and-drop measurements
+[ ] [   ] - drag-and-drop trial timeline data
+[ ] [   ] - drag-and-drop movie
+[ ] [   ] - drag-and-drop segments
+[ ] [   ] - drag-and-drop trajectories
+[ ] [   ] - timeline view
