@@ -400,7 +400,13 @@ void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y,
 }
 
 #ifdef TEST_MEASURE_1
-char *Spec[] = {"<whiskers:string> <dest:string> --face (<x:int> <y:int> <axis:string> |<hint:string>)",NULL};
+char *Spec[] = {"[-h|--help]",
+                "|( <whiskers:string> [<bars:string>] <dest:string>",
+                "   --face ( <x:int> <y:int> <axis:string> ",
+                "          | <hint:string>",
+                "          )",
+                " )",
+                NULL};
 int main( int argc, char* argv[] )
 { Whisker_Seg *wv;
   int wvn;
@@ -409,6 +415,30 @@ int main( int argc, char* argv[] )
   char face_axis;
   
   Process_Arguments( argc, argv, Spec, 0 );
+
+  help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
+      "----------------------------\n"
+      "Whisker segment measurements\n"
+      "----------------------------\n"
+      "\n"
+      "Measures attributes of traced whiskers segments.\n"
+      "These are stored in a data table with columns:\n"
+      "\t1.  whisker identity (-1:other, 0,1,2...:Whiskers) \n"
+      "\t2.  time (frame #)\n"
+      "\t3.  segment id\n"
+      "\t4.  length (px)\n"
+      "\t5.  tracing score\n"
+      "\t6.  angle at follicle (degrees)\n"
+      "\t7.  mean curvature (1/px)\n"
+      "\t8.  follicle position: x (px)\n"
+      "\t9.  follicle position: y (px)\n"
+      "\t10. tip position: x (px)\n"
+      "\t11. tip position: y (px)\n"
+      "\n\tand optionally (with a provided .bar file)\n"
+      "\t12. distance to center of bar\n"
+      "\nTo access this data via python/numpy see `traj.py.`\n"
+      "\n" );
+
   wv = Load_Whiskers( Get_String_Arg("whiskers"), NULL, &wvn);
 
   if( Is_Arg_Matched("hint") )
