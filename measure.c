@@ -31,6 +31,7 @@
 #if 0
 #define DEBUG_MEASURE_POLYFIT_ERROR 
 #define DEBUG_MEASURE_FACE_POINT_FROM_HINT
+#define DEBUG_FIDWID_BUILD_INDEX
 #endif
 
 int _score_cmp( const void *a, const void *b )
@@ -104,7 +105,7 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey, ch
   // -----------
   // XXX: an alternate approach would be to compute the polynomial fit
   //      and do quadrature on that.  Might be more precise.
-  //      Although, need cumlen
+  //      Although, need cumlen (a.k.a cl) for polyfit anyway
   { float *ax = x + 1,       *ay = y + 1,
           *bx = x,           *by = y;
     double *cl = cumlen + 1, *clm = cumlen;
@@ -298,6 +299,25 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey, ch
   dest[7] = tip_y;
 }
 
+double Whisker_Seg_Compute_Distance_To_Bar( Whisker_Seg *w, Bar *bar )
+{ // Simple approach - find closest sampled point
+  int n = w->len;
+  double d = DBL_MAX,
+        *pd = &d,
+         x  = bar->x,
+         y  = bar->y;
+  float *wx = w->x,
+        *wy = w->y;
+  while(n--)
+    bd( double, pd, hypot(wx[n]-x,wy[n]-y) );
+  return d;
+
+  // More complicated but perhaps more accurate, is to do a polynomial fit
+  // [u(t)=x(t),y(t)] and find the roots of u' . (u-b) == 0  where b is the bar
+  // position vector.  Then, for solution t, compute distance ||u(t)-b||.  This
+  // has the advantage of not relying on a small sampling interval.
+}
+
 Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int facey, char face_axis )
 { Measurements *table = Alloc_Measurements_Table( wvn /* #rows */, 8/* #measurments */ ); 
   while(wvn--)
@@ -411,18 +431,95 @@ int main( int argc, char* argv[] )
 #endif
 
 #ifdef TEST_MEASURE_2
+typedef struct _FidWidIndex
+{ Measurements *m;
+  Whisker_Seg  *w;
+} FidWidIndex;
+
+void fidwid_max( Measurements *table, int nrows, Whisker_Seg *wv, int wvn, int *maxfid, int *maxwid )
+{ *maxfid = *maxwid = 0;
+  while(nrows--)
+  { bu( int, maxfid, table[nrows].fid );
+    bu( int, maxwid, table[nrows].wid );
+  }
+  while(wvn--)
+  { bu( int, maxfid, wv[wvn].time );
+    bu( int, maxwid, wv[wvn].id );
+  }
+}
+
+FidWidIndex *fidwid_build_index( Measurements *table, int nrows, Whisker_Seg *wv, int wvn, int *maxfid, int *n_idx)
+{ int maxwid;
+  FidWidIndex *idx = NULL;
+  Measurements *mrow;
+  Whisker_Seg  *wrow;
+  int n;
+
+  fidwid_max( table, nrows, wv, wvn, maxfid, &maxwid );
+  n =  (*maxfid)*maxwid;
+  idx = Guarded_Malloc(  sizeof(FidWidIndex)*n, "fidwid_build_index" );
+  memset( idx, 0, sizeof(FidWidIndex)*n );
+
+  mrow = table + nrows;
+  while(mrow-- > table)
+  { int fid = mrow->fid,
+        wid = mrow->wid;
+    idx[ fid * maxwid + wid ].m = mrow;
+  }
+
+  wrow = wv + wvn;
+  while(wrow-- > wv)
+  { int fid = wrow->time,
+        wid = wrow->id;
+    idx[ fid * maxwid + wid ].w = wrow;
+  }
+
+  // Copy down valid indices
+  { int i;
+    FidWidIndex *bm,
+                *cur;
+    for(cur = bm = idx; cur < idx+n; cur++)
+    { 
+#ifdef DEBUG_FIDWID_BUILD_INDEX
+      assert(cur>=bm);
+      debug("Bookmark : %d\n"
+            "  Cursor : %d\n", bm-idx, cur-idx );
+#endif
+      if( cur->w && cur->m )
+        *bm++ = *cur; //copy down
+    }
+    n = bm - idx; //update count
+    idx = Guarded_Realloc( idx, n*sizeof(FidWidIndex), "compacting fidwid_build_index" );
+  }
+
+  if( n_idx )
+    *n_idx = n;
+  return idx;
+}
+
+Bar **bar_build_index( Bar *bars, int nbars, int maxfid )
+{ Bar *row = bars + nbars,
+      **idx = Guarded_Malloc( sizeof(Bar*)*maxfid, "bar_build_index" );
+  while(row-- > bars)
+    idx[row->time] = row;
+  return idx;
+}
+
 char *Spec[] = {"[-h|--help]",
                 "|(",
-                "<source-measurements:string> <source-whiskers:string> <source-bar:string> <dest:string>",
-                "--radius_mm <double>",
-                "--px2mm     <double>",
+                "   <source-measurements:string> <source-whiskers:string> <source-bars:string> <dest:string>",
                 ")",
                 NULL};
 int main( int argc, char* argv[] )
 { Measurements *table;
   Whisker_Seg *whiskers;
-  Bar *bars;
-  int nrows, nsegs, nbars;
+  Bar *bars, **bindex;
+  FidWidIndex *fidwid_index;
+  int nrows, 
+      nsegs, 
+      nbars, 
+      nframes,
+      nfidwid;
 
   Process_Arguments(argc,argv,Spec,0);
 
@@ -444,10 +541,6 @@ int main( int argc, char* argv[] )
       "\tInput whisker segments file (see whisk)\n"
       "<dest>\n"
       "\tOutput: Results will be saved here as a Measurements table.\n"
-      "<px2mm>\n"
-      "\tThe number of millimeters per pixel\n"
-      "<radius_mm>\n"
-      "\tThe approximate radius of the post in millimeters\n"
       "\n" );
 
   // Load source data
@@ -455,18 +548,25 @@ int main( int argc, char* argv[] )
   whiskers = Load_Whiskers( Get_String_Arg( "source-whiskers" ), NULL, &nsegs);
   bars = Load_Bars_From_Filename( Get_String_Arg( "source-bars" ), &nbars);
 
-  // Sort to get correspondance between table and segments
-  Sort_Measurements_Table_Segment_UID(table,nrows);
-  Whisker_Seg_Sort_By_Id(whiskers, nsegs);
-  Bar_Sort_By_Time(bars,nbars);
-
   // Append a column if neccessary
   Measurements_Table_Append_Columns_In_Place( table, nrows,
       MEASURE__NUM_FIELDS_FROM_MEASURE_SEGMENTS
       + MEASURE__NUM_FIELDS_FROM_BAR
       - table[0].n  );
 
+  // Get correspondance between table, segments, and bars
+  fidwid_index = fidwid_build_index( table, nrows, whiskers, nsegs, &nframes, &nfidwid);
+  bindex       = bar_build_index   ( bars, nbars, nframes );
+
   // Compute
+  // - loop over index 
+  // - for each segment and bar, update row in measurements
+  //   table.
+
+  { FidWidIndex *item = fidwid_index + nfidwid;
+    while( item-- > fidwid_index )
+      item->m->data[8] = Whisker_Seg_Compute_Distance_To_Bar( item->w, bindex[ item->m->fid ] ); 
+  }
 
   // Save
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );

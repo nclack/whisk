@@ -234,7 +234,7 @@ void Measurements_Table_Append_Columns_In_Place( Measurements *table, int n_rows
       ncol = n + n_cols_to_add; //new      number of columns
   double *buffer = table[0].data - n*table[0].row; //row gives offset from head of data buffer
 
-  if( n_cols_to_add ) return; //noop
+  if( !n_cols_to_add ) return; //noop
   assert( n_cols_to_add > 0 );
 
   // 0. Realloc data buffer - invalidates all table[i].data and velocity pointers!
@@ -249,12 +249,13 @@ void Measurements_Table_Append_Columns_In_Place( Measurements *table, int n_rows
       memcpy( dst -= ncol, row, n*sizeof(double) );
   }
 
-  // 2. update row pointers
+  // 2. update row pointers and column count
   { Measurements *row = table  + n_rows;
     while( row-- > table )
     { int offset = row->row;
       row->data     = buffer +          offset * ncol;
       row->velocity = buffer + (n_rows+offset) * ncol;
+      row->n        = ncol;
     }
   }
 }

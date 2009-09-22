@@ -46,6 +46,7 @@ SHARED_EXPORT
 void help(int show, char *str, ... )
 { if(show)
   { va_list argList;
+    Print_Argument_Usage(ERR_STREAM,0);
     va_start( argList, str );
     vfprintf(ERR_STREAM, str, argList);
     va_end( argList );

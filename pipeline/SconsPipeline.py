@@ -154,6 +154,8 @@ def pipeline_oconnor(env, movie):
 
   builders = [ 
     movie,
+    ( env.Bar,
+      env.Precious, ),
     env.Whisk,
     (env.Precious,),
     env.Measure,
@@ -282,7 +284,7 @@ env['FOLLICLE_THRESH'] = 0 # all the follicle positions fall on one side of this
                            # face orientation which is infered 
 
 env.AddMethod( pipeline_standard, "Pipeline" )
-env.AddMethod( pipeline_curated,    "CuratedPipeline" ) 
+env.AddMethod( pipeline_curated, "CuratedPipeline" ) 
 env.AddMethod( pipeline_oconnor, "OConnorPipeline" )
 
 Export('env')
