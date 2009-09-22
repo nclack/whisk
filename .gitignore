@@ -4,6 +4,7 @@
 *.os
 *.dylib
 *.dll
+*.swp
 
 .sconsign.dblite
 data
