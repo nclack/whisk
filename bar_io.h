@@ -10,6 +10,8 @@ typedef struct _Bar
 
 inline Bar *Bar_Static_Cast( int time, float x, float y);
 
+void        Bar_Sort_By_Time( Bar *bars, int nbars);
+
 //
 // Bar File IO 
 //

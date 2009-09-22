@@ -1,6 +1,7 @@
 #include "compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <assert.h>
 #include "utilities.h"
@@ -22,6 +23,14 @@ inline Bar *Bar_Static_Cast( int time, float x, float y)
   b.x = x;
   b.y = y;
   return &b;
+}
+
+static int _cmp_sort_bars_by_time(void *a, void *b)
+{ return ((Bar*)a)->time - ((Bar*)b)->time;
+}
+
+void Bar_Sort_By_Time( Bar *bars, int nbars)
+{ qsort( bars, nbars, sizeof(Bar), _cmp_sort_bars_by_time );
 }
 
 // 
