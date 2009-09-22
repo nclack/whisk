@@ -5,9 +5,13 @@
 *.dylib
 *.dll
 *.swp
+*.detectorbank
+*.scons
 
 .sconsign.dblite
+
 data
+proc
 
 contour_lib.c
 draw_lib.c
@@ -57,3 +61,4 @@ test_whisker_io
 
 ui/trace.py
 ui/whiskerdata/trace.py
+
