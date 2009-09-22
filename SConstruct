@@ -232,7 +232,9 @@ for t in tests:
                                               'whisker_io_whisker1.c', 'whisker_io_whiskold.c',
                                                 ] ) 
 ## bar_io tests 
-tests = [ "TEST_BAR_IO_1", ]
+tests = [ "TEST_BAR_IO_1",
+          "TEST_BAR_IO_2",
+        ]
 totestobj = lambda t: env.Object( 'bar_io_'+t.lower(), ['bar_io.c'], CPPDEFINES = t )
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),

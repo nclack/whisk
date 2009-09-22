@@ -29,10 +29,6 @@ inline Bar *Bar_Static_Cast( int time, float x, float y)
 //
 typedef FILE BarFile;
 
-//
-// Bar File IO - main api
-//
-//
 BarFile* Bar_File_Open(const char* filename, const char *mode)
 { BarFile* f = fopen(filename, mode);
   if(!f)
@@ -69,7 +65,23 @@ Bar *Read_Bars( BarFile *file, int *n )
   }
 }
 
-#ifdef TEST_BAR_IO_1
+Bar *Load_Bars_From_Filename( const char *filename, int *nbars )
+{ BarFile *fp = Bar_File_Open( filename, "r" );
+  Bar *bars = Read_Bars(fp,nbars);
+  Bar_File_Close(fp);
+  return bars;
+}
+
+void Save_Bars_To_Filename( const char *filename, Bar *bars, int nbars )
+{ BarFile *fp = Bar_File_Open( filename, "w" );
+  int i;
+  for(i=0;i<nbars;i++)
+    Bar_File_Append_Bar( fp, bars+i );
+  Bar_File_Close(fp);
+}
+
+
+#if defined(TEST_BAR_IO_1) || defined(TEST_BAR_IO_2)
 
 //evals expression px once, y up to 2 times
 #define bd(TYPE,px,y) { TYPE *X = (px); *X = *X<(y) ? *X:(y);}
@@ -98,7 +110,9 @@ void printbar(Bar *b, char *name, void (*print_fun)(char *,...))
             "\t       x (px): %f\n" 
             "\t       y (px): %f\n", name, b->time, b->x, b->y );
 }
+#endif
 
+#ifdef TEST_BAR_IO_1
 // Just do a read write cycle
 char *filename = "data/testing/test.bar",
      *outfile  = "data/testing/trash.bar";
@@ -118,7 +132,7 @@ int main(int argc, char* argv[])
     printbar( &low,  "Min", debug );
     printbar( &high, "Max", debug );
 
-    //write - writes over test data file!!
+    //write 
     file = Bar_File_Open( outfile, "w" );
     assert(file); //should not fail here, should fail in open
     { int i;
@@ -128,6 +142,29 @@ int main(int argc, char* argv[])
     Bar_File_Close(file);
     debug("Wrote out bars to %s\n",outfile);
   }
+  return 0;
+}
+#endif
+
+#ifdef TEST_BAR_IO_2
+// Just do a read write cycle
+char *filename = "data/testing/test.bar",
+     *outfile  = "data/testing/trash.bar";
+int main(int argc, char* argv[])
+{ int n_bars=0;
+  Bar *bars = Load_Bars_From_Filename( filename, &n_bars ),
+      low,high;
+  assert(bars);
+
+  debug( "Read - %s\n"
+          "Number of bars: %d\n", filename, n_bars);
+  bar_minmax(bars, n_bars, &low, &high);
+  printbar( &low,  "Min", debug );
+  printbar( &high, "Max", debug );
+
+  //write 
+  Save_Bars_To_Filename( outfile, bars, n_bars);
+  debug("Wrote out bars to %s\n",outfile);
   return 0;
 }
 #endif
