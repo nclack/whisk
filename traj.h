@@ -96,6 +96,8 @@ SHARED_EXPORT void Sort_Measurements_Table_State_Time( Measurements *table, int 
 
 SHARED_EXPORT void Sort_Measurements_Table_Time( Measurements *table, int nrows );
 
+SHARED_EXPORT void Sort_Measurements_Table_Segment_UID( Measurements *table, int nrows );
+
 SHARED_EXPORT void Sort_Measurements_Table_Time_Face( Measurements *table, int nrows );
 
 SHARED_EXPORT void Sort_Measurements_Table_Time_State_Face( Measurements *table, int nrows );

@@ -422,19 +422,26 @@ Err:
   return 0;
 }
 
-int cmp_sort_state_time( const void* a, const void* b )
+static int cmp_sort_state_time( const void* a, const void* b )
 { Measurements *rowa = (Measurements*)a,
                *rowb = (Measurements*)b;
   int dstate = (rowa->state) - (rowb->state);  
   return (dstate==0) ? (rowa->fid - rowb->fid) : dstate;
 }
 
-int cmp_sort_time( const void* a, const void* b )
+static int cmp_sort_time( const void* a, const void* b )
 { Measurements *rowa = (Measurements*)a,
                *rowb = (Measurements*)b;
   return (rowa->fid - rowb->fid);
 }
     
+static int cmp_sort_segment_uid( const void* a, const void* b )
+{ Measurements *rowa = (Measurements*)a,
+               *rowb = (Measurements*)b;
+  int d = (rowa->fid - rowb->fid); 
+  return (d!=0) ? d: (rowa->wid - rowb->wid);
+}
+
 static inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
 { int ix = a->col_follicle_x, 
       iy = a->col_follicle_y;
@@ -453,11 +460,11 @@ static inline double _cmp_sort_face__ccw_test( Measurements *a, Measurements *b 
   return ax*by - ay*bx;
 }
 
-int cmp_sort_face_order( const void* a, const void* b )
+static int cmp_sort_face_order( const void* a, const void* b )
 { return (int) _cmp_sort_face__ccw_test((Measurements*)a,(Measurements*)b);
 }
 
-int cmp_sort_time_face_order( const void* a, const void* b )
+static int cmp_sort_time_face_order( const void* a, const void* b )
 { Measurements *rowa = (Measurements*)a,
                *rowb = (Measurements*)b;
   int dt = rowa->fid - rowb->fid;
@@ -466,7 +473,7 @@ int cmp_sort_time_face_order( const void* a, const void* b )
   return dt;
 }
 
-int cmp_sort_time_state_face_order( const void* a, const void *b )
+static int cmp_sort_time_state_face_order( const void* a, const void *b )
 { Measurements *rowa = (Measurements*)a,
                *rowb = (Measurements*)b;
   int d = rowa->fid - rowb->fid;
@@ -493,6 +500,11 @@ void Sort_Measurements_Table_State_Time( Measurements *table, int nrows )
 SHARED_EXPORT
 void Sort_Measurements_Table_Time( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time );
+}
+
+SHARED_EXPORT 
+void Sort_Measurements_Table_Segment_UID( Measurements *table, int nrows )
+{ qsort( table, nrows, sizeof(Measurements), cmp_sort_segment_uid );
 }
 
 SHARED_EXPORT
