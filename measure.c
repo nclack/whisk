@@ -319,7 +319,9 @@ double Whisker_Seg_Compute_Distance_To_Bar( Whisker_Seg *w, Bar *bar )
 }
 
 Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int facey, char face_axis )
-{ Measurements *table = Alloc_Measurements_Table( wvn /* #rows */, 8/* #measurments */ ); 
+{ Measurements *table = Alloc_Measurements_Table( 
+                          wvn /* #rows */, 
+                          MEASURE__NUM_FIELDS_FROM_MEASURE_SEGMENTS/* #measurments */ ); 
   while(wvn--)
   { Measurements *row = table + wvn; 
     row->row   = wvn;
@@ -331,10 +333,50 @@ Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int
     row->col_follicle_x = 4;
     row->col_follicle_y = 5;
     row->valid_velocity = 0;
-    row->n = 8;
-    Whisker_Seg_Measure( wv+wvn, row->data, facex, facey, face_axis );  
+    row->n = MEASURE__NUM_FIELDS_FROM_MEASURE_SEGMENTS;
+    Whisker_Seg_Measure( wv+wvn, row->data, facex, facey, face_axis );
   }
   return table;
+}
+
+static Bar **bar_build_index( Bar *bars, int nbars, int maxfid )
+{ Bar *row = bars + nbars,
+      **idx = Guarded_Malloc( sizeof(Bar*)*maxfid, "bar_build_index" );
+  while(row-- > bars)
+    idx[row->time] = row;
+  return idx;
+}
+
+Measurements *Whisker_Segments_Measure_With_Bar( Whisker_Seg *wv, int wvn, Bar *bars, int nbars, int facex, int facey, char face_axis )
+{ int ncol =  MEASURE__NUM_FIELDS_FROM_MEASURE_SEGMENTS
+              + MEASURE__NUM_FIELDS_FROM_BAR ;
+  int maxfid = 0,
+     *pmaxfid = &maxfid,
+      i = wvn;
+
+  while(i--)
+    bu( int, pmaxfid, wv[i].time );
+
+  { Bar **bindex = bar_build_index( bars, nbars, maxfid );
+    Measurements *table = Alloc_Measurements_Table( wvn, ncol );
+    while(wvn--)
+    { Measurements *row = table + wvn; 
+      row->row   = wvn;
+      row->fid   = wv[wvn].time;
+      row->wid   = wv[wvn].id;
+      row->state =  0;
+      row->face_x = facex;
+      row->face_y = facey;
+      row->col_follicle_x = 4;
+      row->col_follicle_y = 5;
+      row->valid_velocity = 0;
+      row->n = ncol;
+      Whisker_Seg_Measure( wv+wvn, row->data, facex, facey, face_axis );
+      row->data[ncol-1] = Whisker_Seg_Compute_Distance_To_Bar( wv+wvn, bindex[row->fid] );
+    }
+    free(bindex);
+    return table;
+  }
 }
 
 void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y, char *face_axis )
@@ -401,7 +443,7 @@ void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y,
 
 #ifdef TEST_MEASURE_1
 char *Spec[] = {"[-h|--help]",
-                "|( <whiskers:string> [<bars:string>] <dest:string>",
+                "|( <whiskers:string> [<bar:string>] <dest:string>",
                 "   --face ( <x:int> <y:int> <axis:string> ",
                 "          | <hint:string>",
                 "          )",
@@ -436,7 +478,7 @@ int main( int argc, char* argv[] )
       "\t11. tip position: y (px)\n"
       "\n\tand optionally (with a provided .bar file)\n"
       "\t12. distance to center of bar\n"
-      "\nTo access this data via python/numpy see `traj.py.`\n"
+      "\nTo access this data via python/numpy see `traj.py` and traj.MeasurementTable\n"
       "\n" );
 
   wv = Load_Whiskers( Get_String_Arg("whiskers"), NULL, &wvn);
@@ -449,7 +491,14 @@ int main( int argc, char* argv[] )
     face_axis = Get_String_Arg("axis")[0];
   }
 
-  table = Whisker_Segments_Measure( wv, wvn, facex, facey, face_axis );
+  if( Is_Arg_Matched("bar") )
+  { int nbar;
+    Bar *bars = Load_Bars_From_Filename( Get_String_Arg("bar"), &nbar );
+    table = Whisker_Segments_Measure_With_Bar( wv, wvn, bars, nbar, facex, facey, face_axis ); 
+    free(bars);
+  } else
+  { table = Whisker_Segments_Measure( wv, wvn, facex, facey, face_axis );
+  }
 
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, wvn );
 
@@ -527,13 +576,6 @@ FidWidIndex *fidwid_build_index( Measurements *table, int nrows, Whisker_Seg *wv
   return idx;
 }
 
-Bar **bar_build_index( Bar *bars, int nbars, int maxfid )
-{ Bar *row = bars + nbars,
-      **idx = Guarded_Malloc( sizeof(Bar*)*maxfid, "bar_build_index" );
-  while(row-- > bars)
-    idx[row->time] = row;
-  return idx;
-}
 
 char *Spec[] = {"[-h|--help]",
                 "|(",
@@ -602,6 +644,8 @@ int main( int argc, char* argv[] )
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
 
   // Clean up
+  free(bindex);
+  free(fidwid_index);
   Free_Measurements_Table(table);
   Free_Whisker_Seg_Vec( whiskers, nsegs );
   free(bars);
