@@ -32,18 +32,18 @@
 #include "aip.h"
 #include <stdlib.h>
 
-inline void bd(real * X, real y)
+inline void bdr(real * X, real y)
 { *X = *X<y ? *X:y;
 }
 
-inline void bu(real * X, real y)
+inline void bur(real * X, real y)
 { *X = *X>y ? *X:y;
 }
 
 void range(box *B, point * x, int c)
 { while(c--)
-  { bd(&B->min.x, x[c].x); bu(&B->max.x, x[c].x);
-    bd(&B->min.y, x[c].y); bu(&B->max.y, x[c].y);
+  { bdr(&B->min.x, x[c].x); bur(&B->max.x, x[c].x);
+    bdr(&B->min.y, x[c].y); bur(&B->max.y, x[c].y);
   }
 }
 

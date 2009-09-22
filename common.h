@@ -9,6 +9,14 @@
                     // - comment in  to check for memory leaks in an
                     //   configured Visual Studio.
 
+//evals expression px once, y up to 2 times
+#ifndef bd
+#define bd(TYPE,px,y) { TYPE *X = (px); *X = *X<(y) ? *X:(y);}
+#endif
+#ifndef bu
+#define bu(TYPE,px,y) { TYPE *X = (px); *X = *X>(y) ? *X:(y);}
+#endif
+
 #ifndef MAX
 #define MAX(a,b) ( (a<b)?b:a )
 #endif

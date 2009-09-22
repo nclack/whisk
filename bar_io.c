@@ -92,10 +92,6 @@ void Save_Bars_To_Filename( const char *filename, Bar *bars, int nbars )
 
 #if defined(TEST_BAR_IO_1) || defined(TEST_BAR_IO_2)
 
-//evals expression px once, y up to 2 times
-#define bd(TYPE,px,y) { TYPE *X = (px); *X = *X<(y) ? *X:(y);}
-#define bu(TYPE,px,y) { TYPE *X = (px); *X = *X>(y) ? *X:(y);}
-
 void bar_minmax(Bar *bars, int n_bars, Bar *lowbar, Bar* highbar)
 { Bar *row = bars + n_bars;
   //init
