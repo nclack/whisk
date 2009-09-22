@@ -64,6 +64,8 @@ SHARED_EXPORT void Measurements_Table_Copy_Shape_Data( Measurements *table, int 
 
 SHARED_EXPORT void Measurements_Table_Copy_Velocities( Measurements *table, int n_rows, double *buffer );
 
+SHARED_EXPORT void Measurements_Table_Append_Columns_In_Place( Measurements *table, int n_rows, int n_cols_to_add );
+
 // Returns the number of rows with the queried state
 // Scans once over the table.
 SHARED_EXPORT int Measurements_Table_Size_Select_State( Measurements *table, int n_rows, int state );
