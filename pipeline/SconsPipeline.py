@@ -15,7 +15,7 @@ def change_ext( node, newext ):
   prefix,ext = os.path.splitext( node.path )
   target = env.File( os.path.split(prefix)[1] + newext )
   return target
-                                      
+
 def thumbnail(target, source, env):
   import Image
   Image.fromarray( Reader(source[0].path)[0] ).save( target[0].path )
@@ -41,10 +41,10 @@ def dfs_consume_tuples(g,cur):
   yield rest()
 
 def flatten(tree):
-  isbranch = lambda y: any( map( lambda x: isinstance(y,x), 
+  isbranch = lambda y: any( map( lambda x: isinstance(y,x),
                                 [tuple,
                                  list,
-                                 SCons.Node.NodeList] 
+                                 SCons.Node.NodeList]
                                ))
   if not isbranch(tree):
     yield tree
@@ -73,16 +73,16 @@ def dfs_reduce(f,tree):
       else:
         a = node if a is None else f(a,node)                   #process node
     return a
-  res =  flatten(_dfs_reduce(f,tree))  
+  res =  flatten(_dfs_reduce(f,tree))
   #for e in  map(str,res):
   #  print e
   return res
 
 def pipeline_production(env, movie):
   def alter(j,subdir,ext):
-    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
-  
-  builders = [ 
+    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  )
+
+  builders = [
     movie                                                       ,
     env.Whisk                                                   ,
   (env.Precious,),
@@ -90,23 +90,23 @@ def pipeline_production(env, movie):
     env.Measure                                                 ,
     env.Classify                                                ,
     env.HmmLRTimeSolver,
-    env.GreyAreaSolver,       
+    env.GreyAreaSolver,
     (env.MeasurementsAsMatlab,),
     (env.MeasurementsAsTrajectories,),
     env.Summary
   ]
 
   compose = lambda a,b: b(a)
-  jobs = dfs_reduce( compose, builders )                         
+  jobs = dfs_reduce( compose, builders )
   return jobs
 
 def pipeline_standard(env, movie):
   def alter(j,subdir,ext):
-    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
+    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  )
 
-  builders = [ 
+  builders = [
     movie,
-    ( env.Bar, 
+    ( env.Bar,
       (env.Precious,),
     ),
     env.Whisk,
@@ -114,67 +114,63 @@ def pipeline_standard(env, movie):
 #    lambda j: change_ext(j,'.whiskers'),
     env.Measure,
     env.Classify,
-    ( env.GreyAreaSolver, 
+    ( env.GreyAreaSolver,
       env.Summary
-    ) ,                    
+    ) ,
     ( env.HmmLRSolver,
-      ( env.GreyAreaSolver, 
+      ( env.GreyAreaSolver,
         ( env.MeasurementsAsTrajectories,),
         env.Summary
       ) ,
       ( env.MeasurementsAsTrajectories,),
-      env.Summary 
+      env.Summary
     ),
     ( env.HmmLRTimeSolver,
-      ( env.GreyAreaSolver, 
+      ( env.GreyAreaSolver,
         ( env.MeasurementsAsTrajectories,),
         ( env.MeasurementsAsMatlab,),
         env.Summary
-      ) ,                    
+      ) ,
       ( env.MeasurementsAsTrajectories,),
-      env.Summary 
+      env.Summary
     ),
 #   ( env.HmmLRDelTimeSolver,
-#     ( env.GreyAreaSolver, 
+#     ( env.GreyAreaSolver,
 #       ( env.MeasurementsAsTrajectories,),
 #       env.Summary
-#     ) ,                    
+#     ) ,
 #     ( env.MeasurementsAsTrajectories,),
 #     env.Summary ),
-    env.Summary                             
+    env.Summary
   ]
 
   compose = lambda a,b: b(a)
-  jobs = dfs_reduce( compose, builders )                         
+  jobs = dfs_reduce( compose, builders )
   return jobs
 
 def pipeline_oconnor(env, movie):
-  def alter(j,subdir,ext):
-    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
-
-  builders = [ 
+  def start(mov):
+    b = env.Bar(mov)
+    env.Precious(b)
+    w = env.Whisk(mov)
+    env.Precious(w)
+    return env.MeasureWithBar(w+b)
+  builders = [
     movie,
-    ( env.Bar,
-      env.Precious, ),
-    env.Whisk,
-    (env.Precious,),
-    env.Measure,
+    start,
     env.ClassifyNoHairs,
-#    ( env.Summary, ),
-#    ( env.HmmLRTimeSolver,
-#      env.Summary ),
-#    env.HmmLRSolver,
     ( env.MeasurementsAsTrajectories,),
-    env.Summary 
+    ( env.MeasurementsAsMatlab,),
+    env.Summary
   ]
 
   compose = lambda a,b: b(a)
-  jobs = dfs_reduce( compose, builders )                         
+  jobs = dfs_reduce( compose, builders )
   return jobs
 
 def pipeline_curated(env, source):
   def commit_traj(node):
-    """ expects source to be a curated whiskers file 
+    """ expects source to be a curated whiskers file
         generated target is a measurements file
         returns target node
     """
@@ -186,7 +182,7 @@ def pipeline_curated(env, source):
     return out
 
   builders = [
-    source,  
+    source,
     env.Measure,
     commit_traj,
     env.Summary
@@ -210,12 +206,12 @@ def bar_generator( source, target, env, for_signature ):
   else:
     return Action("")
 
-env  = Environment( 
+env  = Environment(
   PX2MM = 0,
   BUILDERS = {
     'Thumbnail' : Builder(action = thumbnail),
     'LengthVScorePlot': Builder(action = length_v_score_plot),
-    'Whisk' : Builder(generator = whisk_generator, 
+    'Whisk' : Builder(generator = whisk_generator,
                       suffix  = '.whiskers',
                       src_suffix = '.seq'
                      ),
@@ -232,6 +228,10 @@ env  = Environment(
                        suffix     = '.measurements',
                        src_suffix = '.whiskers'
                       ),
+    'MeasureWithBar': Builder(action = "test_measure_1 $SOURCES $TARGET --face $FACEHINT",
+                        suffix     = '.measurements',
+                        src_suffix = '.whiskers'
+                        ),
     'MeasureOld': Builder(action = "measure.py $SOURCE $TARGET --face=$FACEHINT",
                        suffix     = '.measurements',
                        src_suffix = '.whiskers'
@@ -250,7 +250,7 @@ env  = Environment(
     'ClassifyNoHairs': Builder(action = "test_classify_3 $SOURCE $TARGET $FACEHINT -n $WHISKER_COUNT",
                         suffix = { '.measurements' : "[autotraj].measurements" },
                         src_suffix = ".measurements"
-                       ),    
+                       ),
     'Summary': Builder(action = "summary.py $SOURCE $TARGET --px2mm=$PX2MM",
                        src_suffix = ".measurements",
                        suffix = ".png"),
@@ -281,10 +281,10 @@ env['WHISKER_COUNT'] = -1  # a count <1 tries to measure the count for each movi
                            # a count >= 1 will identify that many whiskers in each movie
 env['FOLLICLE_THRESH'] = 0 # all the follicle positions fall on one side of this line
                            # whether the line lies in `x` or `y` depends on the
-                           # face orientation which is infered 
+                           # face orientation which is infered
 
 env.AddMethod( pipeline_standard, "Pipeline" )
-env.AddMethod( pipeline_curated, "CuratedPipeline" ) 
+env.AddMethod( pipeline_curated, "CuratedPipeline" )
 env.AddMethod( pipeline_oconnor, "OConnorPipeline" )
 
 Export('env')
