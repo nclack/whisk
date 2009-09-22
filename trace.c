@@ -141,6 +141,19 @@ void Free_Whisker_Seg_Vec ( Whisker_Seg *wv, int n )
   free(wv);
 }
 
+static int _cmp_whisker_seg_uid(void *a, void *b)
+{ Whisker_Seg *wa =(Whisker_Seg*) a,
+              *wb =(Whisker_Seg*) b;
+  int d = wa->time - wb->time;
+  return (d==0) ? (wa->id - wb->id) : d;
+}
+
+
+SHARED_EXPORT
+void Whisker_Seg_Sort_By_Id( Whisker_Seg *wv, int n )
+{ qsort( wv, n, sizeof(Whisker_Seg), _cmp_whisker_seg_uid );
+}
+
 SHARED_EXPORT
 void Estimate_Image_Shape_From_Segments( Whisker_Seg* wv, int n, int *width, int *height )
 { int w = 0,

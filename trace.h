@@ -69,6 +69,7 @@ typedef struct _Whisker_Seg       //
  SHARED_EXPORT  Whisker_Seg  *Make_Whisker_Seg                      ( int n );                                           
  SHARED_EXPORT  void          Free_Whisker_Seg                      ( Whisker_Seg *w );                                  
  SHARED_EXPORT  void          Free_Whisker_Seg_Vec                  ( Whisker_Seg *wv, int n );                          
+ SHARED_EXPORT  void          Whisker_Seg_Sort_By_Id                ( Whisker_Seg *wv, int n );
  SHARED_EXPORT  void          Estimate_Image_Shape_From_Segments    ( Whisker_Seg* wv, int n, int *width, int *height ); 
 
  SHARED_EXPORT  Array *get_line_detector_bank   (Range *off, Range *wid, Range *ang);
