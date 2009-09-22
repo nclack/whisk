@@ -40,6 +40,7 @@ test_max_filt_1
 test_max_filt_2
 test_max_filt_3
 test_measure_1
+test_measure_2
 test_merge_collisiontable_1
 test_merge_collisiontable_2
 test_merge_collisiontable_3

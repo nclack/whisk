@@ -141,7 +141,7 @@ void Free_Whisker_Seg_Vec ( Whisker_Seg *wv, int n )
   free(wv);
 }
 
-static int _cmp_whisker_seg_uid(void *a, void *b)
+int _cmp_whisker_seg_uid(const void *a, const void *b)
 { Whisker_Seg *wa =(Whisker_Seg*) a,
               *wb =(Whisker_Seg*) b;
   int d = wa->time - wb->time;

@@ -216,13 +216,14 @@ for t in tests:
 
 ## measure tests
 tests = ["TEST_MEASURE_1",
+         "TEST_MEASURE_2"
          ] 
 totestobj = lambda t: env.Object( 'measure_'+t.lower(), ['measure.c'], CPPDEFINES = t )
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                               'svd.c',
                                               'mat.c', 'poly.c',
-                                              'traj.c',
+                                              'traj.c', 'bar_io.c',
                                               'common.c',    'image_lib.c', 'contour_lib.c',
                                               'error.c',     'eval.c',      'level_set.c',
                                               'utilities.c', 'tiff_io.c',   'image_filters.c',
@@ -239,5 +240,5 @@ totestobj = lambda t: env.Object( 'bar_io_'+t.lower(), ['bar_io.c'], CPPDEFINES 
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'common.c',
-                                                 'error.c', 'compat.c',
+                                                 'error.c', 'compat.c'
                                                ] ) 

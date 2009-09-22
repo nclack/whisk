@@ -3,6 +3,7 @@
 #include "utilities.h"
 #include "trace.h"
 #include "whisker_io.h"
+#include "bar_io.h"
 #include "traj.h"
 #include <math.h>
 #include <string.h>
@@ -23,6 +24,9 @@
 //
 #define MEASURE_POLY_FIT_DEGREE  2
 #define MEASURE_POLY_END_PADDING 16
+
+#define MEASURE__NUM_FIELDS_FROM_MEASURE_SEGMENTS 8
+#define MEASURE__NUM_FIELDS_FROM_BAR 1
 
 #if 0
 #define DEBUG_MEASURE_POLYFIT_ERROR 
@@ -402,6 +406,75 @@ int main( int argc, char* argv[] )
   Free_Measurements_Table( table );
   Free_Whisker_Seg_Vec(wv,wvn);
 
+  return 0;
+}
+#endif
+
+#ifdef TEST_MEASURE_2
+char *Spec[] = {"[-h|--help]",
+                "|(",
+                "<source-measurements:string> <source-whiskers:string> <source-bar:string> <dest:string>",
+                "--radius_mm <double>",
+                "--px2mm     <double>",
+                ")",
+                NULL};
+int main( int argc, char* argv[] )
+{ Measurements *table;
+  Whisker_Seg *whiskers;
+  Bar *bars;
+  int nrows, nsegs, nbars;
+
+  Process_Arguments(argc,argv,Spec,0);
+
+  help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
+      "-----------------------------------------\n"
+      "Measure distance to stimulus object (bar)\n"
+      "-----------------------------------------\n"
+      "\n"
+      "Takes existing Measurements files and appends a column with the\n"
+      "computed segment-to-bar distance\n"
+      "\n"
+      "Arguments:\n"
+      "----------\n"
+      "<source-measurements>\n"
+      "\tInput Measurements table file.\n"
+      "<source-bar\n"
+      "\tInput bar tracking file (see whisk)\n"
+      "<source-whiskers>\n"
+      "\tInput whisker segments file (see whisk)\n"
+      "<dest>\n"
+      "\tOutput: Results will be saved here as a Measurements table.\n"
+      "<px2mm>\n"
+      "\tThe number of millimeters per pixel\n"
+      "<radius_mm>\n"
+      "\tThe approximate radius of the post in millimeters\n"
+      "\n" );
+
+  // Load source data
+  table = Measurements_Table_From_Filename( Get_String_Arg( "source-measurements" ), &nrows );
+  whiskers = Load_Whiskers( Get_String_Arg( "source-whiskers" ), NULL, &nsegs);
+  bars = Load_Bars_From_Filename( Get_String_Arg( "source-bars" ), &nbars);
+
+  // Sort to get correspondance between table and segments
+  Sort_Measurements_Table_Segment_UID(table,nrows);
+  Whisker_Seg_Sort_By_Id(whiskers, nsegs);
+  Bar_Sort_By_Time(bars,nbars);
+
+  // Append a column if neccessary
+  Measurements_Table_Append_Columns_In_Place( table, nrows,
+      MEASURE__NUM_FIELDS_FROM_MEASURE_SEGMENTS
+      + MEASURE__NUM_FIELDS_FROM_BAR
+      - table[0].n  );
+
+  // Compute
+
+  // Save
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
+
+  // Clean up
+  Free_Measurements_Table(table);
+  Free_Whisker_Seg_Vec( whiskers, nsegs );
+  free(bars);
   return 0;
 }
 #endif

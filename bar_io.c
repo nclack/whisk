@@ -25,7 +25,7 @@ inline Bar *Bar_Static_Cast( int time, float x, float y)
   return &b;
 }
 
-static int _cmp_sort_bars_by_time(void *a, void *b)
+int _cmp_sort_bars_by_time(const void *a, const void *b)
 { return ((Bar*)a)->time - ((Bar*)b)->time;
 }
 
