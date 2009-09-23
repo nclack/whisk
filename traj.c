@@ -28,6 +28,7 @@
 #endif
 
 // DEBUG OUTPUT
+
 #if 0
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
@@ -724,8 +725,12 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       debug("        fid     n\n");
       debug("last: %5d %5d\n",last->fid,nlast);
       debug("this: %5d %5d\n",this->fid,nthis);
-      debug("next: %5d    \n",next->fid);
-	    debug("row [%7d/%-7d]\n",next - sorted_table, n_rows);
+	  if( this->fid == 3999 ) debug("next: %d\nthis: %d\n",next-sorted_table,this-sorted_table);
+	  if(next - sorted_table < n_rows)
+		debug("next: %5d    \n",next->fid);
+	  else
+		debug("next: at end\n");
+	  debug("row [%7d/%-7d]\n",next - sorted_table, n_rows);
       debug("\n");
 #endif
 
@@ -743,10 +748,12 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       last = this;
       nlast = nthis;
       this = next;
-
-      fid = this->fid;
-      while( (next - sorted_table < n_rows) && next->fid == fid ) 
+	  
+	  if( this - sorted_table < n_rows )
+	  { fid = this->fid;
+        while( (next - sorted_table < n_rows) && (next->fid == fid) ) 
 		    next++;
+	  }
       nthis = next-this;
     }
   } // end context - get extents
