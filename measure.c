@@ -341,7 +341,7 @@ Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int
 
 static Bar **bar_build_index( Bar *bars, int nbars, int maxfid )
 { Bar *row = bars + nbars,
-      **idx = Guarded_Malloc( sizeof(Bar*)*maxfid, "bar_build_index" );
+      **idx = Guarded_Malloc( sizeof(Bar*)*(maxfid+1), "bar_build_index" );
   while(row-- > bars)
     idx[row->time] = row;
   return idx;
