@@ -267,12 +267,11 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
         real *pv = &vel;
         vel = -DBL_MAX; //log
         for(k=0;k<nprev;k++)
-          if( prev[k].state == -1 )
-            bu( real, pv, 
-                Eval_Velocity_Likelihood_Log2( vel_dists, 
-                                               prev[k].data,
-                                               obs[j].data,
-                                               0 ));
+          bu( real, pv,
+              Eval_Velocity_Likelihood_Log2( vel_dists,
+                                              prev[k].data,
+                                              obs[j].data,
+                                              0 ));
 
         shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
 
