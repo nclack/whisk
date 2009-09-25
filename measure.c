@@ -253,7 +253,7 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey, ch
       polymul( yp, MEASURE_POLY_FIT_DEGREE+1,
               xpp, MEASURE_POLY_FIT_DEGREE+1,
               mul2 );
-      polyadd( mul1, 2*MEASURE_POLY_FIT_DEGREE,
+      polysub( mul1, 2*MEASURE_POLY_FIT_DEGREE,
                mul2, 2*MEASURE_POLY_FIT_DEGREE,
                num );
   

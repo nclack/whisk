@@ -13,7 +13,9 @@ inline double polyval             ( double *p, int degree, double x);
 inline int    polymul_nelem_dest  ( int na, int nb);
 inline void   polymul             ( double *a, int na, double *b, int nb, double *dest );
 inline void   polyadd_ip_left     ( double *a, int na, double *b, int nb );
+inline void   polysub_ip_left     ( double *a, int na, double *b, int nb );
 inline void   polyadd             ( double *a, int na, double *b, int nb, double *dest );
+inline void   polysub             ( double *a, int na, double *b, int nb, double *dest );
 inline void   polyder_ip          ( double *a, int na, int times);
 
 void    Vandermonde_Build             ( double *x, int n, int degree, double *V );

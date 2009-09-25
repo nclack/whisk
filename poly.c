@@ -66,6 +66,15 @@ inline void polyadd_ip_left(double *a, int na, double *b, int nb )
     a[nb] += b[nb];
 }
 
+inline void polysub_ip_left(double *a, int na, double *b, int nb )
+{ 
+#ifdef DEBUG_POLYADD_IP
+  assert(na>nb);
+#endif
+  while( nb-- )
+    a[nb] -= b[nb];
+}
+
 inline void polyadd ( double *a, int na, double *b, int nb, double *dest )
 { 
   while( na > nb )
@@ -77,6 +86,16 @@ inline void polyadd ( double *a, int na, double *b, int nb, double *dest )
     dest[na] = a[na] + b[na];
 }
 
+inline void polysub ( double *a, int na, double *b, int nb, double *dest )
+{ 
+  while( na > nb )
+    dest[--na] = a[na];
+  while( nb > na )
+    dest[--nb] = b[nb];
+  assert(na==nb);
+  while( na-- )
+    dest[na] = a[na] - b[na];
+}
 //
 // Derivative of polynomial
 //
