@@ -576,7 +576,6 @@ FidWidIndex *fidwid_build_index( Measurements *table, int nrows, Whisker_Seg *wv
   return idx;
 }
 
-
 char *Spec[] = {"[-h|--help]",
                 "|(",
                 "   <source-measurements:string> <source-whiskers:string> <source-bars:string> <dest:string>",
