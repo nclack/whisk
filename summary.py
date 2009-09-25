@@ -447,27 +447,29 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
 
   ioff()
   def getbars(state):
-    time,mask = table.get_time_and_mask(state)
-    dt = diff(time)
+    t,mask = table.get_time_and_mask(state)
+    dt = diff(t)
     idx, = where(dt>1)
-    return [ (time[i], dt[i] ) for i in idx ]
+    return [ (t[i], dt[i] ) for i in idx ]
   incrange = lambda a,b: range(a,b+1)
   states = incrange(*table.get_state_range())
   cmap = cm.hsv
   N = float(len(states))
-  
-  time = array(map( lambda i: table._measurements[i].fid       , xrange(table._nrows) ))
-  angl = array(map( lambda i: table._measurements[i].data[2]   , xrange(table._nrows) ))
-  curv = array(map( lambda i: table._measurements[i].data[3]   , xrange(table._nrows) ))
-  smask= array(map( lambda i: table._measurements[i].state >= 0, xrange(table._nrows) ))
-  mid = lambda v: (v.max() + v.min())/2.0
-  if smask.any():
-    th0 = round( mid(angl[smask]) /45.0)*45
-  else:
-    th0 = round( mid(angl)/45.0 )*45
+ 
+  data = table.asarray()
+  time = data[:,1]
+  angl = data[:,5]
+  curv = data[:,6]
+  smask= data[:,0] > -1
+  if not smask.any():
+    smask[:] = 1.0
+  th0 = round( median(angl)/45.0 )*45
   vmin1,vmax1 = th0-70,th0+70
 
-
+  #
+  # bars for blank areas
+  # scatter plots
+  #
   ax = subplot(211)
   plot   ( time,
            angl,
@@ -482,21 +484,20 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
                     )
   xlabel('Time (frames)')
   ylabel('Angle at root (deg)')
-  ax = subplot(211)
   
   ax = subplot(212)
   xlabel('Time (frames)')
-  data = table.get_shape_table()
-  lim = max( data[:,3].max(), - data[:,3].max() )
+  lim = max( abs(curv[smask].max()), abs(curv[smask].min()) )
   if px2mm is None:
     ylabel('Mean Curvature (1/px)')
     px2mm = 1.0
     vmin2,vmax2 = -lim,lim
   else:
     ylabel('Mean Curvature (1/mm)')
-    vmin2,vmax2 = -lim/px2mm,lim/px2mm
+    lim = max( round( lim/px2mm/0.1 ) * 0.1, 0.1 )
+    vmin2,vmax2 = -lim,lim
   plot  ( time,
-          curv/px2mm, #data[:,3]/px2mm,
+          curv/px2mm,
           **defaults['scatter'] )
   for i,s in enumerate(states):
     ax.broken_barh( getbars(s), 
@@ -506,18 +507,19 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
                     linewidth = 0.1,
                     alpha = 1.0/N 
                     )
-  #ax.broken_barh( getbars(0), (vmin2,vmax2-vmin2) ,edgecolors=[(0,0,0,0)],facecolors=[0,0,0,0.5] )
-
-  #for tid in table.iter_state():
+  
+  #
+  # lines
+  #
   for i,tid in enumerate(states):
-    time,mask = table.get_time_and_mask(tid)
-    data = table.get_shape_data(tid)
+    t,mask = table.get_time_and_mask(tid)
+    sh = table.get_shape_data(tid)
     defaults['lines']['color'] = cmap(i/N)
     subplot(211)
-    plot(time,data[:,2], **defaults['lines'] )
+    plot(t,sh[:,2], **defaults['lines'] )
     subplot(212)
-    plot(time,data[:,3]/px2mm, **defaults['lines'] )
-
+    plot(t,sh[:,3]/px2mm, **defaults['lines'] )
+  
   try:
     ax = subplot(211)
     axis((0,time.max(),vmin1,vmax1))
