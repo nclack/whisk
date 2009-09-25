@@ -250,7 +250,7 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
         continue;             //      this frame
     
       match = find_match( distA, rowA, minstateA, distB, markB, nframeB, minstateB, -5000.0 );
-      if( match && ( map[ rowA->state ] != match->state ) ) 
+      if( match && ( map[ rowA->state-minstateA ] != match->state-minstateB ) ) 
       { frames = request_storage( frames,
                                  &frames_size,
                                   sizeof(int),
@@ -260,9 +260,8 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
         last = cur;
                                   
 #ifdef DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
-        if(match->state != minstateB )
           debug("Frame %5d. Mismatch\tident:(%3d, %-3d) wid:(%3d, %-3d)\n", cur, 
-              map[rowA->state], 
+              map[rowA->state-minstateA]+minstateB, 
               match->state,
               rowA->wid,
               match->wid);
@@ -280,6 +279,7 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
 }
 
 #ifdef TEST_REPORT_1
+//produces a list of mismatched frames
 char* Spec[] = {"<measurements1:string> <measurements2:string>",NULL};
 int main(int argc, char* argv[])
 { Measurements *A, *B;
@@ -295,7 +295,7 @@ int main(int argc, char* argv[])
   { debug("frames vec at %p\n"
           "         size %d\n",frames, nframes);
     while(nframes--)
-      debug("%5d\n",nframes);
+      debug("%5d\n",frames[nframes]);
   }
 
   Free_Measurements_Table(A);
@@ -305,7 +305,7 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef TEST_REPORT_COMPARE_TRAJECTORIES
-
+//produces a hitogram of #mismatches/frame
 char* Spec[] = {"<measurements1:string> <measurements2:string>",NULL};
 int main(int argc, char* argv[])
 { Measurements *A, *B;
@@ -474,12 +474,12 @@ int main(int argc, char* argv[])
         continue;
     
       match = find_match( distA, rowA, minstateA, distB, markB, nframeB, minstateB, -5000.0 );
-      if( match && ( map[ rowA->state ] != match->state ) ) 
+      if( match && ( map[ rowA->state-minstateA ] != match->state-minstateB ) ) 
       { mismatch++;
 #ifdef DEBUG_REPORT_1
         if(match->state != -1 )
           debug("Frame %5d. Mismatch\tident:(%3d, %-3d) wid:(%3d, %-3d)\n", cur, 
-              map[rowA->state], 
+              map[rowA->state-minstateA]+minstateB, 
               match->state,
               rowA->wid,
               match->wid);
