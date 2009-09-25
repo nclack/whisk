@@ -69,7 +69,7 @@ typedef real* (*Tpf_Alloc_Emissions)                                   ( int nwh
 typedef real* (*Tpf_Request_Static_Resizable_Emissions)                ( int nwhisk, int nobs );
 typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_Log2)            ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
 typedef void  (*Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2)      ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
-typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2)  ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements** history, int nhist, Distributions *shp_dists, Distributions *vel_dists );
+typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2)  ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements *prev, int nprev, Measurements** history, int nhist, Distributions *shp_dists, Distributions *vel_dists );
 typedef int   (*Tpf_State_Decode)                                      ( int state );
 
 int* _static_range( int n )
@@ -99,23 +99,23 @@ Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2  pf_Compute_Emissions_For_T
 Tpf_State_Decode                                      pf_State_Decode                                      =  LRModel_State_Decode;
 #endif
 
-#ifdef  TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
-#include "hmm-reclassify-lrmodel-w-deletions.h"
-Tpf_State_Count                                       pf_State_Count                                       =  LRDelModel_State_Count;
-Tpf_Alloc_Transitions                                 pf_Alloc_Transitions                                 =  LRDelModel_Alloc_Transitions;
-Tpf_Init_Uniform_Transitions                          pf_Init_Uniform_Transitions                          =  LRDelModel_Init_Uniform_Transitions;
-Tpf_Estimate_Transitions                              pf_Estimate_Transitions                              =  LRDelModel_Estimate_Transitions;
-Tpf_Log2_Transitions                                  pf_Log2_Transitions                                  =  LRDelModel_Log2_Transitions;
-Tpf_Alloc_Starts                                      pf_Alloc_Starts                                      =  LRDelModel_Alloc_Starts;
-Tpf_Compute_Starts_For_Two_Classes_Log2               pf_Compute_Starts_For_Two_Classes_Log2               =  LRDelModel_Compute_Starts_For_Two_Classes_Log2;
-Tpf_Compute_Starts_For_Distinct_Whiskers_Log2         pf_Compute_Starts_For_Distinct_Whiskers_Log2         =  LRDelModel_Compute_Starts_For_Distinct_Whiskers_Log2;
-Tpf_Alloc_Emissions                                   pf_Alloc_Emissions                                   =  LRDelModel_Alloc_Emissions;
-Tpf_Request_Static_Resizable_Emissions                pf_Request_Static_Resizable_Emissions                =  LRDelModel_Request_Static_Resizable_Emissions;
-Tpf_Compute_Emissions_For_Two_Classes_Log2            pf_Compute_Emissions_For_Two_Classes_Log2            =  LRDelModel_Compute_Emissions_For_Two_Classes_Log2;
-Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2      pf_Compute_Emissions_For_Distinct_Whiskers_Log2      =  LRDelModel_Compute_Emissions_For_Distinct_Whiskers_Log2;
-Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2  pf_Compute_Emissions_For_Two_Classes_W_History_Log2  =  LRDelModel_Compute_Emissions_For_Two_Classes_W_History_Log2;
-Tpf_State_Decode                                      pf_State_Decode                                      =  LRDelModel_State_Decode;
-#endif
+//#ifdef  TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
+//#include "hmm-reclassify-lrmodel-w-deletions.h"
+//Tpf_State_Count                                       pf_State_Count                                       =  LRDelModel_State_Count;
+//Tpf_Alloc_Transitions                                 pf_Alloc_Transitions                                 =  LRDelModel_Alloc_Transitions;
+//Tpf_Init_Uniform_Transitions                          pf_Init_Uniform_Transitions                          =  LRDelModel_Init_Uniform_Transitions;
+//Tpf_Estimate_Transitions                              pf_Estimate_Transitions                              =  LRDelModel_Estimate_Transitions;
+//Tpf_Log2_Transitions                                  pf_Log2_Transitions                                  =  LRDelModel_Log2_Transitions;
+//Tpf_Alloc_Starts                                      pf_Alloc_Starts                                      =  LRDelModel_Alloc_Starts;
+//Tpf_Compute_Starts_For_Two_Classes_Log2               pf_Compute_Starts_For_Two_Classes_Log2               =  LRDelModel_Compute_Starts_For_Two_Classes_Log2;
+//Tpf_Compute_Starts_For_Distinct_Whiskers_Log2         pf_Compute_Starts_For_Distinct_Whiskers_Log2         =  LRDelModel_Compute_Starts_For_Distinct_Whiskers_Log2;
+//Tpf_Alloc_Emissions                                   pf_Alloc_Emissions                                   =  LRDelModel_Alloc_Emissions;
+//Tpf_Request_Static_Resizable_Emissions                pf_Request_Static_Resizable_Emissions                =  LRDelModel_Request_Static_Resizable_Emissions;
+//Tpf_Compute_Emissions_For_Two_Classes_Log2            pf_Compute_Emissions_For_Two_Classes_Log2            =  LRDelModel_Compute_Emissions_For_Two_Classes_Log2;
+//Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2      pf_Compute_Emissions_For_Distinct_Whiskers_Log2      =  LRDelModel_Compute_Emissions_For_Distinct_Whiskers_Log2;
+//Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2  pf_Compute_Emissions_For_Two_Classes_W_History_Log2  =  LRDelModel_Compute_Emissions_For_Two_Classes_W_History_Log2;
+//Tpf_State_Decode                                      pf_State_Decode                                      =  LRDelModel_State_Decode;
+//#endif
 
 #ifdef TEST_HMM_RECLASSIFY_NO_DELTAS
 char *Spec[] = {"[-h|--help] | (<source:string> <dest:string> [-n <int>])",NULL};
@@ -408,7 +408,7 @@ int main(int argc, char*argv[])
   Distributions_Apply_Log2( vel_dists );
 
   //
-  // Process frames independantly
+  // Process frames 
   //
   Sort_Measurements_Table_Time_Face( table, nrows );
   { real *E = (*pf_Request_Static_Resizable_Emissions)( 
@@ -416,7 +416,9 @@ int main(int argc, char*argv[])
                   (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
     Measurements *row,
+                 *prev = NULL,
                  **last = Guarded_Malloc( sizeof(Measurements*)*nwhisk, "alloc array for last identified whiskers" );
+    int nprev=0;
     memset(last,0, sizeof(Measurements*)*nwhisk );
     row = table;
     while( row < table+nrows )
@@ -435,7 +437,6 @@ int main(int argc, char*argv[])
       (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, bookmark, shp_dists );
 
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
-      //(*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
       { int i;
         debug("Last\n");
@@ -444,7 +445,16 @@ int main(int argc, char*argv[])
         debug("\n");
       }
 #endif
-      (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E, nwhisk, bookmark, nobs, last, nwhisk, shp_dists, vel_dists );
+      if(!prev)
+        (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
+      else
+        (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,            
+                                                                nwhisk, 
+                                                                bookmark, nobs, 
+                                                                prev, nprev,
+                                                                last, nwhisk, 
+                                                                shp_dists, 
+                                                                vel_dists );
 
       { int N = (*pf_State_Count)(nwhisk);
         ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
@@ -479,6 +489,8 @@ int main(int argc, char*argv[])
         } // end commit viterbi result
         Free_Viterbi_Result(result);  // FIXME: thrashing the heap
       } // end viterbi solution
+      prev = bookmark;
+      nprev = nobs;
 #ifdef DEBUG_HMM_RECLASSIFY
       assert(row!=bookmark);
 #endif

@@ -8,11 +8,9 @@ Vague Objectives
 Current
 =======
 [ ] [!! ] classify.c - better autotraj for o'connor - allow for range of whisker count
-<<<<<<< HEAD:TODO
-=======
 [ ] [!!!] probability of a transition for non-corresponding types
 [ ] [!! ] how to handle whiskers entering/leaving the field
->>>>>>> updated TODO:TODO
+[ ] [   ] update or remove hmm-lrdel-time with better non-corresponding velcity est.
 
 Tabled
 ======

@@ -14,7 +14,7 @@ real *LRModel_Alloc_Emissions                                   ( int nwhisk, in
 real *LRModel_Request_Static_Resizable_Emissions                ( int nwhisk, int nobs );
 void  LRModel_Compute_Emissions_For_Two_Classes_Log2            ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
 void  LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2      ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
-void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2  ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements** history, int nhist, Distributions *shp_dists, Distributions *vel_dists );
+void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2  ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements *prev, int nprev, Measurements** history, int nhist, Distributions *shp_dists, Distributions *vel_dists );
 int   LRModel_State_Decode                                      ( int state );
 
 #endif

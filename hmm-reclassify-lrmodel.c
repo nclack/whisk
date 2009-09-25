@@ -225,6 +225,8 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
     int nwhisk, 
     Measurements *obs, 
     int nobs, 
+    Measurements *prev,
+    int nprev,
     Measurements** history, 
     int nhist, 
     Distributions *shp_dists,
@@ -232,31 +234,12 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
 { int N = 2 * nwhisk + 1;
   int i,j;
   real max_logp_delta = -FLT_MAX;
-  Measurements *prev;
+  Measurements *p;
 
-  // over all observables and all states
-  // compute max delta probability.
-  // ...this will be used as the default delta prob when a
-  //    previous observation for a state is missing
-  { int any = 0;
-    for (i=0; i<N; i++ )
-    { double logp_delta;
-      int st = LRModel_State_Decode(i);
-      if( (st>-1) && (prev = history[ st ]) )
-      { any = 1;
-        for(j=0;j<nobs;j++)
-        { logp_delta = Eval_Velocity_Likelihood_Log2( vel_dists,
-                                                      prev->data,
-                                                      obs[j].data,
-                                                      i&1 );
-          max_logp_delta = MAX( max_logp_delta, logp_delta );
-        }
-      }
-    }
-    if( !any )
-      max_logp_delta = 0;
-  }
-
+  //
+  // XXX: If there's a missing prev than perhaps
+  //      bail on the velocity part
+  //
 #ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
   debug("  j st   shp      vel\n"
         " -- -- -------  ------\n");
@@ -266,11 +249,11 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
     real shp,vel;
     int state = i&1;
     int st = LRModel_State_Decode(i); 
-    if( st > -1 && (prev = history[ st ]) ) 
+    if( st > -1 && (p = history[ st ]) ) 
     { for(j=0;j<nobs;j++)
       { shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
         vel = Eval_Velocity_Likelihood_Log2( vel_dists,
-                                              prev->data,
+                                              p->data,
                                               obs[j].data,
                                               state );
         row[j] = shp + vel;
@@ -280,8 +263,19 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
       }
     } else // missing a previous
     { for(j=0;j<nobs;j++)
-      { shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
-        vel = max_logp_delta;
+      { int k;
+        real *pv = &vel;
+        vel = -DBL_MAX; //log
+        for(k=0;k<nprev;k++)
+          if( prev[k].state == -1 )
+            bu( real, pv, 
+                Eval_Velocity_Likelihood_Log2( vel_dists, 
+                                               prev[k].data,
+                                               obs[j].data,
+                                               0 ));
+
+        shp = Eval_Likelihood_Log2( shp_dists, obs[j].data, state );
+
         row[j] = shp + vel;
 #ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
         debug(" %2d %2d % 5.3f % 5.3f * \n",j,st,shp,vel);
