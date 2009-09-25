@@ -791,6 +791,66 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       }
     }
   }
+  // Compute non-corresponding velocity distribution
+  //     for following sort order must be by Time
+  //     (enforced above)
+  { Measurements *last = sorted_table,
+                  *this = sorted_table,
+                  *next = NULL;
+    int nlast, nthis;
+    int fid = last->fid;
+    double *hist = d->data; //state == minstate
+
+    while( (this - sorted_table < n_rows) && (this->fid == fid) ) 
+      ++this;
+    nlast = this-last;
+    next = this;
+
+    while( this - sorted_table < n_rows )
+    { fid = this->fid;
+      while( (next - sorted_table < n_rows) && (next->fid == fid) ) 
+        next++;
+      nthis = next-this;
+#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
+      debug("        fid     n\n");
+      debug("last: %5d %5d\n",last->fid,nlast);
+      debug("this: %5d %5d\n",this->fid,nthis);
+      if(next - sorted_table < n_rows)
+        debug("next: %5d    \n",next->fid);
+      else
+        debug("next: at end\n");
+      debug("row [%7d/%-7d]\n",next - sorted_table, n_rows);
+      debug("\n");
+#endif
+
+      for(i=0; i<nlast; i++)
+      { double *ldata = last[i].data;
+        for(j=0; j<nthis; j++)  
+        { double *tdata = this[j].data;
+          for(k=0; k<n; k++)
+          { double diff = _diff( tdata[k], ldata[k] ); 
+            int ibin = (int) floor(  (diff - mn[k]) / delta[k]  );
+            hist[ k*measure_stride + ibin  ] ++;
+#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
+            if(  !( ibin >= 0 && ibin < n_bins ) )
+            { debug("   ibin:  %d\n",ibin);             
+              debug("   nbins: %d\n",n_bins);           
+              debug("    data[%d]: %f\n", j,  diff    );
+              debug("      mn[%d]: %f\n", j,    mn[k] );
+              debug("      mx[%d]: %f\n", j,    mx[k] );
+              debug("   delta[%d]: %f\n", j, delta[k] );
+            }
+            assert( ibin >= 0 && ibin < n_bins );
+#endif
+          }
+        }
+      }
+      last = this;
+      nlast = nthis;
+      this = next;
+    
+    }
+  } // end context - get extents
 
   return d;
 }
