@@ -7,14 +7,17 @@ Vague Objectives
 
 Current
 =======
-[x] [!!!] measure.c  - utility to update measurements table with bar measurement
-[ ] [!!!] - incorporate occlusion related measurements into pipeline
+[ ] [!! ] classify.c - better autotraj for o'connor - allow for range of whisker count
+<<<<<<< HEAD:TODO
+=======
+[ ] [!!!] probability of a transition for non-corresponding types
+[ ] [!! ] how to handle whiskers entering/leaving the field
+>>>>>>> updated TODO:TODO
 
-Table
-=====
+Tabled
+======
 [ ] [   ] poly.c     - polynomial stack object for stack based polynomial arithmetic
 [ ] [   ] mat.c      - matrix stack object for matrix arithmetic
-[ ] [!! ] classify.c - better autotraj for o'connor - allow for range of whisker count
 
 User Interface
 ==============
@@ -25,8 +28,19 @@ User Interface
 [ ] [   ] - drag-and-drop movie
 [ ] [   ] - drag-and-drop segments
 [ ] [   ] - drag-and-drop trajectories
+[ ] [   ] - drag-and-drop spikes
+[ ] [   ] - audio for signals
 [ ] [   ] - timeline view
 
 Refactor
 ========
 [ ] [   ] - bar --> stimulus
+[ ] [   ] - viterbi.[ch] to hmm.[ch]
+[ ] [   ] - bu/bd to interpretable names
+[ ] [   ] - add vector max and vector argmax in common.h
+            replace existing loops
+
+Done
+====
+[x] [!!!] measure.c  - utility to update measurements table with bar measurement
+[x] [!!!] - incorporate occlusion related measurements into pipeline
