@@ -111,36 +111,12 @@ def pipeline_standard(env, movie):
     ),
     env.Whisk,
     (env.Precious,),
-#    lambda j: change_ext(j,'.whiskers'),
     env.Measure,
     env.Classify,
-    ( env.GreyAreaSolver,
-      env.Summary
-    ) ,
-    ( env.HmmLRSolver,
-      ( env.GreyAreaSolver,
-        ( env.MeasurementsAsTrajectories,),
-        env.Summary
-      ) ,
-      ( env.MeasurementsAsTrajectories,),
-      env.Summary
-    ),
     ( env.HmmLRTimeSolver,
-      ( env.GreyAreaSolver,
-        ( env.MeasurementsAsTrajectories,),
-        ( env.MeasurementsAsMatlab,),
-        env.Summary
-      ) ,
       ( env.MeasurementsAsTrajectories,),
       env.Summary
     ),
-#   ( env.HmmLRDelTimeSolver,
-#     ( env.GreyAreaSolver,
-#       ( env.MeasurementsAsTrajectories,),
-#       env.Summary
-#     ) ,
-#     ( env.MeasurementsAsTrajectories,),
-#     env.Summary ),
     env.Summary
   ]
 
