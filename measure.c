@@ -300,17 +300,22 @@ void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey, ch
 }
 
 double Whisker_Seg_Compute_Distance_To_Bar( Whisker_Seg *w, Bar *bar )
-{ // Simple approach - find closest sampled point
-  int n = w->len;
-  double d = DBL_MAX,
-        *pd = &d,
-         x  = bar->x,
-         y  = bar->y;
-  float *wx = w->x,
-        *wy = w->y;
-  while(n--)
-    bd( double, pd, hypot(wx[n]-x,wy[n]-y) );
-  return d;
+{ if(bar)
+  {
+    // Simple approach - find closest sampled point
+    int n = w->len;
+    double d = DBL_MAX,
+          *pd = &d,
+           x  = bar->x,
+           y  = bar->y;
+    float *wx = w->x,
+          *wy = w->y;
+    while(n--)
+      bd( double, pd, hypot(wx[n]-x,wy[n]-y) );
+    return d;
+  } else
+  { return 0.0;
+  }
 
   // More complicated but perhaps more accurate, is to do a polynomial fit
   // [u(t)=x(t),y(t)] and find the roots of u' . (u-b) == 0  where b is the bar
@@ -342,6 +347,7 @@ Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int
 static Bar **bar_build_index( Bar *bars, int nbars, int maxfid )
 { Bar *row = bars + nbars,
       **idx = Guarded_Malloc( sizeof(Bar*)*(maxfid+1), "bar_build_index" );
+  memset(idx,0,sizeof(Bar*)*(maxfid+1));
   while(row-- > bars)
     idx[row->time] = row;
   return idx;
