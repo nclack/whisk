@@ -519,7 +519,7 @@ def main( filename,
         elif event.key == pygame.K_RIGHTBRACKET:
           And = lambda a,b: a and b
           none_missing = lambda fid: reduce(And, 
-                                            map(lambda t: t.has_key(fid),
+                                            map(lambda t: t.has_key(fid) and whiskers[fid].has_key(t[fid]),
                                                 trajectories.values() ))
           fid = im.tell()
           while none_missing(fid):
@@ -529,7 +529,7 @@ def main( filename,
         elif event.key == pygame.K_LEFTBRACKET:
           And = lambda a,b: a and b
           none_missing = lambda fid: reduce(And, 
-                                            map(lambda t: t.has_key(fid),
+                                            map(lambda t: t.has_key(fid) and whiskers[fid].has_key(t[fid]),
                                                 trajectories.values() ))
           fid = im.tell()
           while none_missing(fid):
