@@ -515,7 +515,27 @@ def main( filename,
             pass
           bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode)
           #save_state( whiskers_file_name, whiskers, trajectories ); # <-- autosave 
-                                                                      
+
+        elif event.key == pygame.K_RIGHTBRACKET:
+          And = lambda a,b: a and b
+          none_missing = lambda fid: reduce(And, 
+                                            map(lambda t: t.has_key(fid),
+                                                trajectories.values() ))
+          fid = im.tell()
+          while none_missing(fid):
+            fid += 1
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=min(fid,N-1), mode=mode)
+
+        elif event.key == pygame.K_LEFTBRACKET:
+          And = lambda a,b: a and b
+          none_missing = lambda fid: reduce(And, 
+                                            map(lambda t: t.has_key(fid),
+                                                trajectories.values() ))
+          fid = im.tell()
+          while none_missing(fid):
+            fid -= 1
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=max(fid,0), mode=mode)
+
     textsurf = font.render( "frame: %d/%d"%(im.tell(),N-1),
                             1, (255,255,255) )
     rect = textsurf.get_rect().move(10,10)
