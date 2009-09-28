@@ -494,7 +494,7 @@ def plot_summary_measurements_table(table, px2mm=None, options={}, doshow=1):
     vmin2,vmax2 = -lim,lim
   else:
     ylabel('Mean Curvature (1/mm)')
-    lim = max( round( lim/px2mm/0.1 ) * 0.1, 0.1 )
+    lim = max( ceil( lim/px2mm/0.1 ) * 0.1, 0.1 )
     vmin2,vmax2 = -lim,lim
   plot  ( time,
           curv/px2mm,
