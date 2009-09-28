@@ -697,9 +697,13 @@ unwanted changes.  """
                           default = "",
                           help    = "Label to append to prefix when guessing data file name.  Set to empty quotes for no label. [default: nothing]");
     options, args = parser.parse_args()
-    if len(args) == 0:
+
+    # figure out which file is which
+    files = dict( [(os.path.splitext(f)[-1],f) for f in args] )
+    movie_file = files.get('.seq',files.get('.tif',None))
+    if movie_file is None:
       parser.error("Path to movie file is required.");
-    
+
     # The prefix_label arg will only be used if not "" and no specific prefix is supplied (len(args)==1)
     if len(args) in [0,1]:
       if options.prefix_label:
@@ -709,10 +713,9 @@ unwanted changes.  """
       else:
         whiskers_file_name = os.path.splitext( args[-1] )[0]
     else:
-      whiskers_file_name = args[1:]
-     
-    #whiskerdata.start_autosave()
-    whiskers = main(args[0],
+      whiskers_file_name = files.values()
+
+    whiskers = main(movie_file,
                     whiskers_file_name, 
                     **options.__dict__)
   except SystemExit:

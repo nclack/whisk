@@ -74,8 +74,9 @@ def __save_state(precursor_or_names, whiskers ,trajectories):
   else:
     raise TypeError(" precursor_or_names must be string or iterable ")
 
-  for e in names.iterkeys():
-    savers[e](names[e],objs[e]) 
+  do_nothing = lambda a,b: None
+  for e,n in names.iteritems():
+    savers.get(e,do_nothing)(n,objs.get(e)) 
 
 def save_state( precursor_or_names, whiskers, trajectories ):
   print "save state: "+str(precursor_or_names)
