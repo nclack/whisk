@@ -358,11 +358,14 @@ Measurements *Whisker_Segments_Measure_With_Bar( Whisker_Seg *wv, int wvn, Bar *
               + MEASURE__NUM_FIELDS_FROM_BAR ;
   int maxfid = 0,
      *pmaxfid = &maxfid,
-      i = wvn;
+      i = nbars;
 
   while(i--)
+    bu( int, pmaxfid, bars[i].time );
+  i = wvn;
+  while(i--)
     bu( int, pmaxfid, wv[i].time );
-
+  
   { Bar **bindex = bar_build_index( bars, nbars, maxfid );
     Measurements *table = Alloc_Measurements_Table( wvn, ncol );
     while(wvn--)
