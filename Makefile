@@ -1,16 +1,19 @@
 CC = gcc
 LDFLAGS = -lm #-lSaturn
 CFLAGS = -g -O3 #-ftree-vectorize #-Wall  #-finstrument-functions
+LIBTOOL_SHARED = libtool -dynamic
 pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contour_lib.o\
 					 water_shed.o
 cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 match.o bar.o image_adapt.o error.o adjust_scan_bias.o\
 					 seed.o whisker_io.o whisker_io_whisker1.o whisker_io_whiskbin1.o\
-					 whisker_io_whiskold.o viterbi.o traj.o compat.o merge.o
+					 whisker_io_whiskold.o viterbi.o traj.o compat.o merge.o\
+					 svd.o poly.o mat.o\
+					 bar_io.o
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
 APPS  = whisk whisker_convert
-LIBS  = libwhisk.so
+LIBS  = libwhisk.dylib libtraj.dylib
 
 all: checkos $(APPS) $(LIBS) python #$(TESTS)
 
@@ -38,31 +41,15 @@ whisker_io_main.o: whisker_io.c
 whisker_convert: whisker_io_main.o $(filter-out whisker_io.o,$(modules)) $(modules:.o=.h)
 	$(CC) $(LDFLAGS) $(CFLAGS) $+ -o $@
 
-libwhisk.so: $(modules)
-ifneq ($(OS), Windows_NT)
-	@echo
-	@echo    ~~~ Building $@
-	@echo
-	libtool -dynamic -o $@ $+ -lc $(LDFLAGS)
-else
-	@echo
-	@echo    ~~~ Windows detected.  Building $(@:.so=.dll)
-	@echo
-	$(CC) -shared $(CFLAGS) -o $(@:.so=.dll) $+ $(LDFLAGS)  
-endif
+libwhisk.dylib: $(modules)
+	$(LIBTOOL_SHARED) -o $@ $+ -lc $(LDFLAGS)
 
-python: $(LIBS) trace.py
-ifneq ($(OS), Windows_NT)
+libtraj.dylib: traj.o common.o error.o utilities.o viterbi.o report.o
+	$(LIBTOOL_SHARED) -o $@ $+ -lc $(LDFLAGS)
+
+python: $(LIBS) trace.py traj.py
 	$(CP) $+ ./ui/whiskerdata
 	$(CP) $+ ./ui
-	make -C ./ui/genetiff
-else
-	$(CP) libwhisk.dll ui\whiskerdata 
-	$(CP) trace.py ui\whiskerdata
-	$(CP) libwhisk.dll ui
-	$(CP) trace.py ui
-	make -C ui\genetiff
-endif
 
 awk: $(pmodules:.o=.toawk)
 
@@ -74,6 +61,9 @@ awk: $(pmodules:.o=.toawk)
 	$(CC) $(CFLAGS) -c $*.c
 
 $(cmodules): $(cmodules:.o=.h)
+
+test_measure_1: $(modules)
+	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_MEASURE_1 $+ -o $@
 
 test_whisker_io: test_whisker_io.c $(modules) 
 
@@ -122,7 +112,9 @@ clean: checkos
 	-$(RM) ./ui/whiskerdata/*.so
 	-$(RM) ./ui/*.so
 	-$(RM) ./ui/whiskerdata/trace.py
+	-$(RM) ./ui/whiskerdata/traj.py
 	-$(RM) ./ui/trace.py
+	-$(RM) ./ui/traj.py
 	-$(RM) *.dll
 	-$(RM) *.exe
 	-$(RM) *.pyc
