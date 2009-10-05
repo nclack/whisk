@@ -452,10 +452,10 @@ void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y,
 
 #ifdef TEST_MEASURE_1
 char *Spec[] = {"[-h|--help]",
-                "|( <whiskers:string> [<bar:string>] <dest:string>",
-                "   --face ( <x:int> <y:int> <axis:string> ",
+                "|( --face ( <x:int> <y:int> <axis:string> ",
                 "          | <hint:string>",
                 "          )",
+                "   <whiskers:string> [<bar:string>] <dest:string>",
                 " )",
                 NULL};
 int main( int argc, char* argv[] )
@@ -491,6 +491,9 @@ int main( int argc, char* argv[] )
       "\n" );
 
   wv = Load_Whiskers( Get_String_Arg("whiskers"), NULL, &wvn);
+  if(wvn<=0)
+    error("No whiskers found\n"
+          "\tin %s\n", Get_String_Arg("whiskers"));
 
   if( Is_Arg_Matched("hint") )
   { face_point_from_hint( wv, wvn,  Get_String_Arg("hint"), &facex, &facey, &face_axis );
@@ -503,6 +506,9 @@ int main( int argc, char* argv[] )
   if( Is_Arg_Matched("bar") )
   { int nbar;
     Bar *bars = Load_Bars_From_Filename( Get_String_Arg("bar"), &nbar );
+    if(nbar<=0)
+      error("No bars found\n"
+            "\tin %s\n", Get_String_Arg("bar"));
     table = Whisker_Segments_Measure_With_Bar( wv, wvn, bars, nbar, facex, facey, face_axis ); 
     free(bars);
   } else

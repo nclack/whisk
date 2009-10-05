@@ -1,6 +1,6 @@
 CC = gcc
 LDFLAGS = -lm #-lSaturn
-CFLAGS = -g -O3 #-ftree-vectorize #-Wall  #-finstrument-functions
+CFLAGS = -g  #-ftree-vectorize #-Wall  #-finstrument-functions
 pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contour_lib.o\
 					 water_shed.o
 cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
@@ -11,7 +11,7 @@ cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 bar_io.o 
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
-APPS  = whisk whisker_convert test_measure_1
+APPS  = whisk whisker_convert test_measure_1 test_classify_1 test_hmm_reclassify_3
 LIBS  = libwhisk.so libtraj.so
 
 all: checkos $(APPS) $(LIBS) python #$(TESTS)
@@ -65,6 +65,15 @@ $(cmodules): $(cmodules:.o=.h)
 
 test_measure_1: measure.c $(modules)
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_MEASURE_1 $+ -o $@
+
+test_classify_1: classify.c utilities.o traj.o common.o error.o viterbi.o
+	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_CLASSIFY_1 $+ -o $@
+
+test_hmm_reclassify_3: hmm-reclassify.c utilities.o  traj.o  common.o \
+                       error.o viterbi.o \
+                       hmm-reclassify-lrmodel.o \
+                       hmm-reclassify-lrmodel-w-deletions.o
+	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_HMM_RECLASSIFY_3 $+ -o $@
 
 test_whisker_io: test_whisker_io.c $(modules) 
 

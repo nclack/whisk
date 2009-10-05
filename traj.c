@@ -30,6 +30,8 @@
 // DEBUG OUTPUT
 
 #if 0
+#define  DEBUG_MEASUREMENTS_TABLE_ALLOC
+#define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
 #define  DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
@@ -38,8 +40,6 @@
 #define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_DISTRIBUTIONS 
-#define  DEBUG_MEASUREMENTS_TABLE_ALLOC
-#define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
 #define  DEBUG_EVAL_LIKELIHOOD_LOG2 
 #endif
 
@@ -328,6 +328,9 @@ FILE *Measurements_Table_To_File( FILE *fp, Measurements *table, int n_rows )
 SHARED_EXPORT
 void Measurements_Table_To_Filename( const char *filename, Measurements *table, int n_rows )
 { FILE *fp = fopen( filename, "wb" );
+  if(!fp)
+    error("Couldn't open file for writing\n"
+          "\tFile name: %s\n",filename);
   fp = Measurements_Table_To_File( fp, table, n_rows );
   fclose(fp);
 }
