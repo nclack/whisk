@@ -15,10 +15,11 @@ Howard Hughes Medical Institute, JFRC
 import scheduler
 from scheduler import LastOnlyScheduler
 import trace
+import traj
 from trace import Save_Whiskers as save_whiskers
 from trace import Load_Whiskers 
 from copy import deepcopy
-import os
+import os,sys
 
 import pdb
 
@@ -54,9 +55,11 @@ def copy_trajectories( trajectories ):
 
 def __save_state(precursor_or_names, whiskers ,trajectories):
   objs = {'.whiskers': whiskers,
-          '.trajectories': trajectories }
+          '.trajectories': trajectories,
+          '.measurements': trajectories }
   savers = {'.whiskers':     save_whiskers,
-            '.trajectories': save_trajectories }
+            '.trajectories': save_trajectories,
+            '.measurements': lambda name,t: traj.MeasurementsTable(name).commit_trajectories(t).save(name)}
   names = dict([ (k,None) for k in objs.iterkeys() ])
   if not isinstance(precursor_or_names, str ) and hasattr( precursor_or_names, '__iter__' ):
     #multiple names...try to find names for the different filetypes, otherwise guess
@@ -76,7 +79,10 @@ def __save_state(precursor_or_names, whiskers ,trajectories):
 
   do_nothing = lambda a,b: None
   for e,n in names.iteritems():
+    print 'Saving ',e,'...',
+    sys.stdout.flush()
     savers.get(e,do_nothing)(n,objs.get(e)) 
+    print 'Done'
 
 def save_state( precursor_or_names, whiskers, trajectories ):
   print "save state: "+str(precursor_or_names)
@@ -84,19 +90,25 @@ def save_state( precursor_or_names, whiskers, trajectories ):
 
 def load_state( precursor_or_names ):
   order = ['.whiskers', '.trajectories', '.bar' ]
+  alias = { '.whiskers'     : '.whiskers',
+            '.trajectories' : '.trajectories',
+            '.measurements' : '.trajectories',
+            '.bar'          : '.bar' }
   loaders = {'.whiskers':     load_whiskers,
              '.trajectories': load_trajectories,
-             '.bar':          load_bar_centers } 
-  names = dict([ (k,None) for k in order ])
+             '.bar':          load_bar_centers,
+             '.measurements': lambda name: [traj.MeasurementsTable(name).get_trajectories(),0]} 
+  names = dict([ (alias[k],None) for k in order ])
 
   if not isinstance(precursor_or_names, str ) and hasattr( precursor_or_names, '__iter__' ):
     #multiple names...try to find names for the different filetypes, otherwise guess
+    precursor_or_names = filter( lambda name: (os.path.splitext(name)[1] in loaders.keys()), precursor_or_names )
     for fn,(p,e) in zip( precursor_or_names, map( os.path.splitext, precursor_or_names ) ):
-      names[e] = fn
+      names[alias[e]] = fn
     precursor = p
-    for e,fn in names.iteritems():
+    for e,fn in names.iteritems(): #try to guess
       if fn is None:
-        names[e] = precursor +  e
+        names[alias[e]] = precursor +  e
   elif isinstance(precursor_or_names,str): #single valued, assume it's a filename or precursor
     precursor = os.path.splitext(precursor_or_names)[0]
     for k,v in names.iteritems():
@@ -104,7 +116,11 @@ def load_state( precursor_or_names ):
   else:
     raise TypeError(" precursor_or_names must be string or iterable ")
 
-  objs = [loaders[e](names[e])[0] for e in order]
+  def logload(t,v):
+    print "Loaded: ",t
+    return v
+  print 'Loading...'
+  objs = [logload(t,loaders[os.path.splitext(names[t])[1]](names[t])[0]) for t in order]
   objs.append(0) #append a legit trajectory id....assuming 0...this should probably get taken out later
   return objs
  

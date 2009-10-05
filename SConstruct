@@ -87,7 +87,7 @@ libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c',
                                       'utilities.c','viterbi.c','report.c'] )
 
 ## install - copy things around
-env.Install( 'ui/whiskerdata', ['trace.py', libwhisk] ) 
+env.Install( 'ui/whiskerdata', ['trace.py','traj.py',libwhisk] ) 
 env.Install( 'ui/genetiff', [libwhisk] ) 
 env.Install( 'ui',             ['trace.py', libwhisk] ) 
 env.Alias( 'python', ['ui/whiskerdata','ui'] )

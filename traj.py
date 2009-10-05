@@ -11,6 +11,11 @@ import pdb
 
 os.environ['PATH'] += r';.\\'
 ctraj = cdll.LoadLibrary( find_library('traj') )
+if not ctraj:
+  ctraj = cdll.LoadLibrary( find_library('whisk') )
+  if not ctraj:
+    raise ImportError("Can not load whisk or traj shared library");
+
 
 class cMeasurements(Structure):
   """ Proxy for Measurements struct. 
@@ -119,14 +124,16 @@ class MeasurementsTable(object):
     >>> traj  = table.get_trajectories()
     >>> max(traj.keys())
     3
-    >>> max(traj[-1].keys())
-    4598
+    >>> traj.has_key(-1)
+    False
     """
     data = self.asarray()
     t = {}
     for row in data:
       r = map(int,row[:3])
       t.setdefault( r[0],{} ).setdefault( r[1], r[2] ) 
+    if -1 in t.keys():
+      del t[-1]
     return t
 
   def save_trajectories(self, filename, excludes=[]):

@@ -61,4 +61,4 @@ test_whisker_io
 
 ui/trace.py
 ui/whiskerdata/trace.py
-
+ui/whiskerdata/traj.py
