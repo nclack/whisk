@@ -1,7 +1,6 @@
 CC = gcc
 LDFLAGS = -lm #-lSaturn
 CFLAGS = -g -O3 #-ftree-vectorize #-Wall  #-finstrument-functions
-LIBTOOL_SHARED = libtool -dynamic
 pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contour_lib.o\
 					 water_shed.o
 cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
@@ -9,11 +8,11 @@ cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 seed.o whisker_io.o whisker_io_whisker1.o whisker_io_whiskbin1.o\
 					 whisker_io_whiskold.o viterbi.o traj.o compat.o merge.o\
 					 svd.o poly.o mat.o\
-					 bar_io.o
+					 bar_io.o 
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
-APPS  = whisk whisker_convert
-LIBS  = libwhisk.dylib libtraj.dylib
+APPS  = whisk whisker_convert test_measure_1
+LIBS  = libwhisk.so libtraj.so
 
 all: checkos $(APPS) $(LIBS) python #$(TESTS)
 
@@ -41,11 +40,13 @@ whisker_io_main.o: whisker_io.c
 whisker_convert: whisker_io_main.o $(filter-out whisker_io.o,$(modules)) $(modules:.o=.h)
 	$(CC) $(LDFLAGS) $(CFLAGS) $+ -o $@
 
-libwhisk.dylib: $(modules)
-	$(LIBTOOL_SHARED) -o $@ $+ -lc $(LDFLAGS)
+libwhisk.so: $(modules)
+	ar cru $@ $+
+	ranlib $@
 
-libtraj.dylib: traj.o common.o error.o utilities.o viterbi.o report.o
-	$(LIBTOOL_SHARED) -o $@ $+ -lc $(LDFLAGS)
+libtraj.so: traj.o common.o error.o utilities.o viterbi.o report.o
+	ar cru $@ $+
+	ranlib $@
 
 python: $(LIBS) trace.py traj.py
 	$(CP) $+ ./ui/whiskerdata
@@ -62,7 +63,7 @@ awk: $(pmodules:.o=.toawk)
 
 $(cmodules): $(cmodules:.o=.h)
 
-test_measure_1: $(modules)
+test_measure_1: measure.c $(modules)
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_MEASURE_1 $+ -o $@
 
 test_whisker_io: test_whisker_io.c $(modules) 
