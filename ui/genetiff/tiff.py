@@ -5,13 +5,6 @@ from numpy import zeros
 from reader import StackReader
 import os,sys
 
-#if sys.platform == 'win32':
-#  libext = '.dll'
-#else:
-#  libext ='.so'
-
-#dllpath = os.path.join(*os.path.split(__file__)[:-1])
-#cReader = CDLL(os.path.join( dllpath,"libreader%s"%libext) )
 os.environ['PATH']+=';.\\'
 cReader = CDLL( find_library("whisk") )
 
@@ -37,11 +30,12 @@ def readstack( filename ):
   width, height, depth, kind = c_int(0),c_int(0),c_int(0),c_int(0)
   if not os.path.exists(filename):
     raise IOError, "File not found. (%s)"%filename 
-  cReader.Get_Stack_Dimensions_px( filename,
-                                   byref(width),
-                                   byref(height),
-                                   byref(depth),
-                                   byref(kind) )
+  if(not cReader.Get_Stack_Dimensions_px( filename,
+                                       byref(width),
+                                       byref(height),
+                                       byref(depth),
+                                       byref(kind) )):
+    raise IOError, "Couldn't read dimensions for %s"%filename
   stack = zeros( (depth.value, height.value, width.value), dtype = _bpp[kind.value] )
   cReader.Read_Tiff_Stack_Into_Buffer( filename, 
                                         stack.ctypes.data_as( POINTER(c_uint8) ))

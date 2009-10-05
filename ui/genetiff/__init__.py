@@ -16,7 +16,7 @@ def Reader(filename, transpose = False, adjuststipple = False):
   ext = os.path.splitext( filename )[-1]
   if ext == '.seq':
     ret = SeqReader( filename )
-  elif ext == '.tiff' or ext == '.tif':
+  elif ext == '.tiff' or ext == '.tif' or ext=='.lsm':
     ret = TiffReader( filename )
   else:
     raise Exception,"File type (%s) not supported."%ext
