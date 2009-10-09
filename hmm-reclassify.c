@@ -543,6 +543,142 @@ int main(int argc, char*argv[])
 
 #ifdef TEST_HMM_RECLASSIFY_WATERSHED
 
+// TODO: fix root index is 1 not 0 errors in heap
+//
+typedef struct _heap
+{ real **data;
+  size_t size;
+  size_t maxsize;
+} heap;
+
+#define heap_left(i)   ((i)<<1)
+#define heap_right(i)  (((i)<<1)+1)
+#define heap_parent(i) ((i)/2)
+
+heap *heap_alloc( size_t count )
+{ heap *h = Guarded_Malloc( sizeof(heap), "alloc priority queue" );
+  h->data = (real**) Guarded_Malloc( sizeof(real*)*count, "alloc priority queue for hmm-watershed" );
+  //memset(h->data,0,sizeof(real*)*2*count); // shouldn't be neccessary
+  h->size    = 0;
+  h->maxsize = count;
+  return h;
+}
+
+void heap_free( heap *h )
+{ if(h)
+  { if( h->data ) free(h->data);
+    free(h);
+  }
+}
+
+inline void heapify( heap* h, int i )
+{ int left  = heap_left(i),
+      right = heap_right(i),
+      argmax = i;
+  real **data  = h->data-1, // head is at index 1...that is, want data[1] <==> h->data[0]
+       max = *data[i];
+#ifdef DEBUG_HEAPIFY
+  assert(i>=1);
+#endif
+  if(  ( left < h->size )&&( *data[left] > max ) )
+  { argmax = left;
+    max = *data[left];
+  }
+  if(  ( right < h->size )&&( *data[right] > max ) )
+    argmax = right;
+
+  if( argmax != i )
+  { real *a = data[argmax];     // swap contents
+    data[argmax] = data[i];
+    data[i] = a;
+    //??? Faster?: SWAP( data[i], data[argmax] );
+    heapify( h, argmax );       // call on subtree
+  }
+}
+
+// Organizes an unorganized heap in O(h->size)
+inline void heap_build( heap *h )
+{ int i = h->size/2;
+  while(i-- > 1)
+    heapify(h,i);
+}
+
+inline real *heap_pop_head( heap *h )
+{ real *max,
+      **data = h->data - 1;
+  if( h->size < 1 )
+    error("heap underflow\n");
+  max = data[1];
+  data[1] = data[h->size--];
+  heapify(h,1);
+  return max;
+}
+
+inline real *heap_pop_and_replace_head( heap *h, real *v )
+{ real *max,
+      **data = h->data - 1;
+  if( h->size < 1 )
+    error("heap underflow\n");
+  max = data[1];
+  data[1] = v;
+  heapify(h,1);
+  return max;
+}
+
+inline void heap_insert( heap *h, real *v )
+{ real **data = h->data - 1;
+  size_t i,parent;
+  if( h->size+1 > h->maxsize )
+    error("Heap overflow.\n"
+          "\tRequested : %d\n"
+          "\tAvailable : %d\n", h->size, h->maxsize);
+  i = ++(h->size);
+  data[i] = v;
+  while( i>1 && *data[parent = heap_parent(i)] < *data[i] )
+  { real* a = data[i];
+    data[i] = data[parent];
+    data[parent] = a;
+    i = parent;
+  }
+
+}
+
+heap *Priority_Queue_Init( real *likelihood, int nframes)
+{ // 1. count local maxima
+  //    since we want to start with high-likelihood this "watershed" will be
+  //    high to low.
+  int count = 0;
+  real *p;          // cursor into the likelihood array
+  heap *q;          // priority queue
+  static const real tol = 1e-10;
+
+  p = likelihood + nframes;
+  while(p-- > likelihood+1)
+    if(    (p[ 0] - p[-1]) > tol
+        && (p[ 0] - p[ 1]) > tol )
+      count++;
+
+  // 2. alloc queue - a binary tree
+  //    children of i are at i<<1,i<<1+1
+  q = heap_alloc( 2*count );
+
+  // 3. place local minima  (tolerance suppresses a few)
+  //    a.  throw them, unordered, onto the heap
+  //    b.  use heap_build, O(count)
+  //    Repeated heap_insert would be O( count x log(count) )
+  { real **minima = q->data;
+    p = likelihood + nframes;
+    while(p-- > likelihood+1)
+      if(    (p[ 0] - p[-1]) > tol
+          && (p[ 0] - p[ 1]) > tol ) 
+        *(minima++) = p;
+    q->size = minima - q->data;
+    heap_build(q);
+  }
+
+  return q;
+}
+
 char *Spec[] = {"[-h|--help] | ( [-n <int>] <source:string> <dest:string> )",NULL};
 int main(int argc, char*argv[])
 {
