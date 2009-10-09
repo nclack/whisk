@@ -34,7 +34,7 @@
 
 #elif defined( TEST_HMM_RECLASSIFY_5 )
 #define TEST_HMM_RECLASSIFY_LR_MODEL
-#define TEST_HMM_RECLASSIFY_FILTER
+#define TEST_HMM_RECLASSIFY_WATERSHED
 #endif
 
 #else
@@ -517,12 +517,7 @@ int main(int argc, char*argv[])
 }
 #endif
 
-#ifdef TEST_HMM_RECLASSIFY_FILTER
-
-typedef struct _Lattice
-{ struct _Lattice* argmax;
-  real             max;
-} LatticeNode;
+#ifdef TEST_HMM_RECLASSIFY_WATERSHED
 
 char *Spec[] = {"[-h|--help] | ( [-n <int>] <source:string> <dest:string> )",NULL};
 int main(int argc, char*argv[])
@@ -537,7 +532,7 @@ int main(int argc, char*argv[])
   
   help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
     "----------------------------\n"
-    "HMM-Reclassify ( Voting )\n"
+    "HMM-Reclassify ( Watershed )\n"
     "----------------------------\n"
     " <source> should be the filename of a `measurements` file where an initial guess has been made as\n"
     "          to the identity of many of the whiskers.  These initial assignments are used to build a \n"
@@ -655,13 +650,10 @@ int main(int argc, char*argv[])
       // 
       // Process Frame
       //
-      { real *gamma = (*pf_Alloc_Emissions)( nwhisk, nobs ); // nobs == nseq, emissions are same size as result
-        int N = (*pf_State_Count)(nwhisk);
-        HMM_Correspondance_Probabilities_Log2( _static_range(nobs), nobs,
-                                               S, T, E, nobs, N,
-                                               gamma );
+      {
+
         // XXX: to be continued...
-        free(gamma);
+
       }
 
 #ifdef DEBUG_HMM_RECLASSIFY
