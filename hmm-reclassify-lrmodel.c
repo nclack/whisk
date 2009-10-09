@@ -7,6 +7,7 @@
 #include "viterbi.h"
 #include "common.h"
 
+#include "hmm-reclassify.h"
 #include "hmm-reclassify-lrmodel.h"
 
 #if 0
@@ -225,21 +226,15 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
     int nwhisk, 
     Measurements *obs, 
     int nobs, 
-    Measurements *prev,
-    int nprev,
-    Measurements** history, 
-    int nhist, 
+    Measurements_Reference *prev,
     Distributions *shp_dists,
     Distributions *vel_dists )
 { int N = 2 * nwhisk + 1;
   int i,j;
   real max_logp_delta = -FLT_MAX;
-  Measurements *p;
+  Measurements *p,
+               **history = prev->whiskers;
 
-  //
-  // XXX: If there's a missing prev than perhaps
-  //      bail on the velocity part
-  //
 #ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
   debug("  j st   shp      vel\n"
         " -- -- -------  ------\n");
@@ -266,10 +261,10 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
       { int k;
         real *pv = &vel;
         vel = -DBL_MAX; //log
-        for(k=0;k<nprev;k++)
+        for(k=0;k<prev->nframe;k++)
           bu( real, pv,
               Eval_Velocity_Likelihood_Log2( vel_dists,
-                                              prev[k].data,
+                                              prev->frame[k].data,
                                               obs[j].data,
                                               0 ));
 
@@ -279,6 +274,99 @@ void  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2(
 #ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_HISTORY_LOG2
         debug(" %2d %2d % 5.3f % 5.3f * \n",j,st,shp,vel);
 #endif
+      }
+    }
+  }
+}
+
+void  LRModel_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2(
+    real *E, 
+    int nwhisk, 
+    Measurements *obs, 
+    int nobs, 
+    Measurements_Reference *prev,
+    Measurements_Reference *next,
+    Distributions *shp_dists,
+    Distributions *vel_dists )
+{ int N = 2 * nwhisk + 1;
+  int i,j;
+  real max_logp_delta = -FLT_MAX;
+  Measurements *p;
+
+  // init 
+  LRModel_Compute_Emissions_For_Two_Classes_Log2( E, nwhisk, obs, nobs, shp_dists );
+
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_PREV_AND_NEXT_LOG2
+  debug("  j st   shp      vel\n"
+        " -- -- -------  ------\n");
+#endif
+  for(i=0;i<N;i++)        // iterate over states
+  { real *row = E + i*nobs;
+    real shp,vel;
+    int state = i&1;
+    int st = LRModel_State_Decode(i); 
+    //
+    // prev
+    //
+    if( st > -1 && (p = prev->whiskers[ st ]) ) 
+    { for(j=0;j<nobs;j++) // iterate over segments
+      { vel = Eval_Velocity_Likelihood_Log2( vel_dists,
+                                              p->data,
+                                              obs[j].data,
+                                              state );
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_PREV_AND_NEXT_LOG2
+        debug("<<< %2d %2d % 5.3f % 5.3f\n",j,st,row[j],vel);
+#endif
+        row[j] += vel;
+      }
+    } else // missing a previous
+    { for(j=0;j<nobs;j++)
+      { int k;
+        real *pv = &vel;
+        vel = -DBL_MAX; //log
+        for(k=0;k<prev->nframe;k++)
+          bu( real, pv,
+              Eval_Velocity_Likelihood_Log2( vel_dists,
+                                              prev->frame[k].data,
+                                              obs[j].data,
+                                              0 ));
+
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_PREV_AND_NEXT_LOG2
+        debug("<<< %2d %2d % 5.3f % 5.3f * \n",j,st,row[j],vel);
+#endif
+        row[j] += vel;
+      }
+    }      
+    //
+    // next
+    //
+    if( st > -1 && (p = next->whiskers[ st ]) ) 
+    { for(j=0;j<nobs;j++) // iterate over segments
+      { vel = Eval_Velocity_Likelihood_Log2( vel_dists,
+                                              p->data,
+                                              obs[j].data,
+                                              state );
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_PREV_AND_NEXT_LOG2
+        debug(">>> %2d %2d % 5.3f % 5.3f\n",j,st,row[j],vel);
+#endif
+        row[j] += vel;
+      }
+    } else // missing a next    
+    { for(j=0;j<nobs;j++)
+      { int k;
+        real *pv = &vel;
+        vel = -DBL_MAX; //log
+        for(k=0;k<prev->nframe;k++)
+          bu( real, pv,
+              Eval_Velocity_Likelihood_Log2( vel_dists,
+                                              next->frame[k].data,
+                                              obs[j].data,
+                                              0 ));
+
+#ifdef DEBUG_LRMODEL_COMPUTE_EMISSIONS_FOR_TWO_CLASSES_W_PREV_AND_NEXT_LOG2
+        debug(">>> %2d %2d % 5.3f % 5.3f * \n",j,st,row[j],vel);
+#endif
+        row[j] += vel;
       }
     }
   }

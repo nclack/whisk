@@ -1,5 +1,4 @@
 //
-// TODO: FIXME: how to handle duplicate long segments in the middle of the sequence?
 // TODO: What are termed "deletions" should be "insertions."  Also "junk"
 //       states are essentially repeated insertions states.  Maybe there is a
 //       better name than "junk" (i.e. other)
@@ -12,6 +11,7 @@
 #include "traj.h"
 #include "viterbi.h"
 #include "common.h"
+#include "hmm-reclassify.h"
 
 // Make one model the default
 #ifndef TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
@@ -61,47 +61,40 @@
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
 
+typedef int   (*Tpf_State_Count)                                             ( int nwhisk );                                                                   
+typedef real* (*Tpf_Alloc_Transitions)                                       ( int nwhisk );                                                                   
+typedef real* (*Tpf_Init_Uniform_Transitions)                                ( real *T, int nwhisk );                                                          
+typedef void  (*Tpf_Estimate_Transitions)                                    ( real *T, int nwhisk, Measurements *table, int nrows );                          
+typedef void  (*Tpf_Log2_Transitions)                                        ( real *T, int nwhisk, real baseline_log2 );                                      
+typedef real* (*Tpf_Alloc_Starts)                                            ( int nwhisk );                                                                   
+typedef void  (*Tpf_Compute_Starts_For_Two_Classes_Log2)                     ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );  
+typedef void  (*Tpf_Compute_Starts_For_Distinct_Whiskers_Log2)               ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );  
+typedef real* (*Tpf_Alloc_Emissions)                                         ( int nwhisk, int nobs );                                                         
+typedef real* (*Tpf_Request_Static_Resizable_Emissions)                      ( int nwhisk, int nobs );                                                         
+typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_Log2)                  ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );   
+typedef void  (*Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2)            ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );   
+typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2)        ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements_Reference *prev, Distributions *shp_dists, Distributions *vel_dists );
+typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2)  ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements_Reference *prev, Measurements_Reference *next, Distributions *shp_dists, Distributions *vel_dists );
+typedef int   (*Tpf_State_Decode)                                            ( int state );
 
-typedef int   (*Tpf_State_Count)                                       ( int nwhisk );
-typedef real* (*Tpf_Alloc_Transitions)                                 ( int nwhisk );
-typedef real* (*Tpf_Init_Uniform_Transitions)                          ( real *T, int nwhisk );
-typedef void  (*Tpf_Estimate_Transitions)                              ( real *T, int nwhisk, Measurements *table, int nrows );
-typedef void  (*Tpf_Log2_Transitions)                                  ( real *T, int nwhisk, real baseline_log2 );
-typedef real* (*Tpf_Alloc_Starts)                                      ( int nwhisk );
-typedef void  (*Tpf_Compute_Starts_For_Two_Classes_Log2)               ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );
-typedef void  (*Tpf_Compute_Starts_For_Distinct_Whiskers_Log2)         ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );
-typedef real* (*Tpf_Alloc_Emissions)                                   ( int nwhisk, int nobs );
-typedef real* (*Tpf_Request_Static_Resizable_Emissions)                ( int nwhisk, int nobs );
-typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_Log2)            ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
-typedef void  (*Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2)      ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
-typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2)  ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements *prev, int nprev, Measurements** history, int nhist, Distributions *shp_dists, Distributions *vel_dists );
-typedef int   (*Tpf_State_Decode)                                      ( int state );
-
-int* _static_range( int n )
-{ static size_t maxsize = 0;
-  static int *buf = NULL;
-  buf = request_storage( buf, &maxsize, sizeof(int), n, "_static_range" );
-  while(n--)
-    buf[n] = n;
-  return buf;
-}
 
 #ifdef TEST_HMM_RECLASSIFY_LR_MODEL
 #include "hmm-reclassify-lrmodel.h"
-Tpf_State_Count                                       pf_State_Count                                       =  LRModel_State_Count;
-Tpf_Alloc_Transitions                                 pf_Alloc_Transitions                                 =  LRModel_Alloc_Transitions;
-Tpf_Init_Uniform_Transitions                          pf_Init_Uniform_Transitions                          =  LRModel_Init_Uniform_Transitions;
-Tpf_Estimate_Transitions                              pf_Estimate_Transitions                              =  LRModel_Estimate_Transitions;
-Tpf_Log2_Transitions                                  pf_Log2_Transitions                                  =  LRModel_Log2_Transitions;
-Tpf_Alloc_Starts                                      pf_Alloc_Starts                                      =  LRModel_Alloc_Starts;
-Tpf_Compute_Starts_For_Two_Classes_Log2               pf_Compute_Starts_For_Two_Classes_Log2               =  LRModel_Compute_Starts_For_Two_Classes_Log2;
-Tpf_Compute_Starts_For_Distinct_Whiskers_Log2         pf_Compute_Starts_For_Distinct_Whiskers_Log2         =  LRModel_Compute_Starts_For_Distinct_Whiskers_Log2;
-Tpf_Alloc_Emissions                                   pf_Alloc_Emissions                                   =  LRModel_Alloc_Emissions;
-Tpf_Request_Static_Resizable_Emissions                pf_Request_Static_Resizable_Emissions                =  LRModel_Request_Static_Resizable_Emissions;
-Tpf_Compute_Emissions_For_Two_Classes_Log2            pf_Compute_Emissions_For_Two_Classes_Log2            =  LRModel_Compute_Emissions_For_Two_Classes_Log2;
-Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2      pf_Compute_Emissions_For_Distinct_Whiskers_Log2      =  LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2;
-Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2  pf_Compute_Emissions_For_Two_Classes_W_History_Log2  =  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2;
-Tpf_State_Decode                                      pf_State_Decode                                      =  LRModel_State_Decode;
+Tpf_State_Count                                             pf_State_Count                                            =  LRModel_State_Count;                                 
+Tpf_Alloc_Transitions                                       pf_Alloc_Transitions                                      =  LRModel_Alloc_Transitions;                           
+Tpf_Init_Uniform_Transitions                                pf_Init_Uniform_Transitions                               =  LRModel_Init_Uniform_Transitions;                    
+Tpf_Estimate_Transitions                                    pf_Estimate_Transitions                                   =  LRModel_Estimate_Transitions;                        
+Tpf_Log2_Transitions                                        pf_Log2_Transitions                                       =  LRModel_Log2_Transitions;                            
+Tpf_Alloc_Starts                                            pf_Alloc_Starts                                           =  LRModel_Alloc_Starts;                                
+Tpf_Compute_Starts_For_Two_Classes_Log2                     pf_Compute_Starts_For_Two_Classes_Log2                    =  LRModel_Compute_Starts_For_Two_Classes_Log2;         
+Tpf_Compute_Starts_For_Distinct_Whiskers_Log2               pf_Compute_Starts_For_Distinct_Whiskers_Log2              =  LRModel_Compute_Starts_For_Distinct_Whiskers_Log2;   
+Tpf_Alloc_Emissions                                         pf_Alloc_Emissions                                        =  LRModel_Alloc_Emissions;                             
+Tpf_Request_Static_Resizable_Emissions                      pf_Request_Static_Resizable_Emissions                     =  LRModel_Request_Static_Resizable_Emissions;          
+Tpf_Compute_Emissions_For_Two_Classes_Log2                  pf_Compute_Emissions_For_Two_Classes_Log2                 =  LRModel_Compute_Emissions_For_Two_Classes_Log2;      
+Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2            pf_Compute_Emissions_For_Distinct_Whiskers_Log2           =  LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2;
+Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2        pf_Compute_Emissions_For_Two_Classes_W_History_Log2       =  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2;
+Tpf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2  pf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2 =  LRModel_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2;
+Tpf_State_Decode                                            pf_State_Decode                                           =  LRModel_State_Decode;
 #endif
 
 //#ifdef  TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
@@ -121,6 +114,143 @@ Tpf_State_Decode                                      pf_State_Decode           
 //Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2  pf_Compute_Emissions_For_Two_Classes_W_History_Log2  =  LRDelModel_Compute_Emissions_For_Two_Classes_W_History_Log2;
 //Tpf_State_Decode                                      pf_State_Decode                                      =  LRDelModel_State_Decode;
 //#endif
+
+//
+// Frame index
+//
+typedef struct _frame_index
+{ Measurements *first;
+  int n;
+} frame_index;
+
+// Table should be sorted by time
+frame_index *build_frame_index(Measurements *table, int nrows)
+{ int nframes = table[nrows-1].fid+1;
+  Measurements *row  = table + nrows,
+               *last = row-1;
+  frame_index *index = Guarded_Malloc( sizeof(frame_index)*nframes, "alloc frame index" );
+
+  { int fid = 0;
+    while(row-- > table )
+    { if( row->fid != fid )
+      { index[fid].first = row + 1;
+        index[fid].n     = last - row;
+        last = row;
+        fid = row->fid;
+      }
+    }
+    index[0].first = table;
+    index[0].n     = last - table;
+  }
+
+  return index;
+}
+
+void free_frame_index(frame_index *idx)
+{ if(idx) free(idx);
+}
+
+//
+// static range
+// ...analagous to python's range()
+//
+int* _static_range( int n )
+{ static size_t maxsize = 0;
+  static int *buf = NULL;
+  buf = request_storage( buf, &maxsize, sizeof(int), n, "_static_range" );
+  while(n--)
+    buf[n] = n;
+  return buf;
+}
+
+//
+// Measurements_Reference
+//
+Measurements_Reference *Measurements_Reference_Alloc(int nwhisk)
+{ Measurements_Reference *this = Guarded_Malloc(sizeof(Measurements_Reference), "Measurements_Reference_Alloc");
+  this->whiskers = Guarded_Malloc(sizeof(Measurements*)*nwhisk,"Measurements_Reference_Alloc");
+  memset(this->whiskers,0,sizeof(Measurements*)*nwhisk);
+  this->nwhiskers = nwhisk;
+  return this;
+}
+
+void Measurements_Reference_Free( Measurements_Reference* this )
+{ if(this)
+  { if( this->whiskers )
+      free(this->whiskers);
+    free(this);
+  }
+}
+
+inline void Measurements_Reference_Reset( Measurements_Reference *this)
+{ Measurements **w = this->whiskers;
+  memset( w, 0, this->nwhiskers * sizeof(Measurements*) );
+}
+
+void Measurements_Reference_Build( Measurements_Reference *this, Measurements *row, int nseg )
+{ Measurements **w = this->whiskers;
+  this->frame  = row;
+  this->nframe = nseg;
+  while(nseg--)
+    if(row[nseg].state >= 0)
+      w[row[nseg].state] = row + nseg;
+}
+
+inline int Measurements_Reference_Has_Full_Count( Measurements_Reference *this )
+{ int n = this->nwhiskers;
+  Measurements **w = this->whiskers;
+  while(n--)
+    if( !w[n] )
+      return 0;
+  return 1;
+}
+
+
+//
+// Measurements_Apply_Model
+//
+
+void Measurements_Apply_Model( frame_index *index, int fid, int nframes, int nwhisk, //input
+                               real *S, real *T, real *E,                            //model parameters
+                               real *likelihood )                                    //framewise likelihood (may be NULL)
+{ int N = (*pf_State_Count)(nwhisk),
+      nobs = index[fid].n;
+
+  ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
+
+  // Commit the result
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
+  debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n",
+      fid,                              // frame id
+      nframes,                          // total frames
+      result->total,                    // log2 prob(obs|model)           //?
+      result->prob,                     // log2 prob(path|obs)            //?
+      result->total - result->prob );                                     //?
+  assert( nobs == result->n );
+#endif
+  if( likelihood )
+    likelihood[fid] = result->prob - result->total;
+#ifdef DEBUG_HMM_RECLASSIFY
+  assert((result->prob - result->total)<=1e-7); //log2 likelikehoods should be less than zero
+#endif
+  { int i = nobs;
+    int *seq = result->sequence;
+    Measurements *bookmark = index[fid].first;
+    while(i--)
+    { int s = seq[i],
+      lbl = (*pf_State_Decode)(s);
+      bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers}
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
+      debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
+          bookmark[i].fid,
+          bookmark[i].wid,
+          s,
+          bookmark[i].state);
+#endif
+    }
+  } // end commit viterbi result
+  Free_Viterbi_Result(result);  // FIXME: thrashing the heap
+} // end viterbi solution
 
 void HMM_Reclassify_No_Deltas_W_Likelihood(
     Measurements *table, int nrows,        // observables
@@ -442,11 +572,9 @@ int main(int argc, char*argv[])
                   nwhisk,
                   (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
-    Measurements *row,
-                 *prev = NULL,
-                 **last = Guarded_Malloc( sizeof(Measurements*)*nwhisk, "alloc array for last identified whiskers" );
-    int nprev=0;
-    memset(last,0, sizeof(Measurements*)*nwhisk );
+    Measurements *row;
+    Measurements_Reference *last = Measurements_Reference_Alloc(nwhisk);
+
     row = table;
     while( row < table+nrows )
     { Measurements *bookmark = row;
@@ -468,18 +596,17 @@ int main(int argc, char*argv[])
       { int i;
         debug("Last\n");
         for(i=0; i<nwhisk; i++)
-          debug("\t%p", last[i]);
+          debug("\t%p", last->whiskers[i]);
         debug("\n");
       }
 #endif
-      if(!prev)
+      if(!last->frame)
         (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
       else
         (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
                                                                 nwhisk,
                                                                 bookmark, nobs,
-                                                                prev, nprev,
-                                                                last, nwhisk,
+                                                                last,
                                                                 shp_dists,
                                                                 vel_dists );
 
@@ -498,13 +625,13 @@ int main(int argc, char*argv[])
 #endif
         { int i = nobs;
           int *seq = result->sequence;
-          memset(last,0, sizeof(Measurements*)*nwhisk );
+          memset(last->whiskers,0, sizeof(Measurements*)*nwhisk );
           while(i--)
           { int s = seq[i],
                 lbl = (*pf_State_Decode)(s);
             bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers}
             if(lbl>-1)
-              last[lbl] = bookmark+i;
+              last->whiskers[lbl] = bookmark+i;
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
             debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
                 bookmark[i].fid,
@@ -516,12 +643,13 @@ int main(int argc, char*argv[])
         } // end commit viterbi result
         Free_Viterbi_Result(result);  // FIXME: thrashing the heap
       } // end viterbi solution
-      prev = bookmark;
-      nprev = nobs;
+      last->frame  = bookmark;
+      last->nframe = nobs;
 #ifdef DEBUG_HMM_RECLASSIFY
       assert(row!=bookmark);
 #endif
     } // end loop over observations
+    Measurements_Reference_Free(last);
     free(last);
     free(S);
   } // end re-classification
@@ -546,37 +674,6 @@ int main(int argc, char*argv[])
 
 #ifdef TEST_HMM_RECLASSIFY_WATERSHED
 
-typedef struct _frame_index
-{ Measurements *first;
-  int n;
-} frame_index;
-
-// Table should be sorted by time
-frame_index *build_frame_index(Measurements *table, int nrows)
-{ int nframes = table[nrows-1].fid+1;
-  Measurements *row  = table + nrows,
-               *last = row-1;
-  frame_index *index = Guarded_Malloc( sizeof(frame_index)*nframes, "alloc frame index" );
-
-  { int fid = 0;
-    while(row-- > table )
-    { if( row->fid != fid )
-      { index[fid].first = row + 1;
-        index[fid].n     = last - row;
-        last = row;
-        fid = row->fid;
-      }
-    }
-    index[0].first = table;
-    index[0].n     = last - table;
-  }
-
-  return index;
-}
-
-void free_frame_index(frame_index *idx)
-{ if(idx) free(idx);
-}
 
 typedef struct _heap
 { real **data;
@@ -686,8 +783,8 @@ heap *Priority_Queue_Init( real *likelihood, int nframes)
 
   p = likelihood + nframes;
   while(p-- > likelihood+1)
-    if(    (p[ 0] - p[-1]) > tol
-        && (p[ 0] - p[ 1]) > tol )
+    if(    (p[ 0] - p[-1]) >= tol
+        && (p[ 0] - p[ 1]) >= tol )
       count++;
   count += 2; //will also add first and last
 
@@ -731,13 +828,11 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
       next  = fid + 1,
       ref,
       nobs = index[fid].n;
-  static Measurements **hist = NULL;
-  static size_t histsize = 0;
   static const real tol = 1e-3;
+  static Measurements_Reference *hist = NULL;
 
-  hist = request_storage( hist, &histsize, sizeof(Measurements*), nwhisk,
-                          "HMM_Reclassify_Frame_W_Neighbors" );
-  memset(hist,0, sizeof(Measurements*)*nwhisk );
+  if(!hist)
+    hist = Measurements_Reference_Alloc(nwhisk);
 
   // Mark out unreliable neighbors
   if(    prev < 0 
@@ -761,58 +856,18 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
     ref = next;
   else
     ref = prev;
-  { int i;
-    for( i=0; i<index[ref].n; i++ )
-    { Measurements *row = index[ref].first + i;
-      if( row->state >=0 )
-        hist[ row->state ] = row;
-    }
+  { Measurements_Reference_Build( hist, index[ref].first, index[ref].n );
     (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
         nwhisk,
         index[fid].first, nobs,
-        index[ref].first, index[ref].n,
-        hist, nwhisk,
+        hist,
         shp_dists,
         vel_dists );
   }
 
-  { int N = (*pf_State_Count)(nwhisk);
-    ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
-
-    // Commit the result
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-    debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n",
-        fid,                              // frame id
-        table[nrows-1].fid+1,             // total frames
-        result->total,                    // log2 prob(obs|model)           //?
-        result->prob,                     // log2 prob(path|obs)            //?
-        result->total - result->prob );                                     //?
-    assert( nobs == result->n );
-#endif
-  //if( likelihood )
-  //  likelihood[fid] = result->prob - result->total;
-#ifdef DEBUG_HMM_RECLASSIFY
-    assert(likelihood[fid]<=1e-7);
-#endif
-    { int i = nobs;
-      int *seq = result->sequence;
-      Measurements *bookmark = index[fid].first;
-      while(i--)
-      { int s = seq[i],
-        lbl = (*pf_State_Decode)(s);
-        bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers}
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-        debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
-            bookmark[i].fid,
-            bookmark[i].wid,
-            s,
-            bookmark[i].state);
-#endif
-      }
-    } // end commit viterbi result
-    Free_Viterbi_Result(result);  // FIXME: thrashing the heap
-  } // end viterbi solution
-
+  Measurements_Apply_Model( index, fid, table[nrows-1].fid+1 /*nframes*/, nwhisk,
+                            S,T,E,
+                            NULL /*likelihood*/ );
   if(propigate)
   { prev = fid-1;
     next = fid+1;
@@ -1019,6 +1074,8 @@ int main(int argc, char*argv[])
                                           next,
                                           1 /*propigate*/ );
       }
+
+
 
     }
 
