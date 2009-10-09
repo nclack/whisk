@@ -69,6 +69,11 @@ def __save_state(precursor_or_names, whiskers ,trajectories):
     for e,fn in names.iteritems():
       if fn is None:
         names[e] = precursor +  e
+    ext = map( lambda n: os.path.splitext(n)[-1], precursor_or_names )
+    if '.trajectories' in ext:
+      del names['.measurements']
+    elif '.measurements' in ext:
+      del names['.trajectories']
   elif isinstance(precursor_or_names,str): 
     #single valued, assume it's a filename or precursor
     precursor = os.path.splitext(precursor_or_names)[0]

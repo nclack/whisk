@@ -140,7 +140,7 @@ frame_index *build_frame_index(Measurements *table, int nrows)
       }
     }
     index[0].first = table;
-    index[0].n     = last - table;
+    index[0].n     = last - table + 1;
   }
 
   return index;
@@ -1325,31 +1325,34 @@ int main(int argc, char*argv[])
           temp;
       do
       { fid=0;
-        left_ok = 0;
-        right_ok = 0;
         while( fid < nframes )
-        { while( visited[fid] && fid<nframes ) fid++; // find the left side of the next gap
+        { left_ok = right_ok = 0;
+          while( visited[fid] && fid<nframes ) fid++; // find the left side of the next gap
           if( fid == nframes )
           { break;  // no gaps...so all done
           } else if( left_ok = (fid != 0) )
           { Measurements_Reference_Build( left, index[fid-1].first, index[fid-1].n );
             left_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
                                                 left, fid, 1 );
+            left_ok &= left_jump < nframes;
           }
           while( !visited[fid] && fid<nframes ) fid++; // find the right side of this gap
           if( right_ok = (fid != nframes) )
           { Measurements_Reference_Build( right, index[fid].first, index[fid].n );
             right_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
                                                   right, fid-1, -1 );
+            right_ok &= right_jump >= 0;
           }
           /* if gap-jump hit the other side (that is, it didn't find anything)
            * mark as not ok */
           temp = left_ok;
-          left_ok   &= ( !right_ok || right->frame->fid != left_jump );
-          right_ok  &= ( !temp     || left->frame->fid  != right_jump );
+          //left_ok   &= ( !right_ok || right->frame->fid != left_jump );
+          //right_ok  &= ( !temp     || left->frame->fid  != right_jump );
+          left_ok  = left_ok  && ( !right_ok || right->frame->fid != left_jump );  
+          right_ok = right_ok && ( !temp     || left->frame->fid  != right_jump ); 
           /* choose the one with the smaller
           * jump, on tie choose left */
-          left_ok  &= ( !right_ok || (left_jump-(left->frame->fid) <= (right->frame->fid)-right_jump ) );
+          left_ok  = left_ok && ( !right_ok || (left_jump-(left->frame->fid) <= (right->frame->fid)-right_jump ) );
           right_ok &= !left_ok; // ensure only left or right (or none) is chosen
 
           if( left_ok )
@@ -1369,10 +1372,12 @@ int main(int argc, char*argv[])
                                             right_jump+1,1);
           }
 #ifdef DEBUG_HMM_RECLASSIFY
-          debug("Gap jump: left: (%2d) %5d delta: %5d\n"
-                "         right: (%2d) %5d delta: %5d\n",
-                left_ok,  left_jump,  left_jump  - left->frame->fid,
-                right_ok, right_jump, right->frame->fid - right_jump );
+          debug("Gap jump: left: (%2d) %5d jump to %5d   delta: %5d\n"
+                "         right: (%2d) %5d jump to %5d   delta: %5d\n"
+                "           fid:      %5d \n",
+                left_ok,  (left->frame)? left->frame->fid : -1, left_jump, ( left->frame)? left_jump   - left->frame->fid : -1,
+                right_ok, (right->frame)? right->frame->fid : -1, right_jump,(right->frame)? right->frame->fid - right_jump : -1,
+                fid);
           fwrite( visited, sizeof(real*), nframes, fp );
 #endif
 
