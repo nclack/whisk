@@ -61,18 +61,18 @@
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
 
-typedef int   (*Tpf_State_Count)                                             ( int nwhisk );                                                                   
-typedef real* (*Tpf_Alloc_Transitions)                                       ( int nwhisk );                                                                   
-typedef real* (*Tpf_Init_Uniform_Transitions)                                ( real *T, int nwhisk );                                                          
-typedef void  (*Tpf_Estimate_Transitions)                                    ( real *T, int nwhisk, Measurements *table, int nrows );                          
-typedef void  (*Tpf_Log2_Transitions)                                        ( real *T, int nwhisk, real baseline_log2 );                                      
-typedef real* (*Tpf_Alloc_Starts)                                            ( int nwhisk );                                                                   
-typedef void  (*Tpf_Compute_Starts_For_Two_Classes_Log2)                     ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );  
-typedef void  (*Tpf_Compute_Starts_For_Distinct_Whiskers_Log2)               ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );  
-typedef real* (*Tpf_Alloc_Emissions)                                         ( int nwhisk, int nobs );                                                         
-typedef real* (*Tpf_Request_Static_Resizable_Emissions)                      ( int nwhisk, int nobs );                                                         
-typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_Log2)                  ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );   
-typedef void  (*Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2)            ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );   
+typedef int   (*Tpf_State_Count)                                             ( int nwhisk );
+typedef real* (*Tpf_Alloc_Transitions)                                       ( int nwhisk );
+typedef real* (*Tpf_Init_Uniform_Transitions)                                ( real *T, int nwhisk );
+typedef void  (*Tpf_Estimate_Transitions)                                    ( real *T, int nwhisk, Measurements *table, int nrows );
+typedef void  (*Tpf_Log2_Transitions)                                        ( real *T, int nwhisk, real baseline_log2 );
+typedef real* (*Tpf_Alloc_Starts)                                            ( int nwhisk );
+typedef void  (*Tpf_Compute_Starts_For_Two_Classes_Log2)                     ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );
+typedef void  (*Tpf_Compute_Starts_For_Distinct_Whiskers_Log2)               ( real *S, real *T, int nwhisk, Measurements *first, Distributions *shp_dists );
+typedef real* (*Tpf_Alloc_Emissions)                                         ( int nwhisk, int nobs );
+typedef real* (*Tpf_Request_Static_Resizable_Emissions)                      ( int nwhisk, int nobs );
+typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_Log2)                  ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
+typedef void  (*Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2)            ( real *E, int nwhisk, Measurements *obs, int nobs, Distributions *shp_dists );
 typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2)        ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements_Reference *prev, Distributions *shp_dists, Distributions *vel_dists );
 typedef void  (*Tpf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2)  ( real *E, int nwhisk, Measurements *obs, int nobs, Measurements_Reference *prev, Measurements_Reference *next, Distributions *shp_dists, Distributions *vel_dists );
 typedef int   (*Tpf_State_Decode)                                            ( int state );
@@ -80,17 +80,17 @@ typedef int   (*Tpf_State_Decode)                                            ( i
 
 #ifdef TEST_HMM_RECLASSIFY_LR_MODEL
 #include "hmm-reclassify-lrmodel.h"
-Tpf_State_Count                                             pf_State_Count                                            =  LRModel_State_Count;                                 
-Tpf_Alloc_Transitions                                       pf_Alloc_Transitions                                      =  LRModel_Alloc_Transitions;                           
-Tpf_Init_Uniform_Transitions                                pf_Init_Uniform_Transitions                               =  LRModel_Init_Uniform_Transitions;                    
-Tpf_Estimate_Transitions                                    pf_Estimate_Transitions                                   =  LRModel_Estimate_Transitions;                        
-Tpf_Log2_Transitions                                        pf_Log2_Transitions                                       =  LRModel_Log2_Transitions;                            
-Tpf_Alloc_Starts                                            pf_Alloc_Starts                                           =  LRModel_Alloc_Starts;                                
-Tpf_Compute_Starts_For_Two_Classes_Log2                     pf_Compute_Starts_For_Two_Classes_Log2                    =  LRModel_Compute_Starts_For_Two_Classes_Log2;         
-Tpf_Compute_Starts_For_Distinct_Whiskers_Log2               pf_Compute_Starts_For_Distinct_Whiskers_Log2              =  LRModel_Compute_Starts_For_Distinct_Whiskers_Log2;   
-Tpf_Alloc_Emissions                                         pf_Alloc_Emissions                                        =  LRModel_Alloc_Emissions;                             
-Tpf_Request_Static_Resizable_Emissions                      pf_Request_Static_Resizable_Emissions                     =  LRModel_Request_Static_Resizable_Emissions;          
-Tpf_Compute_Emissions_For_Two_Classes_Log2                  pf_Compute_Emissions_For_Two_Classes_Log2                 =  LRModel_Compute_Emissions_For_Two_Classes_Log2;      
+Tpf_State_Count                                             pf_State_Count                                            =  LRModel_State_Count;
+Tpf_Alloc_Transitions                                       pf_Alloc_Transitions                                      =  LRModel_Alloc_Transitions;
+Tpf_Init_Uniform_Transitions                                pf_Init_Uniform_Transitions                               =  LRModel_Init_Uniform_Transitions;
+Tpf_Estimate_Transitions                                    pf_Estimate_Transitions                                   =  LRModel_Estimate_Transitions;
+Tpf_Log2_Transitions                                        pf_Log2_Transitions                                       =  LRModel_Log2_Transitions;
+Tpf_Alloc_Starts                                            pf_Alloc_Starts                                           =  LRModel_Alloc_Starts;
+Tpf_Compute_Starts_For_Two_Classes_Log2                     pf_Compute_Starts_For_Two_Classes_Log2                    =  LRModel_Compute_Starts_For_Two_Classes_Log2;
+Tpf_Compute_Starts_For_Distinct_Whiskers_Log2               pf_Compute_Starts_For_Distinct_Whiskers_Log2              =  LRModel_Compute_Starts_For_Distinct_Whiskers_Log2;
+Tpf_Alloc_Emissions                                         pf_Alloc_Emissions                                        =  LRModel_Alloc_Emissions;
+Tpf_Request_Static_Resizable_Emissions                      pf_Request_Static_Resizable_Emissions                     =  LRModel_Request_Static_Resizable_Emissions;
+Tpf_Compute_Emissions_For_Two_Classes_Log2                  pf_Compute_Emissions_For_Two_Classes_Log2                 =  LRModel_Compute_Emissions_For_Two_Classes_Log2;
 Tpf_Compute_Emissions_For_Distinct_Whiskers_Log2            pf_Compute_Emissions_For_Distinct_Whiskers_Log2           =  LRModel_Compute_Emissions_For_Distinct_Whiskers_Log2;
 Tpf_Compute_Emissions_For_Two_Classes_W_History_Log2        pf_Compute_Emissions_For_Two_Classes_W_History_Log2       =  LRModel_Compute_Emissions_For_Two_Classes_W_History_Log2;
 Tpf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2  pf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2 =  LRModel_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2;
@@ -829,24 +829,24 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
       ref,
       nobs = index[fid].n;
   static const real tol = 1e-3;
-  static Measurements_Reference *hist = NULL;
+  static Measurements_Reference *hist  = NULL;
+  static Measurements_Reference *hist2 = NULL;
 
   if(!hist)
-    hist = Measurements_Reference_Alloc(nwhisk);
+  { hist  = Measurements_Reference_Alloc(nwhisk);
+    hist2 = Measurements_Reference_Alloc(nwhisk);
+  }
+  Measurements_Reference_Reset(hist);
 
   // Mark out unreliable neighbors
-  if(    prev < 0 
-      || !visited[prev] )
-    prev = -1;
-  if(    next >= nframes 
-      || !visited[next] )
-    next = -1;
+  if(    prev < 0        || !visited[prev] )  prev = -1;
+  if(    next >= nframes || !visited[next] )  next = -1;
   if( prev==-1 && next==-1 )
-    return 0; //do nothing - 
+    return 0; //do nothing -
   if( prev!=-1 && next != -1)
   {// XXX: MERGE INTERVALS
     warning("Merge @ %5d\n",fid);
-    return 0; //do nothing - 
+    return 0; //do nothing -
   }
 
   (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, index[fid].first, shp_dists );
@@ -871,14 +871,17 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
   if(propigate)
   { prev = fid-1;
     next = fid+1;
-    if(    prev < 0 
+    if(    prev < 0
         || visited[prev]
         || likelihood[prev] - likelihood[fid] > tol)
       prev = -1;
-    if(    next >= nframes 
-        || visited[next] 
+    if(    next >= nframes
+        || visited[next]
         || likelihood[next] - likelihood[fid] > tol)
       next = -1;
+
+    Measurements_Reference_Reset(hist);
+    Measurements_Reference_Reset(hist2);
     if( prev > -1 )
     { visited[prev] = visited[fid];
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
@@ -893,6 +896,7 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
                                         likelihood,
                                         prev,
                                         1 /*propigate*/ );
+      Measurements_Reference_Build( hist, index[prev].first, index[prev].n );
     }
     if( next > -1 )
     { visited[next] = visited[fid];
@@ -908,6 +912,19 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
                                         likelihood,
                                         next,
                                         1 /*propigate*/ );
+      Measurements_Reference_Build( hist2, index[next].first, index[next].n );
+    }
+
+    if( Measurements_Reference_Has_Full_Count(hist) &&
+        Measurements_Reference_Has_Full_Count(hist2) )
+    { (*pf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2)( E,
+          nwhisk,
+          index[fid].first, nobs,
+          hist, hist2,
+          shp_dists, vel_dists );
+      Measurements_Apply_Model( index, fid, table[nrows-1].fid+1 /*nframes*/, nwhisk,
+                                S,T,E,
+                                NULL /*likelihood*/ );
     }
   }
   return 1;
@@ -1047,7 +1064,7 @@ int main(int argc, char*argv[])
       fwrite( visited, sizeof(real*), nframes, fp );
 #endif
 
-      // fill local interval 
+      // fill local interval
       if(   prev >= 0
          && !visited[prev] )
       { visited[prev] = visited[fid];
