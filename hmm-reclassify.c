@@ -25,15 +25,15 @@
 #define TEST_HMM_RECLASSIFY_LR_MODEL
 #define  TEST_HMM_RECLASSIFY_NO_DELTAS
 
-#elif defined( TEST_HMM_RECLASSIFY_2 ) 
+#elif defined( TEST_HMM_RECLASSIFY_2 )
 #define TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
 #define TEST_HMM_RECLASSIFY_NO_DELTAS
 
-#elif defined( TEST_HMM_RECLASSIFY_3 ) 
+#elif defined( TEST_HMM_RECLASSIFY_3 )
 #define TEST_HMM_RECLASSIFY_LR_MODEL
 #define TEST_HMM_RECLASSIFY_W_DELTAS
 
-#elif defined( TEST_HMM_RECLASSIFY_4 ) 
+#elif defined( TEST_HMM_RECLASSIFY_4 )
 #define TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
 #define TEST_HMM_RECLASSIFY_W_DELTAS
 
@@ -48,7 +48,7 @@
 #define TEST_HMM_RECLASSIFY_W_DELTAS
 
 #endif
-               
+
 #define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
 #define HMM_RECLASSIFY_VEL_DISTS_NBINS   (8096)
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
@@ -56,8 +56,8 @@
 //
 // DEBUG DEFINES
 //
-#if 0
 #define DEBUG_HMM_RECLASSIFY
+#if 0
 #define DEBUG_HMM_RECLASSIFY_EXTRA
 #endif
 
@@ -138,8 +138,8 @@ void HMM_Reclassify_No_Deltas_W_Likelihood(
   { Measurements *bookmark = row;
     int fid = row->fid;
     int nobs;
-    while( row->fid == fid && row < table+nrows ) 
-    { 
+    while( row->fid == fid && row < table+nrows )
+    {
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
       debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
 #endif
@@ -157,7 +157,7 @@ void HMM_Reclassify_No_Deltas_W_Likelihood(
 
       // Commit the result
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-      debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
+      debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n",
           fid,                              // frame id
           table[nrows-1].fid+1,             // total frames
           result->total,                    // log2 prob(obs|model)           //?
@@ -171,12 +171,12 @@ void HMM_Reclassify_No_Deltas_W_Likelihood(
         int *seq = result->sequence;
         while(i--)
         { int s = seq[i];
-          bookmark[i].state = (*pf_State_Decode)(s);   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
+          bookmark[i].state = (*pf_State_Decode)(s);   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers}
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-          debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
-              bookmark[i].fid, 
-              bookmark[i].wid, 
-              s,         
+          debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
+              bookmark[i].fid,
+              bookmark[i].wid,
+              s,
               bookmark[i].state);
 #endif
         }
@@ -189,6 +189,7 @@ void HMM_Reclassify_No_Deltas_W_Likelihood(
   } // end loop over observations
 }
 
+
 #ifdef TEST_HMM_RECLASSIFY_NO_DELTAS
 char *Spec[] = {"[-h|--help] | (<source:string> <dest:string> [-n <int>])",NULL};
 int main(int argc, char*argv[])
@@ -199,7 +200,7 @@ int main(int argc, char*argv[])
   real *T;
 
   Process_Arguments( argc, argv, Spec, 0 );
-  
+
   help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
     "--------------\n"
     "HMM-Reclassify\n"
@@ -219,7 +220,7 @@ int main(int argc, char*argv[])
   // Load Table
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &nrows );
   Sort_Measurements_Table_State_Time(table, nrows);
-  
+
   // Get expected number of whiskers
   nwhisk = -1;
   if( Is_Arg_Matched("-n") )
@@ -240,7 +241,7 @@ int main(int argc, char*argv[])
   // Compute transitions matrix for model
   //   -  assumes there's a prior guess for the identities
 
-  T = (*pf_Alloc_Transitions)(nwhisk);  
+  T = (*pf_Alloc_Transitions)(nwhisk);
   //(*pf_Init_Uniform_Transitions)(T,nwhisk);
   (*pf_Estimate_Transitions)( T, nwhisk, table, nrows );
 
@@ -250,14 +251,14 @@ int main(int argc, char*argv[])
     double *row;
     int N = nwhisk*2 + 1;
     for( row=T; row < T + N*N; row++ )
-    { 
+    {
       if( ! (row-T)%N )
       { assert( fabs(sum-1.0) < 1e-3 );
         sum = 0.0;
       }
       sum += *row;
     }
-  } 
+  }
 #endif
 
   (*pf_Log2_Transitions)(T,nwhisk, HMM_RECLASSIFY_BASELINE_LOG2);
@@ -268,14 +269,14 @@ int main(int argc, char*argv[])
     double *row;
     int N = nwhisk*2 + 1;
     for( row=T; row < T + N*N; row++ )
-    { 
+    {
       if( ! (row-T)%N )
       { assert( fabs(sum-1.0) < 1e-3 );
         sum = 0.0;
       }
       sum += *row;
     }
-  } 
+  }
 #endif
 
   //
@@ -308,11 +309,11 @@ int main(int argc, char*argv[])
   Distributions_Apply_Log2( shp_dists );
 
   //
-  // Process frames 
+  // Process frames
   //
   Sort_Measurements_Table_Time_Face( table, nrows );
-  { real *E = (*pf_Request_Static_Resizable_Emissions)( 
-                  nwhisk, 
+  { real *E = (*pf_Request_Static_Resizable_Emissions)(
+                  nwhisk,
                   (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
 
@@ -320,7 +321,7 @@ int main(int argc, char*argv[])
     // Reclassify all frames
     //
     HMM_Reclassify_No_Deltas_W_Likelihood(
-        table, nrows, 
+        table, nrows,
         shp_dists,
         nwhisk,
         S,T,E,
@@ -333,10 +334,10 @@ int main(int argc, char*argv[])
   //
   // Save results
   //
-  
+
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
 
-  // 
+  //
   // Cleanup
   //
   free(T);
@@ -358,7 +359,7 @@ int main(int argc, char*argv[])
   real *T;
 
   Process_Arguments( argc, argv, Spec, 0 );
-  
+
   help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
     "----------------------------\n"
     "HMM-Reclassify (with deltas)\n"
@@ -383,7 +384,7 @@ int main(int argc, char*argv[])
   //
   Sort_Measurements_Table_State_Time(table, nrows);
   Measurements_Table_Compute_Velocities(table,nrows);
-  
+
   nwhisk = -1;
   if( Is_Arg_Matched("-n") )
     nwhisk = Get_Int_Arg("-n");
@@ -396,7 +397,7 @@ int main(int argc, char*argv[])
     assert(minstate==-1);
     assert(maxstate>=0);
     assert(nstate>0);
-#endif 
+#endif
   }
 
 #ifdef DEBUG_HMM_RECLASSIFY
@@ -413,7 +414,7 @@ int main(int argc, char*argv[])
 
   //
   // Want to condition distributions over whether it's a whisker or not,
-  // so encode input labels  
+  // so encode input labels
   //
   row = table + nrows;
   while(row-- > table)
@@ -434,11 +435,11 @@ int main(int argc, char*argv[])
   Distributions_Apply_Log2( vel_dists );
 
   //
-  // Process frames 
+  // Process frames
   //
   Sort_Measurements_Table_Time_Face( table, nrows );
-  { real *E = (*pf_Request_Static_Resizable_Emissions)( 
-                  nwhisk, 
+  { real *E = (*pf_Request_Static_Resizable_Emissions)(
+                  nwhisk,
                   (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
     Measurements *row,
@@ -451,15 +452,15 @@ int main(int argc, char*argv[])
     { Measurements *bookmark = row;
       int fid = row->fid;
       int nobs;
-      while(row < table+nrows && row->fid == fid  ) 
-      { 
+      while(row < table+nrows && row->fid == fid  )
+      {
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
           debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
 #endif
         ++row;
       }
       nobs = row - bookmark;
-      
+
       (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, bookmark, shp_dists );
 
       E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
@@ -474,12 +475,12 @@ int main(int argc, char*argv[])
       if(!prev)
         (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
       else
-        (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,            
-                                                                nwhisk, 
-                                                                bookmark, nobs, 
+        (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
+                                                                nwhisk,
+                                                                bookmark, nobs,
                                                                 prev, nprev,
-                                                                last, nwhisk, 
-                                                                shp_dists, 
+                                                                last, nwhisk,
+                                                                shp_dists,
                                                                 vel_dists );
 
       { int N = (*pf_State_Count)(nwhisk);
@@ -487,7 +488,7 @@ int main(int argc, char*argv[])
 
         // Commit the result
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-        debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
+        debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n",
             fid,                              // frame id
             table[nrows-1].fid+1,             // total frames
             result->total,                    // log2 prob(obs|model)           //?
@@ -501,14 +502,14 @@ int main(int argc, char*argv[])
           while(i--)
           { int s = seq[i],
                 lbl = (*pf_State_Decode)(s);
-            bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
+            bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers}
             if(lbl>-1)
               last[lbl] = bookmark+i;
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-            debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
-                bookmark[i].fid, 
-                bookmark[i].wid, 
-                s,         
+            debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
+                bookmark[i].fid,
+                bookmark[i].wid,
+                s,
                 bookmark[i].state);
 #endif
           }
@@ -528,10 +529,10 @@ int main(int argc, char*argv[])
   //
   // Save results
   //
-  
+
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
 
-  // 
+  //
   // Cleanup
   //
   //free(T);
@@ -556,7 +557,7 @@ frame_index *build_frame_index(Measurements *table, int nrows)
   Measurements *row  = table + nrows,
                *last = row-1;
   frame_index *index = Guarded_Malloc( sizeof(frame_index)*nframes, "alloc frame index" );
-  
+
   { int fid = 0;
     while(row-- > table )
     { if( row->fid != fid )
@@ -700,13 +701,124 @@ heap *Priority_Queue_Init( real *likelihood, int nframes)
     p = likelihood + nframes;
     while(p-- > likelihood+1)
       if(    (p[ 0] - p[-1]) > tol
-          && (p[ 0] - p[ 1]) > tol ) 
+          && (p[ 0] - p[ 1]) > tol )
         *(minima++) = p;
     q->size = minima - q->data;
     heap_build(q);
   }
 
   return q;
+}
+
+void HMM_Reclassify_Frame_W_Neighbors(
+    Measurements *table, int nrows,        // observables
+    frame_index *index, int nframes,       // frame index
+    Distributions *shp_dists,              // shape (static) distributions
+    Distributions *vel_dists,              // shape (static) distributions
+    int nwhisk,                            // number of whiskers to expect
+    real *S,                               // must be preallocated  - starts
+    real *T,                               // must be precomputed   - transitions
+    real *E,                               // must be preallocated  - emissions
+    real *likelihood,                      //
+    int fid,                               // frame to reclassify
+    int propigate)                         // Recursively propigate to neighbors?
+{ int prev  = fid - 1,
+      next  = fid + 1,
+      ref,
+      nobs = index[fid].n;
+  static Measurements **hist = NULL;
+  static size_t histsize = 0;
+
+  hist = request_storage( hist, &histsize, sizeof(Measurements*), nwhisk,
+                          "HMM_Reclassify_Frame_W_Neighbors" );
+  memset(hist,0, sizeof(Measurements*)*nwhisk );
+
+  if( prev < 0 )
+    prev = -1;
+  if( next >= nframes )
+    next = -1;
+  if( prev > -1 && next > -1 )
+  { if( likelihood[prev] > likelihood[next] )
+      next = -1;
+    else
+      prev = -1;
+  }
+  assert( prev==-1 || next == -1 );
+
+  (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, index[fid].first, shp_dists );
+  E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
+
+  if( prev == -1 )
+    ref = next;
+  else
+    ref = prev;
+  { int i;
+    for( i=0; i<index[ref].n; i++ )
+    { Measurements *row = index[ref].first + i;
+      if( row->state >=0 )
+        hist[ row->state ] = row;
+    }
+    (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
+        nwhisk,
+        index[fid].first, nobs,
+        index[ref].first, index[ref].n,
+        hist, nwhisk,
+        shp_dists,
+        vel_dists );
+  }
+
+  { int N = (*pf_State_Count)(nwhisk);
+    ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
+
+    // Commit the result
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
+    debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n",
+        fid,                              // frame id
+        table[nrows-1].fid+1,             // total frames
+        result->total,                    // log2 prob(obs|model)           //?
+        result->prob,                     // log2 prob(path|obs)            //?
+        result->total - result->prob );                                     //?
+    assert( nobs == result->n );
+#endif
+    { int i = nobs;
+      int *seq = result->sequence;
+      Measurements *bookmark = index[fid].first;
+      while(i--)
+      { int s = seq[i],
+        lbl = (*pf_State_Decode)(s);
+        bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers}
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
+        debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
+            bookmark[i].fid,
+            bookmark[i].wid,
+            s,
+            bookmark[i].state);
+#endif
+      }
+    } // end commit viterbi result
+    Free_Viterbi_Result(result);  // FIXME: thrashing the heap
+  } // end viterbi solution
+
+  if(propigate)
+  { if( prev >= 0 )
+      HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+                                        index, nframes,
+                                        shp_dists, vel_dists,
+                                        nwhisk,
+                                        S,T,E,
+                                        likelihood,
+                                        prev,
+                                        0 /*propigate*/ );
+    if( next < nframes )
+      HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+                                        index, nframes,
+                                        shp_dists, vel_dists,
+                                        nwhisk,
+                                        S,T,E,
+                                        likelihood,
+                                        next,
+                                        0 /*propigate*/ );
+  }
 }
 
 char *Spec[] = {"[-h|--help] | ( [-n <int>] <source:string> <dest:string> )",NULL};
@@ -719,7 +831,7 @@ int main(int argc, char*argv[])
   real *T;
 
   Process_Arguments( argc, argv, Spec, 0 );
-  
+
   help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
     "----------------------------\n"
     "HMM-Reclassify ( Watershed )\n"
@@ -744,7 +856,7 @@ int main(int argc, char*argv[])
   //
   Sort_Measurements_Table_State_Time(table, nrows);
   Measurements_Table_Compute_Velocities(table,nrows);
-  
+
   nwhisk = -1;
   if( Is_Arg_Matched("-n") )
     nwhisk = Get_Int_Arg("-n");
@@ -757,7 +869,7 @@ int main(int argc, char*argv[])
     assert(minstate==-1);
     assert(maxstate>=0);
     assert(nstate>0);
-#endif 
+#endif
   }
 
 #ifdef DEBUG_HMM_RECLASSIFY
@@ -774,7 +886,7 @@ int main(int argc, char*argv[])
 
   //
   // Want to condition distributions over whether it's a whisker or not,
-  // so encode input labels  
+  // so encode input labels
   //
   row = table + nrows;
   while(row-- > table)
@@ -795,25 +907,25 @@ int main(int argc, char*argv[])
   Distributions_Apply_Log2( vel_dists );
 
   //
-  // Process frames 
+  // Process frames
   //
   Sort_Measurements_Table_Time_Face( table, nrows );
-  { real *E = (*pf_Request_Static_Resizable_Emissions)( 
-                  nwhisk, 
+  { real *E = (*pf_Request_Static_Resizable_Emissions)(
+                  nwhisk,
                   (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
     int nframes = table[nrows-1].fid+1;
     char *visited    = Guarded_Malloc( sizeof(char)*nframes, "alloc visited"    );
     real *likelihood = Guarded_Malloc( sizeof(real)*nframes, "alloc likelihood" );
     frame_index *index = build_frame_index(table,nrows);
-    heap *q;    
+    heap *q;
 #ifdef DEBUG_HMM_RECLASSIFY
     //FILE *fp = fopen("visited.raw","w+b");
 #endif
 
     //  Initialize
     //   - Get initial likelihoods
-    //   - Build priority queue 
+    //   - Build priority queue
     //
     memset( visited, 0, sizeof(char)*nframes );
     HMM_Reclassify_No_Deltas_W_Likelihood( table, nrows, shp_dists, nwhisk, S,T,E, likelihood );
@@ -853,6 +965,15 @@ int main(int argc, char*argv[])
       { heap_pop_head(q);
       }
 
+      HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+                                        index, nframes,
+                                        shp_dists, vel_dists,
+                                        nwhisk,
+                                        S,T,E,
+                                        likelihood,
+                                        fid,
+                                        1 /*propigate*/ );
+
     }
 
 #ifdef DEBUG_HMM_RECLASSIFY
@@ -871,10 +992,10 @@ int main(int argc, char*argv[])
   //
   // Save results
   //
-  
+
   Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
 
-  // 
+  //
   // Cleanup
   //
   //free(T);
