@@ -21,9 +21,9 @@
 //
 // DEBUG DEFINES
 //
-#if 0
 #define DEBUG_HMM_RECLASSIFY
 #define DEBUG_HMM_RECLASSIFY_EXTRA
+#if 0
 #endif
 
 #if 1 // setup tests
@@ -711,7 +711,7 @@ heap *Priority_Queue_Init( real *likelihood, int nframes)
   return q;
 }
 
-void HMM_Reclassify_Frame_W_Neighbors(
+int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, otherwise 0
     Measurements *table, int nrows,        // observables
     frame_index *index, int nframes,       // frame index
     Distributions *shp_dists,              // shape (static) distributions
@@ -720,6 +720,7 @@ void HMM_Reclassify_Frame_W_Neighbors(
     real *S,                               // must be preallocated  - starts
     real *T,                               // must be precomputed   - transitions
     real *E,                               // must be preallocated  - emissions
+    char *visited,
     real *likelihood,                      //
     int fid,                               // frame to reclassify
     int propigate)                         // Recursively propigate to neighbors?
@@ -734,9 +735,9 @@ void HMM_Reclassify_Frame_W_Neighbors(
                           "HMM_Reclassify_Frame_W_Neighbors" );
   memset(hist,0, sizeof(Measurements*)*nwhisk );
 
-  if( prev < 0 )
+  if( !visited[prev] || prev < 0 )
     prev = -1;
-  if( next >= nframes )
+  if( !visited[next] || next >= nframes )
     next = -1;
   if( prev > -1 && next > -1 )
   { if( likelihood[prev] > likelihood[next] )
@@ -745,6 +746,8 @@ void HMM_Reclassify_Frame_W_Neighbors(
       prev = -1;
   }
   assert( prev==-1 || next == -1 );
+  if( prev==-1 && next==-1 )
+    return 0; //do nothing - 
 
   (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, index[fid].first, shp_dists );
   E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
@@ -781,6 +784,11 @@ void HMM_Reclassify_Frame_W_Neighbors(
         result->total - result->prob );                                     //?
     assert( nobs == result->n );
 #endif
+    if( likelihood )
+      likelihood[fid] = result->prob - result->total;
+#ifdef DEBUG_HMM_RECLASSIFY
+    assert(likelihood[fid]<=1e-7);
+#endif
     { int i = nobs;
       int *seq = result->sequence;
       Measurements *bookmark = index[fid].first;
@@ -809,6 +817,7 @@ void HMM_Reclassify_Frame_W_Neighbors(
                                         shp_dists, vel_dists,
                                         nwhisk,
                                         S,T,E,
+                                        visited,
                                         likelihood,
                                         prev,
                                         0 /*propigate*/ );
@@ -818,10 +827,12 @@ void HMM_Reclassify_Frame_W_Neighbors(
                                         shp_dists, vel_dists,
                                         nwhisk,
                                         S,T,E,
+                                        visited,
                                         likelihood,
                                         next,
                                         0 /*propigate*/ );
   }
+  return 1;
 }
 
 char *Spec[] = {"[-h|--help] | ( [-n <int>] <source:string> <dest:string> )",NULL};
@@ -953,7 +964,7 @@ int main(int argc, char*argv[])
       }
 
 #ifdef DEBUG_HMM_RECLASSIFY
-      debug("Frame: %5d Q size: %5d/%-5d likelihood: %f\n", fid, q->size, q->maxsize, likelihood[fid]);
+      debug("Frame: %5d Q size: %5d/%-5d likelihood: %g\n", fid, q->size, q->maxsize, likelihood[fid]);
       //fwrite( visited, sizeof(char), nframes, fp );
 #endif
       //update queue
@@ -968,14 +979,18 @@ int main(int argc, char*argv[])
       { heap_pop_head(q);
       }
 
-      HMM_Reclassify_Frame_W_Neighbors( table, nrows,
-                                        index, nframes,
-                                        shp_dists, vel_dists,
-                                        nwhisk,
-                                        S,T,E,
-                                        likelihood,
-                                        fid,
-                                        0 /*propigate*/ );
+      if( HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+                                            index, nframes,
+                                            shp_dists, vel_dists,
+                                            nwhisk,
+                                            S,T,E,
+                                            visited,
+                                            likelihood,
+                                            fid,
+                                            1 /*propigate*/ ))
+      {
+        heap_build(q);
+      }
 
     }
 
