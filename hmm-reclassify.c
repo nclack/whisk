@@ -18,6 +18,13 @@
 #define TEST_HMM_RECLASSIFY_LR_MODEL
 #endif
 
+//
+// DEBUG DEFINES
+//
+#if 0
+#define DEBUG_HMM_RECLASSIFY
+#define DEBUG_HMM_RECLASSIFY_EXTRA
+#endif
 
 #if 1 // setup tests
 
@@ -53,13 +60,6 @@
 #define HMM_RECLASSIFY_VEL_DISTS_NBINS   (8096)
 #define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
-//
-// DEBUG DEFINES
-//
-#define DEBUG_HMM_RECLASSIFY
-#if 0
-#define DEBUG_HMM_RECLASSIFY_EXTRA
-#endif
 
 
 typedef int   (*Tpf_State_Count)                                       ( int nwhisk );
@@ -561,9 +561,10 @@ frame_index *build_frame_index(Measurements *table, int nrows)
   { int fid = 0;
     while(row-- > table )
     { if( row->fid != fid )
-      { index[fid].first = row;
+      { index[fid].first = row + 1;
         index[fid].n     = last - row;
         last = row;
+        fid = row->fid;
       }
     }
     index[0].first = table;
@@ -800,7 +801,9 @@ void HMM_Reclassify_Frame_W_Neighbors(
   } // end viterbi solution
 
   if(propigate)
-  { if( prev >= 0 )
+  { prev = fid-1;
+    next = fid+1;
+    if( prev >= 0 )
       HMM_Reclassify_Frame_W_Neighbors( table, nrows,
                                         index, nframes,
                                         shp_dists, vel_dists,
@@ -972,7 +975,7 @@ int main(int argc, char*argv[])
                                         S,T,E,
                                         likelihood,
                                         fid,
-                                        1 /*propigate*/ );
+                                        0 /*propigate*/ );
 
     }
 

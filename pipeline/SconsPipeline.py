@@ -117,6 +117,10 @@ def pipeline_standard(env, movie):
       ( env.MeasurementsAsTrajectories,),
       env.Summary
     ),
+    ( env.HmmLRTimePQSolver,
+      ( env.MeasurementsAsTrajectories,),
+      env.Summary
+    ),
     env.Summary
   ]
 
@@ -245,6 +249,9 @@ env  = Environment(
     'HmmLRTimeSolver': Builder(action = "test_hmm_reclassify_3 -n $WHISKER_COUNT $SOURCE $TARGET",
                               src_suffix = ".measurements",
                               suffix = lit( "[hmm-lr-time].measurements")),
+    'HmmLRTimePQSolver': Builder(action = "test_hmm_reclassify_5 -n $WHISKER_COUNT $SOURCE $TARGET",
+                              src_suffix = ".measurements",
+                              suffix = lit( "[hmm-lr-time-pq].measurements")),
     'HmmLRDelTimeSolver': Builder(action = "test_hmm_reclassify_4 -n $WHISKER_COUNT $SOURCE $TARGET",
                               src_suffix = ".measurements",
                               suffix = lit( "[hmm-lrdel-time].measurements")),
