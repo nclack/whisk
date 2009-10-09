@@ -13,6 +13,11 @@
 #include "viterbi.h"
 #include "common.h"
 
+// Make one model the default
+#ifndef TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
+#define TEST_HMM_RECLASSIFY_LR_MODEL
+#endif
+
 
 #if 1 // setup tests
 
@@ -117,6 +122,71 @@ Tpf_State_Decode                                      pf_State_Decode           
 //Tpf_State_Decode                                      pf_State_Decode                                      =  LRDelModel_State_Decode;
 //#endif
 
+void HMM_Reclassify_No_Deltas_W_Likelihood(
+    Measurements *table, int nrows,        // observables
+    Distributions *shp_dists,              // shape (static) distributions
+    int nwhisk,                            // number of whiskers to expect
+    real *S,                               // must be preallocated  - starts
+    real *T,                               // must be precomputed   - transitions
+    real *E,                               // must be preallocated  - emissions
+    real *likelihood)                      // must be preallocated or NULL
+{
+  Measurements *row;
+
+  row = table;
+  while( row < table+nrows )
+  { Measurements *bookmark = row;
+    int fid = row->fid;
+    int nobs;
+    while( row->fid == fid && row < table+nrows ) 
+    { 
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
+      debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
+#endif
+      ++row;
+    }
+    nobs = row - bookmark;
+
+    (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, bookmark, shp_dists );
+
+    E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
+    (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
+
+    { int N = (*pf_State_Count)(nwhisk);
+      ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
+
+      // Commit the result
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
+      debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
+          fid,                              // frame id
+          table[nrows-1].fid+1,             // total frames
+          result->total,                    // log2 prob(obs|model)           //?
+          result->prob,                     // log2 prob(path|obs)            //?
+          result->total - result->prob );                                     //?
+      assert( nobs == result->n );
+#endif
+      { int i = nobs;
+        int *seq = result->sequence;
+        while(i--)
+        { int s = seq[i];
+          bookmark[i].state = (*pf_State_Decode)(s);   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
+#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
+          debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
+              bookmark[i].fid, 
+              bookmark[i].wid, 
+              s,         
+              bookmark[i].state);
+#endif
+        }
+      } // end commit viterbi result
+      Free_Viterbi_Result(result);  // FIXME: thrashing the heap
+    } // end viterbi solution
+#ifdef DEBUG_HMM_RECLASSIFY
+    assert(row!=bookmark);
+#endif
+  } // end loop over observations
+}
+
 #ifdef TEST_HMM_RECLASSIFY_NO_DELTAS
 char *Spec[] = {"[-h|--help] | (<source:string> <dest:string> [-n <int>])",NULL};
 int main(int argc, char*argv[])
@@ -144,11 +214,11 @@ int main(int argc, char*argv[])
     "          the initial guess provided by <source>.  Specifying a number less than one results in\n"
     "          the default behavior.\n"
     "\n");
-
+  // Load Table
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), &nrows );
-
   Sort_Measurements_Table_State_Time(table, nrows);
   
+  // Get expected number of whiskers
   nwhisk = -1;
   if( Is_Arg_Matched("-n") )
     nwhisk = Get_Int_Arg("-n");
@@ -166,7 +236,7 @@ int main(int argc, char*argv[])
 
   //
   // Compute transitions matrix for model
-  //
+  //   -  assumes there's a prior guess for the identities
 
   T = (*pf_Alloc_Transitions)(nwhisk);  
   //(*pf_Init_Uniform_Transitions)(T,nwhisk);
@@ -209,7 +279,8 @@ int main(int argc, char*argv[])
   //
   // Want to condition distributions over whether it's a whisker or not,
   // so encode input identities.
-  //
+  //   - this block must be after calculation of transitions
+  //   - erases the loaded (guess) identities
   { int i = nrows;
     while(i--)
     { Measurements *row = table + i;
@@ -235,71 +306,24 @@ int main(int argc, char*argv[])
   Distributions_Apply_Log2( shp_dists );
 
   //
-  // Process frames independantly
+  // Process frames 
   //
   Sort_Measurements_Table_Time_Face( table, nrows );
   { real *E = (*pf_Request_Static_Resizable_Emissions)( 
                   nwhisk, 
                   (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
-    Measurements *row;
 
-    row = table;
-    while( row < table+nrows )
-    //for( row = table; row < table+nrows; row++ )
-    { Measurements *bookmark = row;
-      int fid = row->fid;
-      int nobs;
-      while( row->fid == fid && row < table+nrows ) 
-      { 
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-          debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
-#endif
-        ++row;
-      }
-      nobs = row - bookmark;
-      
-      (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T,  nwhisk, bookmark, shp_dists );
+    //
+    // Reclassify all frames
+    //
+    HMM_Reclassify_No_Deltas_W_Likelihood(
+        table, nrows, 
+        shp_dists,
+        nwhisk,
+        S,T,E,
+        NULL /*likelihood*/);
 
-      E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
-      (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
-
-      { int N = (*pf_State_Count)(nwhisk);
-        ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
-
-        // Commit the result
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-        debug("[%5d/%5d]: total: %+5.5f prob: %+5.5f (delta: %+5.5f)\n", 
-            fid,                              // frame id
-            table[nrows-1].fid+1,             // total frames
-            result->total,                    // log2 prob(obs|model)           //?
-            result->prob,                     // log2 prob(path|obs)            //?
-            result->total - result->prob );                                     //?
-        assert( nobs == result->n );
-        //{ int i = nobs;  //result should be strictly increasing (upper trangular)
-        //  while(--i) assert( result->sequence[i] - result->sequence[i-1] >=0 );
-        //}
-#endif
-        { int i = nobs;
-          int *seq = result->sequence;
-          while(i--)
-          { int s = seq[i];
-            bookmark[i].state = (*pf_State_Decode)(s);   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers} 
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-            debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n", 
-                bookmark[i].fid, 
-                bookmark[i].wid, 
-                s,         
-                bookmark[i].state);
-#endif
-          }
-        } // end commit viterbi result
-        Free_Viterbi_Result(result);  // FIXME: thrashing the heap
-      } // end viterbi solution
-#ifdef DEBUG_HMM_RECLASSIFY
-      assert(row!=bookmark);
-#endif
-    } // end loop over observations
     free(S);
     free(E);
   } // end re-classification
