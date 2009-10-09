@@ -165,6 +165,8 @@ void HMM_Reclassify_No_Deltas_W_Likelihood(
           result->total - result->prob );                                     //?
       assert( nobs == result->n );
 #endif
+      if( likelihood )
+        likelihood[fid] = result->prob - result->total;
       { int i = nobs;
         int *seq = result->sequence;
         while(i--)
@@ -642,7 +644,7 @@ inline real *heap_pop_head( heap *h )
   return max;
 }
 
-inline real *heap_pop_and_replace_head( heap *h, real *v )
+inline real *heap_pop_and_insert( heap *h, real *v )
 { real *max,
       **data = h->data - 1;
   if( h->size < 1 )
@@ -800,56 +802,70 @@ int main(int argc, char*argv[])
                   nwhisk, 
                   (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
-    Measurements *row,
-                 **last = Guarded_Malloc( sizeof(Measurements*)*nwhisk, "alloc array for last identified whiskers" );
-    memset(last,0, sizeof(Measurements*)*nwhisk );
-    row = table;
-    // Advance over rows
-    while( row < table+nrows )
-    { Measurements *bookmark = row;
-      int fid = row->fid;
-      int nobs;
-      // Advance over chunks of rows in same frame 
-      // (since sorted, this is the whole frame)
-      while(row < table+nrows && row->fid == fid  ) 
-      { 
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-          debug("Frame: %5d  Whisker: %3d  State: %3d \n", row->fid, row->wid, row->state);
+    int nframes = table[nrows-1].fid+1;
+    char *visited    = Guarded_Malloc( sizeof(char)*nframes, "alloc visited"    );
+    real *likelihood = Guarded_Malloc( sizeof(real)*nframes, "alloc likelihood" );
+    frame_index *index = build_frame_index(table,nrows);
+    heap *q;    
+#ifdef DEBUG_HMM_RECLASSIFY
+    //FILE *fp = fopen("visited.raw","w+b");
 #endif
-        ++row;
+
+    //  Initialize
+    //   - Get initial likelihoods
+    //   - Build priority queue 
+    //
+    memset( visited, 0, sizeof(char)*nframes );
+    HMM_Reclassify_No_Deltas_W_Likelihood( table, nrows, shp_dists, nwhisk, S,T,E, likelihood );
+    q = Priority_Queue_Init( likelihood, nframes );
+
+    // Process frames according to priority queue
+    while( q->size > 0 )
+    { int fid = q->data[0] - likelihood,
+          prev  = fid - 1,
+          next  = fid + 1;
+      if( visited[fid] )
+      { heap_pop_head(q);
+        continue;
       }
-      nobs = row - bookmark;
-      
-      // 
-      // Compute starts and emissions for frame
-      //
-      (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, bookmark, shp_dists );
-      E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
-#ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-      { int i;
-        debug("Last\n");
-        for(i=0; i<nwhisk; i++)
-          debug("\t%p", last[i]);
-        debug("\n");
+      visited[fid] = 1;
+
+      if( visited[prev] || prev < 0 )
+      { prev = -1;
       }
-#endif
-      (*pf_Compute_Emissions_For_Two_Classes_Log2)( E, nwhisk, bookmark, nobs, shp_dists );
-
-      // 
-      // Process Frame
-      //
-      {
-
-        // XXX: to be continued...
-
+      if( visited[next] || next >= nframes )
+      { next = -1;
       }
 
 #ifdef DEBUG_HMM_RECLASSIFY
-      assert(row!=bookmark);
+      debug("Frame: %5d Q size: %5d/%-5d likelihood: %f\n", fid, q->size, q->maxsize, likelihood[fid]);
+      //fwrite( visited, sizeof(char), nframes, fp );
 #endif
-    } // end loop over observations
-    free(last);
+      //update queue
+      if( prev>=0 && next>=0 )
+      { heap_pop_and_insert(q, likelihood + prev);
+        heap_insert        (q, likelihood + next);
+      } else if( prev >=0 )
+      { heap_pop_and_insert(q, likelihood + prev);
+      } else if( next >=0 )
+      { heap_pop_and_insert(q, likelihood + next);
+      } else
+      { heap_pop_head(q);
+      }
+
+    }
+
+#ifdef DEBUG_HMM_RECLASSIFY
+   //fclose(fp);
+#endif
+    //
+    // Cleanup
+    //
+    heap_free(q);
+    free_frame_index(index);
+    free(likelihood);
     free(S);
+    free(E);
   } // end re-classification
 
   //
