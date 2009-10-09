@@ -21,8 +21,8 @@
 //
 // DEBUG DEFINES
 //
-#if 0
 #define DEBUG_HMM_RECLASSIFY
+#if 0
 #define DEBUG_HMM_RECLASSIFY_EXTRA
 #endif
 
@@ -973,90 +973,16 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
 // Merging intervals
 //
 
-typedef struct _boundary
-{ int fid;
-  real score;
-  real *source;
-  real *dest;
-} Boundary;
-
-inline Boundary *Boundary_Alloc(int n)
-{ return Guarded_Malloc( n*sizeof(Boundary), "boundary alloc" );
-}
-
-inline void Boundary_Free(Boundary *b)
-{ if(b) free(b);
-}
-
-int Boundary_Count( real** regions, int nframes )
-{ int count = 0;
-  // pointers in regions should be monitonically increasing with
-  //   the index into regions.  That is,
-  //      a>=b ==> regions[a]>=regions[b]
-  while(nframes-- > 1)
-    if( regions[nframes] != regions[nframes-1] && regions[nframes] && regions[nframes-1])
+int _count_labelled_as_whiskers(frame_index *index, int fid)
+{ int count = 0,     // Pass if this minima didn't label all whiskers
+      i,
+      n = index[fid].n,
+  minstate = -1;
+  Measurements *row = index[fid].first;
+  for(i=0; i<n; i++ )
+    if( row[i].state > minstate )
       count ++;
   return count;
-}
-
-Boundary *Boundary_Build( real **regions, int nframes, int *nb )
-{ int n = Boundary_Count( regions, nframes );
-  Boundary *b = Boundary_Alloc(n);
-
-  *nb = n;
-
-  nframes--;
-  while(nframes--)
-    if( regions[nframes+1] != regions[nframes] && regions[nframes] && regions[nframes+1])
-    { real va = *regions[nframes+1],
-           vb = *regions[nframes];
-      b[--n].fid = nframes; // fid marks left index of boundary
-      if( va > vb )
-      { b[  n].score = va - vb;
-        b[  n].source = regions[nframes+1];
-        b[  n].dest   = regions[nframes];
-      } else
-      { b[  n].score = vb - va;
-        b[  n].dest   = regions[nframes+1];
-        b[  n].source = regions[nframes];
-      }
-    }
-  assert(n==0);
-  return b;
-}
-
-void Boundary_Update( Boundary *b, int nb )
-{ Boundary *cur = b  + nb;
-  while(cur-- > b )
-    cur->score = *(cur->source) - *(cur->dest);
-}
-
-int Boundary_cmp( const void *a, const void *b )
-{ Boundary *aa = (Boundary*)a,
-           *bb = (Boundary*)b;
-  real d = aa->score - bb->score;
-  static const real tol = 1e-9;
-  if( d<tol && d>-tol ) return 0;
-  return (d<0) ? -1 : 1 ;
-}
-
-void Boundary_Erase_Loser( Boundary *cur, real **regions, int nframes, int *todo, int *reference )
-{ int fid = cur->fid;
-  if( !regions[fid] || !regions[fid+1] )
-    return;
-  if( *regions[fid] < *regions[fid+1] ) //erase left
-  { real *id = regions[fid];
-    while(fid-- > 0 && regions[fid]==id)
-      regions[fid] = NULL;
-    *todo      = cur->fid;
-    *reference = cur->fid+1;
-  } else                                //erase right
-  { real *id = regions[fid+1];
-    while(++fid < nframes && regions[fid]==id)
-      regions[fid] = NULL;
-    *todo      = cur->fid + 1;
-    *reference = cur->fid;
-  }
 }
 
 char *Spec[] = {"[-h|--help] | ( [-n <int>] <source:string> <dest:string> )",NULL};
@@ -1177,53 +1103,63 @@ int main(int argc, char*argv[])
     //
     // Process frames according to priority queue
     //
-    while( q->size > 0 )
-    { int fid = q->data[0] - likelihood,
-          prev  = fid - 1,
-          next  = fid + 1;
-      real depth = *(q->data[0]);
-      if( visited[fid] )
-      { heap_pop_head(q);
-        continue;
-      }
-      visited[fid] = heap_pop_head(q);
+    { static const real min_likelihood = -1e-6;
+      while( q->size > 0 )
+      { int fid = q->data[0] - likelihood,
+        prev  = fid - 1,
+        next  = fid + 1;
+        real depth = *(q->data[0]);
 
+        if( visited[fid] )   // Pass if already visited
+        { heap_pop_head(q);
+          continue;
+        }
+
+        // Pass if this minima didn't label all whiskers
+        if( _count_labelled_as_whiskers(index,fid) != nwhisk )
+        { heap_pop_head(q);
+          continue;
+        }
+
+        // Don't worry about extending from unlikely minima
+        if( likelihood[fid] < min_likelihood )
+          break;
+
+        visited[fid] = heap_pop_head(q);
 
 #ifdef DEBUG_HMM_RECLASSIFY
-      debug("Frame: %5d Q size: %5d/%-5d likelihood: %g\n", fid, q->size, q->maxsize, likelihood[fid]);
-      fwrite( visited, sizeof(real*), nframes, fp );
+        debug("Frame: %5d Q size: %5d/%-5d likelihood: %g\n", fid, q->size, q->maxsize, likelihood[fid]);
+        fwrite( visited, sizeof(real*), nframes, fp );
 #endif
 
-      // fill local interval
-      if(   prev >= 0
-         && !visited[prev] )
-      { visited[prev] = visited[fid];
-        HMM_Reclassify_Frame_W_Neighbors( table, nrows,
-                                          index, nframes,
-                                          shp_dists, vel_dists,
-                                          nwhisk,
-                                          S,T,E,
-                                          visited,
-                                          likelihood,
-                                          prev,
-                                          1 /*propigate*/ );
+        // fill local interval
+        if(   prev >= 0
+            && !visited[prev] )
+        { visited[prev] = visited[fid];
+          HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+              index, nframes,
+              shp_dists, vel_dists,
+              nwhisk,
+              S,T,E,
+              visited,
+              likelihood,
+              prev,
+              1 /*propigate*/ );
+        }
+        if(   next < nframes
+            && !visited[next] )
+        { visited[next] = visited[fid];
+          HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+              index, nframes,
+              shp_dists, vel_dists,
+              nwhisk,
+              S,T,E,
+              visited,
+              likelihood,
+              next,
+              1 /*propigate*/ );
+        }
       }
-      if(   next < nframes
-         && !visited[next] )
-      { visited[next] = visited[fid];
-        HMM_Reclassify_Frame_W_Neighbors( table, nrows,
-                                          index, nframes,
-                                          shp_dists, vel_dists,
-                                          nwhisk,
-                                          S,T,E,
-                                          visited,
-                                          likelihood,
-                                          next,
-                                          1 /*propigate*/ );
-      }
-
-
-
     }
 
     //
@@ -1231,36 +1167,24 @@ int main(int argc, char*argv[])
     // Motivation
     //  - extend trusted intervals over untrusted one
     //  - beware propigating past big mistakes.
-    { int nb;
-      Boundary *b = Boundary_Build( visited, nframes, &nb ),
-               *cur;
-
-      qsort( b, nb, sizeof(Boundary), &Boundary_cmp ); // prioritize
-
-      cur = b;
-      while(nb--)
-      { int todo,reference;
-        Boundary_Erase_Loser( cur++, visited, nframes, &todo, &reference );
-
-        visited[todo] = visited[reference];
-        HMM_Reclassify_Frame_W_Neighbors( table, nrows,
-            index, nframes,
-            shp_dists, vel_dists,
-            nwhisk,
-            S,T,E,
-            visited,
-            NULL,
-            todo,
-            1 /*propigate*/ );
 
 #ifdef DEBUG_HMM_RECLASSIFY
-        debug("Merge: %5d to %5d.\n", reference, todo );
-        fwrite( visited, sizeof(real*), nframes, fp );
-#endif
+    // unlabel segments on all unvisited intervals
+    { int i;
+      for(i=0; i< nframes; i++)
+      { if( !visited[i] )
+        { int j,n = index[i].n;
+          Measurements *row = index[i].first;
+          for(j=0;j<n;j++)
+            row[j].state = -1;
+        }
       }
-
-      Boundary_Free(b);
     }
+#endif
+
+    // TODO
+    // extend from visited into unvisited frames
+    //
 
 #ifdef DEBUG_HMM_RECLASSIFY
     fclose(fp);
