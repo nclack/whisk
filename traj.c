@@ -1008,7 +1008,6 @@ Measurements **Find_Path( Measurements *sorted_table,
     for( cur = lattice; cur < lattice + nnode; cur++ )
       cur->max = baseline_log2p;
 
-
     cur = lattice + 1;
     row = first;
     next = row;

@@ -21,8 +21,8 @@
 //
 // DEBUG DEFINES
 //
-#define DEBUG_HMM_RECLASSIFY
 #if 0
+#define DEBUG_HMM_RECLASSIFY
 #define DEBUG_HMM_RECLASSIFY_EXTRA
 #endif
 
@@ -206,9 +206,10 @@ inline int Measurements_Reference_Has_Full_Count( Measurements_Reference *this )
   return 1;
 }
 
-
 //
 // Measurements_Apply_Model
+//  - returns 1 if nwhisk segments were labelled as whiskers
+//            0 otherwise
 //
 
 int  Measurements_Apply_Model( frame_index *index, int fid, int nframes, int nwhisk, //input
@@ -245,10 +246,11 @@ int  Measurements_Apply_Model( frame_index *index, int fid, int nframes, int nwh
       if( lbl > -1 )
         whisker_count++;
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
-      debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
+      debug("Frame: %5d  Whisker: %3d  State: %3d Count: %3d Identity: %3d\n",
           bookmark[i].fid,
           bookmark[i].wid,
           s,
+          whisker_count,
           bookmark[i].state);
 #endif
     }
@@ -816,7 +818,6 @@ heap *Priority_Queue_Init( real *likelihood, int nframes)
 }
 
 int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, otherwise 0
-    Measurements *table, int nrows,        // observables
     frame_index *index, int nframes,       // frame index
     Distributions *shp_dists,              // shape (static) distributions
     Distributions *vel_dists,              // shape (static) distributions
@@ -880,7 +881,9 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
   }
 
   if( !Measurements_Apply_Model( index, fid, nframes, nwhisk, S,T,E,NULL ) )
+  { visited[fid] = NULL;
     return 0;
+  }
 
   if(propigate)
   { prev = fid-1;
@@ -906,8 +909,7 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
       debug("\tPropigate <<< to %5d\n",prev);
 #endif
-      HMM_Reclassify_Frame_W_Neighbors( table, nrows,
-                                        index, nframes,
+      HMM_Reclassify_Frame_W_Neighbors( index, nframes,
                                         shp_dists, vel_dists,
                                         nwhisk,
                                         S,T,E,
@@ -921,8 +923,7 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
       debug("\tPropigate >>> to %5d\n",next);
 #endif
-      HMM_Reclassify_Frame_W_Neighbors( table, nrows,
-                                        index, nframes,
+      HMM_Reclassify_Frame_W_Neighbors( index, nframes,
                                         shp_dists, vel_dists,
                                         nwhisk,
                                         S,T,E,
@@ -969,9 +970,139 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
   return 1;
 }
 
-//
-// Merging intervals
-//
+int HMM_Reclassify_Jump_Gap(               // returns frame id to jump to
+    frame_index *index, int nframes,       // frame index
+    Distributions *shp_dists,              // shape (static) distributions
+    Distributions *vel_dists,              // shape (static) distributions
+    int nwhisk,                            // number of whiskers to expect
+    real *S,                               // must be preallocated  - starts
+    real *T,                               // must be precomputed   - transitions
+    real *E,                               // must be preallocated  - emissions
+    real **visited,
+    real *likelihood,                      //
+    Measurements_Reference *ref,           // Reference labelling to use for deltas
+    int fid,                               // frame to start from/query
+    int propigate)                         // Direction to search  (-1 or +1)
+{ assert(propigate != 0);
+  while( fid>=0 && fid<nframes && !visited[fid] )
+  { (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
+      nwhisk,
+      index[fid].first, index[fid].n,
+      ref,
+      shp_dists, vel_dists );
+    if( Measurements_Apply_Model( index, fid, nframes, nwhisk, S,T,E, likelihood ) )
+      return fid;
+    // else didn't get the right number of whiskers...move on to the next frame
+    fid += propigate;
+  }
+  return fid;
+}
+
+int HMM_Reclassify_Fast_Forward(           // returns frame id to jump to
+    frame_index *index, int nframes,       // frame index
+    Distributions *shp_dists,              // shape (static) distributions
+    Distributions *vel_dists,              // shape (static) distributions
+    int nwhisk,                            // number of whiskers to expect
+    real *S,                               // must be preallocated  - starts
+    real *T,                               // must be precomputed   - transitions
+    real *E,                               // must be preallocated  - emissions
+    real **visited,
+    real *likelihood,                      //
+    Measurements_Reference *ref,           // Reference labelling to use for deltas
+    int fid)                               // frame to start from/query
+{ real *mark = visited[fid];
+  assert(fid!=0); // need some left frame with known
+  while( fid>0 && fid<nframes && !visited[fid] )
+  { Measurements_Reference_Build( ref, index[fid-1].first, index[fid-1].n );
+    (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
+      nwhisk,
+      index[fid].first, index[fid].n,
+      ref,
+      shp_dists, vel_dists );
+    Measurements_Apply_Model( index, fid, nframes, nwhisk, S,T,E, likelihood );
+    visited[fid] = mark;
+    fid += 1;
+  }
+  return fid;
+}
+
+int HMM_Reclassify_Fill_Gap(
+    frame_index *index, int nframes,       // frame index
+    Distributions *shp_dists,              // shape (static) distributions
+    Distributions *vel_dists,              // shape (static) distributions
+    int nwhisk,                            // number of whiskers to expect
+    real *S,                               // must be preallocated  - starts
+    real *T,                               // must be precomputed   - transitions
+    real *E,                               // must be preallocated  - emissions
+    real **visited,
+    real *likelihood,                      //
+    int fid_left)                          // frame to start from (left edge of gap)
+{ static Measurements_Reference *left  = NULL;
+  static Measurements_Reference *right = NULL;
+  int fid_right;
+
+  if(!left)
+  { left  = Measurements_Reference_Alloc(nwhisk);
+    right = Measurements_Reference_Alloc(nwhisk);
+  }
+  Measurements_Reference_Reset(left);
+  Measurements_Reference_Reset(right);
+
+  // find other edge of gap
+  fid_right = fid_left;
+  while( fid_right < nframes && !visited[fid_right] ) fid_right++;
+
+  if( fid_right == nframes ) // no other edge...fast forward to end and return
+  { visited[fid_left] = visited[fid_left-1];
+    Measurements_Reference_Build( left, index[fid_left-1].first, index[fid_left-1].n );
+    HMM_Reclassify_Fast_Forward( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL, left, fid_left );
+    return fid_right;
+  }
+
+  // check likelihood of extension from left or right
+  // extend using lowest likelihood side
+  // update and repeat
+
+  // Init
+  fid_right--; //back up one, so left and right are just inside gap
+  Measurements_Reference_Build( left, index[fid_left-1].first, index[fid_left-1].n );
+  Measurements_Reference_Build( right, index[fid_right+1].first, index[fid_right+1].n );
+  //left
+  (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,nwhisk,
+              index[fid_left].first, index[fid_left].n, left,
+              shp_dists, vel_dists );
+  Measurements_Apply_Model( index, fid_left, nframes, nwhisk, S,T,E, likelihood );
+  //right
+  (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,nwhisk,
+              index[fid_right].first, index[fid_right].n, right,
+              shp_dists, vel_dists );
+  Measurements_Apply_Model( index, fid_right, nframes, nwhisk, S,T,E, likelihood );
+
+  // Reduce gap
+  while( fid_right - fid_left >= 0)
+  { if( likelihood[ fid_left ] < likelihood[ fid_right ] ) // then right wins
+    { visited[fid_right] = visited[fid_right+1];
+      fid_right--;
+      Measurements_Reference_Build( right, index[fid_right+1].first, index[fid_right+1].n );
+      (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,nwhisk,
+                  index[fid_right].first, index[fid_right].n, right,
+                  shp_dists, vel_dists );
+      Measurements_Apply_Model( index, fid_right, nframes, nwhisk, S,T,E, likelihood );
+    } else                                                 // the left wins
+    { visited[fid_left] = visited[fid_left-1];
+      fid_left++;
+      Measurements_Reference_Build( left, index[fid_left-1].first, index[fid_left-1].n );
+      (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,nwhisk,
+                  index[fid_left].first, index[fid_left].n, left,
+                  shp_dists, vel_dists );
+      Measurements_Apply_Model( index, fid_left, nframes, nwhisk, S,T,E, likelihood );
+    }
+  }
+
+  // now left with a single frame gap XXX
+
+  return fid_right;
+}
 
 int _count_labelled_as_whiskers(frame_index *index, int fid)
 { int count = 0,     // Pass if this minima didn't label all whiskers
@@ -1136,26 +1267,26 @@ int main(int argc, char*argv[])
         if(   prev >= 0
             && !visited[prev] )
         { visited[prev] = visited[fid];
-          HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+          HMM_Reclassify_Frame_W_Neighbors(
               index, nframes,
               shp_dists, vel_dists,
               nwhisk,
               S,T,E,
               visited,
-              likelihood,
+              NULL, //likelihood,
               prev,
               1 /*propigate*/ );
         }
         if(   next < nframes
             && !visited[next] )
         { visited[next] = visited[fid];
-          HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+          HMM_Reclassify_Frame_W_Neighbors(
               index, nframes,
               shp_dists, vel_dists,
               nwhisk,
               S,T,E,
               visited,
-              likelihood,
+              NULL, //likelihood,
               next,
               1 /*propigate*/ );
         }
@@ -1182,9 +1313,91 @@ int main(int argc, char*argv[])
     }
 #endif
 
-    // TODO
-    // extend from visited into unvisited frames
     //
+    // Try to jump gaps and refill
+    //
+
+    { Measurements_Reference *left  = Measurements_Reference_Alloc(nwhisk),
+                             *right = Measurements_Reference_Alloc(nwhisk);
+      int fid=0,
+          left_ok = 0,  left_jump,
+          right_ok = 0, right_jump,
+          temp;
+      do
+      { fid=0;
+        left_ok = 0;
+        right_ok = 0;
+        while( fid < nframes )
+        { while( visited[fid] && fid<nframes ) fid++; // find the left side of the next gap
+          if( fid == nframes )
+          { break;  // no gaps...so all done
+          } else if( left_ok = (fid != 0) )
+          { Measurements_Reference_Build( left, index[fid-1].first, index[fid-1].n );
+            left_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
+                                                left, fid, 1 );
+          }
+          while( !visited[fid] && fid<nframes ) fid++; // find the right side of this gap
+          if( right_ok = (fid != nframes) )
+          { Measurements_Reference_Build( right, index[fid].first, index[fid].n );
+            right_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
+                                                  right, fid-1, -1 );
+          }
+          /* if gap-jump hit the other side (that is, it didn't find anything)
+           * mark as not ok */
+          temp = left_ok;
+          left_ok   &= ( !right_ok || right->frame->fid != left_jump );
+          right_ok  &= ( !temp     || left->frame->fid  != right_jump );
+          /* choose the one with the smaller
+          * jump, on tie choose left */
+          left_ok  &= ( !right_ok || (left_jump-(left->frame->fid) <= (right->frame->fid)-right_jump ) );
+          right_ok &= !left_ok; // ensure only left or right (or none) is chosen
+
+          if( left_ok )
+          { real *mark = visited[left->frame->fid];
+            visited[ left_jump ] = visited[ left_jump+1 ] = visited[left_jump-1] = mark;
+            HMM_Reclassify_Frame_W_Neighbors(index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL,
+                                            left_jump+1,1);
+            HMM_Reclassify_Frame_W_Neighbors(index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL,
+                                            left_jump-1,1);
+          }
+          if( right_ok )
+          { real *mark = visited[right->frame->fid];
+            visited[ right_jump ] = visited[ right_jump+1 ] = visited[right_jump-1] = mark;
+            HMM_Reclassify_Frame_W_Neighbors(index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL,
+                                            right_jump-1,1);
+            HMM_Reclassify_Frame_W_Neighbors(index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL,
+                                            right_jump+1,1);
+          }
+#ifdef DEBUG_HMM_RECLASSIFY
+          debug("Gap jump: left: (%2d) %5d delta: %5d\n"
+                "         right: (%2d) %5d delta: %5d\n",
+                left_ok,  left_jump,  left_jump  - left->frame->fid,
+                right_ok, right_jump, right->frame->fid - right_jump );
+          fwrite( visited, sizeof(real*), nframes, fp );
+#endif
+
+        }
+      } while(left_ok||right_ok);
+
+
+      Measurements_Reference_Free(left);
+      Measurements_Reference_Free(right);
+    }
+
+    //
+    // Indescriminately fill in the rest
+    //
+    { int fid=0;
+      while( fid < nframes )
+      { while( visited[fid] && fid<nframes ) fid++; // find the left side of the next gap
+        fid = HMM_Reclassify_Fill_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood, fid);
+#ifdef DEBUG_HMM_RECLASSIFY
+        debug("Frame: %5d likelihood: %g\n", fid, likelihood[fid]);
+        fwrite( visited, sizeof(real*), nframes, fp );
+#endif
+      }
+    }
+
 
 #ifdef DEBUG_HMM_RECLASSIFY
     fclose(fp);

@@ -114,11 +114,12 @@ def pipeline_standard(env, movie):
     env.Measure,
     env.Classify,
     ( env.HmmLRTimeSolver,
-      ( env.MeasurementsAsTrajectories,),
       env.Summary
     ),
     ( env.HmmLRTimeWatershedSolver,
-      ( env.MeasurementsAsTrajectories,),
+      ( env.GreyAreaSolver,
+        env.Summary
+      ),
       env.Summary
     ),
     env.Summary
