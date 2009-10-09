@@ -543,8 +543,37 @@ int main(int argc, char*argv[])
 
 #ifdef TEST_HMM_RECLASSIFY_WATERSHED
 
-// TODO: fix root index is 1 not 0 errors in heap
-//
+typedef struct _frame_index
+{ Measurements *first;
+  int n;
+} frame_index;
+
+// Table should be sorted by time
+frame_index *build_frame_index(Measurements *table, int nrows)
+{ int nframes = table[nrows-1].fid+1;
+  Measurements *row  = table + nrows,
+               *last = row-1;
+  frame_index *index = Guarded_Malloc( sizeof(frame_index)*nframes, "alloc frame index" );
+  
+  { int fid = 0;
+    while(row-- > table )
+    { if( row->fid != fid )
+      { index[fid].first = row;
+        index[fid].n     = last - row;
+        last = row;
+      }
+    }
+    index[0].first = table;
+    index[0].n     = last - table;
+  }
+
+  return index;
+}
+
+void free_frame_index(frame_index *idx)
+{ if(idx) free(idx);
+}
+
 typedef struct _heap
 { real **data;
   size_t size;
@@ -591,7 +620,6 @@ inline void heapify( heap* h, int i )
   { real *a = data[argmax];     // swap contents
     data[argmax] = data[i];
     data[i] = a;
-    //??? Faster?: SWAP( data[i], data[argmax] );
     heapify( h, argmax );       // call on subtree
   }
 }
