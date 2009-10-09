@@ -170,6 +170,7 @@ Measurements_Reference *Measurements_Reference_Alloc(int nwhisk)
 { Measurements_Reference *this = Guarded_Malloc(sizeof(Measurements_Reference), "Measurements_Reference_Alloc");
   this->whiskers = Guarded_Malloc(sizeof(Measurements*)*nwhisk,"Measurements_Reference_Alloc");
   memset(this->whiskers,0,sizeof(Measurements*)*nwhisk);
+  this->frame = NULL;
   this->nwhiskers = nwhisk;
   return this;
 }
@@ -210,11 +211,12 @@ inline int Measurements_Reference_Has_Full_Count( Measurements_Reference *this )
 // Measurements_Apply_Model
 //
 
-void Measurements_Apply_Model( frame_index *index, int fid, int nframes, int nwhisk, //input
+int  Measurements_Apply_Model( frame_index *index, int fid, int nframes, int nwhisk, //input
                                real *S, real *T, real *E,                            //model parameters
                                real *likelihood )                                    //framewise likelihood (may be NULL)
 { int N = (*pf_State_Count)(nwhisk),
-      nobs = index[fid].n;
+      nobs = index[fid].n,
+      whisker_count = 0;
 
   ViterbiResult *result = Forward_Viterbi_Log2( _static_range(nobs), nobs, S, T, E, nobs, N );
 
@@ -240,6 +242,8 @@ void Measurements_Apply_Model( frame_index *index, int fid, int nframes, int nwh
     { int s = seq[i],
       lbl = (*pf_State_Decode)(s);
       bookmark[i].state = lbl;   // decode viterbi state to whisker label {-1:junk, 0..n:whiskers}
+      if( lbl > -1 )
+        whisker_count++;
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
       debug("Frame: %5d  Whisker: %3d  State: %3d Identity: %3d\n",
           bookmark[i].fid,
@@ -250,6 +254,7 @@ void Measurements_Apply_Model( frame_index *index, int fid, int nframes, int nwh
     }
   } // end commit viterbi result
   Free_Viterbi_Result(result);  // FIXME: thrashing the heap
+  return whisker_count == nwhisk;
 } // end viterbi solution
 
 void HMM_Reclassify_No_Deltas_W_Likelihood(
@@ -650,7 +655,6 @@ int main(int argc, char*argv[])
 #endif
     } // end loop over observations
     Measurements_Reference_Free(last);
-    free(last);
     free(S);
   } // end re-classification
 
@@ -837,20 +841,30 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
     hist2 = Measurements_Reference_Alloc(nwhisk);
   }
   Measurements_Reference_Reset(hist);
+  Measurements_Reference_Reset(hist2);
+
 
   // Mark out unreliable neighbors
   if(    prev < 0        || !visited[prev] )  prev = -1;
   if(    next >= nframes || !visited[next] )  next = -1;
-  if( prev==-1 && next==-1 )
-    return 0; //do nothing -
-  if( prev!=-1 && next != -1)
-  {// XXX: MERGE INTERVALS
-    warning("Merge @ %5d\n",fid);
-    return 0; //do nothing -
-  }
+  if( (prev==-1) && (next==-1) ) //no good neighbors for update
+    return 0;
 
   (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, index[fid].first, shp_dists );
   E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
+
+  if( prev!=-1 && next !=-1 ) // two neighbors, so update and that's it
+  { Measurements_Reference_Build( hist, index[prev].first, index[prev].n );
+    Measurements_Reference_Build( hist2, index[next].first, index[next].n );
+    (*pf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2)( E,
+        nwhisk,
+        index[fid].first, nobs,
+        hist, hist2,
+        shp_dists, vel_dists );
+    return Measurements_Apply_Model( index, fid, nframes, nwhisk,
+                                     S,T,E,
+                                     NULL /*likelihood*/ );
+  }
 
   if( prev == -1 )
     ref = next;
@@ -865,23 +879,28 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
         vel_dists );
   }
 
-  Measurements_Apply_Model( index, fid, table[nrows-1].fid+1 /*nframes*/, nwhisk,
-                            S,T,E,
-                            NULL /*likelihood*/ );
+  if( !Measurements_Apply_Model( index, fid, nframes, nwhisk, S,T,E,NULL ) )
+    return 0;
+
   if(propigate)
   { prev = fid-1;
     next = fid+1;
-    if(    prev < 0
-        || visited[prev]
-        || likelihood[prev] - likelihood[fid] > tol)
-      prev = -1;
-    if(    next >= nframes
-        || visited[next]
-        || likelihood[next] - likelihood[fid] > tol)
-      next = -1;
+    if(likelihood)
+    { if(    prev < 0
+          || visited[prev]
+          || likelihood[prev] - likelihood[fid] > tol)
+        prev = -1;
+      if(    next >= nframes
+          || visited[next]
+          || likelihood[next] - likelihood[fid] > tol)
+        next = -1;
+    } else //no likelihood provided so ignore
+    { if(    prev < 0        || visited[prev] )
+        prev = -1;
+      if(    next >= nframes || visited[next] )
+        next = -1;
+    }
 
-    Measurements_Reference_Reset(hist);
-    Measurements_Reference_Reset(hist2);
     if( prev > -1 )
     { visited[prev] = visited[fid];
 #ifdef DEBUG_HMM_RECLASSIFY_EXTRA
@@ -896,7 +915,6 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
                                         likelihood,
                                         prev,
                                         1 /*propigate*/ );
-      Measurements_Reference_Build( hist, index[prev].first, index[prev].n );
     }
     if( next > -1 )
     { visited[next] = visited[fid];
@@ -912,22 +930,133 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
                                         likelihood,
                                         next,
                                         1 /*propigate*/ );
-      Measurements_Reference_Build( hist2, index[next].first, index[next].n );
     }
+    Measurements_Reference_Reset(hist);
+    Measurements_Reference_Reset(hist2);
+    if( prev > -1 )
+      Measurements_Reference_Build( hist, index[prev].first, index[prev].n );
+    if( next > -1 )
+      Measurements_Reference_Build( hist2, index[next].first, index[next].n );
 
-    if( Measurements_Reference_Has_Full_Count(hist) &&
-        Measurements_Reference_Has_Full_Count(hist2) )
-    { (*pf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2)( E,
-          nwhisk,
-          index[fid].first, nobs,
-          hist, hist2,
-          shp_dists, vel_dists );
-      Measurements_Apply_Model( index, fid, table[nrows-1].fid+1 /*nframes*/, nwhisk,
-                                S,T,E,
-                                NULL /*likelihood*/ );
+    { int ok_prev = Measurements_Reference_Has_Full_Count(hist),
+          ok_next = Measurements_Reference_Has_Full_Count(hist2);
+      if( ok_next || ok_prev )  // ,then recompute emissions and reapply
+      { if( ok_next && ok_prev )
+        { (*pf_Compute_Emissions_For_Two_Classes_W_Prev_And_Next_Log2)( E,
+              nwhisk,
+              index[fid].first, nobs,
+              hist, hist2,
+              shp_dists, vel_dists );
+        } else if( ok_prev )
+        { (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
+              nwhisk,
+              index[fid].first, nobs,
+              hist,
+              shp_dists, vel_dists );
+        } else if( ok_next )
+        { (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
+              nwhisk,
+              index[fid].first, nobs,
+              hist2,
+              shp_dists, vel_dists );
+        }
+        return Measurements_Apply_Model( index, fid, nframes, nwhisk,
+                                  S,T,E,
+                                  NULL /*likelihood*/ );
+      }
     }
   }
   return 1;
+}
+
+//
+// Merging intervals
+//
+
+typedef struct _boundary
+{ int fid;
+  real score;
+  real *source;
+  real *dest;
+} Boundary;
+
+inline Boundary *Boundary_Alloc(int n)
+{ return Guarded_Malloc( n*sizeof(Boundary), "boundary alloc" );
+}
+
+inline void Boundary_Free(Boundary *b)
+{ if(b) free(b);
+}
+
+int Boundary_Count( real** regions, int nframes )
+{ int count = 0;
+  // pointers in regions should be monitonically increasing with
+  //   the index into regions.  That is,
+  //      a>=b ==> regions[a]>=regions[b]
+  while(nframes-- > 1)
+    if( regions[nframes] != regions[nframes-1] && regions[nframes] && regions[nframes-1])
+      count ++;
+  return count;
+}
+
+Boundary *Boundary_Build( real **regions, int nframes, int *nb )
+{ int n = Boundary_Count( regions, nframes );
+  Boundary *b = Boundary_Alloc(n);
+
+  *nb = n;
+
+  nframes--;
+  while(nframes--)
+    if( regions[nframes+1] != regions[nframes] && regions[nframes] && regions[nframes+1])
+    { real va = *regions[nframes+1],
+           vb = *regions[nframes];
+      b[--n].fid = nframes; // fid marks left index of boundary
+      if( va > vb )
+      { b[  n].score = va - vb;
+        b[  n].source = regions[nframes+1];
+        b[  n].dest   = regions[nframes];
+      } else
+      { b[  n].score = vb - va;
+        b[  n].dest   = regions[nframes+1];
+        b[  n].source = regions[nframes];
+      }
+    }
+  assert(n==0);
+  return b;
+}
+
+void Boundary_Update( Boundary *b, int nb )
+{ Boundary *cur = b  + nb;
+  while(cur-- > b )
+    cur->score = *(cur->source) - *(cur->dest);
+}
+
+int Boundary_cmp( const void *a, const void *b )
+{ Boundary *aa = (Boundary*)a,
+           *bb = (Boundary*)b;
+  real d = aa->score - bb->score;
+  static const real tol = 1e-9;
+  if( d<tol && d>-tol ) return 0;
+  return (d<0) ? -1 : 1 ;
+}
+
+void Boundary_Erase_Loser( Boundary *cur, real **regions, int nframes, int *todo, int *reference )
+{ int fid = cur->fid;
+  if( !regions[fid] || !regions[fid+1] )
+    return;
+  if( *regions[fid] < *regions[fid+1] ) //erase left
+  { real *id = regions[fid];
+    while(fid-- > 0 && regions[fid]==id)
+      regions[fid] = NULL;
+    *todo      = cur->fid;
+    *reference = cur->fid+1;
+  } else                                //erase right
+  { real *id = regions[fid+1];
+    while(++fid < nframes && regions[fid]==id)
+      regions[fid] = NULL;
+    *todo      = cur->fid + 1;
+    *reference = cur->fid;
+  }
 }
 
 char *Spec[] = {"[-h|--help] | ( [-n <int>] <source:string> <dest:string> )",NULL};
@@ -1045,8 +1174,9 @@ int main(int argc, char*argv[])
     }
 #endif
     q = Priority_Queue_Init( likelihood, nframes );
-
+    //
     // Process frames according to priority queue
+    //
     while( q->size > 0 )
     { int fid = q->data[0] - likelihood,
           prev  = fid - 1,
@@ -1096,8 +1226,44 @@ int main(int argc, char*argv[])
 
     }
 
+    //
+    // Merge
+    // Motivation
+    //  - extend trusted intervals over untrusted one
+    //  - beware propigating past big mistakes.
+    { int nb;
+      Boundary *b = Boundary_Build( visited, nframes, &nb ),
+               *cur;
+
+      qsort( b, nb, sizeof(Boundary), &Boundary_cmp ); // prioritize
+
+      cur = b;
+      while(nb--)
+      { int todo,reference;
+        Boundary_Erase_Loser( cur++, visited, nframes, &todo, &reference );
+
+        visited[todo] = visited[reference];
+        HMM_Reclassify_Frame_W_Neighbors( table, nrows,
+            index, nframes,
+            shp_dists, vel_dists,
+            nwhisk,
+            S,T,E,
+            visited,
+            NULL,
+            todo,
+            1 /*propigate*/ );
+
 #ifdef DEBUG_HMM_RECLASSIFY
-   fclose(fp);
+        debug("Merge: %5d to %5d.\n", reference, todo );
+        fwrite( visited, sizeof(real*), nframes, fp );
+#endif
+      }
+
+      Boundary_Free(b);
+    }
+
+#ifdef DEBUG_HMM_RECLASSIFY
+    fclose(fp);
 #endif
     //
     // Cleanup
@@ -1105,6 +1271,7 @@ int main(int argc, char*argv[])
     heap_free(q);
     free_frame_index(index);
     free(likelihood);
+    free(visited);
     free(S);
     free(E);
   } // end re-classification

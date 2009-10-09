@@ -117,7 +117,7 @@ def pipeline_standard(env, movie):
       ( env.MeasurementsAsTrajectories,),
       env.Summary
     ),
-    ( env.HmmLRTimePQSolver,
+    ( env.HmmLRTimeWatershedSolver,
       ( env.MeasurementsAsTrajectories,),
       env.Summary
     ),
@@ -204,11 +204,11 @@ env  = Environment(
                       suffix = '.whiskers',
                       src_suffix = '.whiskers'
                      ),
-    'Measure': Builder(action = "test_measure_1 $SOURCE $TARGET --face $FACEHINT",
+    'Measure': Builder(action = "test_measure_1 --face $FACEHINT $SOURCE $TARGET",
                        suffix     = '.measurements',
                        src_suffix = '.whiskers'
                       ),
-    'MeasureWithBar': Builder(action = "test_measure_1 $SOURCES $TARGET --face $FACEHINT",
+    'MeasureWithBar': Builder(action = "test_measure_1 --face $FACEHINT $SOURCES $TARGET",
                         suffix     = '.measurements',
                         src_suffix = '.whiskers'
                         ),
@@ -249,9 +249,9 @@ env  = Environment(
     'HmmLRTimeSolver': Builder(action = "test_hmm_reclassify_3 -n $WHISKER_COUNT $SOURCE $TARGET",
                               src_suffix = ".measurements",
                               suffix = lit( "[hmm-lr-time].measurements")),
-    'HmmLRTimePQSolver': Builder(action = "test_hmm_reclassify_5 -n $WHISKER_COUNT $SOURCE $TARGET",
+    'HmmLRTimeWatershedSolver': Builder(action = "test_hmm_reclassify_5 -n $WHISKER_COUNT $SOURCE $TARGET",
                               src_suffix = ".measurements",
-                              suffix = lit( "[hmm-lr-time-pq].measurements")),
+                              suffix = lit( "[hmm-watershed].measurements")),
     'HmmLRDelTimeSolver': Builder(action = "test_hmm_reclassify_4 -n $WHISKER_COUNT $SOURCE $TARGET",
                               src_suffix = ".measurements",
                               suffix = lit( "[hmm-lrdel-time].measurements")),
