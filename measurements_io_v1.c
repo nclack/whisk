@@ -54,40 +54,37 @@ void close_measurements_v1( FILE *fp )
 
 void write_measurements_v1( FILE *fp, Measurements *table, int n_rows )
 { int n_measures = table[0].n;
+  Measurements *row = table + n_rows;
+  static const int rowsize = sizeof( Measurements ) - 2*sizeof(double*); //exclude the pointers
+
   fwrite( &n_rows, sizeof(int), 1, fp );
   fwrite( &n_measures, sizeof(int), 1, fp );
-  fwrite( table, sizeof(Measurements), n_rows, fp);
-  fwrite( table[0].data - table[0].row*table[0].n, sizeof(double), 2*n_rows*n_measures, fp );
+
+  while( row-- > table )
+  { fwrite( row, rowsize, 1, fp );
+    fwrite( row->data,     sizeof(double), n_measures, fp );
+    fwrite( row->velocity, sizeof(double), n_measures, fp );
+  }
 }
 
 Measurements *read_measurements_v1( FILE *fp, int *n_rows)
-{ Measurements *table;
-  int n_measures,i;
-  double *ref, *old;
+{ Measurements *table, *row;
+  static const int rowsize = sizeof( Measurements ) - 2*sizeof(double*); //exclude the pointers
+  double *head;
+  int n_measures;
 
   fread( n_rows, sizeof(int), 1, fp);
   fread( &n_measures, sizeof(int), 1, fp );
 
   table = Alloc_Measurements_Table( *n_rows, n_measures );
-  ref = table[0].data; // head of newly allocated data block
-#ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
-  debug("\tLoad -           ref: %p\n",ref);
-#endif
-  fread( table, sizeof(Measurements), *n_rows, fp); 
-  old = table[0].data - table[0].row * n_measures; // head of old (nonexistent) data block
-  fread( ref, sizeof(double), 2*(*n_rows)*n_measures, fp );
-  
-  // update pointers to new data block
-  i = *n_rows;
-  while(i--)
-  { Measurements *row = table + i;
-    row->data     = ref + ( row->data     - old );
-    row->velocity = ref + ( row->velocity - old );
-  }
-#ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
-  debug("\tLoad - table[0].data: %p\n",table[0].data);
-  debug("\tLoad - table[0].row : %d\n",table[0].row );
-#endif
+  head = table[0].data;
+  row = table + (*n_rows);
 
+  while( row-- > table )
+  { fread( row, rowsize, 1, fp );
+    row->row = (row->data - head)/sizeof(double);
+    fread( row->data, sizeof(double), n_measures, fp);
+    fread( row->velocity, sizeof(double), n_measures, fp);
+  }
   return table;
 }

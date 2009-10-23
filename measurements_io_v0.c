@@ -9,7 +9,7 @@ int is_file_measurements_v0( const char* filename)
     error("In is_file_measurements_v0, could not open file (%s) for reading.\n",filename);
     
   fscanf(fp,"%32s", format);
-  return strncmp(format,not,sizeof(not)) != 0 ;
+  return strncmp(format,not,sizeof(not)-1) != 0 ;
 }
 
 FILE* open_measurements_v0( const char* filename, const char* mode )

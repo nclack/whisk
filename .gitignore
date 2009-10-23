@@ -23,6 +23,7 @@ water_shed.c
 
 whisk
 whisker_convert
+measurements_convert
 seedtest
 stripetest
 test_bar_io_1
