@@ -67,13 +67,14 @@ $(cmodules): $(cmodules:.o=.h)
 test_measure_1: measure.c $(modules)
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_MEASURE_1 $+ -o $@
 
-test_classify_1: classify.c utilities.o traj.o common.o error.o viterbi.o
+test_classify_1: classify.c utilities.o traj.o common.o error.o viterbi.o measurements_io.o measurements_io_v0.o measurements_io_v1.o
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_CLASSIFY_1 $+ -o $@
 
 test_hmm_reclassify_3: hmm-reclassify.c utilities.o  traj.o  common.o \
                        error.o viterbi.o \
                        hmm-reclassify-lrmodel.o \
-                       hmm-reclassify-lrmodel-w-deletions.o
+                       hmm-reclassify-lrmodel-w-deletions.o \
+                       measurements_io.o measurements_io_v0.o measurements_io_v1.o
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_HMM_RECLASSIFY_3 $+ -o $@
 
 test_whisker_io: test_whisker_io.c $(modules) 
