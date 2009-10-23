@@ -1053,9 +1053,11 @@ int HMM_Reclassify_Fill_Gap(
   while( fid_right < nframes && !visited[fid_right] ) fid_right++;
 
   if( fid_right == nframes ) // no other edge...fast forward to end and return
-  { visited[fid_left] = visited[fid_left-1];
-    Measurements_Reference_Build( left, index[fid_left-1].first, index[fid_left-1].n );
-    HMM_Reclassify_Fast_Forward( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL, left, fid_left );
+  { if( fid_left != 0 )
+    { visited[fid_left] = visited[fid_left-1];
+      Measurements_Reference_Build( left, index[fid_left-1].first, index[fid_left-1].n );
+      HMM_Reclassify_Fast_Forward( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL, left, fid_left );
+    }
     return fid_right;
   }
 
@@ -1235,6 +1237,13 @@ int main(int argc, char*argv[])
     // Process frames according to priority queue
     //
     { static const real min_likelihood = -1e-6;
+      if( *q->data[0] < min_likelihood )
+        warning("Best labeling has likelihood lower that threshold.\n"
+                "\tThis indicates the model doesn't work well for this data.\n"
+                "\tPerhaps you specified the wrong  number of whiskers to look?\n"
+                "\n"
+                "\t\tBest likelihood: %f\n"
+                "\t\t      Threshold: %f\n", *q->data[0], min_likelihood);
       while( q->size > 0 )
       { int fid = q->data[0] - likelihood,
         prev  = fid - 1,
