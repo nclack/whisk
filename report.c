@@ -4,6 +4,7 @@
 #include "common.h"
 #include <stdio.h>
 #include <string.h>
+#include "measurements_io.h"
 
 #if 0
 #define DEBUG_REPORT_1
@@ -287,8 +288,8 @@ int main(int argc, char* argv[])
 
   Process_Arguments(argc, argv, Spec, 0);
   
-  A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), &nA );
-  B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), &nB );
+  A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), NULL, &nA );
+  B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), NULL, &nB );
   
   frames = Measurements_Tables_Get_Diff_Frames( A, nA, B, nB, &nframes );
 
@@ -326,8 +327,8 @@ int main(int argc, char* argv[])
 
   Process_Arguments(argc, argv, Spec, 0);
   
-  A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), &nA );
-  B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), &nB );
+  A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), NULL, &nA );
+  B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), NULL, &nB );
 
   //
   // Now build distributions. (Conditioned on whisker or not)

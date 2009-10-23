@@ -1,21 +1,19 @@
 Vague Objectives
 ================
-[ ] [!!!] - unify facial ordering priors and temporal coherence priors
 [ ] [!! ] - multidimensional histogramming for conditional probability estimation
 [ ] [!  ] - revamp ui
 [ ] [!  ] - refactor and cleanup
 
 Current
 =======
-[ ] [!! ] classify.c - better autotraj for o'connor - allow for range of whisker count
-[ ] [!!!] probability of a transition for non-corresponding types
-[ ] [!! ] how to handle whiskers entering/leaving the field
-[ ] [   ] update or remove hmm-lrdel-time with better non-corresponding velcity est.
+[ ] [!!!] traj.c     - .measurements file not compatible across x32 and x64 platforms
 
 Tabled
 ======
 [ ] [   ] poly.c     - polynomial stack object for stack based polynomial arithmetic
 [ ] [   ] mat.c      - matrix stack object for matrix arithmetic
+[ ] [!! ] classify.c - better autotraj for o'connor - allow for range of whisker count
+[ ] [!! ] how to handle whiskers entering/leaving the field
 
 User Interface
 ==============
@@ -42,3 +40,6 @@ Done
 ====
 [x] [!!!] measure.c  - utility to update measurements table with bar measurement
 [x] [!!!] - incorporate occlusion related measurements into pipeline
+[x] [   ] update or remove hmm-lrdel-time with better non-corresponding velcity est.
+[x] [!!!] - unify facial ordering priors and temporal coherence priors
+[x] [!!!] probability of a transition for non-corresponding types

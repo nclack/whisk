@@ -5,6 +5,7 @@
 
 #include "compat.h"
 #include "traj.h"
+#include "measurements_io.h"
 #include <assert.h>
 #include <float.h>
 #include <stdlib.h>
@@ -30,8 +31,8 @@
 // DEBUG OUTPUT
 
 #if 0
-#define  DEBUG_MEASUREMENTS_TABLE_ALLOC
 #define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
+#define  DEBUG_MEASUREMENTS_TABLE_ALLOC
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
 #define  DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
@@ -315,81 +316,13 @@ void Measurements_Table_Select_Shape_By_State( Measurements *table, int n_rows, 
   } 
 }
 
-SHARED_EXPORT
-FILE *Measurements_Table_To_File( FILE *fp, Measurements *table, int n_rows )
-{ int n_measures = table[0].n;
-  fwrite( &n_rows, sizeof(int), 1, fp );
-  fwrite( &n_measures, sizeof(int), 1, fp );
-  fwrite( table, sizeof(Measurements), n_rows, fp);
-  fwrite( table[0].data - table[0].row*table[0].n, sizeof(double), 2*n_rows*n_measures, fp );
-  return fp;
-}
-
-SHARED_EXPORT
-void Measurements_Table_To_Filename( const char *filename, Measurements *table, int n_rows )
-{ FILE *fp = fopen( filename, "wb" );
-  if(!fp)
-    error("Couldn't open file for writing\n"
-          "\tFile name: %s\n",filename);
-  fp = Measurements_Table_To_File( fp, table, n_rows );
-  fclose(fp);
-}
-
-SHARED_EXPORT
-Measurements *Measurements_Table_From_File( FILE *fp, int *n_rows)
-{ Measurements *table;
-  int n_measures,i;
-  double *ref, *old;
-
-  fread( n_rows, sizeof(int), 1, fp);
-  fread( &n_measures, sizeof(int), 1, fp );
-
-  table = Alloc_Measurements_Table( *n_rows, n_measures );
-  ref = table[0].data; // head of newly allocated data block
-#ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
-  debug("\tLoad -           ref: %p\n",ref);
-#endif
-  fread( table, sizeof(Measurements), *n_rows, fp); 
-  old = table[0].data - table[0].row * n_measures; // head of old (nonexistent) data block
-  fread( ref, sizeof(double), 2*(*n_rows)*n_measures, fp );
-  
-  // update pointers to new data block
-  i = *n_rows;
-  while(i--)
-  { Measurements *row = table + i;
-    row->data     = ref + ( row->data     - old );
-    row->velocity = ref + ( row->velocity - old );
-  }
-#ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
-  debug("\tLoad - table[0].data: %p\n",table[0].data);
-  debug("\tLoad - table[0].row : %d\n",table[0].row );
-#endif
-
-  return table;
-}
-
-SHARED_EXPORT
-Measurements *Measurements_Table_From_Filename( const char *filename, int *n_rows)
-{ Measurements *t = NULL;
-  FILE *fp = fopen( filename, "rb" );
-  if(!fp) error("Could not open file as Measurements Table.\n"
-                "\tFrom: %s\n",filename);
-  t = Measurements_Table_From_File( fp, n_rows );
-  fclose(fp);
-  return t;
-}
-
 int test_Measurements_Table_FileIO( char* filename,  Measurements *table, int n_rows )
-{ FILE *fp = fopen(filename,"wb");
-  Measurements *t2;
+{ Measurements *t2;
   int nr2,i;
 
-  Measurements_Table_To_File(fp, table, n_rows);
-  fclose(fp);
+  Measurements_Table_To_Filename( filename, NULL, table, n_rows );
 
-  fp = fopen( filename, "rb" );
-  t2 = Measurements_Table_From_File( fp, &nr2 );
-  fclose(fp);
+  t2 = Measurements_Table_From_Filename( filename, NULL, &nr2 );
 
   if( nr2 != n_rows )
   { warning("Number of rows don't match: %d != %d\n",n_rows,nr2);
@@ -1252,7 +1185,7 @@ int main(int argc, char *argv[])
   
   debug("Test: Load measurements and compute distributions.\n");
   Process_Arguments(argc,argv,Spec,0);
-  table = Measurements_Table_From_Filename( Get_String_Arg("filename"), &n_rows);
+  table = Measurements_Table_From_Filename( Get_String_Arg("filename"), NULL, &n_rows);
 
   { Distributions *shape, *velocity;
     int minstate, maxstate, nstates;
@@ -1292,7 +1225,7 @@ int main(int argc, char *argv[])
   
   debug("Test: Load measurements, run solve, and save result.\n");
   Process_Arguments(argc,argv,Spec,0);
-  table = Measurements_Table_From_Filename( Get_String_Arg("source"), &n_rows);
+  table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n_rows);
 
   Solve( table, n_rows, IDENTITY_SOLVER_SHAPE_NBINS, IDENTITY_SOLVER_VELOCITY_NBINS );
   Sort_Measurements_Table_State_Time( table, n_rows );
@@ -1310,7 +1243,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, n_rows );
   Free_Measurements_Table(table);
 
 //if(err)

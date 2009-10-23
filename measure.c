@@ -10,6 +10,7 @@
 #include <assert.h>
 #include "poly.h"
 #include "mat.h"
+#include "measurements_io.h"
 
 
 #if 0  // Tests
@@ -515,7 +516,7 @@ int main( int argc, char* argv[] )
   { table = Whisker_Segments_Measure( wv, wvn, facex, facey, face_axis );
   }
 
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, wvn );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL,  table, wvn );
 
   Free_Measurements_Table( table );
   Free_Whisker_Seg_Vec(wv,wvn);
@@ -630,7 +631,7 @@ int main( int argc, char* argv[] )
       "\n" );
 
   // Load source data
-  table = Measurements_Table_From_Filename( Get_String_Arg( "source-measurements" ), &nrows );
+  table = Measurements_Table_From_Filename( Get_String_Arg( "source-measurements" ), NULL, &nrows );
   whiskers = Load_Whiskers( Get_String_Arg( "source-whiskers" ), NULL, &nsegs);
   bars = Load_Bars_From_Filename( Get_String_Arg( "source-bars" ), &nbars);
 
@@ -655,7 +656,7 @@ int main( int argc, char* argv[] )
   }
 
   // Save
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, nrows );
 
   // Clean up
   free(bindex);

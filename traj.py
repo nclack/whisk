@@ -438,7 +438,7 @@ class MeasurementsTable(object):
     >>> table.save( "data/testing/trash.measurements" )    # doctest:+ELLIPSIS 
     <...MeasurementsTable object at ...>
     """
-    ctraj.Measurements_Table_To_Filename( filename, self._measurements, self._nrows )
+    ctraj.Measurements_Table_To_Filename( filename, None, self._measurements, self._nrows )
     return self
 
   def save_to_matlab_file(self, filename, format = '5'):
@@ -472,7 +472,7 @@ class MeasurementsTable(object):
     nrows = c_int()
     if self._measurements:
       ctraj.Free_Measurements_Table( self._measurements )
-    self._measurements = ctraj.Measurements_Table_From_Filename( filename, byref(nrows) )
+    self._measurements = ctraj.Measurements_Table_From_Filename( filename, None, byref(nrows) )
     self._nrows = nrows.value
     self._sort_state = None #unknown
     return self
@@ -756,6 +756,7 @@ ctraj.Measurements_Table_Copy_Velocities.argtypes = [
 
 ctraj.Measurements_Table_From_Filename.restype = POINTER(cMeasurements)
 ctraj.Measurements_Table_From_Filename.argtypes = [
+  POINTER( c_char ),
   POINTER( c_char ),
   POINTER( c_int  ) ]
 

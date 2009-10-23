@@ -82,9 +82,16 @@ libwhisk = env.SharedLibrary('whisk',list(cfiles))
 obj = env.Object("whisker_io_main", "whisker_io.c", CPPDEFINES = "WHISKER_IO_CONVERTER");
 env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
 
+## measurements converter
+obj = env.Object("measurements_io_main", "measurements_io.c", CPPDEFINES = "MEASUREMENTS_IO_CONVERTER");
+env.Program("measurements_convert",[obj]+list( cfiles - set(["measurements_io.c"]) ) )
+
 ## traj 
 libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c',
-                                      'utilities.c','viterbi.c','report.c'] )
+                                      'utilities.c','viterbi.c','report.c',
+                                      'measurements_io.c',
+                                      'measurements_io_v0.c',
+                                      'measurements_io_v1.c'] )
 
 ## install - copy things around
 env.Install( 'ui/whiskerdata', ['trace.py','traj.py',libwhisk] ) 
@@ -112,7 +119,10 @@ tests = ["TEST_BUILD_DISTRIBUTIONS",
 totestobj = lambda t: env.Object( 'trajobj_'+t.lower(), ['traj.c'], CPPDEFINES = t)
 for t in tests:
   env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c',
-                                            'utilities.c','viterbi.c',] ) 
+                                            'utilities.c','viterbi.c',
+                                            'measurements_io.c',
+                                            'measurements_io_v0.c',
+                                            'measurements_io_v1.c',] ) 
 
 ## merge tests
 tests = ["TEST_COLLISIONTABLE_1",
@@ -141,6 +151,9 @@ for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',
                                                  'error.c','viterbi.c',
+                                                 'measurements_io.c',
+                                                 'measurements_io_v0.c',
+                                                 'measurements_io_v1.c',
                                                ] ) 
 
 ## hmm-reclassify tests
@@ -154,7 +167,10 @@ for t in tests:
                                                  'utilities.c', 'traj.c', 'common.c',
                                                  'error.c','viterbi.c',
                                                  'hmm-reclassify-lrmodel.c',
-                                                 'hmm-reclassify-lrmodel-w-deletions.c'
+                                                 'hmm-reclassify-lrmodel-w-deletions.c',
+                                                 'measurements_io.c',
+                                                 'measurements_io_v0.c',
+                                                 'measurements_io_v1.c'
                                                ] ) 
 ## Deque tests
 tests = ["TEST_DEQUE_1",
@@ -186,7 +202,10 @@ totestobj = lambda t: env.Object( 'report_'+t.lower(), ['report.c'], CPPDEFINES 
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'common.c',
-                                                 'error.c', 'traj.c', 'viterbi.c'
+                                                 'error.c', 'traj.c', 'viterbi.c',
+                                                 'measurements_io.c',
+                                                 'measurements_io_v0.c',
+                                                 'measurements_io_v1.c'
                                                ] ) 
 
 ## svd tests
@@ -229,6 +248,9 @@ for t in tests:
                                               'aip.c',       'seed.c',      'draw_lib.c',
                                               'whisker_io.c',          'whisker_io_whiskbin1.c',
                                               'whisker_io_whisker1.c', 'whisker_io_whiskold.c',
+                                              'measurements_io.c',
+                                              'measurements_io_v0.c',
+                                              'measurements_io_v1.c'
                                                 ] ) 
 ## bar_io tests 
 tests = [ "TEST_BAR_IO_1",

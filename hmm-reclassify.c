@@ -12,6 +12,7 @@
 #include "viterbi.h"
 #include "common.h"
 #include "hmm-reclassify.h"
+#include "measurements_io.h"
 
 // Make one model the default
 #ifndef TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
@@ -355,7 +356,7 @@ int main(int argc, char*argv[])
     "          the default behavior.\n"
     "\n");
   // Load Table
-  table = Measurements_Table_From_Filename( Get_String_Arg("source"), &nrows );
+  table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &nrows );
   Sort_Measurements_Table_State_Time(table, nrows);
 
   // Get expected number of whiskers
@@ -472,7 +473,7 @@ int main(int argc, char*argv[])
   // Save results
   //
 
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, nrows );
 
   //
   // Cleanup
@@ -514,7 +515,7 @@ int main(int argc, char*argv[])
     "          the default behavior.\n"
     "\n");
 
-  table = Measurements_Table_From_Filename( Get_String_Arg("source"), &nrows );
+  table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &nrows );
 
   //
   // Compute velocities using approximate/incomplete labelling
@@ -664,7 +665,7 @@ int main(int argc, char*argv[])
   // Save results
   //
 
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, nrows );
 
   //
   // Cleanup
@@ -1146,7 +1147,7 @@ int main(int argc, char*argv[])
     "          the default behavior.\n"
     "\n");
 
-  table = Measurements_Table_From_Filename( Get_String_Arg("source"), &nrows );
+  table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &nrows );
 
   //
   // Compute velocities using approximate/incomplete labelling
@@ -1431,7 +1432,7 @@ int main(int argc, char*argv[])
   // Save results
   //
 
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, nrows );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, nrows );
 
   //
   // Cleanup

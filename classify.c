@@ -5,6 +5,7 @@
 #include "common.h"
 #include "utilities.h"
 #include "traj.h"
+#include "measurements_io.h"
 
 #define DEBUG_CLASSIFY_1
 #define DEBUG_CLASSIFY_3
@@ -296,7 +297,7 @@ int main(int argc, char* argv[])
         " high %f\n", px2mm, low_px, high_px );
 #endif
 
-  table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), &n_rows );
+  table  = Measurements_Table_From_Filename ( Get_String_Arg("source"), NULL, &n_rows );
   Sort_Measurements_Table_Time(table,n_rows);
 
   if( Is_Arg_Matched("face") )
@@ -392,7 +393,7 @@ int main(int argc, char* argv[])
 
   Measurements_Table_Label_By_Order(table, n_rows, count ); //resorts
 
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, n_rows );
   Free_Measurements_Table(table);
   return 0;
 }
@@ -416,7 +417,7 @@ int main(int argc, char* argv[])
          "--                                                                            \n");
 
   Process_Arguments( argc, argv, Spec, 0);
-  table = Measurements_Table_From_Filename( Get_String_Arg("source"), &n_rows );
+  table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n_rows );
   
   { int thresh;
     for( thresh = 0; thresh < 400; thresh ++ )
@@ -468,7 +469,7 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), &n_rows );
+  table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), NULL, &n_rows );
   Sort_Measurements_Table_Time(table,n_rows);
 
   if( Is_Arg_Matched("face") )
@@ -518,7 +519,7 @@ int main(int argc, char* argv[])
 
   Measurements_Table_Label_By_Order(table, n_rows, count ); //resorts
 
-  Measurements_Table_To_Filename( Get_String_Arg("dest"), table, n_rows );
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, n_rows );
   Free_Measurements_Table(table);
   return 0;
 }

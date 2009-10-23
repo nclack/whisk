@@ -6,6 +6,8 @@
 #include "compat.h"
 #include <stdio.h>
 
+// FIXME: sizeof(Measurements) changes on 64 vs 32 bit machines ruining file
+//        compatibility.
 typedef struct _Measurements
 { int row;           // offset from head of data buffer ... Note: the type limits size of table
   int fid;
@@ -81,14 +83,6 @@ SHARED_EXPORT void Measurements_Table_Select_Velocities_By_State( Measurements *
 // Selects rows according to their state and returns shape data
 // `data` should be the appropriate size. See `Measurements_Table_Size_Select_Velocities`
 SHARED_EXPORT void Measurements_Table_Select_Shape_By_State( Measurements *table, int n_rows, int state, double *data );
-
-SHARED_EXPORT FILE *Measurements_Table_To_File( FILE *fp, Measurements *table, int n_rows );
-
-SHARED_EXPORT void Measurements_Table_To_Filename( const char *filename, Measurements *table, int n_rows );
-
-SHARED_EXPORT Measurements *Measurements_Table_From_File( FILE *fp, int *n_rows);
-
-SHARED_EXPORT Measurements *Measurements_Table_From_Filename( const char *filename, int *n_rows);
 
 SHARED_EXPORT void Enumerate_Measurements_Table( Measurements *table, int nrows );
 
