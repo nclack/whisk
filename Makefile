@@ -12,7 +12,8 @@ cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 measurements_io.o measurements_io_v0.o measurements_io_v1.o
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
-APPS  = whisk whisker_convert test_measure_1 test_classify_1 test_hmm_reclassify_3
+APPS  = whisk whisker_convert test_measure_1 test_classify_1 test_hmm_reclassify_3 test_hmm_reclassify_5
+
 LIBS  = libwhisk.so libtraj.so
 
 all: checkos $(APPS) $(LIBS) python #$(TESTS)
@@ -76,6 +77,13 @@ test_hmm_reclassify_3: hmm-reclassify.c utilities.o  traj.o  common.o \
                        hmm-reclassify-lrmodel-w-deletions.o \
                        measurements_io.o measurements_io_v0.o measurements_io_v1.o
 	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_HMM_RECLASSIFY_3 $+ -o $@
+
+test_hmm_reclassify_5: hmm-reclassify.c utilities.o  traj.o  common.o \
+                       error.o viterbi.o \
+                       hmm-reclassify-lrmodel.o \
+                       hmm-reclassify-lrmodel-w-deletions.o \
+                       measurements_io.o measurements_io_v0.o measurements_io_v1.o
+	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_HMM_RECLASSIFY_5 $+ -o $@
 
 test_whisker_io: test_whisker_io.c $(modules) 
 
