@@ -31,17 +31,17 @@
 // DEBUG OUTPUT
 
 #if 0
-#define  DEBUG_MEASUREMENTS_TABLE_ALLOC
-#define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
+#define  DEBUG_EVAL_LIKELIHOOD_LOG2 
+#define  DEBUG_MEASUREMENTS_TABLE_ALLOC
+#define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
 #define  DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
 #define  DEBUG_FIND_PATH
 #define  DEBUG_TEST_SOLVE_GRAY_AREAS 
 #define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_DISTRIBUTIONS_ALLOC
 #define  DEBUG_BUILD_DISTRIBUTIONS 
-#define  DEBUG_EVAL_LIKELIHOOD_LOG2 
 #endif
 
 SHARED_EXPORT
@@ -836,9 +836,18 @@ double Eval_Likelihood_Log2( Distributions *dist, double *vec, int istate )
   double acc = 0;
   int ibin;
   int i;
+  int nbins = dist->n_bins;
 
   for(i=0; i < dist->n_measures; i++)
   { ibin = (int) floor( ( vec[i] - dist->bin_min[i] ) / ( dist->bin_delta[i] ) );
+#ifdef DEBUG_EVAL_LIKELIHOOD_LOG2
+    if( ibin<0 || ibin >= nbins )
+      warning("In Eval_Likelihood_Log2\n"
+              "\tibin out of range\n"
+              "\t\tibin : %d\n"
+              "\t\tnbins: %d\n", ibin,nbins);
+#endif
+    ibin = CLAMP(ibin,0,nbins-1);
     acc += hists[measure_stride*i + ibin]; // addition here bc probs are in log space
 #ifdef DEBUG_EVAL_LIKELIHOOD_LOG2
     debug("\t%5d %f\n", ibin, hists[measure_stride*i + ibin]);

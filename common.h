@@ -28,6 +28,7 @@
 #endif
 
 #define CLAMP_UINT8(v) ( (v>255) ? 255:( (v<0)? 0:v ) )
+#define CLAMP(v,low,high) ((v)>(high) ? (high): ( (v)<(low)?(low):(v)))
 
 #define WRAP_ANGLE_HALF_PLANE(th) \
   while( (th)    < M_PI/2.0 )     \
