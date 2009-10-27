@@ -1,4 +1,4 @@
-function M = whisker_measurements_read(filename)
+function M = read_whisker_measurements(filename)
 %% Reads measurements files output from whisker tracking
 %
 % CAVEAT   
@@ -9,7 +9,7 @@ function M = whisker_measurements_read(filename)
 % the different formats.
 %
 % USAGE
-% M = whisker_measurements_read(filename)
+% M = read_whisker_measurements(filename)
 %
 % <filename> is the full path to the file.
 % <M> is the output measurements matrix.  It has the
@@ -33,7 +33,7 @@ function M = whisker_measurements_read(filename)
 % EXAMPLE
 %
 % %% plot time course of follicle angle for whisker "0."
-% >> M = whisker_measurements_read("test.measurements");
+% >> M = read_whisker_measurements("test.measurements");
 % >> mask = M(:,1)==0;   % select whisker "0"
 % >> plot( M(mask,2), M(mask,6) );
 %
@@ -55,7 +55,7 @@ try
 
   %% read in row by row
   for i=1:nrows,
-    [row,count] = fread(fid,10,'uint32');
+    [row,count] = fread(fid,10,'int32');
     assert( count==10, ['Could not read the measurements file: ',filename] );
     M(i,1:3) = row( [4 2 3] );
     [data,count] = fread(fid, nmeas, 'float64');
