@@ -48,17 +48,16 @@ typedef enum
     CHAN_FLOAT       //  The bits ... as an IEEE floating point value
   } Channel_Type;
 
-typedef struct _Tiff_Histogram
+typedef struct
   { int          bitshift;     // The largest non-zero bit position
     int          total;        // Sum of all counts in the histogram
     unsigned int counts[512];  // Bitshift is at least 1/2*max value, giving 8-bit
   } Tiff_Histogram;            //   precision when max >= 256
 
-typedef struct _Tiff_Channel
+typedef struct
   { int             width;            //  The width of every channel plane
     int             height;           //  The height of every chanel plane
     Channel_Meaning interpretation;   //  Any interpretation hint (if any) provided by the tiff
-    unsigned short *map;              //  The color map for those channels that are CHAN_MAPPED
     int             scale;            //  The # of bits per value in this channel
     int             bytes_per_pixel;  //  The # of bytes each value is stored in (1, 2, or 4)
     Channel_Type    type;             //  The nature of the values
@@ -66,11 +65,12 @@ typedef struct _Tiff_Channel
     Tiff_Histogram *histogram;        //  Histogram of channel values (NULL if not computed)
   } Tiff_Channel;
 
-typedef struct _Tiff_Image
+typedef struct
   { int             width;            //  The width of every channel plane
     int             height;           //  The height of every chanel plane
     int             number_channels;  //  The number of channels (samples_per_pixel)
     Tiff_Channel  **channels;         //  [0..number_channels-1] gives the Channel object for each
+    unsigned short *map;              //  The color map for the 1st channel if it is CHAN_MAPPED
   } Tiff_Image;
 
 /* For those routines below that have error exits, you can get a text string describing the
@@ -108,7 +108,7 @@ Tiff_IFD *Make_IFD_For_Image(Tiff_Image *image, int compression);
 //   version to scale all channels in the image to a given scale
 
 void Scale_Tiff_Channel(Tiff_Channel *channel, int scale);
-void Range_Tiff_Channel(Tiff_Channel *channel, unsigned int *minval, unsigned int *maxval);
+void Range_Tiff_Channel(Tiff_Channel *channel, double *minval, double *maxval);
 void Shift_Tiff_Channel(Tiff_Channel *channel, int shift);
 
 Tiff_Histogram *Histogram_Tiff_Channel(Tiff_Channel *channel);
@@ -141,4 +141,4 @@ void            Kill_Tiff_Histogram(Tiff_Histogram *histogram);
 void            Reset_Tiff_Histogram();
 int             Tiff_Histogram_Usage();
 
-#endif //_TIFF_IMAGE
+#endif _TIFF_IMAGE

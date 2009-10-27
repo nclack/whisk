@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-//#include <unistd.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -51,7 +51,7 @@ typedef unsigned char  uint8;
 typedef unsigned short uint16;
 typedef unsigned int   uint32;
 
-typedef struct _Tif_Tag
+typedef struct
   { uint16  label;
     uint16  type;
     uint32  count;
@@ -69,7 +69,7 @@ static int type_sizes[13] = //  Sizes in bytes of the tiff types (see tiff_io.h)
 
 #define WORD_MULTIPLE(x) ((((x)-1)/4+1)*4)  // Will align values internally on word boundaries
 
-typedef struct _TIFD
+typedef struct
   { int     data_flip;  //  The image data needs to be endian-flipped when interpreted
 
     int     numtags;    //  Number of tags in the IFD
@@ -87,7 +87,7 @@ typedef struct _TIFD
     uint8   *data;      //  concatenation of all tiles/strips encoding the image
   } TIFD;
 
-typedef struct _Treader
+typedef struct
   { int      flip;       //  bytes need to be flipped to get machine endian
     int      ifd_no;     //  # of next ifd to be read (start counting at 1)
     int      lsm;        //  this is an lsm file and you have to do hideous things to read it
@@ -97,7 +97,7 @@ typedef struct _Treader
     FILE    *input;
   } Treader;
 
-typedef struct _Twriter
+typedef struct
   { int      flip;        //  bytes need to be flipped to get machine endian
     int      ifd_no;      //  # of next ifd to be written (start counting at 1)
     int      lsm;         //  this is an lsm file and you have to do hideous things as a result
@@ -109,7 +109,7 @@ typedef struct _Twriter
     FILE    *output;
   } Twriter;
 
-typedef struct _Tannotator
+typedef struct
   { int      flip;        //  bytes need to be flipped to get machine endian
     uint32   ano_cnto;    //  offset of annotation count
     uint32   ano_offset;  //  offset of annotation block
@@ -363,8 +363,6 @@ void Reset_Tiff_Writer()
 int Tiff_Writer_Usage()
 { return (Twriter_Inuse); }
 
-#ifndef _WIN32
-
 static inline int tannotator_asize(Tannotator *tif)
 { return (tif->ano_count); }
 
@@ -477,8 +475,6 @@ void Kill_Tiff_Annotator(Tiff_Annotator *tif)
   fclose(atif->inout);
   kill_tannotator(atif);
 }
-
-#endif //#ifndef _WIN32
 
 static uint32 *get_ifd_vector(int size, char *routine)
 { static uint32 *IFD_Vector = NULL;
@@ -827,11 +823,13 @@ Tiff_Reader *Open_Tiff_Reader(char *name, int *big_endian, int lsm)
     goto invalid;
   if (order == 0x4949)
     { flip = mach_endian;
-      *big_endian = 0;
+      if (big_endian != NULL)
+        *big_endian = 0;
     }
   else if (order == 0x4D4D)
     { flip = 1-mach_endian;
-      *big_endian = 1;
+      if (big_endian != NULL)
+        *big_endian = 1;
     }
   else
     { report_error("Does not contain valid endian value");
@@ -850,7 +848,6 @@ Tiff_Reader *Open_Tiff_Reader(char *name, int *big_endian, int lsm)
   tif = new_treader("Open_Tiff_Reader");
 
   fstat(fileno(input),&fdesc);
-
 
   tif->flip       = flip;
   tif->first_ifd  = offset;
@@ -913,6 +910,11 @@ invalid:
 
 int End_Of_Tiff(Tiff_Reader *tif)
 { return (((Treader *) tif)->ifd_offset == 0); }
+
+void Close_Tiff_Reader(Tiff_Reader *etif)
+{ Treader *tif = (Treader *) etif;
+  fclose(tif->input);
+}
 
 /* For .lsm's produced by Zeiss: the ROWS_PER_STRIP tag is missing and equals IMAGE_LENGTH.
    For .lsm's subsequently written by this package, the ROWS_PER_STRIP tag is present, implying
@@ -1027,13 +1029,11 @@ Tiff_IFD *Read_Tiff_IFD(Tiff_Reader *rtif)
         tag->value       = value;
         //  LONG_PTR(tag)[0] = value; ???
 
-        {
-          int size = count * type_sizes[type];
-          if (size > 4 || bit_tag == tag)
-            { veof  += WORD_MULTIPLE(size);
-              vsize += size;
-            }
-        }
+        int size = count * type_sizes[type];
+        if (size > 4 || bit_tag == tag)
+          { veof  += WORD_MULTIPLE(size);
+            vsize += size;
+          }
       }
 
     ifd->vsize = vsize;
@@ -1456,8 +1456,9 @@ Tiff_IFD *Read_Tiff_IFD(Tiff_Reader *rtif)
         }
 
       if ( ! has_row)
-        { int     type, count;
-          uint32 *ptr;
+        { Tiff_Type type;
+          int       count;
+          uint32   *ptr;
 
           ptr  = (uint32 *) Get_Tiff_Tag(ifd,TIFF_IMAGE_LENGTH,&type,&count);
           if (ptr == NULL)
@@ -1507,7 +1508,7 @@ Tiff_IFD *Create_Tiff_IFD(int num_tags)
   return ((Tiff_IFD *) ifd);
 }
 
-void *Get_Tiff_Tag(Tiff_IFD *eifd, int label, int *type, int *count)
+void *Get_Tiff_Tag(Tiff_IFD *eifd, int label, Tiff_Type *type, int *count)
 { TIFD *ifd = (TIFD *) eifd;
   int   i;
 
@@ -1515,8 +1516,10 @@ void *Get_Tiff_Tag(Tiff_IFD *eifd, int label, int *type, int *count)
     if (ifd->tags[i].label == label)
       { Tif_Tag *tag = ifd->tags+i;
 
-        *type  = tag->type;
-        *count = tag->count; 
+        if (type != NULL)
+          *type  = tag->type;
+        if (count != NULL)
+          *count = tag->count; 
         if (type_sizes[tag->type]*tag->count <= 4)
           return (VOID_PTR(tag));
         else
@@ -1540,7 +1543,7 @@ void Delete_Tiff_Tag(Tiff_IFD *eifd, int label)
       }
 }
 
-int Set_Tiff_Tag(Tiff_IFD *eifd, int label, int type, int count, void *data)
+int Set_Tiff_Tag(Tiff_IFD *eifd, int label, Tiff_Type type, int count, void *data)
 { TIFD    *ifd = (TIFD *) eifd;
 
   Tif_Tag *tag;
@@ -1712,9 +1715,9 @@ int Write_Tiff_IFD(Tiff_Writer *etif, Tiff_IFD *eifd)
   output = tif->output;
   flip   = tif->flip;
 
-  { char *desc;         //  Hack, ImageJ makes assumptions about the arrangement of blocks
-    int   type;         //    if it finds a description that it produced!  So get rid of it.
-    int   count = 0;
+  { char     *desc;         //  Hack, ImageJ makes assumptions about the arrangement of blocks
+    Tiff_Type type;         //    if it finds a description that it produced!  So get rid of it.
+    int       count = 0;
 
     desc = Get_Tiff_Tag(eifd,TIFF_IMAGE_DESCRIPTION,&type,&count);
     if (count >= 6 && strncmp(desc,"ImageJ",6) == 0)
@@ -2025,9 +2028,10 @@ Tiff_IFD *Convert_LSM_2_RGB(Tiff_IFD *eifd, int source, int target)
   static uint32 *StripVec = NULL;
   static uint16 *StripSht = NULL;
 
-  uint32 *valI, spp;
-  uint16 *valS, bps[3], get[3];
-  int     type = 0, count = 0, hcount;
+  uint32   *valI, spp;
+  uint16   *valS, bps[3], get[3];
+  Tiff_Type type;
+  int       count, hcount;
 
   valI = (uint32 *) Get_Tiff_Tag(ifd,TIFF_NEW_SUB_FILE_TYPE,&type,&count);
   if (valI == NULL)
@@ -2126,8 +2130,9 @@ int *Get_LSM_Colors(Tiff_IFD *eifd, int *nchannels)
   static int  LSM_Color_Max = 0;
   static int *LSM_Color_Array = NULL;
 
-  uint32 *lsmarr, *colarr, coloff, locoff;
-  int     type, count, lflip, i;
+  uint32   *lsmarr, *colarr, coloff, locoff;
+  int       count, lflip, i;
+  Tiff_Type type;
 
   lsmarr = (uint32 *) Get_Tiff_Tag(ifd,TIFF_CZ_LSMINFO,&type,&count);
   if (lsmarr == NULL)
@@ -2140,14 +2145,14 @@ int *Get_LSM_Colors(Tiff_IFD *eifd, int *nchannels)
   coloff = lsmarr[LSM_CHANNEL_COLORS];
   if (lflip)
     flip_long(&coloff);
-  colarr = (uint32 *) (((uint8 *) lsmarr) + coloff);
+  colarr = (uint32 *) (((void *) lsmarr) + coloff);
   *nchannels = colarr[1];
   if (lflip)
     flip_long((uint32 *) nchannels);
   locoff = colarr[3];
   if (lflip)
     flip_long(&locoff);
-  colarr = (uint32 *) (((uint8 *) colarr) + locoff);
+  colarr = (uint32 *) (((void *) colarr) + locoff);
 
   if (*nchannels > LSM_Color_Max)
     { LSM_Color_Max = *nchannels;
@@ -2168,9 +2173,7 @@ int *Get_LSM_Colors(Tiff_IFD *eifd, int *nchannels)
  *                                                                                      *
  ****************************************************************************************/
 
-#ifndef _WIN32
-
-static Tiff_Annotator *open_annotator(char *name, int *good)
+static Tiff_Annotator *open_annotator(char *name, Annotator_Status *good)
 { static int firstime = 1;
   static int mach_endian;
 
@@ -2353,8 +2356,8 @@ closeout:
 Tiff_Annotator *Open_Tiff_Annotator(char *name)
 { return (open_annotator(name,NULL)); }
 
-int Tiff_Annotation_Status(char *name)
-{ int good;
+Annotator_Status Tiff_Annotation_Status(char *name)
+{ Annotator_Status good;
   open_annotator(name,&good);
   return (good);
 }
@@ -2402,7 +2405,8 @@ int Format_Tiff_For_Annotation(char *name)
 { Tiff_Reader *rtif;
   Tiff_Writer *wtif;
   Tiff_IFD    *ifd;
-  int          endian, type, count, status, i, lsm;
+  Tiff_Type    type;
+  int          endian, count, status, i, lsm;
   static char *template = "$jf_tagger.XXXXXX";
   static char *tempname;
 
@@ -2474,7 +2478,6 @@ invalid:
   return (status);
 }
 
-#endif //#ifndef _WIN32
 
 /****************************************************************************************
  *                                                                                      *
@@ -2686,5 +2689,3 @@ void Print_Tiff_IFD(Tiff_IFD *eifd, FILE *output)
       fprintf(output,"\n");
     }
 }
-
-

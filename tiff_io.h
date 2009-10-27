@@ -15,6 +15,10 @@
 *      guaranteed to be at the end of the file so that changing it just is a matter of    *
 *      rewriting the last bit of the file.                                                *
 *                                                                                         *
+*    The routines can also read and write .lsm files, consolidating them as proper tifs   *
+*      once read and minimally reintroducing the essential "quirks" that an .lsm reader   *
+*      would expect when writing back out (as a .lsm)                                     *
+*                                                                                         *
 *  Author:  Gene Myers                                                                    *
 *  Date  :  December 2007                                                                 *
 *                                                                                         *
@@ -31,18 +35,20 @@
 
 // The Tiff 6.0 data types
 
-#define TIFF_BYTE       1
-#define TIFF_ASCII      2
-#define TIFF_SHORT      3
-#define TIFF_LONG       4
-#define TIFF_RATIONAL   5
-#define TIFF_SBTYE      6
-#define TIFF_UNDEFINED  7
-#define TIFF_SSHORT     8
-#define TIFF_SLONG      9
-#define TIFF_SRATIONAL 10
-#define TIFF_FLOAT     11
-#define TIFF_DOUBLE    12
+typedef enum
+  { TIFF_BYTE      = 1,
+    TIFF_ASCII     = 2,
+    TIFF_SHORT     = 3,
+    TIFF_LONG      = 4,
+    TIFF_RATIONAL  = 5,
+    TIFF_SBTYE     = 6,
+    TIFF_UNDEFINED = 7,
+    TIFF_SSHORT    = 8,
+    TIFF_SLONG     = 9,
+    TIFF_SRATIONAL = 10,
+    TIFF_FLOAT     = 11,
+    TIFF_DOUBLE    = 12
+  } Tiff_Type;
 
 // The Tiff 6.0 standard tags and in some cases the interpretation of their values
 //   For each tag in the comment we give the type and the count expected for the tag
@@ -161,6 +167,9 @@
 #define   TIFF_VALUE_UNSPECIFIED_DATA         0
 #define   TIFF_VALUE_ALPHA_DATA               1
 #define   TIFF_VALUE_SOFT_MATTE               2
+#define   TIFF_VALUE_EXTRA_RED                3   //  Customized extension, not part of standard
+#define   TIFF_VALUE_EXTRA_GREEN              4   //  Customized extension, not part of standard
+#define   TIFF_VALUE_EXTRA_BLUE               5   //  Customized extension, not part of standard
 #define TIFF_SAMPLE_FORMAT          339  //  SHORT (Samples_Per_Pixel) 
 #define   TIFF_VALUE_UNSIGNED_INTEGER_DATA    1
 #define   TIFF_VALUE_TWOS_COMPLEMENT_DATA     2
@@ -190,6 +199,8 @@
 #define TIFF_CZ_LSMINFO                   34412  //  BYTE     (See LSM doc)
 
 #define TIFF_JF_TAGGER                    36036  //  ASCII
+
+#define TIFF_JF_MRCINFO                   36037  //  LONG(56) + BYTE(800)
 
 /* A tiff file consists of a header that "points" to a linked list of image file descriptors
    (IFD's).  While it is not required, each IFD typically encodes an image, a Tiff file with
@@ -246,8 +257,8 @@ char *Tiff_Error_String();
             the lsm is compressed.
    Fix (e) takes a bit of extra time but is necessary if one is to strictly adhere to the standard.
    If the Tiff_Reader is for an lsm but ROWS_PER_STRIP is defined, then the package assumes
-   it is reading an LSM file that it wrote (see below) in which case only wart (a) remains and
-   needs to be handled.
+   it is reading an LSM file that it wrote (see below) in which case only wart (a) remains (see
+   next paragraph) and needs to be handled.
 
    While the tags may not be in ascending order of labels internaly, Write_Tiff_IFD, sorts them
    before writing so that a standard tiff results from a write.  However, if the Tiff_Writer is
@@ -262,6 +273,7 @@ Tiff_Reader *Open_Tiff_Reader(char *name, int *big_endian, int lsm);
 void         Rewind_Tiff_Reader(Tiff_Reader *tif);
 int          Advance_Tiff_Reader(Tiff_Reader *tif);
 int          End_Of_Tiff(Tiff_Reader *tif);
+void         Close_Tiff_Reader(Tiff_Reader *tif);
 
 Tiff_Reader *Copy_Tiff_Reader(Tiff_Reader *tif);
 void         Free_Tiff_Reader(Tiff_Reader *tif);
@@ -308,8 +320,8 @@ Tiff_IFD    *Read_Tiff_IFD(Tiff_Reader *tif);
 int          Write_Tiff_IFD(Tiff_Writer *tif, Tiff_IFD *ifd);
 void         Print_Tiff_IFD(Tiff_IFD *ifd, FILE *output);
 
-void        *Get_Tiff_Tag(Tiff_IFD *ifd, int label, int *type, int *count);
-int          Set_Tiff_Tag(Tiff_IFD *ifd, int label, int type, int count, void *data);
+void        *Get_Tiff_Tag(Tiff_IFD *ifd, int label, Tiff_Type *type, int *count);
+int          Set_Tiff_Tag(Tiff_IFD *ifd, int label, Tiff_Type type, int count, void *data);
 void         Delete_Tiff_Tag(Tiff_IFD *ifd, int label);
 
 Tiff_IFD    *Copy_Tiff_IFD(Tiff_IFD *tif);
@@ -366,12 +378,14 @@ int      *Get_LSM_Colors(Tiff_IFD *ifd, int *nchannels);
    annotation to be saved.
 */
 
-#define ANNOTATOR_CANT_OPEN     0
-#define ANNOTATOR_GIBBERISH     1
-#define ANNOTATOR_NOT_FORMATTED 2
-#define ANNOTATOR_FORMATTED     3
+typedef enum
+  { ANNOTATOR_CANT_OPEN     = 0,
+    ANNOTATOR_GIBBERISH     = 1,
+    ANNOTATOR_NOT_FORMATTED = 2,
+    ANNOTATOR_FORMATTED     = 3
+  } Annotator_Status;
 
-int Tiff_Annotation_Status(char *name);
+Annotator_Status Tiff_Annotation_Status(char *name);
 
 typedef void Tiff_Annotator;
 
@@ -389,4 +403,3 @@ void            Reset_Tiff_Annotator();
 int             Tiff_Annotator_Usage();
 
 #endif
-
