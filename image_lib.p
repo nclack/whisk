@@ -151,7 +151,6 @@ Tiff_Image *Cast_Image_To_Tiff_Image(Image *im)
   tim->width  = tch->width  = im->width;
   tim->height = tch->height = im->height;
   tch->interpretation       = CHAN_BLACK;
-  tch->map                  = NULL;
   tch->scale                = 8*im->kind;
   tch->bytes_per_pixel      = im->kind;
   tch->type                 = CHAN_UNSIGNED;
