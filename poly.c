@@ -272,6 +272,15 @@ double *polyfit_alloc_workspace( int n, int degree )
   return Guarded_Malloc( sizeof(double)*( polyfit_size_workspace(n,degree) ), "polyfit workspace" );
 }
 
+void polyfit_realloc_workspace( int n, int degree, double **workspace )
+{ degree += 1; // e.g. for degree 2 need 3 coefficients
+  if(workspace)
+  { *workspace = Guarded_Realloc(*workspace, sizeof(double)*( polyfit_size_workspace(n,degree) ), "polyfit workspace" );
+  } else {
+    *workspace = polyfit_alloc_workspace( n, degree );
+  }
+}
+
 void polyfit_free_workspace( double *workspace )
 { if( workspace ) free( workspace );
 }

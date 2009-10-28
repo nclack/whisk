@@ -54,6 +54,8 @@ test_report_compare_trajectories
 test_svd_1
 test_svd_2
 test_svd_3
+test_polyfit_1
+test_polyfit_2
 test_traj_build_distributions
 test_traj_measurement_table_io_1
 test_traj_solve_gray_areas

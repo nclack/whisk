@@ -139,7 +139,8 @@ for t in tests:
                                               'aip.c',       'seed.c',      'draw_lib.c',
                                               'whisker_io.c',          'whisker_io_whiskbin1.c',
                                               'whisker_io_whisker1.c', 'whisker_io_whiskold.c',
-                                              
+                                              'whisker_io_whiskpoly1.c',
+                                              'svd.c', 'mat.c', 'poly.c',
                                               ] ) 
 ## classify tests
 tests = ["TEST_CLASSIFY_1",
@@ -220,16 +221,16 @@ for t in tests:
                                                  'error.c', 'compat.c', 'mat.c'
                                                ] ) 
 
-# polyfit tests
-# tests = ["TEST_POLYFIT_1",
-         # "TEST_POLYFIT_2", 
-         # ] 
-# totestobj = lambda t: env.Object( 'polyfit_'+t.lower(), ['poly.c'], CPPDEFINES = t )
-# for t in tests:
-  # env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
-                                                 # 'utilities.c', 'common.c', 'svd.c',
-                                                 # 'error.c', 'compat.c', 'mat.c'
-                                               # ] ) 
+## polyfit tests
+tests = ["TEST_POLYFIT_1",
+         "TEST_POLYFIT_2", 
+         ] 
+totestobj = lambda t: env.Object( 'polyfit_'+t.lower(), ['poly.c'], CPPDEFINES = t )
+for t in tests:
+  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+                                        'utilities.c', 'common.c', 'svd.c',
+                                        'error.c', 'compat.c', 'mat.c'
+                                      ] ) 
 
 ## measure tests
 tests = ["TEST_MEASURE_1",
@@ -238,8 +239,7 @@ tests = ["TEST_MEASURE_1",
 totestobj = lambda t: env.Object( 'measure_'+t.lower(), ['measure.c'], CPPDEFINES = t )
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
-                                              'svd.c',
-                                              'mat.c', 'poly.c',
+                                              'svd.c', 'mat.c', 'poly.c',
                                               'traj.c', 'bar_io.c',
                                               'common.c',    'image_lib.c', 'contour_lib.c',
                                               'error.c',     'eval.c',      'level_set.c',
@@ -248,6 +248,7 @@ for t in tests:
                                               'aip.c',       'seed.c',      'draw_lib.c',
                                               'whisker_io.c',          'whisker_io_whiskbin1.c',
                                               'whisker_io_whisker1.c', 'whisker_io_whiskold.c',
+                                              'whisker_io_whiskpoly1.c',
                                               'measurements_io.c',
                                               'measurements_io_v0.c',
                                               'measurements_io_v1.c'

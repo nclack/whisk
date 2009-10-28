@@ -35,7 +35,7 @@
 #define DEBUG_FIDWID_BUILD_INDEX
 #endif
 
-int _score_cmp( const void *a, const void *b )
+static int _score_cmp( const void *a, const void *b )
 { 
   float d = *(float*)a - *(float*)b;
   if( d < 0 )

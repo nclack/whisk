@@ -24,6 +24,7 @@ double  Vandermonde_Determinant       ( double *x, int n );
 double  Vandermonde_Determinant_Log2  ( double *x, int n );
 inline int polyfit_size_workspace     ( int n, int degree );
 double *polyfit_alloc_workspace       ( int n, int degree );
+void    polyfit_realloc_workspace     ( int n, int degree, double **workspace );
 void    polyfit_free_workspace        ( double *workspace );
 void    polyfit_reuse                 ( double *y, int n, int degree, double *coeefs, double *workspace );
 void    polyfit                       ( double *x, double *y, int n, int degree, double *coeffs, double *workspace );

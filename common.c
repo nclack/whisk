@@ -9,6 +9,11 @@
 #define DEBUG_REQUEST_STORAGE
 #endif
 
+//
+// MEMORY
+// ------
+//
+
 //for debugging
 void dump_doubles(char* filename, double* a, int n)
 { FILE *fp = fopen(filename,"wb");
@@ -65,9 +70,10 @@ void *request_storage_pow2items( void *buffer, size_t *maxlen_bytes, size_t nbyt
   return buffer;
 }
 
-/**
- * FILE IO
- */
+//
+// FILE IO
+// -------
+//
 
 int fskipline(FILE* fp, size_t *nch)
 { //return fgetln(fp,nch)!=NULL; // not available on windows :(
@@ -76,6 +82,27 @@ int fskipline(FILE* fp, size_t *nch)
   do { c = fgetc(fp); i++; } while( c!=EOF && c!='\n' );
   *nch = i;
   return (c=='\n');
+}
+
+//
+// NUMERICAL
+// ---------
+//
+
+/**
+ * Resizes and fills <resizable> with <n> points from <low> to <high>.
+ * <low> and <high> are inclusive bounds.
+ *
+ * Note the location of resizable may change.
+ */
+void linspace_d( double low, double high, int n, double **resizable, size_t *size )
+{ double step = (high-low)/(n-1.0);
+  int i;
+  double *a;
+  *resizable = request_storage(*resizable, size, sizeof(double), n, "linspace_d");
+  a = *resizable;
+  for(i=0;i<n;i++)
+    a[i] = step*i + low;
 }
 
 /**
