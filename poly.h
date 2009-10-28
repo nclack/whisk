@@ -8,6 +8,7 @@
 //       poly_mul();
 //       degree3 = poly_pop(r);
 //
+#include "compat.h"
 
 inline double polyval             ( double *p, int degree, double x);
 inline int    polymul_nelem_dest  ( int na, int nb);

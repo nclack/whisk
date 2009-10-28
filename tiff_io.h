@@ -378,6 +378,8 @@ int      *Get_LSM_Colors(Tiff_IFD *ifd, int *nchannels);
    annotation to be saved.
 */
 
+#ifndef _MSC_VER // annotator not windows compatible due to unistd.h dependency
+
 typedef enum
   { ANNOTATOR_CANT_OPEN     = 0,
     ANNOTATOR_GIBBERISH     = 1,
@@ -401,5 +403,7 @@ void            Free_Tiff_Annotator(Tiff_Annotator *tif);
 void            Kill_Tiff_Annotator(Tiff_Annotator *tif);
 void            Reset_Tiff_Annotator();
 int             Tiff_Annotator_Usage();
+
+#endif //ifndef _MSV_VER
 
 #endif

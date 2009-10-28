@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -363,6 +363,9 @@ void Reset_Tiff_Writer()
 int Tiff_Writer_Usage()
 { return (Twriter_Inuse); }
 
+
+#ifndef _MSC_VER // annotator not windows compatible due to unistd.h dependency
+
 static inline int tannotator_asize(Tannotator *tif)
 { return (tif->ano_count); }
 
@@ -475,6 +478,8 @@ void Kill_Tiff_Annotator(Tiff_Annotator *tif)
   fclose(atif->inout);
   kill_tannotator(atif);
 }
+
+#endif //#ifndef _MSC_VER // annotator not windows compatible due to unistd.h dependency
 
 static uint32 *get_ifd_vector(int size, char *routine)
 { static uint32 *IFD_Vector = NULL;
@@ -1028,12 +1033,14 @@ Tiff_IFD *Read_Tiff_IFD(Tiff_Reader *rtif)
         tag->count       = count;
         tag->value       = value;
         //  LONG_PTR(tag)[0] = value; ???
-
+		
+		{
         int size = count * type_sizes[type];
         if (size > 4 || bit_tag == tag)
           { veof  += WORD_MULTIPLE(size);
             vsize += size;
           }
+		}
       }
 
     ifd->vsize = vsize;
@@ -2145,14 +2152,14 @@ int *Get_LSM_Colors(Tiff_IFD *eifd, int *nchannels)
   coloff = lsmarr[LSM_CHANNEL_COLORS];
   if (lflip)
     flip_long(&coloff);
-  colarr = (uint32 *) (((void *) lsmarr) + coloff);
+  colarr = (uint32 *) (((char *) lsmarr) + coloff);
   *nchannels = colarr[1];
   if (lflip)
     flip_long((uint32 *) nchannels);
   locoff = colarr[3];
   if (lflip)
     flip_long(&locoff);
-  colarr = (uint32 *) (((void *) colarr) + locoff);
+  colarr = (uint32 *) (((char *) colarr) + locoff);
 
   if (*nchannels > LSM_Color_Max)
     { LSM_Color_Max = *nchannels;
@@ -2172,7 +2179,7 @@ int *Get_LSM_Colors(Tiff_IFD *eifd, int *nchannels)
  *  TIFF_ANNOTATOR ROUTINES                                                             *
  *                                                                                      *
  ****************************************************************************************/
-
+#ifndef _MSC_VER // annotator not windows compatible due to unistd.h dependency
 static Tiff_Annotator *open_annotator(char *name, Annotator_Status *good)
 { static int firstime = 1;
   static int mach_endian;
@@ -2478,6 +2485,7 @@ invalid:
   return (status);
 }
 
+#endif // #ifndef _MSC_VER // annotator not windows compatible due to unistd.h dependency
 
 /****************************************************************************************
  *                                                                                      *

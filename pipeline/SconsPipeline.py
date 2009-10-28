@@ -113,16 +113,9 @@ def pipeline_standard(env, movie):
     (env.Precious,),
     env.Measure,
     env.Classify,
-    ( env.HmmLRTimeSolver,
-      env.Summary
-    ),
-    ( env.HmmLRTimeWatershedSolver,
-      ( env.GreyAreaSolver,
-        env.Summary
-      ),
-      env.Summary
-    ),
-    env.Summary
+    env.HmmLRTimeWatershedSolver,
+    env.GreyAreaSolver,
+    env.Summary    
   ]
 
   compose = lambda a,b: b(a)

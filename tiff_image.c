@@ -424,7 +424,7 @@ void Reset_Tiff_Image()
   get_code_vector(-1,NULL);
 }
 
-#ifdef DEBUG_ENCODE || DEBUG_DECODE
+#if defined( DEBUG_ENCODE ) || defined( DEBUG_DECODE )
 
 static void Print_Plane(int width, int height, int bytes, void *array, int hex, int diff)
 { int x, y;
@@ -1553,6 +1553,7 @@ Tiff_Image *Create_Tiff_Image(int width, int height)
 int Add_Tiff_Image_Channel(Tiff_Image *image, Channel_Meaning meaning, int scale, Channel_Type type)
 { Tiff_Channel *channel;
   int           n;
+  int           csize;
 
   if (scale > 32)
     { error("Scale cannot be more than 32 bits\n");
@@ -1561,7 +1562,7 @@ int Add_Tiff_Image_Channel(Tiff_Image *image, Channel_Meaning meaning, int scale
 
   n = image->number_channels;
 
-  int csize = ((_Tiff_Image *) (((char *) image) - Tiff_Image_Offset))->csize;
+  csize = ((_Tiff_Image *) (((char *) image) - Tiff_Image_Offset))->csize;
   if ((n+1)*((int) sizeof(Tiff_Channel *)) > csize) 
     allocate_tiff_image_channels(image,(n+10)*sizeof(Tiff_Channel *),"Add_Tiff_Image_Channel");
 
