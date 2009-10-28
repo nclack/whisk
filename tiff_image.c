@@ -1737,7 +1737,6 @@ Tiff_IFD *Make_IFD_For_Image(Tiff_Image *image, int compression)
 redo:
   data = stream = Tiff_IFD_Data(ifd);
   remain = data_size;
-printf("compression = %d\n",compression);
 
   for (i = 0; i < image->number_channels; i++)
     { int scale = image->channels[i]->scale;

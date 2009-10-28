@@ -49,6 +49,7 @@ mains = Split( """ whisk
                    seedtest
                    test_whisker_io
                    stripetest
+                   adjust_lines
                """ )
 excludes = set(( """ collisiontable_link_list.c
                      distance.c
