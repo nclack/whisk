@@ -1451,6 +1451,7 @@ int main(int argc, char*argv[])
     { int fid=0;
       while( fid < nframes )
       { while( visited[fid] && fid<nframes ) fid++; // find the left side of the next gap
+	    if( fid==nframes ) break;
         fid = HMM_Reclassify_Fill_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood, fid);
 #ifdef DEBUG_HMM_RECLASSIFY
         debug("Frame: %5d likelihood: %g\n", fid, likelihood[fid]);

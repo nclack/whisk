@@ -2553,6 +2553,17 @@ static void find_a_match(Automaton *mach, int no_escapes)
   Match_Vector = (Match_State *) Guarded_Malloc(sizeof(Match_State)*ArgC,"Process_Arguments");
   Fstack       = (Unit **) Guarded_Malloc(sizeof(Unit *)*(ArgC+mach->longest),"Process_Arguments");
 
+  /** 
+   * On a debug build in Visual Studio malloc'd data gets inited
+   * to 0xcdcdcdcd, which causes problems in some NULL pointer checks.
+   * This indicates to me that these need to be explicitly nulled 
+   * to start with, hence the section below.  -- ngc 2009-10-28
+   */
+  memset( Match_Vector, 0, sizeof(Match_State)*ArgC );
+  memset( F_Path,       0, sizeof(Unit *)*(ArgC+mach->longest) );
+  memset( A_Match,      0, sizeof(Match_State)*ArgC );
+  memset( Fstack,       0, sizeof(Unit *)*(ArgC+mach->longest) );
+
 #ifdef DEBUG_SEARCH
   printf("\nArg to Flags:\n");
 #endif
