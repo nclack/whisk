@@ -130,6 +130,7 @@ frame_index *build_frame_index(Measurements *table, int nrows)
   Measurements *row  = table + nrows,
                *last = row-1;
   frame_index *index = Guarded_Malloc( sizeof(frame_index)*nframes, "alloc frame index" );
+  memset(index,0, sizeof(frame_index)*nframes);
 
   { int fid = 0;
     while(row-- > table )
