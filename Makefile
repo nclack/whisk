@@ -6,10 +6,12 @@ pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contou
 cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 match.o bar.o image_adapt.o error.o adjust_scan_bias.o\
 					 seed.o whisker_io.o whisker_io_whisker1.o whisker_io_whiskbin1.o\
+                     whisker_io_whiskpoly1.o\
 					 whisker_io_whiskold.o viterbi.o traj.o compat.o merge.o\
 					 svd.o poly.o mat.o\
 					 bar_io.o \
-					 measurements_io.o measurements_io_v0.o measurements_io_v1.o
+					 measurements_io.o measurements_io_v0.o measurements_io_v1.o \
+					 whisker_io_whiskpoly1.o
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
 APPS  = whisk whisker_convert test_measure_1 test_classify_1 test_hmm_reclassify_3 test_hmm_reclassify_5
