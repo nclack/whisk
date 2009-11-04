@@ -14,7 +14,7 @@ cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 whisker_io_whiskpoly1.o
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
-APPS  = whisk whisker_convert test_measure_1 test_classify_1 test_hmm_reclassify_3 test_hmm_reclassify_5
+APPS  = whisk whisker_convert test_measure_1 test_measure_2 test_classify_1 test_hmm_reclassify_3 test_hmm_reclassify_5
 
 LIBS  = libwhisk.so libtraj.so
 
