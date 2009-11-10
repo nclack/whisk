@@ -141,4 +141,4 @@ void            Kill_Tiff_Histogram(Tiff_Histogram *histogram);
 void            Reset_Tiff_Histogram();
 int             Tiff_Histogram_Usage();
 
-#endif _TIFF_IMAGE
+#endif //_TIFF_IMAGE
