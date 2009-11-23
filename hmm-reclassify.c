@@ -853,8 +853,8 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
 
 
   // Mark out unreliable neighbors
-  if(    prev < 0        || !visited[prev] )  prev = -1;
-  if(    next >= nframes || !visited[next] )  next = -1;
+  if(    prev < 0        || !visited[prev] || !index[prev].n)  prev = -1;
+  if(    next >= nframes || !visited[next] || !index[next].n)  next = -1;
   if( (prev==-1) && (next==-1) ) //no good neighbors for update
     return 0;
 
