@@ -1170,7 +1170,8 @@ int main(int argc, char*argv[])
   Measurements *table, *row;
   Distributions *shp_dists, *vel_dists;
   real *T;
-
+  int nstate,minstate,maxstate;
+  
   Process_Arguments( argc, argv, Spec, 0 );
 
   help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
@@ -1197,14 +1198,22 @@ int main(int argc, char*argv[])
   //
   Sort_Measurements_Table_State_Time(table, nrows);
   Measurements_Table_Compute_Velocities(table,nrows);
+  nstate = _count_n_states(table,nrows,1,&minstate,&maxstate);
+  if( minstate > -1 )
+  { warning("Doing nothing\n"
+            "\tIt looks like all segments were labelled in the previous step.\n"
+			"\tThis step (hmm-reclassify) helps when there are some segments\n"
+			"\t  that do not correspond to whiskers (e.g. hairs).  Since every\n"
+			"\t  segment was positively identified, there is nothing to do\n"
+			"\t  here.\n");
+    return 0;
+  }
 
   nwhisk = -1;
   if( Is_Arg_Matched("-n") )
     nwhisk = Get_Int_Arg("-n");
   if( nwhisk < 1 )
-  { int nstate,minstate,maxstate;
-    nstate = _count_n_states(table,nrows,1,&minstate,&maxstate);
-    nwhisk = nstate - 1; //subtract the dummy state, which is minstate
+  { nwhisk = nstate - 1; //subtract the dummy state, which is minstate
 #ifdef DEBUG_HMM_RECLASSIFY
     assert(minstate<maxstate);
     assert(minstate==-1);
@@ -1238,6 +1247,10 @@ int main(int argc, char*argv[])
   //
 
   Sort_Measurements_Table_State_Time(table, nrows);
+  if(table[nrows-1].state==0)
+	  error("Measurements table appears to have no labelled segments.\n"
+	        "  This step requires a first guess of the identitiy of a subset of whisker segments.\n"
+			"  Did that step run correctly?\n");
   shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_SHP_DISTS_NBINS );
   vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_VEL_DISTS_NBINS );
   Distributions_Dilate( shp_dists );
@@ -1257,7 +1270,7 @@ int main(int argc, char*argv[])
     real *S = (*pf_Alloc_Starts)( nwhisk );
     int nframes = table[nrows-1].fid+1;
     real **visited    = Guarded_Malloc( sizeof(real*)*nframes, "alloc visited"    );
-    real *likelihood = Guarded_Malloc( sizeof(real)*nframes, "alloc likelihood" );
+    real *likelihood  = Guarded_Malloc( sizeof(real)*nframes, "alloc likelihood" );
     frame_index *index = build_frame_index(table,nrows);
     heap *q;
 #ifdef DEBUG_HMM_RECLASSIFY
