@@ -21,6 +21,8 @@ from trace import Load_Whiskers
 from copy import deepcopy
 import os,sys
 
+from numpy import array,zeros
+
 import pdb
 
 _g_autosave_scheduler = None
@@ -59,7 +61,7 @@ def __save_state(precursor_or_names, whiskers ,trajectories):
           '.measurements': trajectories }
   savers = {'.whiskers':     save_whiskers,
             '.trajectories': save_trajectories,
-            '.measurements': lambda name,t: traj.MeasurementsTable(name).commit_trajectories(t).save(name)}
+            '.measurements': save_measurements }
   names = dict([ (k,None) for k in objs.iterkeys() ])
   if not isinstance(precursor_or_names, str ) and hasattr( precursor_or_names, '__iter__' ):
     #multiple names...try to find names for the different filetypes, otherwise guess
@@ -77,7 +79,8 @@ def __save_state(precursor_or_names, whiskers ,trajectories):
   elif isinstance(precursor_or_names,str): 
     #single valued, assume it's a filename or precursor
     precursor = os.path.splitext(precursor_or_names)[0]
-    for e in names.iteritems():
+    
+    for e in names.iterkeys():
       names[e] = precursor + e
   else:
     raise TypeError(" precursor_or_names must be string or iterable ")
@@ -94,19 +97,20 @@ def save_state( precursor_or_names, whiskers, trajectories ):
   __save_state(precursor_or_names,whiskers,trajectories)
 
 def load_state( precursor_or_names ):
-  order = ['.whiskers', '.trajectories', '.bar' ]
+  order = ['.whiskers', '.measurements', '.bar' ]
   alias = { '.whiskers'     : '.whiskers',
             '.trajectories' : '.trajectories',
-            '.measurements' : '.trajectories',
+            '.measurements' : '.measurements',
             '.bar'          : '.bar' }
   loaders = {'.whiskers':     load_whiskers,
              '.trajectories': load_trajectories,
              '.bar':          load_bar_centers,
-             '.measurements': lambda name: [traj.MeasurementsTable(name).get_trajectories(),0]} 
+             '.measurements': load_measurements } 
   names = dict([ (alias[k],None) for k in order ])
-
+  
   if not isinstance(precursor_or_names, str ) and hasattr( precursor_or_names, '__iter__' ):
     #multiple names...try to find names for the different filetypes, otherwise guess
+    
     precursor_or_names = filter( lambda name: (os.path.splitext(name)[1] in loaders.keys()), precursor_or_names )
     for fn,(p,e) in zip( precursor_or_names, map( os.path.splitext, precursor_or_names ) ):
       names[alias[e]] = fn
@@ -120,7 +124,7 @@ def load_state( precursor_or_names ):
       names[k] = precursor + k
   else:
     raise TypeError(" precursor_or_names must be string or iterable ")
-
+  
   def logload(t,v):
     print "Loaded: ",t
     return v
@@ -128,7 +132,27 @@ def load_state( precursor_or_names ):
   objs = [logload(t,loaders[os.path.splitext(names[t])[1]](names[t])[0]) for t in order]
   objs.append(0) #append a legit trajectory id....assuming 0...this should probably get taken out later
   return objs
- 
+
+def load_measurements( name ):
+  try:
+    return [traj.MeasurementsTable(name).get_trajectories(),0]
+  except IOError:
+    print "Couldn't open file. Creating: ", name
+    return {},0
+
+def save_measurements( name, t ):  
+  try:
+    table = traj.MeasurementsTable(name).commit_trajectories(t)
+    table.save(name)
+  except IOError:
+    nrows = sum( map( len, t.itervalues() ) ) # number of labelled segments
+    table = zeros((nrows,11))
+    row = 0
+    for tid,v in t.iteritems():
+      for fid,wid in v.iteritems():
+        table[row,0:3] = array([tid,fid,wid])  
+    traj.MeasurementsTable( table ).save( name )
+   
 def load_whiskers( filename ):
   try:
     w = Load_Whiskers( filename )

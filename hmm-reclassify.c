@@ -1266,7 +1266,7 @@ int main(int argc, char*argv[])
   Sort_Measurements_Table_Time_Face( table, nrows );
   { real *E = (*pf_Request_Static_Resizable_Emissions)(
                   nwhisk,
-                  (nrows/table[nrows-1].fid)*2); // initial alloc for twice the average sequence length
+                  MAX(2,(nrows/table[nrows-1].fid)*2)); // initial alloc for twice the average sequence length
     real *S = (*pf_Alloc_Starts)( nwhisk );
     int nframes = table[nrows-1].fid+1;
     real **visited    = Guarded_Malloc( sizeof(real*)*nframes, "alloc visited"    );

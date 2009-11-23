@@ -78,28 +78,6 @@ def dfs_reduce(f,tree):
   #  print e
   return res
 
-def pipeline_production(env, movie):
-  def alter(j,subdir,ext):
-    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  )
-
-  builders = [
-    movie                                                       ,
-    env.Whisk                                                   ,
-  (env.Precious,),
-#  (env.Bar),
-    env.Measure                                                 ,
-    env.Classify                                                ,
-    env.HmmLRTimeSolver,
-    env.GreyAreaSolver,
-    (env.MeasurementsAsMatlab,),
-    (env.MeasurementsAsTrajectories,),
-    env.Summary
-  ]
-
-  compose = lambda a,b: b(a)
-  jobs = dfs_reduce( compose, builders )
-  return jobs
-
 def pipeline_standard(env, movie):
   def alter(j,subdir,ext):
     return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  )
@@ -120,6 +98,29 @@ def pipeline_standard(env, movie):
 
   compose = lambda a,b: b(a)
   jobs = dfs_reduce( compose, builders )
+  return jobs
+
+def pipeline_production(env, sources):
+  def alter(j,subdir,ext):
+    return env.File(j).Dir(subdir).File(  os.path.splitext(os.path.split(j.path)[-1])[0]+ext  ) 
+
+  builders = [ 
+    sources,           #start with movie files
+    ( env.Bar,
+      (env.Precious,),
+    ),
+    env.Whisk,
+    (env.Precious,),
+    lambda j: env.Command( change_ext(j[0], '.measurements'), j, 
+                          [ "test_measure_1 --face $FACEHINT $SOURCE $TARGET" ,
+                            "test_classify_1 $TARGET $TARGET $FACEHINT -n $WHISKER_COUNT --px2mm $PX2MM --follicle $FOLLICLE_THRESH",
+                            "test_hmm_reclassify_5 -n $WHISKER_COUNT $TARGET $TARGET",
+                            "test_traj_solve_gray_areas $TARGET $TARGET"] ),
+    env.Summary,
+  ]
+
+  compose = lambda a,b: b(a)
+  jobs = dfs_reduce( compose, builders )                         
   return jobs
 
 def pipeline_oconnor(env, movie):
@@ -260,7 +261,7 @@ env['FOLLICLE_THRESH'] = 0 # all the follicle positions fall on one side of this
                            # whether the line lies in `x` or `y` depends on the
                            # face orientation which is infered
 
-env.AddMethod( pipeline_standard, "Pipeline" )
+env.AddMethod( pipeline_production, "Pipeline" )
 env.AddMethod( pipeline_curated, "CuratedPipeline" )
 env.AddMethod( pipeline_oconnor, "OConnorPipeline" )
 

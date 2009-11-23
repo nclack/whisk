@@ -508,9 +508,15 @@ def main( filename,
         elif event.key in (pygame.K_BACKSPACE,  pygame.K_DELETE):
           try:
             DIRTY = 1
-            segid = trajectories[ current_whisker ][ im.tell() ]
-            del whiskers[im.tell()][segid]
-            del trajectories[ current_whisker ][ im.tell() ] 
+            if event.mod & pygame.KMOD_SHIFT:
+              #erase all trajectory labels
+              for key in trajectories.keys():
+                del trajectories[key]
+            else:
+              #get rid of the selected whisker segment
+              segid = trajectories[ current_whisker ][ im.tell() ]
+              del whiskers[im.tell()][segid]
+              del trajectories[ current_whisker ][ im.tell() ] 
           except KeyError: #deleted when no whisker on frame
             pass
           bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode)
