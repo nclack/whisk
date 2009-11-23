@@ -22,6 +22,7 @@
 //
 // DEBUG DEFINES
 //
+
 #if 0
 #define DEBUG_HMM_RECLASSIFY
 #define DEBUG_HMM_RECLASSIFY_EXTRA
@@ -194,7 +195,7 @@ void Measurements_Reference_Build( Measurements_Reference *this, Measurements *r
 { Measurements **w = this->whiskers;
   this->frame  = row;
   this->nframe = nseg;
-  while(nseg--)
+  while(nseg--)                        // conditionally update the whisker id -> reference segment map
     if(row[nseg].state >= 0)
       w[row[nseg].state] = row + nseg;
 }
@@ -857,6 +858,8 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
   if( (prev==-1) && (next==-1) ) //no good neighbors for update
     return 0;
 
+  if( index[fid].n < 1 ) // No segments found in this frame
+	  return 0;
   (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, index[fid].first, shp_dists );
   E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
 
@@ -990,12 +993,13 @@ int HMM_Reclassify_Jump_Gap(               // returns frame id to jump to
     int fid,                               // frame to start from/query
     int propigate)                         // Direction to search  (-1 or +1)
 { assert(propigate != 0);
+  
   while( fid>=0 && fid<nframes && !visited[fid] )
   { (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
-      nwhisk,
-      index[fid].first, index[fid].n,
-      ref,
-      shp_dists, vel_dists );
+		  nwhisk,
+		  index[fid].first, index[fid].n,
+		  ref,
+		  shp_dists, vel_dists );
     if( Measurements_Apply_Model( index, fid, nframes, nwhisk, S,T,E, likelihood ) )
       return fid;
     // else didn't get the right number of whiskers...move on to the next frame
@@ -1369,8 +1373,8 @@ int main(int argc, char*argv[])
     { Measurements_Reference *left  = Measurements_Reference_Alloc(nwhisk),
                              *right = Measurements_Reference_Alloc(nwhisk);
       int fid=0,
-          left_ok = 0,  left_jump,
-          right_ok = 0, right_jump,
+          left_ok = 0,  left_jump, left_start,
+          right_ok = 0, right_jump, right_start,
           temp;
       do
       { fid=0;
@@ -1381,6 +1385,7 @@ int main(int argc, char*argv[])
           { break;  // no gaps...so all done
           } else if( left_ok = (fid != 0) )
           { Measurements_Reference_Build( left, index[fid-1].first, index[fid-1].n );
+			left_start = fid-1;
             left_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
                                                 left, fid, 1 );
             left_ok &= left_jump < nframes;
@@ -1388,24 +1393,23 @@ int main(int argc, char*argv[])
           while( !visited[fid] && fid<nframes ) fid++; // find the right side of this gap
           if( right_ok = (fid != nframes) )
           { Measurements_Reference_Build( right, index[fid].first, index[fid].n );
-            right_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
+            right_start = fid;
+			right_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
                                                   right, fid-1, -1 );
             right_ok &= right_jump >= 0;
           }
           /* if gap-jump hit the other side (that is, it didn't find anything)
            * mark as not ok */
           temp = left_ok;
-          //left_ok   &= ( !right_ok || right->frame->fid != left_jump );
-          //right_ok  &= ( !temp     || left->frame->fid  != right_jump );
-          left_ok  = left_ok  && ( !right_ok || right->frame->fid != left_jump );  
-          right_ok = right_ok && ( !temp     || left->frame->fid  != right_jump ); 
+          left_ok  = left_ok  && ( !right_ok || right_start !=  left_jump );
+          right_ok = right_ok && ( !temp     ||  left_start != right_jump ); 
           /* choose the one with the smaller
           * jump, on tie choose left */
-          left_ok  = left_ok && ( !right_ok || (left_jump-(left->frame->fid) <= (right->frame->fid)-right_jump ) );
+          left_ok   =  left_ok && ( !right_ok || (left_jump-left_start <= right_start-right_jump ) );
           right_ok &= !left_ok; // ensure only left or right (or none) is chosen
 
           if( left_ok )
-          { real *mark = visited[left->frame->fid];
+          { real *mark = visited[left_start];
             visited[ left_jump ] = mark;
             visited[left_jump-1] = mark;
             HMM_Reclassify_Frame_W_Neighbors(index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL,
@@ -1417,7 +1421,7 @@ int main(int argc, char*argv[])
             }
           }
           if( right_ok )
-          { real *mark = visited[right->frame->fid];
+          { real *mark = visited[right_start];
             visited[ right_jump ] = mark;
             visited[ right_jump+1 ] = mark;
             HMM_Reclassify_Frame_W_Neighbors(index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL,
@@ -1432,8 +1436,8 @@ int main(int argc, char*argv[])
           debug("Gap jump: left: (%2s) %5d jump to %5d   delta: %5d\n"
                 "         right: (%2s) %5d jump to %5d   delta: %5d\n"
                 "           fid:      %5d \n",
-                left_ok? "ok":"  ",  (left->frame)? left->frame->fid : -1, left_jump, ( left->frame)? left_jump   - left->frame->fid : -1,
-                right_ok?"ok":"  ", (right->frame)? right->frame->fid : -1, right_jump,(right->frame)? right->frame->fid - right_jump : -1,
+                left_ok? "ok":"  ",  (left->frame)?  left_start : -1, left_jump, ( left->frame)? left_jump   - left_start : -1,
+                right_ok?"ok":"  ", (right->frame)? right_start : -1, right_jump,(right->frame)? right_start - right_jump : -1,
                 fid);
           fwrite( visited, sizeof(real*), nframes, fp );
 #endif
