@@ -34,8 +34,10 @@ key       function
 ---       --------
 < (,)     Jump to the beginning of the movie
 > (.)     Jump to the end of the movie
-]         Jump to next gap in any trajectory
-[         Jump to previous gap in any trajectory
+]         Jump to next gap in current trajectory
+[         Jump to previous gap in current trajectory
+Shift-]   Jump to next gap in any trajectory
+Shift-[   Jump to previous gap in any trajectory
 Up        Increment current whisker id
 Down      Decrement current whisker id
 Left      Rewind one frame

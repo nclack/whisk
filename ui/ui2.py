@@ -527,22 +527,30 @@ def main( filename,
           bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode)
 
         elif event.key == pygame.K_RIGHTBRACKET:
-          And = lambda a,b: a and b
-          none_missing = lambda fid: reduce(And, 
-                                            map(lambda t: trajectories[t].has_key(fid) and whiskers[fid].has_key(trajectories[t][fid]),
-                                                filter(lambda t:t>=0, 
-                                                       trajectories.keys() ) ))
+          if event.mod & pygame.KMOD_SHIFT:
+            And = lambda a,b: a and b
+            none_missing = lambda fid: reduce(And, 
+                                              map(lambda t: trajectories[t].has_key(fid) and whiskers[fid].has_key(trajectories[t][fid]),
+                                                  filter(lambda t:t>=0, 
+                                                         trajectories.keys() ) ))
+          else:
+            none_missing = lambda fid: trajectories[ current_whisker ].has_key(fid) and whiskers[fid].has_key(trajectories[ current_whisker ][fid])
+
           fid = im.tell()
           while none_missing(fid):
             fid += 1
           bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=min(fid,N-1), mode=mode)
 
         elif event.key == pygame.K_LEFTBRACKET:
-          And = lambda a,b: a and b
-          none_missing = lambda fid: reduce(And, 
-                                  map(lambda t: trajectories[t].has_key(fid) and whiskers[fid].has_key(trajectories[t][fid]),
-                                      filter(lambda t:t>=0, 
-                                             trajectories.keys() ) ))
+          if event.mod & pygame.KMOD_SHIFT:
+            And = lambda a,b: a and b
+            none_missing = lambda fid: reduce(And, 
+                                    map(lambda t: trajectories[t].has_key(fid) and whiskers[fid].has_key(trajectories[t][fid]),
+                                        filter(lambda t:t>=0, 
+                                               trajectories.keys() ) ))
+          else:
+            none_missing = lambda fid: trajectories[ current_whisker ].has_key(fid) and whiskers[fid].has_key(trajectories[ current_whisker ][fid])
+
           fid = im.tell()
           while none_missing(fid):
             fid -= 1
