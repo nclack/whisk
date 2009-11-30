@@ -301,6 +301,10 @@ def main( filename,
                 best = segid
                 bestd = d
             if bestd < cursor_size :
+              #unlabel 'best' in existing trajectories
+              for tid, v in trajectories.iteritems():
+                if v.get(iframe,None) == best:
+                  del v[iframe]
               #found a whisker segment so link it into the trajectory
               if not current_whisker in trajectories:
                 trajectories[current_whisker] = {}
