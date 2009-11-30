@@ -8,6 +8,12 @@
 *.detectorbank
 *.scons
 
+*.obj
+*.exe
+*.lib
+*.exp
+*.pdb
+
 .sconsign.dblite
 
 data
