@@ -180,7 +180,8 @@ def main( filename,
           show_cursor_pos = False,
           noadjuststripes = False,
           prefix_label = "",
-          show_fps = False):
+          show_fps = False,
+          facehint = 'left' ):
   """ main( moviename, tracking_data_prefix ) --> (whiskers, trajectories)
   
   Opens a window to browse through a movie to review and correct traced
@@ -475,6 +476,14 @@ def main( filename,
           save_state( whiskers_file_name, whiskers, trajectories );
           DIRTY = 0
 
+        elif event.key == pygame.K_f: # scroll face hint
+          options = ['left', 'right', 'top', 'bottom']
+          assert facehint in options, "The current face hint is not one of the valid options."
+          for i,e in enumerate( options ):
+            if e == facehint:
+              break
+          facehint = options[(i+1)%len(options)]    
+
         elif event.key == pygame.K_SPACE:
           mode["auto"] = not mode["auto"]
         
@@ -564,6 +573,15 @@ def main( filename,
     textbgrect = textbgrect.clip( bg.get_clip() )
     screen.blit( textsurf, ori ) 
     
+    textsurf = font.render( "Face: %s"%(facehint),
+                            1, (255,255,255) )
+    ori = textsurf.get_rect()
+    ori.topleft = rect.bottomleft
+    rect = ori
+    textbgrect.union_ip(ori)
+    textbgrect = textbgrect.clip( bg.get_clip() )
+    screen.blit( textsurf, ori ) 
+
     if mode["showcursorpos"] and cursor_rect:
       textsurf = font.render( 
                     "cursor: (%4d,%4d)"%tuple(map( lambda x: int(x/scale[0]), 
