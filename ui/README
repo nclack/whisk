@@ -19,10 +19,12 @@ Examples:
 
   python ui2.py S0.tif 
   python ui2.py S0.tif S0
+  python ui2.py S0.tif S0.whisker S0.measurements S0.bar
 
 If no data_files_prefix is given, a default set will be created.  The
-prefix will be used to load the appropriate .whisker and .trajectory
-file.
+prefix will be used to load/save the appropriate files.  Ordering of 
+the filenames isn't important.  Filetype is detected accrording to the
+file extension.
 
 -----------------
 Keyboard Controls
@@ -49,6 +51,9 @@ Shift-s   Save
 ESC       Save and Quit
 =         Increment search radius
 -         Decrement search radius
+f         Scroll through face hints to indicate which side
+          of the image the face is on.  See Notes (below).
+          
 
 --------------
 Mouse Controls
@@ -82,3 +87,11 @@ down shift, ctrl, and/or alt keys will increase the step size by 10x each.
 Hence, holding shift and ctrl (or ctrl and alt, etc...) results in a 100 frame
 step.  Holding shift ctrl and alt and pressing left or right, jumps 1000
 frames.
+
+The face hint is used on saving to a .measurements file.  The .measurements
+file contains, in addition to the identity of segments, measures of follicle
+position, angle, etc...  Some of these measures require approximate knowledge
+of the center of the whisker pad, which is indicated by the face hint. Currently,
+the hint only takes values of 'left','right','top' or 'bottom' that indicate
+the side of the movie the face is on.  These options work for a specific class of 
+data where the image is cropped so the mouse's face is on one side.
