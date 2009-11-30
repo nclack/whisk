@@ -717,6 +717,12 @@ unwanted changes.  """
                           type    = "string",
                           default = "",
                           help    = "Label to append to prefix when guessing data file name.  Set to empty quotes for no label. [default: nothing]");
+    parser.add_option("--facehint",
+                          dest    = "facehint",
+                          action  = "store",
+                          type    = "string",
+                          default = "left",
+                          help    = "Face hint indicating the side of the image the face is on.  May be 'left', 'right', 'top', or 'bottom'. Used for saving to .measurements files. [default: %default]");
     options, args = parser.parse_args()
 
     # figure out which file is which
