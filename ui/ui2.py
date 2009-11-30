@@ -253,7 +253,7 @@ def main( filename,
       #print event
       if event.type == pygame.QUIT:
         if DIRTY:
-          save_state( whiskers_file_name, whiskers, trajectories ); # <-- autosave
+          save_state( whiskers_file_name, whiskers, trajectories, facehint ); # <-- autosave
           DIRTY = 0
         whiskerdata.close()
         pygame.quit()
@@ -322,8 +322,6 @@ def main( filename,
               draw_whisker(screen,whiskers[max(im.tell()-1,0)][sid],color=(0,0,0),color2=(0,0,0),scale=scale[0],thick=1.0, mode=mode)
           cursor_rect = pygame.draw.circle( screen, (  0,255,0,255), p, int(cursor_size*scale[0]), 1 ) 
           
-          #save_state( whiskers_file_name, whiskers, trajectories ); # <-- autosave 
-          
           if mode["auto"]:
             e = { 'pos':[ int( scale[0]*ps[0] ),
                           int( scale[0]*ps[1] ) ], 
@@ -389,8 +387,6 @@ def main( filename,
               if w:
                 draw_whisker(screen,w,color=(0,0,0),color2=(0,0,0),scale=scale[0],thick=1.0,mode=mode)
               cursor_rect = pygame.draw.circle( screen, (  0,255,0,255), p, int(cursor_size*scale[0]), 1 ) 
-              
-              #save_state( whiskers_file_name, whiskers, trajectories ); # <-- autosave 
               
               if mode["auto"]:
                 if im.tell() < N-1: # stop if get to end of movie, or lost
@@ -465,7 +461,7 @@ def main( filename,
         
         elif event.key == pygame.K_ESCAPE:
           if DIRTY:
-            save_state( whiskers_file_name, whiskers, trajectories ); # <-- autosave
+            save_state( whiskers_file_name, whiskers, trajectories, facehint ); # <-- autosave
             DIRTY = 0
           whiskerdata.close()
           pygame.quit();
@@ -473,7 +469,7 @@ def main( filename,
         
         elif (event.key == pygame.K_s) and event.mod & pygame.KMOD_CTRL:
           print "Saving to " + str(whiskers_file_name)
-          save_state( whiskers_file_name, whiskers, trajectories );
+          save_state( whiskers_file_name, whiskers, trajectories, facehint );
           DIRTY = 0
 
         elif event.key == pygame.K_f: # scroll face hint
@@ -529,7 +525,6 @@ def main( filename,
           except KeyError: #deleted when no whisker on frame
             pass
           bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode)
-          #save_state( whiskers_file_name, whiskers, trajectories ); # <-- autosave 
 
         elif event.key == pygame.K_RIGHTBRACKET:
           And = lambda a,b: a and b
@@ -617,7 +612,7 @@ def main( filename,
     pygame.display.flip()
     
     clock.tick(60)
-  save_state( whiskers_file_name, whiskers, trajectories ); # <-- autosave
+  save_state( whiskers_file_name, whiskers, trajectories, facehint ); # <-- autosave
   return whiskers, trajectories
 
 def render(screen, im, current_whisker, state, bg, scale, **kwargs):
@@ -739,6 +734,7 @@ unwanted changes.  """
       else:
         whiskers_file_name = os.path.splitext( args[-1] )[0]
     else:
+      del files[ os.path.splitext(movie_file)[-1] ]
       whiskers_file_name = files.values()
 
     whiskers = main(movie_file,

@@ -78,7 +78,7 @@ Mouse wheel down  Rewind 1 frame
 Notes
 -----
 
-If no output data file is specified, the default 'whiskers.csv' will be used.
+If filenames are not completely specified, default names will be guessed.
 
 If an existing data file is found, the whisker data will be loaded.
 

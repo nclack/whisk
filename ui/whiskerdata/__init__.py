@@ -16,7 +16,7 @@ import scheduler
 from scheduler import LastOnlyScheduler
 import trace
 import traj
-from trace import Save_Whiskers as save_whiskers
+from trace import Save_Whiskers
 from trace import Load_Whiskers 
 from copy import deepcopy
 import os,sys
@@ -55,27 +55,24 @@ def copy_trajectories( trajectories ):
       newthing[s][u] = v
   return newthing
 
-def __save_state(precursor_or_names, whiskers ,trajectories):
-  objs = {'.whiskers': whiskers,
-          '.trajectories': trajectories,
-          '.measurements': trajectories }
+def __save_state(precursor_or_names, *args):
   savers = {'.whiskers':     save_whiskers,
             '.trajectories': save_trajectories,
             '.measurements': save_measurements }
-  names = dict([ (k,None) for k in objs.iterkeys() ])
+  names = dict([ (k,None) for k in savers.iterkeys() ])
+
+  #
+  # Construct output filenames
+  #
   if not isinstance(precursor_or_names, str ) and hasattr( precursor_or_names, '__iter__' ):
     #multiple names...try to find names for the different filetypes, otherwise guess
     for fn,(p,e) in zip( precursor_or_names, map( os.path.splitext, precursor_or_names ) ):
-      names[e] = fn
-    precursor = p
+      names[e] = fn #build map of extentions --> filenames
+    precursor = p   #use the last filename for the precursor
     for e,fn in names.iteritems():
-      if fn is None:
-        names[e] = precursor +  e
-    ext = map( lambda n: os.path.splitext(n)[-1], precursor_or_names )
-    if '.trajectories' in ext:
-      del names['.measurements']
-    elif '.measurements' in ext:
-      del names['.trajectories']
+      if fn is None:               # if the extension has no corresponding filename
+        names[e] = precursor +  e  #    then construct one using the precursor
+
   elif isinstance(precursor_or_names,str): 
     #single valued, assume it's a filename or precursor
     precursor = os.path.splitext(precursor_or_names)[0]
@@ -85,16 +82,29 @@ def __save_state(precursor_or_names, whiskers ,trajectories):
   else:
     raise TypeError(" precursor_or_names must be string or iterable ")
 
-  do_nothing = lambda a,b: None
-  for e,n in names.iteritems():
-    print 'Saving ',e,'...',
+  # Measurements and Trajectories files are somewhat redundant.
+  # Save to the file that identities were loaded from.
+  ext = map( lambda n: os.path.splitext(n)[-1], precursor_or_names )
+  if '.trajectories' in ext:
+    del names['.measurements']
+  elif '.measurements' in ext:
+    del names['.trajectories']
+  else:  #by default save only to the .measurements file
+    del names['.trajectories']
+
+  #
+  # Call the individual save functions
+  #
+  do_nothing = lambda *args: None  #this gets called for unrecognized extensions
+  for extension,filename in names.iteritems():
+    print 'Saving ',extension,'...',
     sys.stdout.flush()
-    savers.get(e,do_nothing)(n,objs.get(e)) 
+    savers.get(extension,do_nothing)(filename,*args) 
     print 'Done'
 
-def save_state( precursor_or_names, whiskers, trajectories ):
+def save_state( precursor_or_names, whiskers, trajectories, facehint ):
   print "save state: "+str(precursor_or_names)
-  __save_state(precursor_or_names,whiskers,trajectories)
+  __save_state(precursor_or_names,whiskers,trajectories, facehint)
 
 def load_state( precursor_or_names ):
   order = ['.whiskers', '.measurements', '.bar' ]
@@ -140,18 +150,9 @@ def load_measurements( name ):
     print "Couldn't open file. Creating: ", name
     return {},0
 
-def save_measurements( name, t ):  
-  try:
-    table = traj.MeasurementsTable(name).commit_trajectories(t)
-    table.save(name)
-  except IOError:
-    nrows = sum( map( len, t.itervalues() ) ) # number of labelled segments
-    table = zeros((nrows,11))
-    row = 0
-    for tid,v in t.iteritems():
-      for fid,wid in v.iteritems():
-        table[row,0:3] = array([tid,fid,wid])  
-    traj.MeasurementsTable( table ).save( name )
+def save_measurements( name, *args ):
+  whiskers, trajectories, facehint = args[0:3]
+  traj.MeasurementsTable( {'whiskers':whiskers, 'facehint':facehint} ).commit_trajectories(trajectories).save(name)
    
 def load_whiskers( filename ):
   try:
@@ -164,8 +165,12 @@ def load_whiskers( filename ):
     print "Couldn't open file. Creating: ", filename
     return {},0
 
-def save_trajectories( filename, trajectories ):
+def save_whiskers( filename, *args ):
+  Save_Whiskers(filename, args[0] )
+
+def save_trajectories( filename, *args ):
   f = open( filename, 'w' )
+  trajectories = args[1]
   for k,v in trajectories.iteritems():
     for s,t in v.iteritems():
       print >> f, '%d,%d,%d'%(k,s,t)
@@ -200,7 +205,3 @@ def load_bar_centers( filename ):
   except:
     pass
   return centers,0
-
-
-
-
