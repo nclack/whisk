@@ -17,7 +17,7 @@ import sys,os
 from ctypes import *
 from ctypes.util import find_library
 from numpy import zeros, float32, uint8, array, hypot, arctan2, pi, concatenate, float64, ndarray, int32
-from numpy import where, cos, sin
+from numpy import where, cos, sin, sum
 from warnings import warn
 
 
@@ -117,6 +117,46 @@ class cWhisker_Seg(Structure):                      #typedef struct
                          w.y.ctypes.data_as( POINTER( c_float ) ),     
                          w.thick.ctypes.data_as( POINTER( c_float ) ), 
                          w.scores.ctypes.data_as( POINTER( c_float ) ) )
+  @staticmethod
+  def CastDictToArray( wvd ):
+    """
+    This function creates a ctypes array of cWhisker_Seg from an input
+    whiskers dictionary.  The resulting array can be passed to functions
+    in the C library.  Don't use Free_Whisker_Seg_Vec on this array; it 
+    doesn't "own" its data.  Instead, it passes most of the data as pointers
+    to numpy arrays.
+    
+    Arguments:
+    ---------
+    <wvd> is a dictionary.  The keys are "frame ids" (integers indicating
+          which time point in the movie).  The value's are another set of
+          dictionaries.  The keys of these dictionaries are "whisker ids,"
+          and the values are of <class `Whisker_Seg`>.
+
+    Example:
+    -------
+    >>> import trace
+    >>> wvd = trace.Load_Whiskers(r"proc\whisker_data_0140.whiskers")
+    >>> wv = trace.cWhisker_Seg.CastDictToArray(wvd)
+    >>> len(wv)
+    40408
+    >>> wv[0]
+    <trace.cWhisker_Seg object at 0x03DACC60>
+    """
+    #first count the number of segments
+    nseg = sum( map(len, wvd.values()) )
+    
+    #create the constructor
+    type_wv = cWhisker_Seg * nseg;
+    
+    #alloc and fill the array
+    def itersegs(wvd):
+      for v in wvd.itervalues():
+        for w in v.itervalues():
+          yield w
+    wv = type_wv( *map(cWhisker_Seg.CastFromWhiskerSeg,list(itersegs(wvd))) )
+    
+    return wv
 
 class cWhiskerIndex(Structure):
   _fields_ = [( 'index' ,   POINTER(POINTER( cWhisker_Seg )) ),

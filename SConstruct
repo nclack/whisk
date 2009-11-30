@@ -90,6 +90,8 @@ env.Program("measurements_convert",[obj]+list( cfiles - set(["measurements_io.c"
 ## traj 
 libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c',
                                       'utilities.c','viterbi.c','report.c',
+                                      'measure.c',
+                                      'poly.c','mat.c','svd.c',
                                       'measurements_io.c',
                                       'measurements_io_v0.c',
                                       'measurements_io_v1.c'] )

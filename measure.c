@@ -324,6 +324,7 @@ double Whisker_Seg_Compute_Distance_To_Bar( Whisker_Seg *w, Bar *bar )
   // has the advantage of not relying on a small sampling interval.
 }
 
+SHARED_EXPORT
 Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int facey, char face_axis )
 { Measurements *table = Alloc_Measurements_Table( 
                           wvn /* #rows */, 
@@ -389,6 +390,7 @@ Measurements *Whisker_Segments_Measure_With_Bar( Whisker_Seg *wv, int wvn, Bar *
   }
 }
 
+SHARED_EXPORT
 void face_point_from_hint( Whisker_Seg *wv, int wvn, char* hint, int *x, int *y, char *face_axis )
 { float maxx = 0.0, 
         maxy = 0.0;

@@ -4,6 +4,8 @@ from ctypes import *
 from ctypes.util import find_library
 import numpy
 from numpy import zeros, double, fabs, ndarray, array
+import trace
+from trace import cWhisker_Seg
 
 import warnings
 
@@ -39,6 +41,7 @@ class cMeasurements(Structure):
               ("n",              c_int               ),                                                           
               ("data",           POINTER( c_double ) ),             # // array of n elements                      
               ("velocity",       POINTER( c_double ) )]             # // array of n elements - change in data/time
+
 
 class cDistributions(Structure):
   """
@@ -77,6 +80,11 @@ class MeasurementsTable(object):
     >>> table = MeasurementsTable( zeros((500,5)) )
 
     >>> table = MeasurementsTable( "data/testing/seq140[autotraj].measurements" )
+
+    >>> import trace
+    >>> wvd = trace.Load_Whiskers( "data/testing/seq140.whiskers" )
+    >>> table = MeasurementsTable( {'whiskers':wvd, 'facehint':'left'} )
+
     """
     object.__init__(self)
     self._measurements = None
@@ -85,6 +93,10 @@ class MeasurementsTable(object):
     self._free_measurements = ctraj.Free_Measurements_Table
     if isinstance(datasource,str):
       self._load(datasource)
+    elif isinstance(datasource,dict):
+      wvd      = datasource['whiskers']
+      facehint = datasource['facehint']
+      self._measurements, self._nrows = MeasurementsTable._fromWhiskerDictWithFacehint( wvd, facehint )
     else:
       self._measurements = ctraj.Measurements_Table_From_Doubles( 
                               datasource.ctypes.data_as( POINTER(c_double) ),   # data buffer       
@@ -98,7 +110,33 @@ class MeasurementsTable(object):
     >>> del table
     """
     self._free_measurements(self._measurements)
-    #ctraj.Free_Measurements_Table(self._measurements)
+
+  @staticmethod
+  def _fromWhiskerDict(wvd, (facex,facey), faceaxis ):
+    """
+    Returns: LP_cMeasurements, int
+      
+    Warning: the returned cMeasurements object needs to be properly deallocated
+             when finished.  Potential memory leak.  For this reason, use the 
+             MeasurementsTable constructor (__init__) instead.
+    """
+    wv = trace.cWhisker_Seg.CastDictToArray(wvd)
+    return ctraj.Whisker_Segments_Measure(wv,len(wv), facex, facey, faceaxis), len(wv)
+  
+  @staticmethod
+  def _fromWhiskerDictWithFacehint(wvd, facehint ):
+    """
+    Returns: LP_cMeasurements, int
+      
+    Warning: the returned cMeasurements object needs to be properly deallocated
+             when finished.  Potential memory leak.  For this reason, use the 
+             MeasurementsTable constructor (__init__) instead.
+    """
+    x,y,ax = c_int(),c_int(),c_char()
+    wv = trace.cWhisker_Seg.CastDictToArray(wvd)
+    ctraj.face_point_from_hint( wv, len(wv), facehint, byref(x), byref(y), byref(ax))
+    return ctraj.Whisker_Segments_Measure(wv,len(wv), x.value, y.value, ax.value), len(wv)
+
 
   def asarray(self):
     """  
@@ -736,6 +774,34 @@ class Tests_Distributions(unittest.TestCase):
 #
 # Declarations 
 #
+ctraj.Whisker_Segments_Measure.restype = POINTER( cMeasurements )
+ctraj.Whisker_Segments_Measure.argtypes = [
+  POINTER( cWhisker_Seg ), # array of whisker segments
+  c_int,                   # number of whisker segments
+  c_int,                   # face x position (px)
+  c_int,                   # face y position (px)
+  c_char ]                 # face orientation ( one of: 'h','v','x' or 'y' )
+
+# ctraj.Whisker_Segments_Measure_With_Bar.restype = POINTER( cMeasurements )
+# ctraj.Whisker_Segments_Measure_With_Bar.argtypes = [
+#   POINTER( cWhisker_Seg ), # array of whisker segments
+#   c_int,                   # number of whisker segments
+#   POINTER( cBar ),         # array of bar locations
+#   c_int,                   # number of bar positions
+#   c_int,                   # face x position (px)
+#   c_int,                   # face y position (px)
+#   c_char ]                 # face orientation ( one of: 'h','v','x' or 'y' )
+
+ctraj.face_point_from_hint.restype = None
+ctraj.face_point_from_hint.argtypes = [
+  POINTER( cWhisker_Seg ), # array of whisker segments
+  c_int,                   # number of whisker segments
+  POINTER( c_char ),       # face hint
+  POINTER( c_int  ),       # (out) face x position (px)
+  POINTER( c_int  ),       # (out) face y position (px)
+  POINTER( c_char ) ]      # (out) face orientation ( one of: 'h','v','x' or 'y' )
+  
+
 ctraj.Measurements_Table_From_Doubles.restype = POINTER(cMeasurements)
 ctraj.Measurements_Table_From_Doubles.argtypes = [
   POINTER( c_double ), # data buffer
