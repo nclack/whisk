@@ -11,7 +11,7 @@
 #define WF_CALL(a,name)  (*(((_WhiskerFile*)a)->name))
 #define WF_DEREF(a,name) (((_WhiskerFile*)a)->name)
  
-#define WHISKER_FILE_DEFAULT_FORMAT 1
+#define WHISKER_FILE_DEFAULT_FORMAT 2
 
 /* 
  * Typedefs defining abstract interface for whisker file io
@@ -53,7 +53,7 @@ char *Whisker_File_Format_Descriptions[] = {
   "Binary format.  Stores whiskers in a parametric polynomial\n"
     "\t\trepresentation. See whisker_io_whiskpoly1.c for details.",
   "Binary format.  See whisker_io_whiskbin1.c for details.",
-  "Old text based format.  Depricated.",
+  "Old text based format.  Deprecated.",
   NULL
 };
 
