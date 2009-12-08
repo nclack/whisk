@@ -90,6 +90,49 @@ int fskipline(FILE* fp, size_t *nch)
 //
 
 /**
+ * Threshold estimation using k-means for k=2 on 8 bit images.
+ */
+
+float threshold_two_means( uint8_t *array, size_t size )
+{ size_t hist[ 256 ],i;
+  uint8_t *cur = array + size;
+  float num = 0.0, 
+        dom = 0.0,
+        thresh,last,
+        c[2] = {0.0,0.0};
+  memset(hist,0,256*sizeof(size_t));
+  while(cur-- > array) ++hist[ *cur ];
+  for(i=0;i<256;i++)
+  { float v = hist[i];
+    num += i*v;
+    dom += v;
+  }
+  thresh = num/dom;    // the mean - compute this way bc we need to compute the hist anyway
+  
+  // update means
+  do
+  { last = thresh;
+    num = dom = 0.0;
+    for(i=0;i<thresh;i++)
+    { float v = hist[i];
+      num += i*v;
+      dom += v;
+    }
+    c[0] = num/dom;
+    num = dom = 0.0;  
+    for(;i<256;i++)
+    { float v = hist[i];
+      num += i*v;
+      dom += v;
+    }
+    c[1] = num/dom;
+    thresh = (c[1]+c[0])/2.0;
+  } while( fabs(last - thresh) > 0.5 );
+  //debug("Threshold: %f\n",thresh);
+  return thresh;
+}
+
+/**
  * Resizes and fills <resizable> with <n> points from <low> to <high>.
  * <low> and <high> are inclusive bounds.
  *

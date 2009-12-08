@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
       for( i=0; i<depth; i++ )
       //for( i=450; i<460; i++ )
       //for( i=0; i<depth; i+= step )
-      { //int i=76;
+      { //int i=174;
         int k;
         image = Copy_Image( load(movie,i,NULL) );                                               // Not Thrashing since managed
         progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
@@ -292,4 +292,3 @@ int main(int argc, char *argv[])
   Free_Image( bg );
   return 0;
 }
-

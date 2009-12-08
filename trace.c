@@ -38,10 +38,10 @@
 #define DEBUG_SEEDING_FIELDS
 #define DEBUG_DETECTOR_BANK
 #define DEBUG_LINE_FITTING
-
-#define DEBUG_LINE_FITTING
 #define SHOW_WHISKER_TRACE
 #define SHOW_HALF_SPACE_DETECTOR
+
+#define DEBUG_LINE_FITTING
 #define DEBUG_WHISKER_TRACE
 #define DEBUG_MOVE
 #define DEBUG_LINE_DETECTOR
@@ -1012,7 +1012,7 @@ Array *get_half_space_detector_bank(Range *off, Range *wid, Range *ang, float *n
   static Range o,a,w;
   if( !bank )  
   { if( read_line_detector_bank( "halfspace.detectorbank", &bank, &o, &w, &a ) )
-    { fprintf(stderr,"Half-space detector bank loaded from file.\n");
+    { progress("Half-space detector bank loaded from file.\n");
     } else {
       Range v[3] = {{ -1.0,       1.0,         OFFSET_STEP },          //offset
                     { -M_PI/4.0,  M_PI/4.0,    M_PI/4.0/ANGLE_STEP },  //angle
@@ -1412,7 +1412,8 @@ int is_local_area_trusted_conservative( Line_Params *line, Image *image, int p )
   q = eval_half_space( line, image, p, &r, &l );
 
   if( thresh < 0.0 || lastim != image->array) /* recomputes when image changes */
-  { thresh = mean_uint8( image );
+  { //thresh = mean_uint8( image );
+    thresh = threshold_two_means( image->array, image->width*image->height );
     lastim = image->array;
   }
 #ifdef SHOW_HALF_SPACE_DETECTOR

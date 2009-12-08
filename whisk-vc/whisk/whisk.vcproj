@@ -194,6 +194,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\bar_io.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\classify.c"
 				>
 			</File>
@@ -246,11 +250,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\mat.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\match.c"
 				>
 			</File>
 			<File
+				RelativePath="..\..\measurements_io.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\measurements_io_v0.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\measurements_io_v1.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\merge.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\poly.c"
 				>
 			</File>
 			<File
@@ -259,6 +283,10 @@
 			</File>
 			<File
 				RelativePath="..\..\seq.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\svd.c"
 				>
 			</File>
 			<File
@@ -313,6 +341,10 @@
 				RelativePath="..\..\whisker_io_whiskold.c"
 				>
 			</File>
+			<File
+				RelativePath="..\..\whisker_io_whiskpoly1.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -329,6 +361,10 @@
 			</File>
 			<File
 				RelativePath="..\..\bar.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\bar_io.h"
 				>
 			</File>
 			<File
@@ -376,11 +412,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\mat.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\match.h"
 				>
 			</File>
 			<File
+				RelativePath="..\..\measurements_io.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\measurements_io_v0.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\measurements_io_v1.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\merge.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\poly.h"
 				>
 			</File>
 			<File
@@ -389,6 +445,10 @@
 			</File>
 			<File
 				RelativePath="..\..\seq.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\svd.h"
 				>
 			</File>
 			<File
@@ -433,6 +493,10 @@
 			</File>
 			<File
 				RelativePath="..\..\whisker_io_whiskold.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\whisker_io_whiskpoly1.h"
 				>
 			</File>
 		</Filter>

@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "compat.h"
 
 // #include <vld.h> // for VC++: Visual Leak Detector (v1.9b) 
                     // - comment out if this causes problems
@@ -76,6 +77,7 @@ void dump_doubles(char* filename, double* a, int n);
 
 void linspace_d( double low, double high, int n, double **resizable, size_t *size );
 
+float threshold_two_means( uint8_t *array, size_t size );
 void maxfilt_centered_double_inplace( double *a, int len, int support );
 #endif //_H_COMMON
 
