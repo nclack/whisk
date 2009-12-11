@@ -106,7 +106,16 @@ def render_plane(screen, im, inc=1, goto=None, scale=1, baseline=None, mode=None
     s = pygame.transform.scale( s, (int(width*scale), int(height*scale) ) )
   return s,a
 
-def draw_whisker( surf, w, radius=5, color=(0,255,255,200) , scale=1, color2=(0,255,255,200), thick = 0.0, selected=False, mode = None):
+def get_follicle_pos( vx, vy, facehint ):
+  side = {'top'   : lambda xs, ys: ys[0] <  ys[-1],
+          'bottom': lambda xs, ys: ys[0] >= ys[-1],
+          'left'  : lambda xs, ys: xs[0] <  xs[-1],
+          'right' : lambda xs, ys: xs[0] >= xs[-1]}
+  eval_idx = [-1,0] # if side function evals true, want index 0, else -1 (end)
+  idx = eval_idx[ side[facehint](vx,vy) ]
+  return vx[idx], vy[idx]
+  
+def draw_whisker( surf, w, radius=12, color=(0,255,255,200) , scale=1, color2=(0,255,255,200), thick = 0.0, selected=False, mode = None, facehint = 'top'): # DHO, changed default radius value.
   if len(w.x) == 0:
     return
 
@@ -140,8 +149,8 @@ def draw_whisker( surf, w, radius=5, color=(0,255,255,200) , scale=1, color2=(0,
   if selected:
     #xp = 40.* floor( max(x[0]-2*radius,0) / 40.) #snap x position to a rough lattice
     #xp = max(xp,radius);
-    pygame.draw.circle( surf, color, 
-        [x[0], y[0]], 
+    pygame.draw.circle( surf, (0,255,0,200), # DHO, changed color to always be green.
+        get_follicle_pos( x, y, facehint ), 
         int(radius))
 
 def draw_bar( surf, x, y, radius, color, scale=1 ):
@@ -181,7 +190,7 @@ def main( filename,
           noadjuststripes = False,
           prefix_label = "",
           show_fps = False,
-          facehint = 'left' ):
+          facehint = 'top' ):
   """ main( moviename, tracking_data_prefix ) --> (whiskers, trajectories)
   
   Opens a window to browse through a movie to review and correct traced
@@ -232,7 +241,7 @@ def main( filename,
   screen.blit(bg,(0,0))
   pygame.display.flip() #for doublebuf
   
-  bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=0, mode=mode)
+  bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=0, mode=mode, facehint=facehint)
   pygame.display.flip() #for doublebuf  
   cursor_rect = None
   last = bg;
@@ -269,16 +278,16 @@ def main( filename,
         size = width,height
         scale = scale,scale
         screen = pygame.display.set_mode( size, flags ) 
-        bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=0, mode=mode)
+        bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=0, mode=mode, facehint=facehint)
       
       elif event.type == pygame.MOUSEBUTTONDOWN:
         #print mode, scale
         #print event
         if event.button == 4:   # mouse wheel up
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=1, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=1, mode=mode, facehint=facehint)
         
         elif event.button == 5: # mouse wheel down
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=-1, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=-1, mode=mode, facehint=facehint)
         
         elif event.button == 1: # mouse left click
           # mark a whisker segment and advance
@@ -317,13 +326,13 @@ def main( filename,
                 if iframe in trajectories[current_whisker]:
                   del trajectories[current_whisker][iframe]
           
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=inc, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=inc, mode=mode, facehint=facehint)
           if bestd < cursor_size:
             fid = max(im.tell()-1,0)
             traj = trajectories[current_whisker]
             if fid in traj:
               sid = traj[fid]
-              draw_whisker(screen,whiskers[max(im.tell()-1,0)][sid],color=(0,0,0),color2=(0,0,0),scale=scale[0],thick=1.0, mode=mode)
+              draw_whisker(screen,whiskers[max(im.tell()-1,0)][sid],color=(0,0,0),color2=(0,0,0),scale=scale[0],thick=1.0, mode=mode,facehint=facehint)
           cursor_rect = pygame.draw.circle( screen, (  0,255,0,255), p, int(cursor_size*scale[0]), 1 ) 
           
           if mode["auto"]:
@@ -387,9 +396,9 @@ def main( filename,
                 print 80*'-'
                 raise ke
               
-              bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=inc, mode=mode)
+              bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=inc, mode=mode, facehint=facehint)
               if w:
-                draw_whisker(screen,w,color=(0,0,0),color2=(0,0,0),scale=scale[0],thick=1.0,mode=mode)
+                draw_whisker(screen,w,color=(0,0,0),color2=(0,0,0),scale=scale[0],thick=1.0,mode=mode,facehint=facehint)
               cursor_rect = pygame.draw.circle( screen, (  0,255,0,255), p, int(cursor_size*scale[0]), 1 ) 
               
               if mode["auto"]:
@@ -437,7 +446,7 @@ def main( filename,
             pdb.set_trace()
           else:
             mode["draw"] = (mode["draw"]+1)%len(drawing_modes)
-            bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=0, mode=mode)
+            bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=0, mode=mode, facehint=facehint)
 
         elif event.key == pygame.K_p:
           if event.mod & pygame.KMOD_SHIFT:
@@ -488,18 +497,18 @@ def main( filename,
           mode["auto"] = not mode["auto"]
         
         elif event.key == pygame.K_LEFT:
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=-1*mult, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=-1*mult, mode=mode, facehint=facehint)
         
         elif event.key == pygame.K_RIGHT:
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=1*mult, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], inc=1*mult, mode=mode, facehint=facehint)
          
         elif event.key == pygame.K_UP  :
           current_whisker += mult
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode, facehint=facehint)
         
         elif event.key == pygame.K_DOWN :
           current_whisker -= mult
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode, facehint=facehint)
         
         elif event.key == pygame.K_MINUS:
           if cursor_size > 1:
@@ -509,10 +518,10 @@ def main( filename,
           cursor_size += 1
         
         elif event.key == pygame.K_COMMA: # jump to beginning of movie
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=0, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=0, mode=mode, facehint=facehint)
                                                                       
         elif event.key == pygame.K_PERIOD: # jump to the end of the movie
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=N-1, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=N-1, mode=mode, facehint=facehint)
                                                                       
         elif event.key in (pygame.K_BACKSPACE,  pygame.K_DELETE):
           try:
@@ -528,7 +537,7 @@ def main( filename,
               del trajectories[ current_whisker ][ im.tell() ] 
           except KeyError: #deleted when no whisker on frame
             pass
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0],  inc=0, mode=mode, facehint=facehint)
 
         elif event.key == pygame.K_RIGHTBRACKET:
           if event.mod & pygame.KMOD_SHIFT:
@@ -543,7 +552,7 @@ def main( filename,
           fid = im.tell()
           while none_missing(fid):
             fid += 1
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=min(fid,N-1), mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=min(fid,N-1), mode=mode, facehint=facehint)
 
         elif event.key == pygame.K_LEFTBRACKET:
           if event.mod & pygame.KMOD_SHIFT:
@@ -558,7 +567,7 @@ def main( filename,
           fid = im.tell()
           while none_missing(fid):
             fid -= 1
-          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=max(fid,0), mode=mode)
+          bg,a = render(screen, im, current_whisker, state, bg, scale[0], goto=max(fid,0), mode=mode, facehint=facehint)
 
     textsurf = font.render( "frame: %d/%d"%(im.tell(),N-1),
                             1, (255,255,255) )
@@ -631,6 +640,8 @@ def render(screen, im, current_whisker, state, bg, scale, **kwargs):
   whiskers, trajectories, bar_centers = state
   kwargs['scale'] = scale
   mode = kwargs['mode']
+  facehint = kwargs['facehint']
+  del kwargs['facehint']
   bg,a = render_plane(screen, im, **kwargs )
   try:
     marked_seg = trajectories[ current_whisker ][ im.tell() ]
@@ -650,14 +661,14 @@ def render(screen, im, current_whisker, state, bg, scale, **kwargs):
         color = cmap( seg2traj[iseg] / (NCOLORS+0.001), bytes = True )
       except KeyError:
         color = coloralt
-      draw_whisker(bg,w,color=color,color2=color ,scale=scale, mode=mode)
+      draw_whisker(bg,w,color=color,color2=color ,scale=scale, mode=mode,facehint=facehint)
     if marked_seg in wv.keys():
       try:
         color = cmap( current_whisker / (NCOLORS+0.001), bytes = True )
       except KeyError:
         color = coloralt
-      draw_whisker(bg,wv[marked_seg],color=color,color2=color ,scale=scale, mode=mode)
-      draw_whisker(bg,wv[marked_seg],color=color,color2=coloralt ,scale=scale, thick = 2.5, selected = True,mode={"draw":0})
+      draw_whisker(bg,wv[marked_seg],color=color,color2=color ,scale=scale, mode=mode,facehint=facehint)
+      draw_whisker(bg,wv[marked_seg],color=color,color2=coloralt ,scale=scale, thick = 2.5, selected = True,mode={"draw":0},facehint=facehint)
       
   if im.tell() in bar_centers:
     x,y = bar_centers[im.tell()]
@@ -733,7 +744,7 @@ unwanted changes.  """
                           dest    = "facehint",
                           action  = "store",
                           type    = "string",
-                          default = "left",
+                          default = "top",
                           help    = "Face hint indicating the side of the image the face is on.  May be 'left', 'right', 'top', or 'bottom'. Used for saving to .measurements files. [default: %default]");
     options, args = parser.parse_args()
 
