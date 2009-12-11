@@ -139,7 +139,7 @@ Image *load(char *path, int index, int *nframes)
       *nframes = saved_nframes;
 
     // estimate scan bias adjustment and image stats
-    { int i,a,n = MIN( 20, saved_nframes ); //use a subset of at most 20 frames
+    { int i,a,n = MIN( 20, saved_nframes ); //use a subset of at most 20 frames - saves some time
       int step = saved_nframes/n;
       double mean = 0.0;
       Image *image = (*fetch)(fp,0);
@@ -152,10 +152,10 @@ Image *load(char *path, int index, int *nframes)
         mean /= (double) a;
       }
 
-      incremental_estimate_scan_bias_v(NULL,0,NULL); // Initialize
-      incremental_estimate_scan_bias_h(NULL,0,NULL);
-      for(i=0; i<saved_nframes; i+=step)
-      { int t;
+      incremental_estimate_scan_bias_v(NULL,0,NULL); // Initialize              // Internally, there is a statically alocated accumulator
+      incremental_estimate_scan_bias_h(NULL,0,NULL);                            // that keeps track of the statistics.
+      for(i=0; i<saved_nframes; i+=step)                                        // First,  the accumulator is reset by passing NULLS
+      { int t;                                                                  // Second, image statistics are computed incrementally
         image = (*fetch)(fp,i);
         hgain = incremental_estimate_scan_bias_h(image,mean,&hstat); // Collect
         vgain = incremental_estimate_scan_bias_v(image,mean,&vstat); 
@@ -177,7 +177,7 @@ Image *load(char *path, int index, int *nframes)
   // so grab the frame of interest, correct 
   // and return!
   
-  { Image *image = (*fetch)(fp,index);
+  { Image *image = Copy_Image( (*fetch)(fp,index) );
     if(hstat > vstat)
       image_adjust_scan_bias_h(image,hgain);
     else
@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
   { bg = Make_Image( image->kind, image->width, image->height );
     memset(bg->array, 0, bg->width * bg->height );
   }
-
+  Free_Image( image );
   /*
    * Bar tracking
    */
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
     progress( "Finding bar positions\n" );
     for( i=0; i<depth; i++ )
     { progress_meter(i, 0, depth-1, 79, "Finding     post: [%5d/%5d]",i,depth);
-      image = Copy_Image( load(movie,i,NULL) );
+      image = load(movie,i,NULL);
       invert_uint8( image );
       Compute_Bar_Location(   image,
                               &x,             // Output: x position
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
       //for( i=0; i<depth; i+= step )
       { //int i=174;
         int k;
-        image = Copy_Image( load(movie,i,NULL) );                                               // Not Thrashing since managed
+        image = load(movie,i,NULL);
         progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
         wv = find_segments(i, image, bg, &wv_n);                                                // Thrashing heap
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
