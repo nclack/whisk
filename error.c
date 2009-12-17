@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "utilities.h"
 
 #define ERR_STREAM stdout
 

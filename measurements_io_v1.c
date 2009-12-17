@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <string.h>
 #include "traj.h"
+#include "error.h"
 
 void measurements_v1_write_header( FILE *file )
 { char type[] = "measV1\0";

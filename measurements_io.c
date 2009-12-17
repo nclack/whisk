@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "measurements_io.h"
 #include "measurements_io_v0.h"

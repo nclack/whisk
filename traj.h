@@ -6,16 +6,14 @@
 #include "compat.h"
 #include <stdio.h>
 
-// FIXME: sizeof(Measurements) changes on 64 vs 32 bit machines ruining file
-//        compatibility.
 typedef struct _Measurements
 { int row;           // offset from head of data buffer ... Note: the type limits size of table
   int fid;
   int wid;
   int state;
 
-  int face_x;        // used in ordering whiskers on the face...roughly, the center of the face
-  int face_y;        //                                      ...does not need to be in image
+  int face_x;         // used in ordering whiskers on the face...roughly, the center of the face
+  int face_y;         //                                      ...does not need to be in image
   int col_follicle_x; // index of the column corresponding to the folicle x position
   int col_follicle_y; // index of the column corresponding to the folicle y position
                                                                            

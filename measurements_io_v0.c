@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <string.h>
 #include "traj.h"
+#include "error.h"
 
 int is_file_measurements_v0( const char* filename)
 { FILE *fp = fopen(filename,"rb");

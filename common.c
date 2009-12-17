@@ -3,6 +3,7 @@
 
 #include "utilities.h"
 #include <assert.h>
+#include <string.h>
 #include "compat.h"
 
 #if 0
