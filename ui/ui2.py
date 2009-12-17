@@ -547,7 +547,7 @@ def main( filename,
                                                   filter(lambda t:t>=0, 
                                                          trajectories.keys() ) ))
           else:
-            none_missing = lambda fid: trajectories[ current_whisker ].has_key(fid) and whiskers[fid].has_key(trajectories[ current_whisker ][fid])
+            none_missing = lambda fid: trajectories.get( current_whisker,{} ).has_key(fid) and whiskers[fid].has_key(trajectories.get( current_whisker,{}).get(fid,-1))
 
           fid = im.tell()
           while none_missing(fid):
@@ -562,7 +562,7 @@ def main( filename,
                                         filter(lambda t:t>=0, 
                                                trajectories.keys() ) ))
           else:
-            none_missing = lambda fid: trajectories[ current_whisker ].has_key(fid) and whiskers[fid].has_key(trajectories[ current_whisker ][fid])
+            none_missing = lambda fid: trajectories.get( current_whisker,{} ).has_key(fid) and whiskers[fid].has_key(trajectories.get( current_whisker,{}).get(fid,-1));
 
           fid = im.tell()
           while none_missing(fid):
