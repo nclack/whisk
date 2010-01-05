@@ -543,11 +543,11 @@ def main( filename,
           if event.mod & pygame.KMOD_SHIFT:
             And = lambda a,b: a and b
             none_missing = lambda fid: reduce(And, 
-                                              map(lambda t: trajectories[t].has_key(fid) and whiskers[fid].has_key(trajectories[t][fid]),
+                                              map(lambda t: trajectories[t].has_key(fid) and whiskers.get(fid,{}).has_key(trajectories[t][fid]),
                                                   filter(lambda t:t>=0, 
                                                          trajectories.keys() ) ))
           else:
-            none_missing = lambda fid: trajectories.get( current_whisker,{} ).has_key(fid) and whiskers[fid].has_key(trajectories.get( current_whisker,{}).get(fid,-1))
+            none_missing = lambda fid: trajectories[ current_whisker ].has_key(fid) and whiskers.get(fid,{}).has_key(trajectories[ current_whisker ][fid])
 
           fid = im.tell()
           while none_missing(fid):
