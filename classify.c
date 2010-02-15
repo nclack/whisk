@@ -232,10 +232,10 @@ void Measurements_Table_Label_By_Order( Measurements *table, int n_rows, int tar
 #ifdef TEST_CLASSIFY_1
 char *Spec[] = {"[-h|--help] |",
                 "<source:string> <dest:string>",
-                "(<face:string> | <x:int> <y:int>)",
+                "(<face:string> | <x:int> <y:int> <axis:string>)",
                 "--px2mm <double>",
                 "-n <int>", 
-                "[--limit<double(1.0)>:<double(5.0)>]",
+                "[--limit<double(1.0)>:<double(50.0)>]",
                 "[--follicle <int>]",
                 NULL};
 int main(int argc, char* argv[])
@@ -268,9 +268,12 @@ int main(int argc, char* argv[])
           "  <dest>   Filename to which labelled Measurements will be saved.\n"
           "           This can be the same as <source>.\n"
           "  <face>\n"
-          "  <x> <y>  These are used for determining the order of whisker segments along \n"
+          "  <x> <y> <axis>\n"
+          "           These are used for determining the order of whisker segments along \n"
           "           the face.  This requires an approximate position for the center of \n"
           "           the face and can be specified in pixel coordinates with <x> and <y>.\n"
+          "           <axis> indicates the orientaiton of the face.  Values for <axis> may\n"
+          "           be 'x' or 'h' for horizontal. 'y' or 'v' indicate a vertical face. \n"
           "           If the face is located along the edge of the frame then specify    \n"
           "           that edge with 'left', 'right', 'top' or 'bottom'.                 \n"
           "  --px2mm <double>\n"
@@ -312,10 +315,32 @@ int main(int argc, char* argv[])
 		  "maxy: %d\n", maxx, maxy );
 #endif
   } else 
-  {
+  { int maxx,maxy;
+    const char *axis = Get_String_Arg("axis");
+    static const int x = 4,
+                     y = 5;
+    Measurements_Table_Pixel_Support( table, n_rows, &maxx, &maxy );
     face_x = Get_Int_Arg("x");
     face_y = Get_Int_Arg("y");
-    // Follicle location threshold - no op (just set all states to 1)
+    follicle_thresh = 0;       // set defaults
+    is_gt = 1;
+    if( Is_Arg_Matched("--follicle") && Get_Int_Arg("--follicle")>0 )
+    { follicle_thresh = Get_Int_Arg("--follicle");
+      switch( axis[0] )        // respond to <follicle> option
+      { case 'x':              // follicle must be between threshold and face
+        case 'h':
+          is_gt = follicle_thresh < face_y;
+          follicle_col = y;
+          break;
+        case 'y':
+        case 'v':
+          is_gt = follicle_thresh < face_x;
+          follicle_col = x;
+          break;
+        default:
+          error("Could not recognize <axis>.  Must be 'x','h','y', or 'v'.  Got %s\n",axis);
+      }
+    }
   }
   // Follicle location threshold
   if( Is_Arg_Matched("--follicle") && Get_Int_Arg("--follicle")>0 )
