@@ -1295,9 +1295,9 @@ int main(int argc, char*argv[])
     //
     { static const real min_likelihood = -1e-6;
       if( *q->data[0] < min_likelihood )
-        warning("Best labeling has likelihood lower that threshold.\n"
-                "\tThis indicates the model doesn't work well for this data.\n"
-                "\tPerhaps you specified the wrong  number of whiskers to look?\n"
+        warning("Best labeling has low likelihood (lower that threshold).\n"
+                "\tThis indicates that the model didn't work well for this data.\n"
+                "\tPerhaps you specified the wrong number of whiskers?\n"
                 "\n"
                 "\t\tBest likelihood: %f\n"
                 "\t\t      Threshold: %f\n", *q->data[0], min_likelihood);
