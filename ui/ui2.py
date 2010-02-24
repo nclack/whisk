@@ -106,13 +106,28 @@ def render_plane(screen, im, inc=1, goto=None, scale=1, baseline=None, mode=None
     s = pygame.transform.scale( s, (int(width*scale), int(height*scale) ) )
   return s,a
 
-def get_follicle_pos( vx, vy, facehint ):
+def get_follicle_pos( vx, vy, scale, facehint ):
   side = {'top'   : lambda xs, ys: ys[0] <  ys[-1],
           'bottom': lambda xs, ys: ys[0] >= ys[-1],
           'left'  : lambda xs, ys: xs[0] <  xs[-1],
           'right' : lambda xs, ys: xs[0] >= xs[-1]}
+  def use_xy_facepos(xs,ys): #this acts as a default "side" function.
+    """ Parses facehints of the form "x y" or "x,y" 
+        Should return 0 when the end of xs,ys is closest to x,y and
+                      1 when the beginning is closest.
+    """
+    xy = facehint.split()
+    if(len(xy)==1): #split on space didn't work, try comma
+      xy = facehint.split(',')
+    #assume things worked by this point
+    x = int(xy[0]) * scale
+    y = int(xy[1]) * scale
+    d = lambda idx: (xs[idx]-x)**2 + (ys[idx]-y)**2
+    #print d(0)<d(-1),xs[0],ys[0],xs[-1],ys[-1],x,y
+    return d(0) < d(-1)
+
   eval_idx = [-1,0] # if side function evals true, want index 0, else -1 (end)
-  idx = eval_idx[ side[facehint](vx,vy) ]
+  idx = eval_idx[ side.get(facehint,use_xy_facepos)(vx,vy) ]
   return vx[idx], vy[idx]
   
 def draw_whisker( surf, w, radius=12, color=(0,255,255,200) , scale=1, color2=(0,255,255,200), thick = 0.0, selected=False, mode = None, facehint = 'top'): # DHO, changed default radius value.
@@ -150,7 +165,7 @@ def draw_whisker( surf, w, radius=12, color=(0,255,255,200) , scale=1, color2=(0
     #xp = 40.* floor( max(x[0]-2*radius,0) / 40.) #snap x position to a rough lattice
     #xp = max(xp,radius);
     pygame.draw.circle( surf, (0,255,0,200), # DHO, changed color to always be green.
-        get_follicle_pos( x, y, facehint ), 
+        get_follicle_pos( x, y, scale, facehint ), 
         int(radius))
 
 def draw_bar( surf, x, y, radius, color, scale=1 ):
