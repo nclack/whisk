@@ -760,7 +760,7 @@ unwanted changes.  """
                           action  = "store",
                           type    = "string",
                           default = "top",
-                          help    = "Face hint indicating the side of the image the face is on.  May be 'left', 'right', 'top', or 'bottom'. Used for saving to .measurements files. [default: %default]");
+                          help    = "Face hint indicating the side of the image the face is on.  May be 'left', 'right', 'top', 'bottom' or 'x,y' where x and y are the face location. Used for saving to .measurements files. [default: %default]");
     options, args = parser.parse_args()
 
     # figure out which file is which
