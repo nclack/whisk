@@ -5,7 +5,40 @@ import os
 
 Progress('Scanning:  $TARGET\r',overwrite=True)
 
-env = Environment(ENV = os.environ )
+env = Environment(ENV = os.environ)
+
+#
+# Multiplatform configuration (autoconf-like)
+#
+
+conf = Configure(env)
+# FFMPEG
+if env['PLATFORM']=='win32':
+  #binaries and includes are supplied, so we don't have to check.
+  conf.env.Append(LIBPATH = r'dependencies\w32vs\ffmpeg\lib')
+  conf.env.Append(CPPFLAGS = r'/I dependencies\w32vs\ffmpeg\include')
+  conf.env.Append(CPPFLAGS=' /DHAVE_FFMPEG')
+  ffmpeg_libs = "libgcc.a libmingwex.a libavcodec.a libavformat.a libavutil.a libswscale.a liba52.a libz.a libfaac.a libfaad.a libgsm.a libmp3lame.a libogg.a libtheora.a libvorbis.a libvorbisenc.a libx264.a libxvidcore.a libpthreadGC2.a wsock32.lib vfw32.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib".split()
+  conf.env.Append(LIBS = ffmpeg_libs)
+  print "(+) FFMPEG Found"
+else:
+  ffmpeg_includes = ["libavcodec/avcodec.h",
+                     "libavformat/avformat.h",
+                     "libswscale/swscale.h"]
+  ffmpeg_libs = "avcodec avformat avutil swscale".split()
+  if all(map(conf.CheckCHeader,ffmpeg_includes)) and \
+     all(map(conf.CheckLib,ffmpeg_libs)):
+       conf.env.Append(CPPFLAGS='-DHAVE_FFMPEG')
+       conf.env.Append(LIBS = ffmpeg_libs)
+       print "(+) FFMPEG Found"
+  else:
+       print "(-) FFMPEG NOT found. Building without FFMPEG support."
+
+env = conf.Finish()
+
+#
+# BUILDERS
+#
 
 # Add builder for transforming .p --> .c
 awk = Builder( action = "awk -f manager.awk $SOURCE > $TARGET",
@@ -36,6 +69,7 @@ if env['PLATFORM']=='win32':
   #env.MergeFlags( env.ParseFlags('-g -lm') )
   #env.Append(CCFLAGS = r'/Od          /Ot     /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /W1 /ZI     /Gd /TC')   #Debug
   env.Append(CCFLAGS  = r'/Ox /Ob2 /Oi /Ot /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE     /EHsc       /MT   /W1 /Zi /Gy     /TC')   #Release - optimized compilation - BROKEN! fread problem?
+  env["LIBSUFFIX"]=""
 else:
   #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))  
   env.MergeFlags( env.ParseFlags( "-g -lm" ))

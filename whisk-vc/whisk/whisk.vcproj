@@ -44,7 +44,8 @@
 				InlineFunctionExpansion="0"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="false"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="..\..\dependencies\w32vs\ffmpeg\include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;HAVE_FFMPEG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -65,7 +66,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libgcc.a libmingwex.a libavcodec.a libavformat.a libavutil.a libswscale.a liba52.a libz.a libfaac.a libfaad.a libgsm.a libmp3lame.a libogg.a libtheora.a libvorbis.a libvorbisenc.a libx264.a libxvidcore.a libpthreadGC2.a wsock32.lib vfw32.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\dependencies\w32vs\ffmpeg\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				StackReserveSize="4194304"
@@ -123,6 +126,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="..\dependencies\w32vs\ffmpeg\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -142,7 +146,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="libgcc.a libmingwex.a libavcodec.a libavformat.a libavutil.a libswscale.a libz.a libdts.a libfaac.a libfaad.a libgsm.a libmp3lame.a libnut.a libogg.a libtheora.a libvorbis.a libvorbisenc.a libx264.a libxvidcore.a libpthreadGC2.a wsock32.lib vfw32.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="..\dependencies\w32vs\ffmpeg\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				StackReserveSize="4194304"
@@ -231,6 +237,10 @@
 			</File>
 			<File
 				RelativePath="..\..\evaltest.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ffmpeg_adapt.c"
 				>
 			</File>
 			<File
@@ -393,6 +403,10 @@
 			</File>
 			<File
 				RelativePath="..\..\eval.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ffmpeg_adapt.h"
 				>
 			</File>
 			<File

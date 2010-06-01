@@ -19,10 +19,11 @@
 #include "whisker_io.h"
 #include "error.h"
 
+#include "ffmpeg_adapt.h"
+
 #undef  WRITE_BACKGROUND
 
 #define PRINT_USAGE( object ) printf("\tUsage "#object": %5d\n", object##_Usage())
-
 
 void check_usage(void)
 { PRINT_USAGE(Image);
@@ -127,7 +128,18 @@ Image *load(char *path, int index, int *nframes)
       closer      = (pf_closer)      &Seq_Close;
       fetch       = (pf_fetch)       &Seq_Read_Image_Static_Storage;
       get_nframes = (pf_get_nframes) &Seq_Get_Depth;
-    }
+    } 
+#ifdef HAVE_FFMPEG
+    else if( strcmp(ext,".mp4")==0 )
+    {
+      opener      = (pf_opener)      &FFMPEG_Open;
+      closer      = (pf_closer)      &FFMPEG_Close;
+      fetch       = (pf_fetch)       &FFMPEG_Fetch;
+      get_nframes = (pf_get_nframes) &FFMPEG_Frame_Count;
+    }  
+#endif
+    if(opener==NULL)
+      error("Could not recognize the file's type by it's extension.  Got: %s.\n",ext);
 
     // Use abstract file interface to open file and init
     fp = (*opener)(path);

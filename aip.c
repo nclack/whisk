@@ -14,18 +14,18 @@
  * Applying Green's theorem, the area integral can be converted to one around
  * the polygon contours.  The winding number has to be evaluated on the edges
  * now.  To do this one can compute the winding number for a single vertex
- * (with respect to the other polygon) and then propigate that number along the
+ * (with respect to the other polygon) and then propagate that number along the
  * contour accounting for intersections by incrementing for a positive cross
- * and decrimenting for a negative cross.
+ * and decrementing for a negative cross.
  *
  * Since intersections must be computed, some effort has to be made to avoid
  * numerical degeneracies.  Here this is solved using the "Simulation of
  * simplicity" approach.  See `fit` for more details.  Briefly, points are
  * mapped on to an integral lattice which is then perturbed systematically
- * before computing primitives such as determinates to gaurantee degineracies
- * (such as a zero determinant) are imposible.
+ * before computing primitives such as determinants to guarantee degeneracies
+ * (such as a zero determinant) are impossible.
  *
- * Scales as O( N*M ) where N and M are the vertices in each polygon
+ * Scales as O( N*M ) where N and M are the vertexes in each polygon
  * respectively. 
  */
 #include "compat.h"
@@ -52,7 +52,7 @@ double fit(box *B, point * x, int cx, vertex * ix, int fudge)
    *
    * Converts floating point coords to an integer representation.  The bottom
    * three bits beyond the significance of the floating point and are used to
-   * offset points to gaurantee resolution of degeneracies.  This is similar to
+   * offset points to guarantee resolution of degeneracies.  This is similar to
    * the method described in:
    *
    * Edelsbrunner, H. and Mücke, E. P. Simulation of simplicity
@@ -203,7 +203,7 @@ int main(){
 #ifdef TEST_AIP_1
        a[] = {{2,3}, {2,3}, {2,3}, {2,4}, {3,3}, {2,3}, {2,3}},
        b[] = {{1,1}, {1,4}, {4,4}, {4,1}, {1,1}}; // 1/2, 1/2
-    // The redundant vertices above are to provoke errors as good test cases should.
+    // The redundant vertexes above are to provoke errors as good test cases should.
     // It is not necessary to duplicate the first vertex at the end.
 #endif
 #ifdef TEST_AIP_2

@@ -11,7 +11,7 @@
 // files to become unreadable!
 //
 // (these parameters are not recorded in the file).
-#define WHISKER_IO_POLY_DEGREE       3
+#define WHISKER_IO_POLY_DEGREE       2
 #define WHISKER_IO_POLY_END_PADDING  0
 
 #define DEBUG_WHISKER_IO_POLYFIT_ERROR

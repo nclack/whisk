@@ -173,7 +173,7 @@ void Vandermonde_Inverse( double *x, int n, double *invV)
     for(i=1;i<n-1;i++)                     // do n-1 rows
     { double v = x[i];
       row  = master + (n-i-1)*n;           // walk rows backwards
-      row[0] -= v*last[j];                 // first column special
+      row[0] -= v*last[0];                 // first column special
       for(j=1; j<i+2; j++)                 // last column gets done right //max j = max(i+1) = n-2+1 = n - 1
         row[j] = last[j-1] - v * last[j];  //    due to memset 0 above
       last = row;

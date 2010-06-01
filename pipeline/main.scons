@@ -1,4 +1,4 @@
-# vi:ft=python:et:ts=2
+# vi:set ft=python
 """
 Example SCons script for processing data.
 

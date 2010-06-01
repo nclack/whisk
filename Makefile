@@ -1,6 +1,12 @@
 CC = gcc
+
 LDFLAGS = -lm #-lSaturn
 CFLAGS = -g  #-ftree-vectorize #-Wall  #-finstrument-functions
+
+# comment these in to build with FFMPEG included
+LDFLAGS = -lm -lavcodec -lavformat -lavutil -lswscale #-lSaturn
+CFLAGS = -g -DHAVE_FFMPEG #-ftree-vectorize #-Wall  #-finstrument-functions
+
 pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contour_lib.o\
 					 water_shed.o
 cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
@@ -10,7 +16,8 @@ cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 svd.o poly.o mat.o\
 					 bar_io.o \
 					 measurements_io.o measurements_io_v0.o measurements_io_v1.o \
-					 whisker_io_whiskpoly1.o
+					 whisker_io_whiskpoly1.o \
+					 ffmpeg_adapt.o
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
 APPS  = whisk whisker_convert test_measure_1 test_classify_1 test_hmm_reclassify_3 test_hmm_reclassify_5

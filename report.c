@@ -128,7 +128,7 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
 #endif
   //
   // Check for differences in identification
-  // =======================================
+  // ---------------------------------------
   
   Sort_Measurements_Table_Time_State_Face( A, nA );
   Sort_Measurements_Table_Time_State_Face( B, nB );
@@ -355,7 +355,7 @@ int main(int argc, char* argv[])
 #endif
   //
   // Check for differences in identification
-  // =======================================
+  // ---------------------------------------
   
   Sort_Measurements_Table_Time_State_Face( A, nA );
   Sort_Measurements_Table_Time_State_Face( B, nB );

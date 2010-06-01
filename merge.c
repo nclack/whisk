@@ -33,9 +33,9 @@
 #define DEBUG_ALLOC_COLLISIONTABLE
 #endif
 
-/* ==============
+/* --------------
  * CollisionTable
- * ==============
+ * --------------
  *
  * This is a scalar (integer) volume.
  *
@@ -432,9 +432,9 @@ inline float _whisker_seg_score_sum( Whisker_Seg *w )
   return s;
 }
 
-/* ===========================
+/* ---------------------------
  * Remove_Overlapping_Whiskers
- * ===========================
+ * ---------------------------
  *
  * Finds duplicate whisker segments and resolves these duplications by removing
  * the lower scoring duplicate.
