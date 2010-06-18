@@ -54,6 +54,8 @@ Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
   debug("\nMeasurements table alloc: %d rows of data at %p\n",n_rows,dataspace);
 #endif
+  if(!dataspace) return NULL;
+  if(!table) return NULL;
   while( n_rows-- )
   { Measurements *row = table     + n_rows;
     row->data     = dataspace     + n_rows*n_measurements;
@@ -325,6 +327,7 @@ int test_Measurements_Table_FileIO( char* filename,  Measurements *table, int n_
   Measurements_Table_To_Filename( filename, NULL, table, n_rows );
 
   t2 = Measurements_Table_From_Filename( filename, NULL, &nr2 );
+  if(!t2) error("Couldn't read %s\n",filename);
 
   if( nr2 != n_rows )
   { warning("Number of rows don't match: %d != %d\n",n_rows,nr2);
@@ -1197,6 +1200,7 @@ int main(int argc, char *argv[])
   debug("Test: Load measurements and compute distributions.\n");
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("filename"), NULL, &n_rows);
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("filename"));
 
   { Distributions *shape, *velocity;
     int minstate, maxstate, nstates;
@@ -1237,6 +1241,7 @@ int main(int argc, char *argv[])
   debug("Test: Load measurements, run solve, and save result.\n");
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n_rows);
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
 
   Solve( table, n_rows, IDENTITY_SOLVER_SHAPE_NBINS, IDENTITY_SOLVER_VELOCITY_NBINS );
   Sort_Measurements_Table_State_Time( table, n_rows );

@@ -18,11 +18,11 @@
  *   -----
  *   From a MATLAB prompt use:
  *
- *   >> mex -o LoadWhiskers whisker_io.mex.c -lwhisk -L./
+ *   >> mex -o LoadWhiskers whisker_io.mex.c -lwhisk -L<path_to_whisk_library> -I<path_to_whisk_includes>
  *
- *   or, using the provided M-file: 
+ *   For example, with everything installed to C:\WhiskerTracker
  *
- *   >> buildmex
+ *   >> mex -o LoadWhiskers whisker_io.mex.c -lwhisk -L'C:\WhiskerTracker' -I'C:\WhiskerTracker' 
  *
  *   Example:
  *   -------
@@ -54,20 +54,6 @@
  *     Could not load whiskers.                                                            
  *                                                                                        
  *                                                                                        
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  *
  **/
 #include <matrix.h>
@@ -132,7 +118,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       int n;
       
       n = ws[i].len;
-      
       
       id     = mxCreateNumericMatrix(1,1,mxINT32_CLASS,mxREAL);
       time   = mxCreateNumericMatrix(1,1,mxINT32_CLASS,mxREAL);

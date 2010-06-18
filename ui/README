@@ -1,75 +1,99 @@
-================
-Whisker tracking
-================
+===============================
+Whisker tracking user interface
+===============================
 
-------------
-File formats
-------------
+Usage: ui2.py [options] moviefile [dataprefix]
 
-Whiskers
-````````
+Options:
+  -h, --help            show this help message and exit
+  -t, -T, --transpose   transpose images [default: False]
+  --frame=N             Start browsing at the N'th frame [default: 0]
+  -c CURSOR_SIZE, --cursorsize=CURSOR_SIZE
+                        Initial cursor radius in pixels [default: 10 px]
+  --cursorpos           Show cursor's center coordinates [default: False]
+  --adjuststripes       Adjust odd-scanline bias [default: True]
+  --noadjuststripes     Prevent adjust odd-scanline bias [default: False]
+  --fps                 Display rendering speed [default: False]
 
-Whiskers can be stored in either a text or binary format.  There is a command
-line utility, `whisker_convert`, provided to convert between different
-supported formats.  `batch.py` can be used to speed up the process of
-converting many files.
+Examples:
 
-The most detailed description of each format can be found in the corresponding
-`whisker_io_*.c` files implimenting the readers/writers for each format.
+  python ui2.py S0.tif 
+  python ui2.py S0.tif S0
+  python ui2.py S0.tif S0.whisker S0.measurements S0.bar
 
-In general, each whisker segment in a file is comprised of a unique id and a 
-number of data points describing the shape as output from the tracing program.
+If no data_files_prefix is given, a default set will be created.  The
+prefix will be used to load/save the appropriate files.  Ordering of 
+the filenames isn't important.  Filetype is detected accrording to the
+file extension.
 
-Trajectories
-````````````
+-----------------
+Keyboard Controls
+-----------------
 
-A text file.  Each line corresponds to a whisker segment.  The line is formated
-as:
+key       function
+---       --------
+< (,)     Jump to the beginning of the movie
+> (.)     Jump to the end of the movie
+]         Jump to next gap in current trajectory
+[         Jump to previous gap in current trajectory
+Shift-]   Jump to next gap in any trajectory
+Shift-[   Jump to previous gap in any trajectory
+Up        Increment current whisker id
+Down      Decrement current whisker id
+Left      Rewind one frame
+Right     Advance one frame
+Shift     ( Modifies arrow keys ) speed up 10x | 
+Ctrl      ( Modifies arrow keys ) speed up 10x | Effects multiply
+Alt       ( Modifies arrow keys ) speed up 10x |
+Delete    Delete whisker in currently displayed frame
+Space     Turn auto mode on and off
+d         Change draw mode
+Shift-d   Enter debug console
+Shift-s   Save
+ESC       Save and Quit
+=         Increment search radius
+-         Decrement search radius
+f         Scroll through face hints to indicate which side
+          of the image the face is on.  See Notes (below).
+          
 
-    trajectory_id, frame_id, whisker_id
+--------------
+Mouse Controls
+--------------
 
-The frame_id, whisker_id pair uniquely specify the whisker.  The trajectory_id
-is an integer that acts like a label.
+Action            function
+------            --------
+Right click       Mark seed for whisker tracking.
+                  Attempt backbone tracing.
+                  Draw traced whisker backbone.
+                  Advance 1 frame.
+Left click        Add nearest segment within cursor to 
+                    current whisker   
+                  If no segment found in cursor, clear
+                    any segments in that frame assigned to the
+                    whisker    
+                  Advance 1 frame
+Mouse wheel up    Advance 1 frame
+Mouse wheel down  Rewind 1 frame
 
-Bar
-```
+-----
+Notes
+-----
 
-A text file.  Each line corresponds to a frame.  The line is formated as:
+If filenames are not completely specified, default names will be guessed.
 
-    frame_id, x, y
+If an existing data file is found, the whisker data will be loaded.
 
-where x, y are real numbers giving the position in pixels, and frame_id is a
-natural number indicating the correspondng time point in the movie (in frames).
+Normally the left and right arrow keys advance or rewind by one frame.  Holding
+down shift, ctrl, and/or alt keys will increase the step size by 10x each.
+Hence, holding shift and ctrl (or ctrl and alt, etc...) results in a 100 frame
+step.  Holding shift ctrl and alt and pressing left or right, jumps 1000
+frames.
 
--------------------
-Graphical interface
--------------------
-
-See ui/README for instructions on how to use the graphical user interface.
-
-ui2.py --help
-
-
-----------------
-Batch processing
-----------------
-
-To benifit from desktop PC's with multiple CPU's (or multiple cores), multiple
-processes should be started simultaneosly to analyze multiple movies. A script 
-called `batch.py` is provided to facilitate this.  See `batch.py --help` for 
-details.
-
-Some example command lines:
-
-./batch.py --help
-
-./batch.py /path/to/data/directory
-
-    Will process all *.seq files in the directory using all cpu cores
-    Results will be placed in data directory.
-
-./batch.py --exe="./path/to/whisk" /path/to/data -f *.tif -n 2
-
-    Will process all *.tif files in the data directory with the specified
-    executable using 2 cpus (2 worker processes).  Results will be placed in
-    data directory.
+The face hint is used on saving to a .measurements file.  The .measurements
+file contains, in addition to the identity of segments, measures of follicle
+position, angle, etc...  Some of these measures require approximate knowledge
+of the center of the whisker pad, which is indicated by the face hint. Currently,
+the hint only takes values of 'left','right','top' or 'bottom' that indicate
+the side of the movie the face is on.  These options work for a specific class of 
+data where the image is cropped so the mouse's face is on one side.

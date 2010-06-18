@@ -636,6 +636,7 @@ int main( int argc, char* argv[] )
 
   // Load source data
   table = Measurements_Table_From_Filename( Get_String_Arg( "source-measurements" ), NULL, &nrows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source-measurements"));
   whiskers = Load_Whiskers( Get_String_Arg( "source-whiskers" ), NULL, &nsegs);
   if(!whiskers)
     error("Could not load whiskers.\n");

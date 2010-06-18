@@ -8,7 +8,9 @@ int is_file_measurements_v0( const char* filename)
   char format[33],
        not[] = "meas";
   if(fp==NULL)
-    error("In is_file_measurements_v0, could not open file (%s) for reading.\n",filename);
+  { warning("In is_file_measurements_v0, could not open file (%s) for reading.\n",filename);
+    return 0;
+  }
     
   fscanf(fp,"%32s", format);
   return strncmp(format,not,sizeof(not)-1) != 0 ;
@@ -19,13 +21,13 @@ FILE* open_measurements_v0( const char* filename, const char* mode )
   if( *mode == 'w' )
   { fp = fopen(filename,"wb");
     if( fp == NULL )
-    { error("Could not open file (%s) for writing.\n");
+    { warning("Could not open file (%s) for writing.\n");
       goto Err;
     }
   } else if( *mode=='r' )
   { fp = fopen(filename,"rb");
   } else {
-    error("Could not recognize mode (%s) for file (%s).\n",mode,filename);
+    warning("Could not recognize mode (%s) for file (%s).\n",mode,filename);
     goto Err;
   }
   return fp;
@@ -54,6 +56,10 @@ Measurements *read_measurements_v0( FILE *fp, int *n_rows)
   fread( &n_measures, sizeof(int), 1, fp );
 
   table = Alloc_Measurements_Table( *n_rows, n_measures );
+  if(!table)
+  { warning("Could not allocate measurements table\n");
+    return NULL;
+  }
   ref = table[0].data; // head of newly allocated data block
 #ifdef DEBUG_MEASUREMENTS_TABLE_FROM_FILE
   debug("\tLoad -           ref: %p\n",ref);

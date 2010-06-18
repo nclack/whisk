@@ -301,6 +301,7 @@ int main(int argc, char* argv[])
 #endif
 
   table  = Measurements_Table_From_Filename ( Get_String_Arg("source"), NULL, &n_rows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
   Sort_Measurements_Table_Time(table,n_rows);
 
   if( Is_Arg_Matched("face") )
@@ -443,6 +444,7 @@ int main(int argc, char* argv[])
 
   Process_Arguments( argc, argv, Spec, 0);
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n_rows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
   
   { int thresh;
     for( thresh = 0; thresh < 400; thresh ++ )
@@ -495,6 +497,7 @@ int main(int argc, char* argv[])
   }
 
   table  = Measurements_Table_From_Filename          ( Get_String_Arg("source"), NULL, &n_rows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
   Sort_Measurements_Table_Time(table,n_rows);
 
   if( Is_Arg_Matched("face") )

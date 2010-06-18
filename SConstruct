@@ -94,6 +94,7 @@ excludes = set(( """ collisiontable_link_list.c
                      distance.c
                      trajectory.c
                      whisker_io.mex.c
+                     measurements_io.mex.c
                  """ ).split())
         
 
@@ -323,8 +324,8 @@ dist += env.InstallAs(target=distname+'/bin/whisker_convert'                    
 dist += env.InstallAs(target=distname+'/bin/measurements_convert'                 , source='measurements_convert')
 dist += env.InstallAs(target=distname+'/bin/default.parameters'                   , source='parameters/default.parameters')
 dist += env.Install(target=distname+'/python'                                     , source=['traj.py','trace.py',libwhisk])
-dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c']+libwhisk)
-dist += env.Install(target=distname+'/matlab/include'                             , source=['whisker_io.h','trace.h','common.h','image_lib.h','contour_lib.h','seed.h','eval.h','parameters/param.h','compat.h','tiff_io.h','level_set.h','water_shed.h','aip.h','utilities.h'])
+dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c','measurements_io.mex.c']+libwhisk)
+dist += env.Install(target=distname+'/matlab/include'                             , source=['measurements_io.h','traj.h','whisker_io.h','trace.h','common.h','image_lib.h','contour_lib.h','seed.h','eval.h','parameters/param.h','compat.h','tiff_io.h','level_set.h','water_shed.h','aip.h','utilities.h'])
 dist += env.Install(target=distname+'/matlab/include/parameters'                  , source=['parameters/param.h'])
 dist += env.Install(target=distname+'/ui/'                                        , source=['ui/README','ui/icon.png']+env.Glob('ui/*.py')+[libwhisk[0].path])
 dist += env.Install(target=distname+'/ui/reader'                                  , source=env.Glob('ui/reader/*.py')+['README']+[libwhisk[0].path])

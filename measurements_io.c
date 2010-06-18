@@ -18,11 +18,11 @@
  * These must be  defined for each supported filetype
  */
 
-typedef int            (*pf_mf_detect)           (const char* filename);                      // Should return true iff file is of the specific file type 
-typedef FILE*          (*pf_mf_open  )           (const char* filename, const char* mode );   // Opens the file for reading and/or writing
-typedef void           (*pf_mf_close )           (FILE* file);                                // Writes footer, closes and frees resources
-typedef void           (*pf_mf_write)            (FILE* file, Measurements *table, int n);
-typedef Measurements*  (*pf_mf_read)             (FILE* file, int *n);                        // Gets the table
+typedef int            (*pf_mf_detect) (const char* filename);                      // Should return true iff file is of the specific file type 
+typedef FILE*          (*pf_mf_open  ) (const char* filename, const char* mode );   // Opens the file for reading and/or writing
+typedef void           (*pf_mf_close ) (FILE* file);                                // Writes footer, closes and frees resources
+typedef void           (*pf_mf_write)  (FILE* file, Measurements *table, int n);
+typedef Measurements*  (*pf_mf_read)   (FILE* file, int *n);                        // Gets the table
 
 typedef struct __MeasurementsFile
 { FILE*          fp;
@@ -88,9 +88,9 @@ int Measurements_File_Autodetect( const char * filename, char** format )
       return i;
     }
   }
-  error("Could not detect measurements file format for %s.\n"
+  warning("Could not detect measurements file format for %s.\n"
         "\t\tPerhaps it's not a measurements file.\n",filename);
-  return -1; // doesn't return
+  return -1;
 }
 
 SHARED_EXPORT
@@ -116,10 +116,10 @@ MeasurementsFile Measurements_File_Open(const char* filename, char* format, cons
       }
     }//end for
     if( ifmt==-1 )
-    { error("Specified file format (%s) not recognized\n",format);
-      error("\tOptions are:\n");
+    { warning("Specified file format (%s) not recognized\n",format);
+      warning("\tOptions are:\n");
       for( i=0; i < Measurements_File_Format_Count; i++ )
-        error("\t\t%s\n",Measurements_File_Formats[i]);
+        warning("\t\t%s\n",Measurements_File_Formats[i]);
       goto Err;
     }
   }
@@ -130,7 +130,7 @@ MeasurementsFile Measurements_File_Open(const char* filename, char* format, cons
    */
   { _MeasurementsFile *mf = (_MeasurementsFile*) malloc( sizeof(_MeasurementsFile) );
     if( mf==NULL )
-    { error("Out of memory in Measurements_File_Open\n");
+    { warning("Out of memory in Measurements_File_Open\n");
       goto Err;
     }
     mf->detect          = Measurements_File_Detectors_Table       [ifmt];
@@ -140,7 +140,7 @@ MeasurementsFile Measurements_File_Open(const char* filename, char* format, cons
     mf->read_segments   = Measurements_File_Read_Table            [ifmt];
     mf->fp = MF_CALL( mf, open )(filename, mode);
     if( mf->fp == NULL )
-    { error("Could not open file %s with mode %s.\n",filename,mode);
+    { warning("Could not open file %s with mode %s.\n",filename,mode);
       goto Err1;
     }
     return mf;
@@ -173,7 +173,8 @@ SHARED_EXPORT
 Measurements *Measurements_Table_From_Filename(const char *filename, char* format, int *n )
 { Measurements *table;
   MeasurementsFile mf = Measurements_File_Open(filename, format, "r");
-  table = Measurements_File_Read( mf, n);
+  if(!mf) return NULL;
+  table = Measurements_File_Read( mf, n); // returns NULL on failure.
   Measurements_File_Close(mf);
   return table;
 }
@@ -185,6 +186,10 @@ void Measurements_Table_To_Filename(const char *filename, char* format, Measurem
   { mf = Measurements_File_Open(filename, "v1", "w");
   } else 
   { mf = Measurements_File_Open(filename, format, "w"); 
+  }
+  if(!mf)
+  { warning("Could not open %s\n",filename);
+    return;
   }
   Measurements_File_Write(mf,table,n);
   Measurements_File_Close(mf);
@@ -215,6 +220,7 @@ int main(int argc, char *argv[]) {
   { Measurements *table;
     int n;
     table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n);
+    if(!table) error("Could not read %s\n",Get_String_Arg("source"));
     Measurements_Table_To_Filename( Get_String_Arg("destination"), Get_String_Arg("format"), table, n);
     Free_Measurements_Table(table);
   }

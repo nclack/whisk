@@ -292,7 +292,9 @@ int main(int argc, char* argv[])
   Process_Arguments(argc, argv, Spec, 0);
   
   A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), NULL, &nA );
+  if(!A) error("Couldn't read %s\n",Get_String_Arg("measurements1"));
   B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), NULL, &nB );
+  if(!B) error("Couldn't read %s\n",Get_String_Arg("measurements2"));
   
   frames = Measurements_Tables_Get_Diff_Frames( A, nA, B, nB, &nframes );
 
@@ -331,7 +333,9 @@ int main(int argc, char* argv[])
   Process_Arguments(argc, argv, Spec, 0);
   
   A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), NULL, &nA );
+  if(!A) error("Couldn't read %s\n",Get_String_Arg("measurements1"));
   B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), NULL, &nB );
+  if(!B) error("Couldn't read %s\n",Get_String_Arg("measurements2"));
 
   //
   // Now build distributions. (Conditioned on whisker or not)

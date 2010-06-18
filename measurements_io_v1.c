@@ -17,10 +17,13 @@ int is_file_measurements_v1( const char* filename)
 { char type[] = "measV1\0";
   char buf[33];
   FILE *file = fopen(filename,"rb");
-  long pos = ftell(file);
+  long pos;
 
   if(!file)
-    error("Could not open file (%s) for reading.\n",filename);
+  { warning("Could not open file (%s) for reading.\n",filename);
+    return 0;
+  }
+  pos = ftell(file); 
   
   fread(buf, sizeof(type), 1, file);
   fclose(file);
@@ -34,7 +37,7 @@ FILE* open_measurements_v1( const char* filename, const char* mode )
   if( *mode == 'w' )
   { fp = fopen(filename,"wb");
     if( fp == NULL )
-    { error("Could not open file (%s) for writing.\n");
+    { warning("Could not open file (%s) for writing.\n");
       goto Err;
     }
     measurements_v1_write_header(fp);
@@ -42,7 +45,7 @@ FILE* open_measurements_v1( const char* filename, const char* mode )
   { fp = fopen(filename,"rb");
     measurements_v1_read_header(fp);
   } else {
-    error("Could not recognize mode (%s) for file (%s).\n",mode,filename);
+    warning("Could not recognize mode (%s) for file (%s).\n",mode,filename);
     goto Err;
   }
   return fp;
@@ -79,6 +82,7 @@ Measurements *read_measurements_v1( FILE *fp, int *n_rows)
   fread( &n_measures, sizeof(int), 1, fp );
 
   table = Alloc_Measurements_Table( *n_rows, n_measures );
+  if(!table) return NULL;
   head = table[0].data;
   row = table + (*n_rows);
 

@@ -365,6 +365,7 @@ int main(int argc, char*argv[])
     "\n");
   // Load Table
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &nrows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
   Sort_Measurements_Table_State_Time(table, nrows);
 
   // Get expected number of whiskers
@@ -524,6 +525,7 @@ int main(int argc, char*argv[])
     "\n");
 
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &nrows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
 
   //
   // Compute velocities using approximate/incomplete labelling
@@ -1194,6 +1196,7 @@ int main(int argc, char*argv[])
     "\n");
 
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &nrows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
 
   //
   // Compute velocities using approximate/incomplete labelling
