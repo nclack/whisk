@@ -5,7 +5,8 @@ import os
 
 Progress('Scanning:  $TARGET\r',overwrite=True)
 
-env = Environment(ENV = os.environ)
+env = Environment(ENV = os.environ,
+                  TOOLS = ['default','packaging'])
 
 #
 # Multiplatform configuration (autoconf-like)
@@ -88,6 +89,7 @@ mains = Split( """ whisk
 excludes = set(( """ collisiontable_link_list.c
                      distance.c
                      trajectory.c
+                     whisker_io.mex.c
                  """ ).split())
         
 
@@ -131,10 +133,11 @@ libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c',
                                       'measurements_io_v1.c'] )
 
 ## install - copy things around
-env.Install( 'ui/whiskerdata', ['trace.py','traj.py',libwhisk] ) 
-env.Install( 'ui/genetiff', [libwhisk] ) 
-env.Install( 'ui',             ['trace.py', libwhisk] ) 
-env.Alias( 'python', ['ui/whiskerdata','ui'] )
+ui_install_targets = \
+  env.Install( 'ui/whiskerdata', ['trace.py','traj.py',libwhisk] ) \
++ env.Install( 'ui/reader', [libwhisk] ) \
++ env.Install( 'ui',             ['trace.py', libwhisk] ) 
+#env.Alias( 'python', ['ui/whiskerdata','ui'] )
 
 #
 # testing/temporary stuff
@@ -300,3 +303,36 @@ for t in tests:
                                                  'utilities.c', 'common.c',
                                                  'error.c', 'compat.c'
                                                ] ) 
+
+##
+# PACKAGING
+#
+distname='WhiskerTracking'
+dist = []
+dist += env.InstallAs(target=distname+'/bin/trace'                                , source='whisk')
+dist += env.InstallAs(target=distname+'/bin/measure'                              , source='test_measure_1')
+dist += env.InstallAs(target=distname+'/bin/classify'                             , source='test_classify_1')
+dist += env.InstallAs(target=distname+'/bin/reclassify'                           , source='test_hmm_reclassify_5')
+dist += env.InstallAs(target=distname+'/bin/report/trajectory_mismatch_histogram' , source='test_report_compare_trajectories')
+dist += env.InstallAs(target=distname+'/bin/report/trajectory_mismatch_frames'    , source='test_report_1')
+dist += env.InstallAs(target=distname+'/bin/whisker_convert'                      , source='whisker_convert')
+dist += env.InstallAs(target=distname+'/bin/measurements_convert'                 , source='measurements_convert')
+dist += env.InstallAs(target=distname+'/bin/default.parameters'                   , source='parameters/default.parameters')
+dist += env.Install(target=distname+'/python'                                     , source=['traj.py','trace.py',libwhisk])
+dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c']+libwhisk)
+dist += env.Install(target=distname+'/matlab/include'                             , source=['whisker_io.h','trace.h','common.h','image_lib.h','contour_lib.h','seed.h','eval.h','parameters/param.h','compat.h','tiff_io.h','level_set.h','water_shed.h','aip.h','utilities.h'])
+dist += env.Install(target=distname+'/matlab/include/parameters'                  , source=['parameters/param.h'])
+dist += env.Install(target=distname+'/ui/'                                        , source=['ui/README','ui/icon.png']+env.Glob('ui/*.py')+[libwhisk[0].path])
+dist += env.Install(target=distname+'/ui/reader'                                  , source=env.Glob('ui/reader/*.py')+['README']+[libwhisk[0].path])
+dist += env.Install(target=distname+'/ui/whiskerdata'                             , source=env.Glob('ui/whiskerdata/*.py')+[libwhisk[0].path])
+## 
+## Packager does not seem to work correctly.
+##
+# env.Package( source = [e.path for e in dist],
+#             NAME = 'whisk',
+#             VERSION = '0.1',
+#             PACKAGEVERSION = 0,
+#             LICENSE = 'The Janelia Farm Research Campus Software Copyright 1.1 (http://license.janelia.org/license/jfrc_copyright_1_1.html)',
+#             SUMMARY = 'A software suite for tracing and tracking whiskers',
+#             DESCRIPTION = 'FIXME: This is the description.')
+#

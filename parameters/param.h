@@ -1,5 +1,7 @@
 #pragma once
+#ifndef bool
 typedef int bool;
+#endif
 typedef enum _t_enum_SEED_METHOD {SEED_ON_MHAT_CONTOURS, SEED_ON_GRID} enumSEED_METHOD;
 #define MIN_LENPRJ (g_param.paramMIN_LENPRJ)
 #define MIN_LENSQR (g_param.paramMIN_LENSQR)

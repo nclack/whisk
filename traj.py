@@ -13,9 +13,9 @@ import pdb
 
 os.environ['PATH'] += r';.\\'
 ctraj = cdll.LoadLibrary( find_library('traj') )
-if not ctraj:
+if ctraj._name==None:
   ctraj = cdll.LoadLibrary( find_library('whisk') )
-  if not ctraj:
+  if ctraj._name==None:
     raise ImportError("Can not load whisk or traj shared library");
 
 

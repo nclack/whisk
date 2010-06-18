@@ -24,13 +24,13 @@ int is_file_whiskbin1( const char *filename )
 { char type[] = "bwhiskbin1\0";
   char buf[33];
   FILE *file = fopen(filename,"rb");
-  long pos = ftell(file);
+  long pos;
 
   if(file==NULL)
-    { error("Could not open file (%s) for reading.\n",filename);
-      exit(1);
+    { warning("Could not open file (%s) for reading.\n",filename);
+      return 0;
     }
-  
+  pos = ftell(file); 
   fread(buf, sizeof(type), 1, file);
   fclose(file);
   if( strncmp( buf, type, sizeof(type) )==0 ) // if this is a whiskbin1 file, read position is not reset
@@ -43,7 +43,7 @@ FILE* open_whiskbin1( const char* filename, const char* mode )
   if( strncmp(mode,"w",1)==0 )
   { fp = fopen(filename,"w+b");
     if( fp == NULL )
-    { error("Could not open file (%s) for writing.\n");
+    { warning("Could not open file (%s) for writing.\n");
       goto Err;
     }
     write_whiskbin1_header(fp);
@@ -52,7 +52,7 @@ FILE* open_whiskbin1( const char* filename, const char* mode )
   { fp = fopen(filename,"rb");
     read_whiskbin1_header(fp);
   } else {
-    error("Could not recognize mode (%s) for file (%s).\n",mode,filename);
+    warning("Could not recognize mode (%s) for file (%s).\n",mode,filename);
     goto Err;
   }
   return fp;

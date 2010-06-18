@@ -14,8 +14,8 @@ int is_file_whisk1(const char* filename)
   char format[33],
        target_format[] = "whisker1";
   if(fp==NULL)
-    { error("In is_file_whisk1, could not open file (%s) for reading.\n",filename);
-      exit(1);
+    { warning("In is_file_whisk1, could not open file (%s) for reading.\n",filename);
+      return 0;
     }
   fscanf(fp,"%32s", format);
   fclose(fp);
@@ -30,7 +30,7 @@ FILE* open_whisk1(const char* filename, const char* mode)
   } else if( strncmp(mode,"r",1)==0 )
   { fp = fopen(filename,"r");
   } else {
-    error("Could not recognize mode (%s) for file (%s).\n",mode,filename);
+    warning("Could not recognize mode (%s) for file (%s).\n",mode,filename);
     return NULL;
   }
   return fp;

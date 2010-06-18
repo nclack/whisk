@@ -16,6 +16,21 @@
 /* 
  * Typedefs defining abstract interface for whisker file io
  * These must be  defined for each supported filetype
+ *
+ * <pf_wf_detect>
+ *   Used to detect whisker file format.
+ *   Returns true(1) if file has format matching implementation.
+ *   On error, should warn, then return false (0).
+ *
+ *   The idea is that each file format implementation defines one of these
+ *   function.  Each of these functions is called in succession till one returns
+ *   true, then that format is used to decode a file.
+ *
+ * <pf_wf_open>
+ *   Opens a file.
+ *   On success, returns a FILE*.
+ *   On failure, should warn, then return NULL.
+ *
  */
 
 typedef int            (*pf_wf_detect)           (const char* filename);                      // Should return true iff file is of the specific file type 
@@ -112,9 +127,9 @@ int Whisker_File_Autodetect( const char * filename, char** format )
       return i;
     }
   }
-  error("Could not detect whisker file format for %s.\n"
+  warning("Could not detect whisker file format for %s.\n"
         "\t\tPerhaps it's not a whiskers file.\n",filename);
-  return -1; // doesn't return
+  return -1; // indicate failure
 }
 
 SHARED_EXPORT
@@ -131,6 +146,8 @@ WhiskerFile Whisker_File_Open(const char* filename, char* format, const char* mo
     } else {
       ifmt = WHISKER_FILE_DEFAULT_FORMAT;
     }
+    if(ifmt==-1)   /*format failed to autodetect*/
+      goto Err;
   } else  // Check against table
   { int i; 
     for( i=0; i < Whisker_File_Format_Count; i++ )
@@ -140,10 +157,10 @@ WhiskerFile Whisker_File_Open(const char* filename, char* format, const char* mo
       }
     }//end for
     if( ifmt==-1 )
-    { error("Specified file format (%s) not recognized\n",format);
-      error("\tOptions are:\n");
+    { warning("Specified file format (%s) not recognized\n"
+              "\tOptions are:\n",format);
       for( i=0; i < Whisker_File_Format_Count; i++ )
-        error("\t\t%s\n",Whisker_File_Formats[i]);
+        warning("\t\t%s\n",Whisker_File_Formats[i]);
       goto Err;
     }
   }
@@ -154,7 +171,7 @@ WhiskerFile Whisker_File_Open(const char* filename, char* format, const char* mo
    */
   { _WhiskerFile *wf = (_WhiskerFile*) malloc( sizeof(_WhiskerFile) );
     if( wf==NULL )
-    { error("Out of memory in Whisker_File_Open\n");
+    { warning("Out of memory in Whisker_File_Open\n");
       goto Err;
     }
     wf->detect          = Whisker_File_Detectors_Table       [ifmt];
@@ -165,7 +182,7 @@ WhiskerFile Whisker_File_Open(const char* filename, char* format, const char* mo
     wf->read_segments   = Whisker_File_Read_Segments_Table   [ifmt];
     wf->fp = WF_CALL( wf, open )(filename, mode);
     if( wf->fp == NULL )
-    { error("Could not open file %s with mode %s.\n",filename,mode);
+    { warning("Could not open file %s with mode %s.\n",filename,mode);
       goto Err1;
     }
     return wf;
@@ -204,21 +221,26 @@ SHARED_EXPORT
 Whisker_Seg *Load_Whiskers(const char *filename, char* format, int *n )
 { Whisker_Seg *wv;
   WhiskerFile wf = Whisker_File_Open(filename, format, "r");
+  if(!wf)
+    return NULL;
   wv = Whisker_File_Read_Segments( wf, n);
   Whisker_File_Close(wf);
   return wv;
 }
 
 SHARED_EXPORT
-void Save_Whiskers(const char *filename, char* format, Whisker_Seg *w, int n )
+int  Save_Whiskers(const char *filename, char* format, Whisker_Seg *w, int n )
 { WhiskerFile wf;
   if( format == NULL )
   { wf = Whisker_File_Open(filename, Whisker_File_Formats[ WHISKER_FILE_DEFAULT_FORMAT ], "w");
   } else 
   { wf = Whisker_File_Open(filename, format, "w"); 
   }
+  if(!wf)
+    return 0;
   Whisker_File_Write_Segments(wf,w,n);
   Whisker_File_Close(wf);
+  return 1;
 }
 
 #ifdef WHISKER_IO_CONVERTER

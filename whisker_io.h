@@ -13,6 +13,6 @@ SHARED_EXPORT void          Whisker_File_Write_Segments  (WhiskerFile wf, Whiske
 SHARED_EXPORT Whisker_Seg*  Whisker_File_Read_Segments   (WhiskerFile wf, int *n);
 
 SHARED_EXPORT Whisker_Seg  *Load_Whiskers                (const char *filename, char *format, int *n );
-SHARED_EXPORT void          Save_Whiskers                (const char *filename, char *format, Whisker_Seg *w, int n );
+SHARED_EXPORT int           Save_Whiskers                (const char *filename, char *format, Whisker_Seg *w, int n );
 
 #endif //H_WHISKER_IO

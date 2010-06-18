@@ -224,7 +224,7 @@ Image *load(char *path, int index, int *nframes)
 /*
  * MAIN
  */
-static char *Spec[] = { "<movie:string> <prefix:string> [--no-whisk] [--no-bar]", NULL };
+static char *Spec[] = { "<movie:string> <prefix:string>", NULL };
 int main(int argc, char *argv[])
 { char  *whisker_file_name, *bar_file_name, *prefix;
   size_t prefix_len;
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 
   /* Process Arguments */
   Process_Arguments(argc,argv,Spec,0);
-  if(Load_Params_File("./parameters/default.parameters"))
+  if(Load_Params_File("default.parameters"))
   { error("Could not load parameters.\n");
   }
 
@@ -264,6 +264,8 @@ int main(int argc, char *argv[])
     memset(bg->array, 0, bg->width * bg->height );
   }
   Free_Image( image );
+
+#if 0
   /*
    * Bar tracking
    */
@@ -289,11 +291,12 @@ int main(int argc, char *argv[])
     }
     Bar_File_Close( bfile );
   }
+#endif
 
   /*
    * Trace whisker segments
    */
-  if( !Is_Arg_Matched("--no-whisk") )
+  //if( !Is_Arg_Matched("--no-whisk") )
   { int           nTotalSegs = 0;
     Whisker_Seg   *wv;
     int wv_n; 

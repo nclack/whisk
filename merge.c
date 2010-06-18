@@ -690,6 +690,8 @@ int main(int argc, char *argv[])
       "|--                                                            \n");
   Process_Arguments(argc,argv,Spec,0);                               
   wv = Load_Whiskers( Get_String_Arg("source"), NULL, &wv_n);
+  if(!wv)
+    error("Could not load whiskers\n");
   
   Estimate_Image_Shape_From_Segments( wv, wv_n, &w, &h );
   debug("Computing table for width: %3d and height: %3d\n",w,h);
@@ -764,6 +766,8 @@ int main(int argc, char *argv[])
       "|--                                                                     \n");
   Process_Arguments(argc,argv,Spec,0);
   wv = Load_Whiskers( Get_String_Arg("source"), NULL, &wv_n);
+  if(!wv)
+    error("Could not load whiskers\n");
 
   fp = fopen( Get_String_Arg("dest"), "wb" );
   if(!fp) error("Couldn't open destination file %s", Get_String_Arg("dest"));
@@ -862,6 +866,8 @@ int main(int argc, char *argv[])
   Process_Arguments                 ( argc,argv,Spec,0);
 
   wv = Load_Whiskers                ( Get_String_Arg("source"), NULL, &wv_n);
+  if(!wv)
+    error("Could not load whiskers\n");
   i  = Remove_Overlapping_Whiskers_Multi_Frame  ( wv, wv_n, 2.0, 2.0, 0.8 );
   Save_Whiskers                     ( Get_String_Arg("dest"), NULL, wv, i );
 

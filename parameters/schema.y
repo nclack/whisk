@@ -574,7 +574,10 @@ void print_epilogue()
      "  g_nparse_errors=0;\n"
      "  memset(g_found_parameters,0,sizeof(g_found_parameters));\n"
      "  fp = fopen(filename,\"r\");\n"
-     "  assert(fp);\n"
+     "  if(!fp)\n"
+     "  { fprintf(stderr,\"Could not open parameter file at %%s.\\n\",filename);\n"
+     "    exit(1);\n"
+     "  }\n"
      "  sts = yyparse();\n"
      "  fclose(fp);\n"
      "  sts |= (g_nparse_errors>0);\n"
@@ -596,7 +599,9 @@ void kvprintall(tkv *self)
 { CPRN("%%{\n");
   print_prelude(g_headername);
   HPRN("#pragma once\n"
-       "typedef int bool;\n");
+       "#ifndef bool\n"
+       "typedef int bool;\n"
+       "#endif\n");
   kvprint_enum_defns(self);
   kvprint_API_defn_getters(self);
   kvprint_params_struct(self);

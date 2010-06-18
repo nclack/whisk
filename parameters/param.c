@@ -2751,7 +2751,10 @@ int Load_Params_File(char *filename)
   g_nparse_errors=0;
   memset(g_found_parameters,0,sizeof(g_found_parameters));
   fp = fopen(filename,"r");
-  assert(fp);
+  if(!fp)
+  { fprintf(stderr,"Could not open parameter file at %s.\n",filename);
+    exit(1);
+  }
   sts = yyparse();
   fclose(fp);
   sts |= (g_nparse_errors>0);

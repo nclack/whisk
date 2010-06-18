@@ -22,8 +22,8 @@ int is_file_whisk_old( const char* filename)
   char format[33],
        not[] = "whisk";
   if(fp==NULL)
-    { error("In is_file_whisk1, could not open file (%s) for reading.\n",filename);
-      exit(1);
+    { warning("In is_file_whisk1, could not open file (%s) for reading.\n",filename);
+      return 0;
     }
   fscanf(fp,"%32s", format);
 
@@ -41,12 +41,12 @@ int is_file_whisk_old( const char* filename)
 FILE* open_whisk_old(const char* filename, const char* mode)
 { FILE *fp;
   if( strncmp(mode,"w",1)==0 )
-  { error("This format is depricated and writing is not supported.\n");
+  { warning("This format is depricated and writing is not supported.\n");
     return NULL;
   } else if( strncmp(mode,"r",1)==0 )
   { fp = fopen(filename,"r");
   } else {
-    error("Could not recognize mode (%s) for file (%s).\n",mode,filename);
+    warning("Could not recognize mode (%s) for file (%s).\n",mode,filename);
     return NULL;
   }
   return fp;
@@ -57,7 +57,7 @@ void close_whisk_old(FILE* fp)
 }
 
 void append_segments_whisk_old ( FILE *fp, Whisker_Seg *wv, int n )
-{ error("This format is depricated and writing is not supported.\n");
+{ warning("This format is deprecated and writing is not supported.\n");
 }
 
 Whisker_Seg *read_segments_whisker_old( FILE *file, int *n)

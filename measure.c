@@ -494,6 +494,8 @@ int main( int argc, char* argv[] )
       "\n" );
 
   wv = Load_Whiskers( Get_String_Arg("whiskers"), NULL, &wvn);
+  if(!wv)
+    error("Could not load whiskers.\n");
   if(wvn<=0)
     error("No whiskers found\n"
           "\tin %s\n", Get_String_Arg("whiskers"));
@@ -635,6 +637,8 @@ int main( int argc, char* argv[] )
   // Load source data
   table = Measurements_Table_From_Filename( Get_String_Arg( "source-measurements" ), NULL, &nrows );
   whiskers = Load_Whiskers( Get_String_Arg( "source-whiskers" ), NULL, &nsegs);
+  if(!whiskers)
+    error("Could not load whiskers.\n");
   bars = Load_Bars_From_Filename( Get_String_Arg( "source-bars" ), &nbars);
 
   // Append a column if neccessary
