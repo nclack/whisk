@@ -45,7 +45,7 @@
 
 import os, sys, traceback, pygame
 from numpy import * 
-import genetiff
+from   reader import Reader
 import re
 import aggdraw
 import trace
@@ -220,7 +220,7 @@ def main( filename,
   font = pygame.font.SysFont('times',24);
   pygame.key.set_repeat(200, 10)
   
-  im = genetiff.Reader( filename, transpose, not noadjuststripes )
+  im = Reader( filename, transpose, not noadjuststripes )
   im.seek( startframe )
   #abg = calc_background( im )
   N = len(im)

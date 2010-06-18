@@ -1,2 +1,0 @@
-recursive-include genetiff *.h 
-exclude genetiff/itiff.py

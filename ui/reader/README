@@ -4,11 +4,11 @@ Install
 This package isn't really designed to be installed in the Python site packages.
 Instead, use this package locally with your source.  For example, if you have
 the python file (example.py) you're working on in a directory called 'src',
-copy the genetiff directory like so
+copy the reader directory like so
 
 src/
   example.py 
-  genetiff/
+  reader/
     ...
 
 Building
