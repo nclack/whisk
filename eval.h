@@ -20,6 +20,7 @@ void translate( point* pbuf, int n, point ori);
 
 void Read_Range( FILE *fp, Range *r );
 void Write_Range( FILE *fp, Range *r );
+int  Is_Same_Range( Range *a, Range *b );
 
 Array *Make_Array( int *shape , int ndim, int bytesperpixel );
 Array *Read_Array( FILE *fp );

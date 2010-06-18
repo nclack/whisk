@@ -7,6 +7,9 @@
  *                                Image *bg,
  *                                int *pnseg )
  *
+ *
+ * [ ] TLEN not checked on detector bank load.  Need to rebuild if this
+ *     changes.
  */
 #include "compat.h"
 #define _USE_MATH_DEFINES
@@ -31,6 +34,7 @@
 #include "eval.h"
 #include "seed.h"
    
+#include "parameters/param.h"
 
 #if 0
 #define DEBUG_READ_LINE_DETECTOR_BANK
@@ -59,12 +63,12 @@
 #undef  EXPORT_COMPZONE_TIF
 #undef  APPLY_ZONE_MASK
 
-#define SEED_ON_GRID
-#if 0
-#define SEED_ON_MHAT_CONTOURS
-#endif
+//#define SEED_ON_GRID
+//#if 0
+//#define SEED_ON_MHAT_CONTOURS
+//#endif
 
-#define SEED_ON_GRID_LATTICE_SPACING 50
+//#define SEED_ON_GRID_LATTICE_SPACING 50
 
 #define HARMONIC_MEAN_N_LABELS 2
 
@@ -278,8 +282,8 @@ void draw_whisker( Image *image, Whisker_Seg *w, int thick, uint8 value )
    * 3. Fill image by rasters
    *
    * This is a bit different than computing the raster for the contours
-   * described by contour_lib.h in that the vertices of the polygon are not
-   * confined to an integral lattice nor are they necesarily adjacent on any
+   * described by contour_lib.h in that the vertexes of the polygon are not
+   * confined to an integral lattice nor are they necessarily adjacent on any
    * lattice.
    */
 { static int *rasters = NULL; // a pairs of x values for each y in image
@@ -289,7 +293,7 @@ void draw_whisker( Image *image, Whisker_Seg *w, int thick, uint8 value )
   rasters = (int*) request_storage( rasters, &maxrasters, 2*sizeof(int), image->height, "draw_whisker - rasters");
   memset( rasters, -1, 2*sizeof(int)*(image->height) );
 
-  //compute offsets by averagewhisker angle
+  //compute offsets by average whisker angle
   { float th = 0.0;
     int i = w->len;
     float *y = w->y,
@@ -395,38 +399,47 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
   memset( mask->array, 0, sarea * mask->kind );
 
   // Get contours, and compute correlations on perimeters
-#ifdef SEED_ON_MHAT_CONTOURS
-  omap = get_objectmap( image );
+  switch(SEED_METHOD)
+  {
+    case SEED_ON_MHAT_CONTOURS:
+      {
+        omap = get_objectmap( image );
 #ifdef DEBUG_SEEDING_FIELDS
-  { Image *cim = Copy_Image( image );
-    Paint_Brush brush = { 1.0, -1.0, -1.0 }; 
-    int i;
+        { Image *cim = Copy_Image( image );
+          Paint_Brush brush = { 1.0, -1.0, -1.0 }; 
+          int i;
 
-    cim = Translate_Image( cim, COLOR, 1 );
-    for( i=0; i < omap->num_objects; i++ )
-      Draw_Contour_Interior( omap->objects[i], &brush, cim );
-    Write_Image("hat_contour.tif", cim);
+          cim = Translate_Image( cim, COLOR, 1 );
+          for( i=0; i < omap->num_objects; i++ )
+            Draw_Contour_Interior( omap->objects[i], &brush, cim );
+          Write_Image("hat_contour.tif", cim);
+        }
+#endif
+        { int i;
+          for( i=0; i < omap->num_objects; i++ )
+          { compute_seed_from_point_field_windowed_on_contour( image, omap->objects[i],
+              SEED_ITERATIONS,       // maxr
+              SEED_ITERATION_THRESH, // iteration threshold
+              SEED_ACCUM_THRESH,     // accumulation threshold
+              h, th, s );
+            Free_Contour( omap->objects[i] );
+          }
+        }
+      }
+      break;
+    case SEED_ON_GRID:
+      {
+        compute_seed_from_point_field_on_grid( image,
+            SEED_ON_GRID_LATTICE_SPACING, // lattice spacing
+            SEED_ITERATIONS,              // maxr
+            SEED_ITERATION_THRESH,        // iteration threshold
+            SEED_ACCUM_THRESH,            // accumulation threshold
+            h,th,s );
+      }
+      break;
+    default:
+      error("Did not recognize value for SEED_METHOD.  Got: %d\n",SEED_METHOD);
   }
-#endif
-  { int i;
-    for( i=0; i < omap->num_objects; i++ )
-    { compute_seed_from_point_field_windowed_on_contour( image, omap->objects[i],
-        4,   // maxr
-        0.4, // iteration threshold
-        0.4, // accumulation threshold
-        h, th, s );
-      Free_Contour( omap->objects[i] );
-    }
-  }
-#endif
-#ifdef SEED_ON_GRID
-  compute_seed_from_point_field_on_grid( image,
-      SEED_ON_GRID_LATTICE_SPACING, // lattice spacing 
-      4,    // maxr                   
-      0.4,  // iteration threshold    
-      0.4,  // accumulation threshold 
-      h,th,s );
-#endif
 #ifdef DEBUG_SEEDING_FIELDS
   { Image *tmp_th, *tmp_s;
     Write_Image( "trace_seed_hist.tif", h );
@@ -601,6 +614,8 @@ Zone *compute_zone(Stack *movie)
   int    w, h, d, a;
   Image *mask;
 
+  DEPRICATED;
+
   w = movie->width;
   h = movie->height;
   d = movie->depth;
@@ -701,6 +716,7 @@ int  write_line_detector_bank( char *filename, Array *bank, Range *off, Range *w
 SHARED_EXPORT
 int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *wid, Range *ang )
 { FILE *fp;
+  Range o,w,a;
 
   fp = fopen(filename,"rb");
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
@@ -714,27 +730,29 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
   progress("seek 0: result %d\n",n);
 #endif
-    Read_Range(fp, off);
+    Read_Range(fp, &o);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
-    progress("read off (%p), ",off);
-    Print_Range(stderr, off);    
+    progress("read off (%p), ",&o);
+    Print_Range(stderr, &o);    
 #endif
-    Read_Range(fp, wid);
+    Read_Range(fp, &w);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
     progress("read wid, ");
-    Print_Range(stderr, wid);
+    Print_Range(stderr, &w);
 #endif
     Read_Range(fp, ang);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
     progress("read ang, ");
-    Print_Range(stderr, ang);
+    Print_Range(stderr, &a);
 #endif
     *bank = Read_Array(fp);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
     progress("read bank\n");
 #endif
     fclose(fp);
-    return 1;
+    return Is_Same_Range(&o,off) && 
+           Is_Same_Range(&w,wid) &&
+           Is_Same_Range(&a,ang);
   } else {
     warning("Couldn't read line detector bank.\n");
     *bank = (NULL);
@@ -747,16 +765,17 @@ Array *get_line_detector_bank(Range *off, Range *wid, Range *ang)
 { static Array *bank = (NULL);
   static Range o,a,w;    
   if( !bank )
-  { if( read_line_detector_bank( "line.detectorbank", &bank, &o, &w, &a ) )
+  { 
+    Range v[3] = {{ -1.0,       1.0,         OFFSET_STEP },          //offset
+                  { -M_PI/4.0,  M_PI/4.0,    M_PI/4.0/ANGLE_STEP },  //angle
+                  {  WIDTH_MIN, WIDTH_MAX,   WIDTH_STEP  }};         //width
+    o = v[0];
+    a = v[1];
+    w = v[2];
+    if( read_line_detector_bank( "line.detectorbank", &bank, &o, &w, &a ) )
     { progress("Line detector bank loaded from file.\n");
     } else {
-      Range v[3] = {{ -1.0,       1.0,         OFFSET_STEP },          //offset
-                    { -M_PI/4.0,  M_PI/4.0,    M_PI/4.0/ANGLE_STEP },  //angle
-                    {  0.4,       6.5,         WIDTH_STEP  }};         //width
       progress("Computing line detector bank.\n");
-      o = v[0];
-      a = v[1];
-      w = v[2];
       bank = Build_Line_Detectors( o, w, a, TLEN, 2*TLEN+3 );
       write_line_detector_bank( "line.detectorbank", bank, &o, &w, &a );
     }
@@ -769,36 +788,14 @@ error:
   return (NULL);
 }
 
-//Array *get_curved_line_detector_bank(Range *off, Range *wid, Range *ang)
-//{ static Array *bank = (NULL);
-//  static Range o,a,w;
-//  if( !bank )
-//  { if( read_line_detector_bank( "curved.detectorbank", &bank, &o, &w, &a ) )
-//    { fprintf(stderr,"Line detector bank loaded from file.\n");
-//    } else {
-//      Range v[3] = {{ -1.0,       1.0,         OFFSET_STEP },          //offset
-//                    { -M_PI/4.0,  M_PI/4.0,    M_PI/4.0/ANGLE_STEP },  //angle
-//                    {  0.5,       6.5,         WIDTH_STEP  }};         //width
-//      fprintf(stderr,"Computing line detector bank.\n");
-//      o = v[0];
-//      a = v[1];
-//      w = v[2];
-//      bank = Build_Line_Detectors( o, w, a, TLEN, 2*TLEN+3 );
-//      write_line_detector_bank( "curved.detectorbank", bank, &o, &w, &a );
-//    }
-//    if(!bank) goto error;
-//  }
-//  *off = o; *ang = a; *wid = w;
-//  return bank;
-//error:
-//  fprintf(stderr,"Warning: Couldn't build bank of curved line detectors!\n");
-//  return (NULL);
-//}
 
 SHARED_EXPORT
 Array *get_harmonic_line_detector_bank(Range *off, Range *wid, Range *ang) // FIXME: Bad name - should be labelled line detectors
 { static Array *bank = (NULL);
   static Range o,a,w;
+  DEPRICATED;
+  // [ ] if this gets put back into active duty - need to adapt to
+  //      get_line_detector_bank pattern
   if( !bank )
   { if( read_line_detector_bank( "harmonic.detectorbank", &bank, &o, &w, &a ) )
     { fprintf(stderr,"Harmonic detector bank loaded from file.\n");
@@ -830,6 +827,8 @@ float integrate_harmonic_mean_by_labels( uint8 *im, float* w, int *pxlist, int n
   float totalnorm = 0.0;
   unsigned int labels[HARMONIC_MEAN_N_LABELS] = {2,3/*,5,7*/};
   const float  sigmin = 255.0;
+
+  DEPRICATED;
 
   int j,i = npx;
   while( i-- )
@@ -895,6 +894,9 @@ float integrate_special_by_labels( uint8 *im, float *w, int *pxlist, int npx )
   unsigned int labels[HARMONIC_MEAN_N_LABELS] = {2,3};
   int j,i = npx;
   float norm = 0.0;
+
+  DEPRICATED;
+
   while( i-- )
   { float u = w[ pxlist[2*i+1] ];
     int code = lround( u );
@@ -969,7 +971,7 @@ float *get_nearest_from_curved_line_detector_bank(float offset, float width, flo
 { int o,a,w;
   Range orng, arng, wrng;
   Array *bank = get_curved_line_detector_bank( &orng, &wrng, &arng );
-
+  DEPRICATED;
   if( !is_small_angle( angle ) )  // if large angle then transpose
   { angle = 3.0*M_PI/2.0 - angle; //   to small ones ( <45deg )
   }
@@ -1011,16 +1013,17 @@ Array *get_half_space_detector_bank(Range *off, Range *wid, Range *ang, float *n
   static float sum = -1.0;
   static Range o,a,w;
   if( !bank )  
-  { if( read_line_detector_bank( "halfspace.detectorbank", &bank, &o, &w, &a ) )
+  {
+    Range v[3] = {{ -1.0,       1.0,         OFFSET_STEP },          //offset
+                  { -M_PI/4.0,  M_PI/4.0,    M_PI/4.0/ANGLE_STEP },  //angle
+                  {  WIDTH_MIN, WIDTH_MAX,   WIDTH_STEP  }};         //width
+    o = v[0];
+    a = v[1];
+    w = v[2];
+    if( read_line_detector_bank( "halfspace.detectorbank", &bank, &o, &w, &a ) )
     { progress("Half-space detector bank loaded from file.\n");
     } else {
-      Range v[3] = {{ -1.0,       1.0,         OFFSET_STEP },          //offset
-                    { -M_PI/4.0,  M_PI/4.0,    M_PI/4.0/ANGLE_STEP },  //angle
-                    {  0.4,       6.5,         WIDTH_STEP  }};         //width
       fprintf(stderr,"Computing half space detector bank.\n");
-      o = v[0];
-      a = v[1];
-      w = v[2];
       bank = Build_Half_Space_Detectors( o, w, a, TLEN, 2*TLEN+3 );
       write_line_detector_bank( "halfspace.detectorbank", bank, &o, &w, &a );
     }
@@ -1202,18 +1205,18 @@ float round_anchor_and_offset( Line_Params *line, int *p, int stride )
 **  bounded to less than the pixel size (proof?).
 */
 { float ex,ey,rx,ry,px,py;
-  float ppx, ppy, drx, dry, t;// ox, oy;
+  float ppx, ppy, drx, dry, t;     // ox, oy;
   ex  = cos(line->angle + M_PI/2); // unit vector normal to line
   ey  = sin(line->angle + M_PI/2);
-  px  = (*p % stride ); // current anchor
+  px  = (*p % stride );            // current anchor
   py  = (*p / stride );
-  rx  = px + ex * line->offset; // current position
+  rx  = px + ex * line->offset;    // current position
   ry  = py + ey * line->offset;
-  ppx = round( rx );    // round to nearest pixel as anchor
+  ppx = round( rx );               // round to nearest pixel as anchor
   ppy = round( ry );
-  drx = rx - ppx; //ppx - rx;       // dr: vector from pp to r
-  dry = ry - ppy; //ppy - ry;
-  t   = drx*ex + dry*ey;// dr dot e (projection along normal to line)
+  drx = rx - ppx;                  // ppx - rx;       // dr: vector from pp to r
+  dry = ry - ppy;                  // ppy - ry;
+  t   = drx*ex + dry*ey;           // dr dot e (projection along normal to line)
   
 	// Max error is ~0.6 px
 
@@ -2398,7 +2401,7 @@ Whisker_Seg *trace_whisker(Seed *s, Image *image)
   }
 
   /*
-   * Copys results into a whisker segment
+   * Copy results into a whisker segment
    */
   if( nright+nleft > 2*TLEN )
   { Whisker_Seg *wseg = Make_Whisker_Seg( nright + nleft );

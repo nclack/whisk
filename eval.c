@@ -62,6 +62,12 @@ void Write_Range( FILE *fp, Range *r )
   fwrite( r, sizeof(Range), 1, fp );
 }
 
+int  Is_Same_Range( Range *a, Range *b )
+{ return (a->min==b->min) &&
+         (a->max==b->max) &&
+         (a->step==b->step);  
+}
+
 Array *Make_Array( int *shape , int ndim, int bytesperpixel )
 { int i = ndim;
   Array    *a       = (Array   *) Guarded_Malloc ( sizeof(Array   ), "array struct" );

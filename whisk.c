@@ -21,6 +21,8 @@
 
 #include "ffmpeg_adapt.h"
 
+#include "parameters/param.h"
+
 #undef  WRITE_BACKGROUND
 
 #define PRINT_USAGE( object ) printf("\tUsage "#object": %5d\n", object##_Usage())
@@ -113,7 +115,8 @@ Image *load(char *path, int index, int *nframes)
   
   if( !opened )
   { char *ext = strrchr( path, '.' ); 
-
+    if(ext==NULL)
+      error("Could not recognize the extension from the filename.\n\tFilename: %s\n",path);
     opened = 1;
 
     // Setup function calls according to file extension
@@ -130,7 +133,13 @@ Image *load(char *path, int index, int *nframes)
       get_nframes = (pf_get_nframes) &Seq_Get_Depth;
     } 
 #ifdef HAVE_FFMPEG
-    else if( strcmp(ext,".mp4")==0 )
+    else if
+      ( strcmp(ext,".mp4")==0 ||
+        strcmp(ext,".mov")==0 || 
+        strcmp(ext,".avi")==0 || 
+        strcmp(ext,".mpg")==0 || 
+        strcmp(ext,".mp4")==0
+      )
     {
       opener      = (pf_opener)      &FFMPEG_Open;
       closer      = (pf_closer)      &FFMPEG_Close;
@@ -138,6 +147,19 @@ Image *load(char *path, int index, int *nframes)
       get_nframes = (pf_get_nframes) &FFMPEG_Frame_Count;
     }  
 #endif
+    else
+    { 
+#ifdef HAVE_FFMPEG
+      warning("Didn't recognize the video file's extension.\n"
+              "Attempting to use FFMPEG.\n");
+      opener      = (pf_opener)      &FFMPEG_Open;
+      closer      = (pf_closer)      &FFMPEG_Close;
+      fetch       = (pf_fetch)       &FFMPEG_Fetch;
+      get_nframes = (pf_get_nframes) &FFMPEG_Frame_Count;
+#else
+      error("Didn't recognize the file extension.\n\tFilename: %s\n",path); 
+#endif
+    }
     if(opener==NULL)
       error("Could not recognize the file's type by it's extension.  Got: %s.\n",ext);
 
@@ -214,6 +236,9 @@ int main(int argc, char *argv[])
 
   /* Process Arguments */
   Process_Arguments(argc,argv,Spec,0);
+  if(Load_Params_File("./parameters/default.parameters"))
+  { error("Could not load parameters.\n");
+  }
 
   prefix = Get_String_Arg("prefix");
   prefix_len = strlen(prefix);

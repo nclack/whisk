@@ -18,8 +18,10 @@
 
 #include "viterbi.h"
 
-#define  IDENTITY_SOLVER_VELOCITY_NBINS   8096
-#define  IDENTITY_SOLVER_SHAPE_NBINS      16
+#include "parameters/param.h"
+
+//#define  IDENTITY_SOLVER_VELOCITY_NBINS   8096
+//#define  IDENTITY_SOLVER_SHAPE_NBINS      16
 
 // TESTS
 #if 0  

@@ -68,6 +68,8 @@ Seed *compute_seed(Raster *raster, int n, int x0, int width, uint8 *value)
   int nb, ne, xc;
   int xfar, xctr;
 
+  DEPRICATED;
+
   //if (raster[n].major < MIN_LENPRJ) 
   //  return (NULL);
   nb = raster[n].minor;    // beginning of y-interval

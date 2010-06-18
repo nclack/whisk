@@ -14,6 +14,8 @@
 #include "hmm-reclassify.h"
 #include "measurements_io.h"
 
+#include "parameters/param.h"
+
 // Make one model the default
 #ifndef TEST_HMM_RECLASSIFY_LR_MODEL_W_DELETIONS
 #define TEST_HMM_RECLASSIFY_LR_MODEL
@@ -58,9 +60,9 @@
 
 #endif
 
-#define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
-#define HMM_RECLASSIFY_VEL_DISTS_NBINS   (8096)
-#define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
+//#define HMM_RECLASSIFY_SHP_DISTS_NBINS   (16)
+//#define HMM_RECLASSIFY_VEL_DISTS_NBINS   (8096)
+//#define HMM_RECLASSIFY_BASELINE_LOG2 (-500.0)
 
 
 typedef int   (*Tpf_State_Count)                                             ( int nwhisk );

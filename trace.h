@@ -7,27 +7,27 @@
 #include "seed.h"
 #include "eval.h"
 
-#define FRAME_DELTA 1
+#include "parameters/param.h"
 
-#define HAT_RADIUS  1.5    //  Mexican-hat radius for whisker detection
-#define MIN_LEVEL   1      //  Level-set threshold for an object
-#define MIN_SIZE    20     //  Minimum # of pixels in an object
+//#define FRAME_DELTA 1
 
-#define TLEN  8
-#define OFFSET_STEP  .1   // pixels
-#define ANGLE_STEP   18.  // divisions of pi/4
-#define WIDTH_STEP   .2   // pixels [ngc: as of 2009-04-01 needs to be same as OFFSET_STEP]
-#define MIN_SIGNAL   5.0  //  per column , typically: sigmin = (2*TLEN+1)*MIN_SIGNAL
-#define MAX_DELTA_ANGLE  10.1 // degrees
-#define MAX_DELTA_WIDTH   6.0 // pixels
-#define MAX_DELTA_OFFSET  6.0 // pixels
+//#define HAT_RADIUS  1.5    //  Mexican-hat radius for whisker detection
+//#define MIN_LEVEL   1      //  Level-set threshold for an object
+//#define MIN_SIZE    20     //  Minimum # of pixels in an object
 
-#define DUPLICATE_THRESHOLD 5.0
+//#define TLEN  8
+//#define OFFSET_STEP  .1   // pixels
+//#define ANGLE_STEP   18.  // divisions of pi/4
+//#define WIDTH_STEP   .2   // pixels [ngc: as of 2009-04-01 needs to be same as OFFSET_STEP]
+//#define MIN_SIGNAL   5.0  //  per column , typically: sigmin = (2*TLEN+1)*MIN_SIGNAL
+//#define MAX_DELTA_ANGLE  10.1 // degrees
+//#define MAX_DELTA_WIDTH   6.0 // pixels
+//#define MAX_DELTA_OFFSET  6.0 // pixels
 
-#define HALF_SPACE_ASSYMETRY_THRESH 0.15     // between 0 and 1.  1 is completely insensitive to assymetry
-//#define HALF_SPACE_FRACTION_DARK    0.2     // between 0 and 1.  Approximate fraction of dark area in image
-//#define HALF_SPACE_TUNNELING_DECAY  0.99     // between 0 and 1.  Smaller values cause tunneling to stop sooner
-#define HALF_SPACE_TUNNELING_MAX_MOVES 10   // pixels.  This should be the largest size of an occluding area to cross
+//#define DUPLICATE_THRESHOLD 5.0
+
+//#define HALF_SPACE_ASSYMETRY_THRESH 0.15     // between 0 and 1.  1 is completely insensitive to assymetry
+//#define HALF_SPACE_TUNNELING_MAX_MOVES 10   // pixels.  This should be the largest size of an occluding area to cross
 
 typedef struct  _Zone      //
   { int    cutoff;    //

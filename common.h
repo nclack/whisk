@@ -10,6 +10,8 @@
                     // - comment in  to check for memory leaks in an
                     //   configured Visual Studio.
 
+#include "parameters/param.h"
+
 //evals expression px once, y up to 2 times
 #ifndef bd
 #define bd(TYPE,px,y) { TYPE *X = (px); *X = *X<(y) ? *X:(y);}
@@ -41,6 +43,8 @@
     (th)    +=   2*M_PI;          \
   while( (th)    >= M_PI )        \
     (th)    -=   2*M_PI;
+
+#define DEPRICATED error("Function at %s:%d was marked for removal.\n",__FILE__,__LINE__)
 
 /************************************************************************
  * Example

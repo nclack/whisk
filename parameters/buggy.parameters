@@ -1,0 +1,38 @@
+[error]
+SHOW_DEBUG_MESSAGES     1
+SHOW_PROGRESS_MESSAGES  1
+
+[reclassify]
+HMM_RECLASSIFY_SHP_DISTS_NBINS 16
+HM_RECLASSIFY_VEL_DISTS_NBINS 8096         // should error here.  value name misspelled
+HMM_RECLASSIFY_BASELINE_LOG2   -500.0
+COMPARE_IDENTITIES_DISTS_NBINS 8096
+IDENTITY_SOLVER_VELOCITY_NBINS 8096
+IDENTITY_SOLVER_SHAPE_NBINS    16
+
+[trace]
+SEED_METHOD                    SEED_ON_SOMETHING  // should error here.  SEED_ON_SOMETHING not valid
+SEED_ON_GRID_LATTICE_SPACING   50
+
+HAT_RADIUS               //      1.5        // should error here.  value got commented out
+MIN_LEVEL                      1            
+MIN_SIZE                       20           
+
+                                            // blah blah blah
+                                            / //error here...bad comment...appears as bad parameter name
+TLEN                           8            
+OFFSET_STEP                    .1           
+ANGLE_STEP                     18     // OK - should not generate an error.  integral should translate to decimal         
+WIDTH_STEP                     .2           
+MIN_SIGNAL                     5.0          
+MAX_DELTA_ANGLE                10.1         
+MAX_DELTA_WIDTH                6.0          
+MAX_DELTA_OFFSET               6.0          
+HALF_SPACE_ASSYMETRY_THRESH    0.15         
+HALF_SPACE_TUNNELING_MAX_MOVES 10           
+
+FRAME_DELTA                    1.6          // should error here.  must be an integer 
+DUPLICATE_THRESHOLD            5.0          
+MIN_LENGTH                     20           
+//MIN_LENSQR                     100        // ?should error here.  missing this value
+MIN_LENPRJ                     14           

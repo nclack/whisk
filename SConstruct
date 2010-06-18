@@ -99,7 +99,7 @@ for n in pnodes:                                    #rebuild these if manager.aw
 pcfiles = [ str(n[0]) for n in pnodes ]             #get resulting c files names
 
 # Aggregate other source files 
-cfiles = set( glob("*.c")+pcfiles ) - excludes        # a unique set of all *.c files: both existent and *.p dependant
+cfiles = set( glob("*.c")+pcfiles+["parameters/param.c"] ) - excludes        # a unique set of all *.c files: both existent and *.p dependant
 main_cfiles = set([n+".c" for n in mains]) # Assume main() is in a c-file with the same name as the program
 cfiles = cfiles.difference(main_cfiles)    # Seperate c-files with and without mains
 cfiles.remove("evaltest.c")

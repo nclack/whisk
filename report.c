@@ -6,6 +6,8 @@
 #include <string.h>
 #include "measurements_io.h"
 
+#include "parameters/param.h"
+
 #if 0
 #define DEBUG_REPORT_1
 #define DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
@@ -20,7 +22,8 @@
 // For the task here, want to have way too many bins.  Treat distributions
 // more like a hash table (?).  So only equal whiskers fall into same bin.
 // 
-#define COMPARE_IDENTITIES_DISTS_NBINS 8096
+// This is now specified in a parameters file and accessed via parameters/param.h
+//#define COMPARE_IDENTITIES_DISTS_NBINS 8096
 
 // Planning:
 // 1. Assume measurements files are from same movie

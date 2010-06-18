@@ -5,9 +5,11 @@
 #include "image_lib.h"
 #include "contour_lib.h"
 
-#define MIN_LENGTH  20     //  If span of object is not 20 pixels will not use as a seed
-#define MIN_LENSQR 100     //  (MIN_LENGTH/2)^2
-#define MIN_LENPRJ  14     //  floor(MIN_LENGTH/sqrt(2))
+#include "parameters/param.h"
+
+//#define MIN_LENGTH  20     //  If span of object is not 20 pixels will not use as a seed
+//#define MIN_LENSQR 100     //  (MIN_LENGTH/2)^2
+//#define MIN_LENPRJ  14     //  floor(MIN_LENGTH/sqrt(2))
 
 typedef struct _Object_Map
   { int       num_objects;

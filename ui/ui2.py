@@ -765,7 +765,12 @@ unwanted changes.  """
 
     # figure out which file is which
     files = dict( [(os.path.splitext(f)[-1],f) for f in args] )
-    movie_file = files.get('.mp4',files.get('.seq',files.get('.tif',None)))
+    movie_file = reduce(lambda a,b: files.get(b,a), [None,
+                                                    '.tif',
+                                                    '.seq',
+                                                    '.mp4',
+                                                    '.avi',
+                                                    '.mpg']);
     if movie_file is None:
       parser.error("Path to movie file is required.");
 

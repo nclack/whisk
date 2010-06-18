@@ -1,0 +1,44 @@
+[error]
+SHOW_DEBUG_MESSAGES            BOOL                                 // something strange in the neighborhood
+SHOW_PROGRESS_MESSAGES         BOOL
+
+[reclassify]
+HMM_RECLASSIFY_SHP_DISTS_NBINS INT
+HMM_RECLASSIFY_VEL_DISTS_NBINS INT
+HMM_RECLASSIFY_BASELINE_LOG2   FLOAT
+COMPARE_IDENTITIES_DISTS_NBINS INT
+IDENTITY_SOLVER_VELOCITY_NBINS INT
+IDENTITY_SOLVER_SHAPE_NBINS    INT
+
+[trace]
+SEED_METHOD                    SEED_ON_GRID | SEED_ON_MHAT_CONTOURS // Specify seeding method: may be SEED_ON_MHAT_CONTOURS or SEED_ON_GRID
+SEED_ON_GRID_LATTICE_SPACING   INT                                  // (pixels)
+SEED_ITERATIONS                INT                                  // Maxium number of iterations to re-estimate a seed.
+SEED_ITERATION_THRESH          FLOAT                                // (0 to 1) Threshold score determining when a seed should be reestimated.
+SEED_ACCUM_THRESH              FLOAT                                // (0 to 1) Threshold score determining when to accumulate statistics
+
+HAT_RADIUS                     FLOAT                                // Mexican-hat radius for whisker detection (seeding)
+MIN_LEVEL                      INT                                  // Level-set threshold for mexican hat result.  Used for seeding on mexican hat contours.
+MIN_SIZE                       INT                                  // Minimum # of pixels in an object considered for mexican-hat based seeding.
+
+                                                                    // detector banks parameterization.  If any of these change, the detector banks
+                                                                    // should be deleted.  They will be regenerated on the next run.
+TLEN                           INT                                  // (px) half the size of the detector support.  If this is changed, the detector banks must be deleted.
+OFFSET_STEP                    FLOAT                                // pixels
+ANGLE_STEP                     FLOAT                                // divisions of pi/4
+WIDTH_STEP                     FLOAT                                // (pixels)
+WIDTH_MIN                      FLOAT                                // (pixels) must be a multiple of WIDTH_STEP
+WIDTH_MAX                      FLOAT                                // (pixels) must be a multiple of WIDTH_STEP 
+MIN_SIGNAL                     FLOAT                                // minimum detector response per detector column.  Typically: (2*TLEN+1)*MIN_SIGNAL is the threshold determining when tracing stops.
+MAX_DELTA_ANGLE                FLOAT                                // (degrees)  The detector is constrained to turns less than this value at each step.
+MAX_DELTA_WIDTH                FLOAT                                // (pixels)   The detector width is constrained to change less than this value at each step.
+MAX_DELTA_OFFSET               FLOAT                                // (pixels)   The detector offset is constrained to change less than this value at each step.
+HALF_SPACE_ASSYMETRY_THRESH    FLOAT                                // (between 0 and 1)  1 is completely insensitive to asymmetry
+HALF_SPACE_TUNNELING_MAX_MOVES INT                                  // (pixels)  This should be the largest size of an occluding area to cross
+
+FRAME_DELTA                    INT                                  // [depricated?] used in compute_zone to look for moving objects
+DUPLICATE_THRESHOLD            FLOAT                                // [depricated?]
+MIN_LENGTH                     INT                                  // [depricated?]           If span of object is not 20 pixels will not use as a seed
+MIN_LENSQR                     INT                                  // [depricated?]           (MIN_LENGTH/2)^2
+MIN_LENPRJ                     INT                                  // [depricated?] [unused]  floor(MIN_LENGTH/sqrt(2))
+
