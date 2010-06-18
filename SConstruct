@@ -8,6 +8,26 @@ Progress('Scanning:  $TARGET\r',overwrite=True)
 env = Environment(ENV = os.environ,
                   TOOLS = ['default','packaging'])
 
+##
+# PLATFORM DEPENDENT CONFIG
+#
+#
+#Tool('mingw')(env)
+if env['PLATFORM']=='win32':
+  #env['CCFLAGS'] = ''
+  #env.MergeFlags( env.ParseFlags('-g -lm') )
+  #env.Append(CCFLAGS = r'/Od          /Ot     /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /W1 /ZI     /Gd /TC')   #Debug
+  env.Append(CCFLAGS  = r'/Ox /Ob2 /Oi /Ot /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE     /EHsc       /MT   /W1 /Zi /Gy     /TC')   #Release - optimized compilation - BROKEN! fread problem?
+  env["LIBSUFFIX"]=""
+else:
+  #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))  
+  env.MergeFlags( env.ParseFlags( "-g -lm" ))
+  if env['PLATFORM']=='darwin':
+    pass
+    #env.MergeFlags( env.ParseFlags( "-arch i386 -arch x86_64 -arch ppc"))
+    
+env['no_import_lib'] = 1
+
 #
 # Multiplatform configuration (autoconf-like)
 #
@@ -34,7 +54,6 @@ else:
        print "(+) FFMPEG Found"
   else:
        print "(-) FFMPEG NOT found. Building without FFMPEG support."
-
 env = conf.Finish()
 
 #
@@ -60,21 +79,6 @@ try:
 except ImportError,e:
   print e
 
-##
-# PLATFORM DEPENDENT CONFIG
-#
-#
-#Tool('mingw')(env)
-if env['PLATFORM']=='win32':
-  #env['CCFLAGS'] = ''
-  #env.MergeFlags( env.ParseFlags('-g -lm') )
-  #env.Append(CCFLAGS = r'/Od          /Ot     /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /W1 /ZI     /Gd /TC')   #Debug
-  env.Append(CCFLAGS  = r'/Ox /Ob2 /Oi /Ot /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE     /EHsc       /MT   /W1 /Zi /Gy     /TC')   #Release - optimized compilation - BROKEN! fread problem?
-  env["LIBSUFFIX"]=""
-else:
-  #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))  
-  env.MergeFlags( env.ParseFlags( "-g -lm" ))
-env['no_import_lib'] = 1
 
 ##
 # MAIN TARGETS

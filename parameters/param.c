@@ -86,6 +86,15 @@
 /* Copy the first part of user declarations.  */
 #line 1 "param.y"
 
+/*
+ * Author: Nathan Clack <clackn@janelia.hhmi.org>
+ * Date  : June 2010
+ * 
+ * Copyright 2010 Howard Hughes Medical Institute.
+ * All rights reserved.
+ * Use is subject to Janelia Farm Research Campus Software Copyright 1.1
+ * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
+ */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -214,13 +223,13 @@ char *g_param_string_table[] = {
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 110 "param.y"
+#line 119 "param.y"
 { int integral;
         float decimal;
         enumSEED_METHOD valSEED_METHOD;
        }
 /* Line 193 of yacc.c.  */
-#line 224 "y.tab.c"
+#line 233 "y.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -245,7 +254,7 @@ typedef struct YYLTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 249 "y.tab.c"
+#line 258 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -575,15 +584,15 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   123,   123,   124,   126,   127,   129,   130,   131,   142,
-     143,   154,   155,   166,   167,   178,   179,   190,   191,   202,
-     203,   214,   215,   226,   227,   238,   239,   250,   251,   262,
-     263,   274,   275,   286,   287,   298,   299,   310,   311,   322,
-     323,   334,   335,   346,   347,   358,   359,   370,   371,   382,
-     383,   394,   395,   406,   407,   418,   419,   430,   431,   442,
-     443,   454,   455,   466,   467,   478,   479,   490,   491,   502,
-     503,   514,   515,   526,   527,   535,   536,   537,   538,   539,
-     540
+       0,   132,   132,   133,   135,   136,   138,   139,   140,   151,
+     152,   163,   164,   175,   176,   187,   188,   199,   200,   211,
+     212,   223,   224,   235,   236,   247,   248,   259,   260,   271,
+     272,   283,   284,   295,   296,   307,   308,   319,   320,   331,
+     332,   343,   344,   355,   356,   367,   368,   379,   380,   391,
+     392,   403,   404,   415,   416,   427,   428,   439,   440,   451,
+     452,   463,   464,   475,   476,   487,   488,   499,   500,   511,
+     512,   523,   524,   535,   536,   544,   545,   546,   547,   548,
+     549
 };
 #endif
 
@@ -1663,37 +1672,37 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 123 "param.y"
+#line 132 "param.y"
     { debug_grammar("EMPTY INPUT\n"); ;}
     break;
 
   case 3:
-#line 124 "param.y"
+#line 133 "param.y"
     { debug_grammar("LINE\n"); ;}
     break;
 
   case 4:
-#line 126 "param.y"
+#line 135 "param.y"
     { debug_grammar("\t\tCOMMENT EMPTY\n"); ;}
     break;
 
   case 5:
-#line 127 "param.y"
+#line 136 "param.y"
     { debug_grammar("\t\tCOMMENT TAIL\n"); ;}
     break;
 
   case 6:
-#line 129 "param.y"
+#line 138 "param.y"
     { debug_grammar("\tEMPTY LINE\n"); ;}
     break;
 
   case 7:
-#line 130 "param.y"
+#line 139 "param.y"
     {g_param.paramMIN_LENPRJ=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LENPRJ]=1; debug_grammar("\tMIN_LENPRJ\n");;}
     break;
 
   case 8:
-#line 131 "param.y"
+#line 140 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1708,12 +1717,12 @@ yyreduce:
     break;
 
   case 9:
-#line 142 "param.y"
+#line 151 "param.y"
     {g_param.paramMIN_LENSQR=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LENSQR]=1; debug_grammar("\tMIN_LENSQR\n");;}
     break;
 
   case 10:
-#line 143 "param.y"
+#line 152 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1728,12 +1737,12 @@ yyreduce:
     break;
 
   case 11:
-#line 154 "param.y"
+#line 163 "param.y"
     {g_param.paramMIN_LENGTH=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LENGTH]=1; debug_grammar("\tMIN_LENGTH\n");;}
     break;
 
   case 12:
-#line 155 "param.y"
+#line 164 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1748,12 +1757,12 @@ yyreduce:
     break;
 
   case 13:
-#line 166 "param.y"
+#line 175 "param.y"
     {g_param.paramDUPLICATE_THRESHOLD=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexDUPLICATE_THRESHOLD]=1; debug_grammar("\tDUPLICATE_THRESHOLD\n");;}
     break;
 
   case 14:
-#line 167 "param.y"
+#line 176 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1768,12 +1777,12 @@ yyreduce:
     break;
 
   case 15:
-#line 178 "param.y"
+#line 187 "param.y"
     {g_param.paramFRAME_DELTA=(yyvsp[(2) - (4)].integral);g_found_parameters[indexFRAME_DELTA]=1; debug_grammar("\tFRAME_DELTA\n");;}
     break;
 
   case 16:
-#line 179 "param.y"
+#line 188 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1788,12 +1797,12 @@ yyreduce:
     break;
 
   case 17:
-#line 190 "param.y"
+#line 199 "param.y"
     {g_param.paramHALF_SPACE_TUNNELING_MAX_MOVES=(yyvsp[(2) - (4)].integral);g_found_parameters[indexHALF_SPACE_TUNNELING_MAX_MOVES]=1; debug_grammar("\tHALF_SPACE_TUNNELING_MAX_MOVES\n");;}
     break;
 
   case 18:
-#line 191 "param.y"
+#line 200 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1808,12 +1817,12 @@ yyreduce:
     break;
 
   case 19:
-#line 202 "param.y"
+#line 211 "param.y"
     {g_param.paramHALF_SPACE_ASSYMETRY_THRESH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexHALF_SPACE_ASSYMETRY_THRESH]=1; debug_grammar("\tHALF_SPACE_ASSYMETRY_THRESH\n");;}
     break;
 
   case 20:
-#line 203 "param.y"
+#line 212 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1828,12 +1837,12 @@ yyreduce:
     break;
 
   case 21:
-#line 214 "param.y"
+#line 223 "param.y"
     {g_param.paramMAX_DELTA_OFFSET=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMAX_DELTA_OFFSET]=1; debug_grammar("\tMAX_DELTA_OFFSET\n");;}
     break;
 
   case 22:
-#line 215 "param.y"
+#line 224 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1848,12 +1857,12 @@ yyreduce:
     break;
 
   case 23:
-#line 226 "param.y"
+#line 235 "param.y"
     {g_param.paramMAX_DELTA_WIDTH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMAX_DELTA_WIDTH]=1; debug_grammar("\tMAX_DELTA_WIDTH\n");;}
     break;
 
   case 24:
-#line 227 "param.y"
+#line 236 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1868,12 +1877,12 @@ yyreduce:
     break;
 
   case 25:
-#line 238 "param.y"
+#line 247 "param.y"
     {g_param.paramMAX_DELTA_ANGLE=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMAX_DELTA_ANGLE]=1; debug_grammar("\tMAX_DELTA_ANGLE\n");;}
     break;
 
   case 26:
-#line 239 "param.y"
+#line 248 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1888,12 +1897,12 @@ yyreduce:
     break;
 
   case 27:
-#line 250 "param.y"
+#line 259 "param.y"
     {g_param.paramMIN_SIGNAL=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMIN_SIGNAL]=1; debug_grammar("\tMIN_SIGNAL\n");;}
     break;
 
   case 28:
-#line 251 "param.y"
+#line 260 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1908,12 +1917,12 @@ yyreduce:
     break;
 
   case 29:
-#line 262 "param.y"
+#line 271 "param.y"
     {g_param.paramWIDTH_MAX=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexWIDTH_MAX]=1; debug_grammar("\tWIDTH_MAX\n");;}
     break;
 
   case 30:
-#line 263 "param.y"
+#line 272 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1928,12 +1937,12 @@ yyreduce:
     break;
 
   case 31:
-#line 274 "param.y"
+#line 283 "param.y"
     {g_param.paramWIDTH_MIN=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexWIDTH_MIN]=1; debug_grammar("\tWIDTH_MIN\n");;}
     break;
 
   case 32:
-#line 275 "param.y"
+#line 284 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1948,12 +1957,12 @@ yyreduce:
     break;
 
   case 33:
-#line 286 "param.y"
+#line 295 "param.y"
     {g_param.paramWIDTH_STEP=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexWIDTH_STEP]=1; debug_grammar("\tWIDTH_STEP\n");;}
     break;
 
   case 34:
-#line 287 "param.y"
+#line 296 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1968,12 +1977,12 @@ yyreduce:
     break;
 
   case 35:
-#line 298 "param.y"
+#line 307 "param.y"
     {g_param.paramANGLE_STEP=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexANGLE_STEP]=1; debug_grammar("\tANGLE_STEP\n");;}
     break;
 
   case 36:
-#line 299 "param.y"
+#line 308 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -1988,12 +1997,12 @@ yyreduce:
     break;
 
   case 37:
-#line 310 "param.y"
+#line 319 "param.y"
     {g_param.paramOFFSET_STEP=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexOFFSET_STEP]=1; debug_grammar("\tOFFSET_STEP\n");;}
     break;
 
   case 38:
-#line 311 "param.y"
+#line 320 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2008,12 +2017,12 @@ yyreduce:
     break;
 
   case 39:
-#line 322 "param.y"
+#line 331 "param.y"
     {g_param.paramTLEN=(yyvsp[(2) - (4)].integral);g_found_parameters[indexTLEN]=1; debug_grammar("\tTLEN\n");;}
     break;
 
   case 40:
-#line 323 "param.y"
+#line 332 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2028,12 +2037,12 @@ yyreduce:
     break;
 
   case 41:
-#line 334 "param.y"
+#line 343 "param.y"
     {g_param.paramMIN_SIZE=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_SIZE]=1; debug_grammar("\tMIN_SIZE\n");;}
     break;
 
   case 42:
-#line 335 "param.y"
+#line 344 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2048,12 +2057,12 @@ yyreduce:
     break;
 
   case 43:
-#line 346 "param.y"
+#line 355 "param.y"
     {g_param.paramMIN_LEVEL=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LEVEL]=1; debug_grammar("\tMIN_LEVEL\n");;}
     break;
 
   case 44:
-#line 347 "param.y"
+#line 356 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2068,12 +2077,12 @@ yyreduce:
     break;
 
   case 45:
-#line 358 "param.y"
+#line 367 "param.y"
     {g_param.paramHAT_RADIUS=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexHAT_RADIUS]=1; debug_grammar("\tHAT_RADIUS\n");;}
     break;
 
   case 46:
-#line 359 "param.y"
+#line 368 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2088,12 +2097,12 @@ yyreduce:
     break;
 
   case 47:
-#line 370 "param.y"
+#line 379 "param.y"
     {g_param.paramSEED_ACCUM_THRESH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexSEED_ACCUM_THRESH]=1; debug_grammar("\tSEED_ACCUM_THRESH\n");;}
     break;
 
   case 48:
-#line 371 "param.y"
+#line 380 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2108,12 +2117,12 @@ yyreduce:
     break;
 
   case 49:
-#line 382 "param.y"
+#line 391 "param.y"
     {g_param.paramSEED_ITERATION_THRESH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexSEED_ITERATION_THRESH]=1; debug_grammar("\tSEED_ITERATION_THRESH\n");;}
     break;
 
   case 50:
-#line 383 "param.y"
+#line 392 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2128,12 +2137,12 @@ yyreduce:
     break;
 
   case 51:
-#line 394 "param.y"
+#line 403 "param.y"
     {g_param.paramSEED_ITERATIONS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSEED_ITERATIONS]=1; debug_grammar("\tSEED_ITERATIONS\n");;}
     break;
 
   case 52:
-#line 395 "param.y"
+#line 404 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2148,12 +2157,12 @@ yyreduce:
     break;
 
   case 53:
-#line 406 "param.y"
+#line 415 "param.y"
     {g_param.paramSEED_ON_GRID_LATTICE_SPACING=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSEED_ON_GRID_LATTICE_SPACING]=1; debug_grammar("\tSEED_ON_GRID_LATTICE_SPACING\n");;}
     break;
 
   case 54:
-#line 407 "param.y"
+#line 416 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2168,12 +2177,12 @@ yyreduce:
     break;
 
   case 55:
-#line 418 "param.y"
+#line 427 "param.y"
     {g_param.paramSEED_METHOD=(yyvsp[(2) - (4)].valSEED_METHOD);g_found_parameters[indexSEED_METHOD]=1; debug_grammar("\tSEED_METHOD\n");;}
     break;
 
   case 56:
-#line 419 "param.y"
+#line 428 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2188,12 +2197,12 @@ yyreduce:
     break;
 
   case 57:
-#line 430 "param.y"
+#line 439 "param.y"
     {g_param.paramIDENTITY_SOLVER_SHAPE_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexIDENTITY_SOLVER_SHAPE_NBINS]=1; debug_grammar("\tIDENTITY_SOLVER_SHAPE_NBINS\n");;}
     break;
 
   case 58:
-#line 431 "param.y"
+#line 440 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2208,12 +2217,12 @@ yyreduce:
     break;
 
   case 59:
-#line 442 "param.y"
+#line 451 "param.y"
     {g_param.paramIDENTITY_SOLVER_VELOCITY_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexIDENTITY_SOLVER_VELOCITY_NBINS]=1; debug_grammar("\tIDENTITY_SOLVER_VELOCITY_NBINS\n");;}
     break;
 
   case 60:
-#line 443 "param.y"
+#line 452 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2228,12 +2237,12 @@ yyreduce:
     break;
 
   case 61:
-#line 454 "param.y"
+#line 463 "param.y"
     {g_param.paramCOMPARE_IDENTITIES_DISTS_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexCOMPARE_IDENTITIES_DISTS_NBINS]=1; debug_grammar("\tCOMPARE_IDENTITIES_DISTS_NBINS\n");;}
     break;
 
   case 62:
-#line 455 "param.y"
+#line 464 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2248,12 +2257,12 @@ yyreduce:
     break;
 
   case 63:
-#line 466 "param.y"
+#line 475 "param.y"
     {g_param.paramHMM_RECLASSIFY_BASELINE_LOG2=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexHMM_RECLASSIFY_BASELINE_LOG2]=1; debug_grammar("\tHMM_RECLASSIFY_BASELINE_LOG2\n");;}
     break;
 
   case 64:
-#line 467 "param.y"
+#line 476 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2268,12 +2277,12 @@ yyreduce:
     break;
 
   case 65:
-#line 478 "param.y"
+#line 487 "param.y"
     {g_param.paramHMM_RECLASSIFY_VEL_DISTS_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexHMM_RECLASSIFY_VEL_DISTS_NBINS]=1; debug_grammar("\tHMM_RECLASSIFY_VEL_DISTS_NBINS\n");;}
     break;
 
   case 66:
-#line 479 "param.y"
+#line 488 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2288,12 +2297,12 @@ yyreduce:
     break;
 
   case 67:
-#line 490 "param.y"
+#line 499 "param.y"
     {g_param.paramHMM_RECLASSIFY_SHP_DISTS_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexHMM_RECLASSIFY_SHP_DISTS_NBINS]=1; debug_grammar("\tHMM_RECLASSIFY_SHP_DISTS_NBINS\n");;}
     break;
 
   case 68:
-#line 491 "param.y"
+#line 500 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2308,12 +2317,12 @@ yyreduce:
     break;
 
   case 69:
-#line 502 "param.y"
+#line 511 "param.y"
     {g_param.paramSHOW_PROGRESS_MESSAGES=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSHOW_PROGRESS_MESSAGES]=1; debug_grammar("\tSHOW_PROGRESS_MESSAGES\n");;}
     break;
 
   case 70:
-#line 503 "param.y"
+#line 512 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2328,12 +2337,12 @@ yyreduce:
     break;
 
   case 71:
-#line 514 "param.y"
+#line 523 "param.y"
     {g_param.paramSHOW_DEBUG_MESSAGES=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSHOW_DEBUG_MESSAGES]=1; debug_grammar("\tSHOW_DEBUG_MESSAGES\n");;}
     break;
 
   case 72:
-#line 515 "param.y"
+#line 524 "param.y"
     {
                                       fprintf(stderr,
                                              "Problem encountered loading parameters file at line %d, columns %d-%d\n"
@@ -2348,12 +2357,12 @@ yyreduce:
     break;
 
   case 73:
-#line 526 "param.y"
+#line 535 "param.y"
     { debug_grammar("\tCOMMENT LINE\n"); ;}
     break;
 
   case 74:
-#line 527 "param.y"
+#line 536 "param.y"
     { fprintf(stderr,"Problem encountered loading parameters file at line %d, columns %d-%d\n"
                                                        "\tCould not interpret parameter name.\n",
                                                (yylsp[(1) - (2)]).first_line,(yylsp[(1) - (2)]).first_column+1,
@@ -2364,38 +2373,38 @@ yyreduce:
     break;
 
   case 75:
-#line 535 "param.y"
+#line 544 "param.y"
     {(yyval.decimal)=(yyvsp[(1) - (1)].integral);;}
     break;
 
   case 76:
-#line 536 "param.y"
+#line 545 "param.y"
     {(yyval.decimal)=(yyvsp[(1) - (1)].decimal);;}
     break;
 
   case 77:
-#line 537 "param.y"
+#line 546 "param.y"
     {(yyval.integral)=(yyvsp[(1) - (1)].integral);;}
     break;
 
   case 78:
-#line 538 "param.y"
+#line 547 "param.y"
     {(yyval.decimal)=(yyvsp[(1) - (1)].decimal);;}
     break;
 
   case 79:
-#line 539 "param.y"
+#line 548 "param.y"
     {(yyval.valSEED_METHOD)=SEED_ON_MHAT_CONTOURS;;}
     break;
 
   case 80:
-#line 540 "param.y"
+#line 549 "param.y"
     {(yyval.valSEED_METHOD)=SEED_ON_GRID;;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 2399 "y.tab.c"
+#line 2408 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2615,7 +2624,7 @@ yyreturn:
 }
 
 
-#line 542 "param.y"
+#line 551 "param.y"
 
 FILE *fp=NULL;                                               // when a file is opened, this points to the file
 int yylex(void)

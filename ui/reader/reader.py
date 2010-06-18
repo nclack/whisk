@@ -14,8 +14,14 @@ See `tiff.py` for a practical example of how the `StackReader` can be
 subclassed, or see `seq.py` for another example implementation of the
 `IMovieReader` interface.
 
-Author: Nathan Clack
-2008
+---
+Author: Nathan Clack <clackn@janelia.hhmi.org>
+Date  : 
+
+Copyright 2010 Howard Hughes Medical Institute.
+All rights reserved.
+Use is subject to Janelia Farm Research Campus Software Copyright 1.1
+license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
 """
 import pdb
 from numpy import floor

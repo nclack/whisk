@@ -1,10 +1,17 @@
+/* 
+ * Author: Nathan Clack
+ *   Date: May 31, 2010
+ *
+ * Copyright 2010 Howard Hughes Medical Institute.
+ * All rights reserved.
+ * Use is subject to Janelia Farm Research Campus Software Copyright 1.1
+ * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
+ */
 /*
  * Code here is largely based on Michael Meeuwisse's example code (copyright
  * and license below).  The only changes I've made have been to rename some
  * things.
  *
- * Author: Nathan Clack
- *   Date: May 31, 2010
  */
 /* 
  * (C) Copyright 2010 Michael Meeuwisse

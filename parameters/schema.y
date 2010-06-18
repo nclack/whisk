@@ -1,13 +1,20 @@
 /* Grammar for file defining parameters */
+/* Author: Nathan Clack <clackn@janelia.hhmi.org>
+ * Date  : June 2010
+ *
+ * Copyright 2010 Howard Hughes Medical Institute.
+ * All rights reserved.
+ * Use is subject to Janelia Farm Research Campus Software Copyright 1.1
+ * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
+ */
 /* 
- *  [ ] memory leak from string tokens.  "need" to free them when we're done
+ *  [?] memory leak from string tokens.  "need" to free them when we're done
  * params.y (generated)
  *  [x] check to make sure all the required tokens got hit
- *  [ ] API
+ *  [x] API
  *      [x] Load_Params_File(char* filename);
- *      [ ] T Get_*() {return g_param.*};
- *      [ ] #define * (g_param.*)
- *      [ ] make the .h file
+ *      [x] #define * (g_param.*)
+ *      [x] make the .h file
  *  [x] More descriptive handling of syntax errors
  *      [ ]  FIXME: enum token checking isn't handled correctly.  Values from
  *                  different enums aren't distinguished.
@@ -395,6 +402,15 @@ void kvprint_value_grammar(tkv *self)
 
 void print_prelude(char *headername)
 { CPRN(
+     "/*\n"
+     " * Author: Nathan Clack <clackn@janelia.hhmi.org>\n"
+     " * Date  : June 2010\n"
+     " * \n"
+     " * Copyright 2010 Howard Hughes Medical Institute.\n"
+     " * All rights reserved.\n"
+     " * Use is subject to Janelia Farm Research Campus Software Copyright 1.1\n"
+     " * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).\n"
+     " */\n"
      "#include <stdio.h>\n"
      "#include <string.h>\n"
      "#include <stdlib.h>\n"
@@ -598,7 +614,17 @@ void print_epilogue()
 void kvprintall(tkv *self)
 { CPRN("%%{\n");
   print_prelude(g_headername);
-  HPRN("#pragma once\n"
+  HPRN(
+       "/*\n"
+       " * Author: Nathan Clack <clackn@janelia.hhmi.org>\n"
+       " * Date  : June 2010\n"
+       " *\n"
+       " * Copyright 2010 Howard Hughes Medical Institute.\n"
+       " * All rights reserved.\n"
+       " * Use is subject to Janelia Farm Research Campus Software Copyright 1.1\n"
+       " * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).\n"
+       " */\n"
+       "#pragma once\n"
        "#ifndef bool\n"
        "typedef int bool;\n"
        "#endif\n");
