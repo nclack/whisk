@@ -5,8 +5,13 @@ import os
 
 Progress('Scanning:  $TARGET\r',overwrite=True)
 
+# Currently, TARGET_ARCH only effects Windows builds.  It's set here to force
+# an x86 build on x64 windows systems because there is no x64 FFMPEG support 
+# there.
+
 env = Environment(ENV = os.environ,
-                  TOOLS = ['default','packaging'])
+                  TOOLS = ['default','packaging'],
+                  TARGET_ARCH="x86")
 
 ##
 # PLATFORM DEPENDENT CONFIG
