@@ -19,9 +19,11 @@ if env['PLATFORM']=='win32':
   #env.Append(CCFLAGS = r'/Od          /Ot     /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /W1 /ZI     /Gd /TC')   #Debug
   env.Append(CCFLAGS  = r'/Ox /Ob2 /Oi /Ot /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE     /EHsc       /MT   /W1 /Zi /Gy     /TC')   #Release - optimized compilation - BROKEN! fread problem?
   env.Append(LINKFLAGS = r'/MACHINE:X86')
-  env["LIBSUFFIX"]=""
+  static_libwhiskio_name = "whiskio.lib"
+  env["LIBSUFFIX"]="" #have to do this to use static libaries with the wrong extension
 else:
-  #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))  
+  #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))
+  static_libwhiskio_name = "whiskio"
   env.MergeFlags( env.ParseFlags( "-g -lm" ))
   if env['PLATFORM']=='darwin':
     pass
@@ -122,6 +124,22 @@ for name in mains:
 
 libwhisk = env.SharedLibrary('whisk',list(cfiles))
 
+ioobjs = map(lambda n:env.Object(n),[
+                          'svd.c', 'mat.c', 'poly.c',
+                          'traj.c', 'bar_io.c',
+                          'common.c',    'image_lib.c', 'contour_lib.c',
+                          'error.c',     'eval.c',      'level_set.c',
+                          'utilities.c', 'tiff_io.c',   'image_filters.c',
+                          'trace.c',     'tiff_image.c','compat.c',
+                          'aip.c',       'seed.c',      'draw_lib.c',
+                          'whisker_io.c',          'whisker_io_whiskbin1.c',
+                          'whisker_io_whisker1.c', 'whisker_io_whiskold.c',
+                          'whisker_io_whiskpoly1.c',
+                          'measurements_io.c',
+                          'measurements_io_v0.c',
+                          'measurements_io_v1.c'])
+staticlibwhiskio = env.StaticLibrary(static_libwhiskio_name,ioobjs,LIBS="")
+
 ## whisker converter
 obj = env.Object("whisker_io_main", "whisker_io.c", CPPDEFINES = "WHISKER_IO_CONVERTER");
 whisker_convert = env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
@@ -192,7 +210,7 @@ for t in tests:
 ## classify tests
 tests = ["TEST_CLASSIFY_1",
          "TEST_CLASSIFY_2",
-	   "TEST_CLASSIFY_3"
+         "TEST_CLASSIFY_3"
          ] 
 totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFINES = t )
 test_classify = map( lambda t: env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
@@ -327,7 +345,7 @@ dist += env.InstallAs(target=distname+'/bin/whisker_convert$PROGSUFFIX'         
 dist += env.InstallAs(target=distname+'/bin/measurements_convert$PROGSUFFIX'      , source=measurements_convert)
 dist += env.InstallAs(target=distname+'/bin/default.parameters'                   , source='parameters/default.parameters')
 dist += env.Install(target=distname+'/python'                                     , source=['traj.py','trace.py',libwhisk])
-dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c','measurements_io.mex.c']+libwhisk)
+dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c','measurements_io.mex.c']+staticlibwhiskio)
 dist += env.Install(target=distname+'/matlab/include'                             , source=['measurements_io.h','traj.h','whisker_io.h','trace.h','common.h','image_lib.h','contour_lib.h','seed.h','eval.h','parameters/param.h','compat.h','tiff_io.h','level_set.h','water_shed.h','aip.h','utilities.h'])
 dist += env.Install(target=distname+'/matlab/include/parameters'                  , source=['parameters/param.h'])
 dist += env.Install(target=distname+'/ui/'                                        , source=['ui/README','ui/icon.png']+env.Glob('ui/*.py')+[libwhisk[0].path])

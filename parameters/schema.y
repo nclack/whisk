@@ -625,7 +625,7 @@ void kvprintall(tkv *self)
        " * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).\n"
        " */\n"
        "#pragma once\n"
-       "#ifndef bool\n"
+       "#if !defined(bool) && !defined(_bool_T)\n"
        "typedef int bool;\n"
        "#endif\n");
   kvprint_enum_defns(self);

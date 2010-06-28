@@ -11,6 +11,6 @@
 % license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
 %
 
-mex -DLOAD_MEASUREMENTS -o LoadMeasurements measurements_io.mex.c -lwhisk -L. -I./include 
-mex -DSAVE_MEASUREMENTS -o SaveMeasurements measurements_io.mex.c -lwhisk -L. -I./include 
-mex -o LoadWhiskers whisker_io.mex.c -lwhisk -L. -I./include
+mex LINKFLAGSPOST=/NODEFAULTLIB:LIBCMT -DLOAD_MEASUREMENTS -output LoadMeasurements measurements_io.mex.c  -L. -lwhiskio -I./include 
+mex LINKFLAGSPOST=/NODEFAULTLIB:LIBCMT -DSAVE_MEASUREMENTS -output SaveMeasurements measurements_io.mex.c  -L. -lwhiskio -I./include 
+mex LINKFLAGSPOST=/NODEFAULTLIB:LIBCMT -output LoadWhiskers whisker_io.mex.c -L. -lwhiskio -I./include

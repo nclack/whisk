@@ -8,7 +8,7 @@
  * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
  */
 #pragma once
-#ifndef bool
+#if !defined(bool) && !defined(_bool_T)
 typedef int bool;
 #endif
 typedef enum _t_enum_SEED_METHOD {SEED_ON_MHAT_CONTOURS, SEED_ON_GRID} enumSEED_METHOD;
