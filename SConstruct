@@ -18,6 +18,7 @@ if env['PLATFORM']=='win32':
   #env.MergeFlags( env.ParseFlags('-g -lm') )
   #env.Append(CCFLAGS = r'/Od          /Ot     /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /W1 /ZI     /Gd /TC')   #Debug
   env.Append(CCFLAGS  = r'/Ox /Ob2 /Oi /Ot /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE     /EHsc       /MT   /W1 /Zi /Gy     /TC')   #Release - optimized compilation - BROKEN! fread problem?
+  env.Append(LINKFLAGS = r'/MACHINE:X86')
   env["LIBSUFFIX"]=""
 else:
   #env.MergeFlags( env.ParseFlags( "-O3 -lm" ))  
@@ -38,7 +39,7 @@ if env['PLATFORM']=='win32':
   #binaries and includes are supplied, so we don't have to check.
   conf.env.Append(LIBPATH = r'dependencies\w32vs\ffmpeg\lib')
   conf.env.Append(CPPFLAGS = r'/I dependencies\w32vs\ffmpeg\include')
-  conf.env.Append(CPPFLAGS=' /DHAVE_FFMPEG')
+  conf.env.Append(CPPFLAGS=' /DHAVE_FFMPEG') #
   ffmpeg_libs = "libgcc.a libmingwex.a libavcodec.a libavformat.a libavutil.a libswscale.a liba52.a libz.a libfaac.a libfaad.a libgsm.a libmp3lame.a libogg.a libtheora.a libvorbis.a libvorbisenc.a libx264.a libxvidcore.a libpthreadGC2.a wsock32.lib vfw32.lib  kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib".split()
   conf.env.Append(LIBS = ffmpeg_libs)
   print "(+) FFMPEG Found"
@@ -115,18 +116,19 @@ cfiles.remove("evaltest.c")
 #
 # Builds
 #
+main_targets = {}
 for name in mains:
-  env.Program(name,[name+".c"] + list(cfiles) )
+  main_targets[name] = env.Program(name,[name+".c"] + list(cfiles) )
 
 libwhisk = env.SharedLibrary('whisk',list(cfiles))
 
 ## whisker converter
 obj = env.Object("whisker_io_main", "whisker_io.c", CPPDEFINES = "WHISKER_IO_CONVERTER");
-env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
+whisker_convert = env.Program("whisker_convert",[obj]+list( cfiles - set(["whisker_io.c"]) ) )
 
 ## measurements converter
 obj = env.Object("measurements_io_main", "measurements_io.c", CPPDEFINES = "MEASUREMENTS_IO_CONVERTER");
-env.Program("measurements_convert",[obj]+list( cfiles - set(["measurements_io.c"]) ) )
+measurements_convert = env.Program("measurements_convert",[obj]+list( cfiles - set(["measurements_io.c"]) ) )
 
 ## traj 
 libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c',
@@ -167,7 +169,7 @@ for t in tests:
                                             'utilities.c','viterbi.c',
                                             'measurements_io.c',
                                             'measurements_io_v0.c',
-                                            'measurements_io_v1.c',] ) 
+                                           'measurements_io_v1.c',] ) 
 
 ## merge tests
 tests = ["TEST_COLLISIONTABLE_1",
@@ -193,14 +195,14 @@ tests = ["TEST_CLASSIFY_1",
 	   "TEST_CLASSIFY_3"
          ] 
 totestobj = lambda t: env.Object( 'classify_'+t.lower(), ['classify.c'], CPPDEFINES = t )
-for t in tests:
-  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+test_classify = map( lambda t: env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',
                                                  'error.c','viterbi.c',
                                                  'measurements_io.c',
                                                  'measurements_io_v0.c',
                                                  'measurements_io_v1.c',
-                                               ] ) 
+                                               ] ),
+                                               tests)
 
 ## hmm-reclassify tests
 tests = [ "TEST_HMM_RECLASSIFY_1",
@@ -208,8 +210,7 @@ tests = [ "TEST_HMM_RECLASSIFY_1",
           "TEST_HMM_RECLASSIFY_5",
          ] 
 totestobj = lambda t: env.Object( 'hmm-reclassify_'+t.lower(), ['hmm-reclassify.c'], CPPDEFINES = t )
-for t in tests:
-  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+test_reclassify = map( lambda t: env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'traj.c', 'common.c',
                                                  'error.c','viterbi.c',
                                                  'hmm-reclassify-lrmodel.c',
@@ -217,7 +218,8 @@ for t in tests:
                                                  'measurements_io.c',
                                                  'measurements_io_v0.c',
                                                  'measurements_io_v1.c'
-                                               ] ) 
+                                               ] ),
+                                               tests)
 ## Deque tests
 tests = ["TEST_DEQUE_1",
          ] 
@@ -245,8 +247,9 @@ tests = ["TEST_REPORT_COMPARE_TRAJECTORIES",
          "TEST_REPORT_1",
          ] 
 totestobj = lambda t: env.Object( 'report_'+t.lower(), ['report.c'], CPPDEFINES = t )
+reporter = {}
 for t in tests:
-  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+  reporter[t] = env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'common.c',
                                                  'error.c', 'traj.c', 'viterbi.c',
                                                  'measurements_io.c',
@@ -282,8 +285,7 @@ tests = ["TEST_MEASURE_1",
          "TEST_MEASURE_2"
          ] 
 totestobj = lambda t: env.Object( 'measure_'+t.lower(), ['measure.c'], CPPDEFINES = t )
-for t in tests:
-  env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
+test_measure = map( lambda t: env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                               'svd.c', 'mat.c', 'poly.c',
                                               'traj.c', 'bar_io.c',
                                               'common.c',    'image_lib.c', 'contour_lib.c',
@@ -297,7 +299,8 @@ for t in tests:
                                               'measurements_io.c',
                                               'measurements_io_v0.c',
                                               'measurements_io_v1.c'
-                                                ] ) 
+                                                ] ),
+                                                tests)
 ## bar_io tests 
 tests = [ "TEST_BAR_IO_1",
           "TEST_BAR_IO_2",
@@ -314,14 +317,14 @@ for t in tests:
 #
 distname='WhiskerTracking'
 dist = []
-dist += env.InstallAs(target=distname+'/bin/trace'                                , source='whisk')
-dist += env.InstallAs(target=distname+'/bin/measure'                              , source='test_measure_1')
-dist += env.InstallAs(target=distname+'/bin/classify'                             , source='test_classify_1')
-dist += env.InstallAs(target=distname+'/bin/reclassify'                           , source='test_hmm_reclassify_5')
-dist += env.InstallAs(target=distname+'/bin/report/trajectory_mismatch_histogram' , source='test_report_compare_trajectories')
-dist += env.InstallAs(target=distname+'/bin/report/trajectory_mismatch_frames'    , source='test_report_1')
-dist += env.InstallAs(target=distname+'/bin/whisker_convert'                      , source='whisker_convert')
-dist += env.InstallAs(target=distname+'/bin/measurements_convert'                 , source='measurements_convert')
+dist += env.InstallAs(target=distname+'/bin/trace$PROGSUFFIX'                     , source=main_targets['whisk'])
+dist += env.InstallAs(target=distname+'/bin/measure'                              , source=test_measure[0])
+dist += env.InstallAs(target=distname+'/bin/classify'                             , source=test_classify[0])
+dist += env.InstallAs(target=distname+'/bin/reclassify'                           , source=test_reclassify[-1])
+dist += env.InstallAs(target=distname+'/bin/report/trajectory_mismatch_histogram' , source=reporter['TEST_REPORT_COMPARE_TRAJECTORIES'])
+dist += env.InstallAs(target=distname+'/bin/report/trajectory_mismatch_frames'    , source=reporter['TEST_REPORT_1'])
+dist += env.InstallAs(target=distname+'/bin/whisker_convert'                      , source=whisker_convert)
+dist += env.InstallAs(target=distname+'/bin/measurements_convert'                 , source=measurements_convert)
 dist += env.InstallAs(target=distname+'/bin/default.parameters'                   , source='parameters/default.parameters')
 dist += env.Install(target=distname+'/python'                                     , source=['traj.py','trace.py',libwhisk])
 dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c','measurements_io.mex.c']+libwhisk)

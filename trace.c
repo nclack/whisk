@@ -827,10 +827,10 @@ float integrate_harmonic_mean_by_labels( uint8 *im, float* w, int *pxlist, int n
   float totalnorm = 0.0;
   unsigned int labels[HARMONIC_MEAN_N_LABELS] = {2,3/*,5,7*/};
   const float  sigmin = 255.0;
+  int j,i;
 
   DEPRICATED;
-
-  int j,i = npx;
+  i = npx; 
   while( i-- )
   { float u = w[ pxlist[2*i+1] ];
     int code = lround( u );
