@@ -24,12 +24,26 @@
  *
  *   >> mex -o LoadWhiskers whisker_io.mex.c -lwhisk -L'C:\WhiskerTracker' -I'C:\WhiskerTracker' 
  *
+ *   On windows it may be necessary to add 
+ * 
+ *      LINKFLAGSPOST=/NODEFAULTLIB:LIBCMT
+ *
+ *   to the mex command line or to your mexopts.bat.
+ *
+ *   Usage:
+ *   -----
+ *
+ *   whiskers          = LoadWhiskers(filename)
+ *   [whiskers,format] = LoadWhiskers(filename)
+ *
+ *   <whiskers> is a struct array with a number of fields describing the shape of traced whisker-like segments.
+ *   <format>   is a string describing how the whisker data is stored.
+ *
  *   Example:
  *   -------
  *   From inside MATLAB:
  *
  *     >> w = LoadWhiskers('/Users/clackn/Desktop/whisker-mp4/whisker_data_0250.whiskers') 
- *     Got /Users/clackn/Desktop/whisker-mp4/whisker_data_0250.whiskers                    
  *                                                                                        
  *     w =                                                                                 
  *                                                                                        
@@ -71,7 +85,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   /* check for proper number of arguments */
   if(nrhs!=1) 
     mexErrMsgTxt("One input required.");
-  else if(nlhs > 1) 
+  else if(nlhs > 2) 
     mexErrMsgTxt("Too many output arguments.");
 
   /* input must be a string */
@@ -96,6 +110,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   if(nlhs==0)
     goto Done;
+  
+  if(nlhs==2)
+  { char *format=NULL;
+    if( Whisker_File_Autodetect(filename,&format)==-1 ) 
+      goto AutodetectException;
+  
+    plhs[1] = mxCreateString(format);
+    if(!plhs[1])
+      goto AllocateFormatStringException;
+  }
   
   { const char *fields[] = {"id","time","x","y","thick","scores"};        
     plhs[0] = mxCreateStructMatrix(
@@ -152,7 +176,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       
     }
   }
-              
+  
 Done:
   Free_Whisker_Seg_Vec(ws,nwhisk);
+  return;
+AutodetectException:
+  Free_Whisker_Seg_Vec(ws,nwhisk);
+  mexErrMsgTxt("Could not autodetect file format.\n");
+AllocateFormatStringException:
+  Free_Whisker_Seg_Vec(ws,nwhisk);
+  mexErrMsgTxt("Allocation failed for format string.\n");
 }

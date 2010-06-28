@@ -16,10 +16,15 @@
  *
  *    mex -DLOAD_MEASUREMENTS -o LoadMeasurements measurements_io.mex -lwhisk -L./lib -I./include 
  *
+ *   On windows it may be necessary to add 
+ * 
+ *      LINKFLAGSPOST=/NODEFAULTLIB:LIBCMT
+ *
+ *   to the mex command line or to your mexopts.bat. 
+ *
  *  Calling from Matlab console:
  *
  *    table = LoadMeasurements('path/to/file.measurements'); 
- *
  *
  *  Returned `table` is a `struct array` with the following fields:
  *    
@@ -279,7 +284,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "Could not convert input to string.");
 
   nrows = mxGetM(prhs[1])*mxGetN(prhs[1]);
+#if 0
   mexPrintf("Counted %d rows.\n",nrows);
+#endif
   mxassert(
       table=Alloc_Measurements_Table(nrows,8), //see end of measure.c:Whisker_Segments_Measure for column assignments 
       "Could not allocate temporary Measurements table.");
@@ -304,7 +311,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       follicle_y  = mxGetFieldByNumber(prhs[1],i,10); 
       tip_x       = mxGetFieldByNumber(prhs[1],i,11); 
       tip_y       = mxGetFieldByNumber(prhs[1],i,12); 
-
+#if 0
       mexPrintf("fid        :%p\n",fid       );
       mexPrintf("wid        :%p\n",wid       );
       mexPrintf("label      :%p\n",label     );
@@ -319,6 +326,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       mexPrintf("tip_x      :%p\n",tip_x     );
       mexPrintf("tip_y      :%p\n",tip_y     );
       mexPrintf("%d of %d\n",i,nrows);
+#endif
 
       if(!( fid        && 
             wid        && 
