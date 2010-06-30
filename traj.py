@@ -21,11 +21,14 @@ import warnings
 import pdb
 
 os.environ['PATH'] += r';.\\'
-ctraj = cdll.LoadLibrary( find_library('traj') )
-if ctraj._name==None:
+#ctraj = cdll.LoadLibrary( find_library('traj') )
+#if ctraj._name==None:
+try:
   ctraj = cdll.LoadLibrary( find_library('whisk') )
-  if ctraj._name==None:
-    raise ImportError("Can not load whisk or traj shared library");
+except:
+  raise ImportError("Can not load whisk or traj shared library"); 
+if ctraj._name==None:
+  raise ImportError("Can not load whisk or traj shared library");
 
 
 class cMeasurements(Structure):
