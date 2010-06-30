@@ -14,7 +14,10 @@ from numpy import zeros
 from reader import StackReader
 import os,sys
 
-os.environ['PATH']+=';.\\'
+os.environ['PATH']=('%s;.\\;'%os.path.split(__file__)[0])+os.environ['PATH']
+# cReader_path = find_library("whisk");
+# print cReader_path
+# print os.path.split(__file__)[0]
 cReader = CDLL( find_library("whisk") )
 
 cReader.FFMPEG_Get_Stack_Dimensions.restype = c_int
