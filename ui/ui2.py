@@ -202,8 +202,11 @@ def load_icon():
   path = getfile(load_icon)
   #filename = join(split(join(os.getcwd(), __file__ ))[0],'icon.png')
   filename = join(split(path)[0],'icon.png')
-  icon = pygame.image.load(filename)
-  pygame.display.set_icon(icon)
+  try:
+    icon = pygame.image.load(filename)
+    pygame.display.set_icon(icon)
+  except: #silently fail if icon won't load
+    pass
 
 def main( filename, 
           whiskers_file_name, 
