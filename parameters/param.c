@@ -2762,7 +2762,7 @@ int Load_Params_File(char *filename)
   fp = fopen(filename,"r");
   if(!fp)
   { fprintf(stderr,"Could not open parameter file at %s.\n",filename);
-    exit(1);
+    return 1; // failed
   }
   sts = yyparse();
   fclose(fp);

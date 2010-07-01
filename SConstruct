@@ -129,11 +129,13 @@ for name in mains:
 
 libwhisk = env.SharedLibrary('whisk',list(cfiles))
 
-ioobjs = map(lambda n:env.Object(n),[
+obj_error_skip_params = env.Object(target='error-skip-param.o',source='error.c',CPPDEFINES="SKIP_PARAMS_FILE");
+ioobjs = obj_error_skip_params + \
+         map(lambda n:env.Object(n),[
                           'svd.c', 'mat.c', 'poly.c',
                           'traj.c', 'bar_io.c',
                           'common.c',    'image_lib.c', 'contour_lib.c',
-                          'error.c',     'eval.c',      'level_set.c',
+                          'eval.c',      'level_set.c',
                           'utilities.c', 'tiff_io.c',   'image_filters.c',
                           'trace.c',     'tiff_image.c','compat.c',
                           'aip.c',       'seed.c',      'draw_lib.c',
@@ -357,6 +359,7 @@ env.Install('./ui/','parameters/default.parameters')
 #
 distname='WhiskerTracking'
 dist = []
+libwhisk_package = [libwhisk[0].path,'parameters/default.parameters']
 dist += env.InstallAs(target=distname+'/bin/trace$PROGSUFFIX'                     , source=main_targets['whisk'])
 dist += env.InstallAs(target=distname+'/bin/measure$PROGSUFFIX'                   , source=test_measure[0])
 dist += env.InstallAs(target=distname+'/bin/classify$PROGSUFFIX'                  , source=test_classify[0])
@@ -366,11 +369,10 @@ dist += env.InstallAs(target=distname+'/bin/report/trajectory_mismatch_frames$PR
 dist += env.InstallAs(target=distname+'/bin/whisker_convert$PROGSUFFIX'           , source=whisker_convert)
 dist += env.InstallAs(target=distname+'/bin/measurements_convert$PROGSUFFIX'      , source=measurements_convert)
 dist += env.InstallAs(target=distname+'/bin/default.parameters'                   , source='parameters/default.parameters')
-dist += env.Install(target=distname+'/python'                                     , source=['traj.py','trace.py',libwhisk])
+dist += env.Install(target=distname+'/python'                                     , source=['traj.py','trace.py']+libwhisk_package)
 dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c','measurements_io.mex.c']+staticlibwhiskio)
 dist += env.Install(target=distname+'/matlab/include'                             , source=['measurements_io.h','traj.h','whisker_io.h','trace.h','common.h','image_lib.h','contour_lib.h','seed.h','eval.h','parameters/param.h','compat.h','tiff_io.h','level_set.h','water_shed.h','aip.h','utilities.h'])
 dist += env.Install(target=distname+'/matlab/include/parameters'                  , source=['parameters/param.h'])
-libwhisk_package = [libwhisk[0].path,'parameters/default.parameters']
 dist += env.Install(target=distname+'/ui/'                                        , source=['ui/README','ui/icon.png']+env.Glob('ui/*.py')+libwhisk_package)
 dist += env.Install(target=distname+'/ui/reader'                                  , source=env.Glob('ui/reader/*.py')+['README']+libwhisk_package)
 dist += env.Install(target=distname+'/ui/whiskerdata'                             , source=env.Glob('ui/whiskerdata/*.py')+libwhisk_package)

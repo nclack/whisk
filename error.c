@@ -9,6 +9,10 @@
 
 #define ERR_STREAM stdout
 
+#ifdef SKIP_PARAMS_FILE
+#define SHOW_PROGRESS_MESSAGES_ 0
+#define SHOW_DEBUG_MESSAGES_    0
+#else
 int _g_params_inited = 0;
 
 int check_params_loaded()
@@ -24,6 +28,7 @@ int check_params_loaded()
   }
   return 1;
 }
+#endif
 
 SHARED_EXPORT
 void error(char *str, ... )
@@ -53,7 +58,11 @@ void debug(char *str, ... )
 {
   va_list argList;
   va_start( argList, str );
-  if(check_params_loaded() && SHOW_DEBUG_MESSAGES )
+#ifdef SKIP_PARAMS_FILE
+  if(SHOW_DEBUG_MESSAGES_)
+#else
+  if(check_params_loaded() && SHOW_DEBUG_MESSAGES)
+#endif
     vfprintf(ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);
@@ -76,7 +85,11 @@ SHARED_EXPORT
 void progress(char *str, ... )
 { va_list argList;
   va_start( argList, str );
+#ifdef SKIP_PARAMS_FILE
+  if(SHOW_PROGRESS_MESSAGES_)
+#else
   if(check_params_loaded() && SHOW_PROGRESS_MESSAGES )
+#endif
     vfprintf( ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);
@@ -84,7 +97,12 @@ void progress(char *str, ... )
 
 SHARED_EXPORT
 void progress_meter(double cur, double min, double max, int len, char *str, ...)
-{ if( SHOW_PROGRESS_MESSAGES )
+{ 
+#ifdef SKIP_PARAMS_FILE
+  if(SHOW_PROGRESS_MESSAGES_)
+#else
+  if(check_params_loaded() && SHOW_PROGRESS_MESSAGES )
+#endif
   { va_list argList;
     char buf[1024];
     int n=0;
