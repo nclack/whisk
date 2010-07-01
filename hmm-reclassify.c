@@ -1177,6 +1177,10 @@ int main(int argc, char*argv[])
   int nstate,minstate,maxstate;
   
   Process_Arguments( argc, argv, Spec, 0 );
+  if(Load_Params_File("default.parameters"))
+  { warning("Make sure defualt.parameters is in the calling directory\n");
+    error("Could not load parameters from file: default.parameters\n");
+  }
 
   help( Is_Arg_Matched("-h") || Is_Arg_Matched("--help"),
     "----------------------------\n"

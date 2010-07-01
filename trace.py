@@ -38,6 +38,10 @@ import pdb
 os.environ['PATH'] += r';.//'
 cWhisk = CDLL( find_library("whisk") )
 
+_param_file = "default.parameters"
+if cWhisk.Load_Params_File(_param_file)==1: #returns 0 on success, 1 on failure
+  raise Exception("Could not load tracing parameters from file: %s"%_param_file)
+
 #
 # DATA STRUCTURE TRANSLATIONS
 #

@@ -186,7 +186,7 @@ def load_whiskers( filename ):
     if len(w):
       wid = w.values()[0].keys()[0]
     return w,wid      
-  except IOError:
+  except:
     print "Couldn't open file. Creating: ", filename
     return {},0
 

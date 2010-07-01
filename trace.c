@@ -37,13 +37,13 @@
 #include "parameters/param.h"
 
 #if 0
+#define DEBUG_DETECTOR_BANK
 #define DEBUG_READ_LINE_DETECTOR_BANK
+#define SHOW_HALF_SPACE_DETECTOR
 #define SHOW_LINE_DETECTOR
 #define DEBUG_SEEDING_FIELDS
-#define DEBUG_DETECTOR_BANK
 #define DEBUG_LINE_FITTING
 #define SHOW_WHISKER_TRACE
-#define SHOW_HALF_SPACE_DETECTOR
 
 #define DEBUG_LINE_FITTING
 #define DEBUG_WHISKER_TRACE
@@ -720,7 +720,7 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
 
   fp = fopen(filename,"rb");
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
-  progress("errno: %d\n",errno);
+  //progress("errno: %d\n",errno);
   progress("%s %p\n"
            "pointer to banks pointer: %p\n"
            "           banks pointer: %p\n",filename,fp,bank,*bank);

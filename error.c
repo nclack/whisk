@@ -9,6 +9,22 @@
 
 #define ERR_STREAM stdout
 
+int _g_params_inited = 0;
+
+int check_params_loaded()
+{ char f[] = "default.parameters";
+  if(_g_params_inited==0)
+  { if(Load_Params_File(f))
+    { warning("Make sure %s is in the calling directory\n"  
+              "Could not load parameters from file: %s\n",f,f);
+      return 0;
+    }
+    else
+      _g_params_inited = 1;
+  }
+  return 1;
+}
+
 SHARED_EXPORT
 void error(char *str, ... )
 {
@@ -37,7 +53,7 @@ void debug(char *str, ... )
 {
   va_list argList;
   va_start( argList, str );
-  if( SHOW_DEBUG_MESSAGES )
+  if(check_params_loaded() && SHOW_DEBUG_MESSAGES )
     vfprintf(ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);
@@ -60,7 +76,7 @@ SHARED_EXPORT
 void progress(char *str, ... )
 { va_list argList;
   va_start( argList, str );
-  if( SHOW_PROGRESS_MESSAGES )
+  if(check_params_loaded() && SHOW_PROGRESS_MESSAGES )
     vfprintf( ERR_STREAM, str, argList);
   va_end( argList );
   fflush(NULL);

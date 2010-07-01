@@ -158,6 +158,7 @@ libtraj = env.SharedLibrary( 'traj', ['traj.c','common.c','error.c',
                                       'utilities.c','viterbi.c','report.c',
                                       'measure.c',
                                       'poly.c','mat.c','svd.c',
+                                      'parameters/param.c',
                                       'measurements_io.c',
                                       'measurements_io_v0.c',
                                       'measurements_io_v1.c'] )
@@ -180,7 +181,8 @@ for i in range(2,6):
 
 ## viterbi tests
 viterbi_test = env.Object('viterbi_test', ['viterbi.c'], CPPDEFINES = "TEST_VITERBI")
-env.Program('test_viterbi', [viterbi_test, 'common.c', 'utilities.c','error.c',])
+env.Program('test_viterbi', [viterbi_test, 'common.c', 'utilities.c','error.c',
+                                           'parameters/param.c',])
 
 ## traj tests
 tests = ["TEST_BUILD_DISTRIBUTIONS",
@@ -190,6 +192,7 @@ totestobj = lambda t: env.Object( 'trajobj_'+t.lower(), ['traj.c'], CPPDEFINES =
 for t in tests:
   env.Program( 'test_traj_'+t[5:].lower(), [ totestobj(t),'common.c','error.c',
                                             'utilities.c','viterbi.c',
+                                            'parameters/param.c',
                                             'measurements_io.c',
                                             'measurements_io_v0.c',
                                            'measurements_io_v1.c',] ) 
@@ -210,6 +213,7 @@ for t in tests:
                                               'whisker_io.c',          'whisker_io_whiskbin1.c',
                                               'whisker_io_whisker1.c', 'whisker_io_whiskold.c',
                                               'whisker_io_whiskpoly1.c',
+                                              'parameters/param.c',
                                               'svd.c', 'mat.c', 'poly.c',
                                               ] ) 
 ## classify tests
@@ -224,6 +228,7 @@ test_classify = map( lambda t: env.Program( 'test_'+t[5:].lower(), [ totestobj(t
                                                  'measurements_io.c',
                                                  'measurements_io_v0.c',
                                                  'measurements_io_v1.c',
+                                                 'parameters/param.c'
                                                ] ),
                                                tests)
 
@@ -240,7 +245,8 @@ test_reclassify = map( lambda t: env.Program( 'test_'+t[5:].lower(), [ totestobj
                                                  'hmm-reclassify-lrmodel-w-deletions.c',
                                                  'measurements_io.c',
                                                  'measurements_io_v0.c',
-                                                 'measurements_io_v1.c'
+                                                 'measurements_io_v1.c',
+                                                 'parameters/param.c'
                                                ] ),
                                                tests)
 ## Deque tests
@@ -251,6 +257,7 @@ for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'common.c',
                                                  'error.c',
+                                                 'parameters/param.c'
                                                ] ) 
 
 ## Running maxima filter tests
@@ -263,6 +270,7 @@ for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c',
                                                  'error.c',
+                                                 'parameters/param.c'
                                                ] ) 
 
 ## report tests
@@ -277,7 +285,8 @@ for t in tests:
                                                  'error.c', 'traj.c', 'viterbi.c',
                                                  'measurements_io.c',
                                                  'measurements_io_v0.c',
-                                                 'measurements_io_v1.c'
+                                                 'measurements_io_v1.c',
+                                                 'parameters/param.c'
                                                ] ) 
 
 ## svd tests
@@ -289,7 +298,8 @@ totestobj = lambda t: env.Object( 'svd_'+t.lower(), ['svd.c'], CPPDEFINES = t )
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'common.c',
-                                                 'error.c', 'compat.c', 'mat.c'
+                                                 'error.c', 'compat.c', 'mat.c',
+                                                 'parameters/param.c'
                                                ] ) 
 
 ## polyfit tests
@@ -300,7 +310,8 @@ totestobj = lambda t: env.Object( 'polyfit_'+t.lower(), ['poly.c'], CPPDEFINES =
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                         'utilities.c', 'common.c', 'svd.c',
-                                        'error.c', 'compat.c', 'mat.c'
+                                        'error.c', 'compat.c', 'mat.c',
+                                        'parameters/param.c'
                                       ] ) 
 
 ## measure tests
@@ -321,7 +332,8 @@ test_measure = map( lambda t: env.Program( 'test_'+t[5:].lower(), [ totestobj(t)
                                               'whisker_io_whiskpoly1.c',
                                               'measurements_io.c',
                                               'measurements_io_v0.c',
-                                              'measurements_io_v1.c'
+                                              'measurements_io_v1.c',
+                                              'parameters/param.c'
                                                 ] ),
                                                 tests)
 ## bar_io tests 
@@ -332,8 +344,13 @@ totestobj = lambda t: env.Object( 'bar_io_'+t.lower(), ['bar_io.c'], CPPDEFINES 
 for t in tests:
   env.Program( 'test_'+t[5:].lower(), [ totestobj(t),
                                                  'utilities.c', 'common.c',
-                                                 'error.c', 'compat.c'
+                                                 'error.c', 'compat.c',
+                                                 'parameters/param.c'
                                                ] ) 
+
+# copy parameters files around
+env.Install('./','parameters/default.parameters')
+env.Install('./ui/','parameters/default.parameters')
 
 ##
 # PACKAGING
@@ -353,9 +370,10 @@ dist += env.Install(target=distname+'/python'                                   
 dist += env.Install(target=distname+'/matlab'                                     , source=env.Glob('*.m')+['whisker_io.mex.c','measurements_io.mex.c']+staticlibwhiskio)
 dist += env.Install(target=distname+'/matlab/include'                             , source=['measurements_io.h','traj.h','whisker_io.h','trace.h','common.h','image_lib.h','contour_lib.h','seed.h','eval.h','parameters/param.h','compat.h','tiff_io.h','level_set.h','water_shed.h','aip.h','utilities.h'])
 dist += env.Install(target=distname+'/matlab/include/parameters'                  , source=['parameters/param.h'])
-dist += env.Install(target=distname+'/ui/'                                        , source=['ui/README','ui/icon.png']+env.Glob('ui/*.py')+[libwhisk[0].path])
-dist += env.Install(target=distname+'/ui/reader'                                  , source=env.Glob('ui/reader/*.py')+['README']+[libwhisk[0].path])
-dist += env.Install(target=distname+'/ui/whiskerdata'                             , source=env.Glob('ui/whiskerdata/*.py')+[libwhisk[0].path])
+libwhisk_package = [libwhisk[0].path,'parameters/default.parameters']
+dist += env.Install(target=distname+'/ui/'                                        , source=['ui/README','ui/icon.png']+env.Glob('ui/*.py')+libwhisk_package)
+dist += env.Install(target=distname+'/ui/reader'                                  , source=env.Glob('ui/reader/*.py')+['README']+libwhisk_package)
+dist += env.Install(target=distname+'/ui/whiskerdata'                             , source=env.Glob('ui/whiskerdata/*.py')+libwhisk_package)
 ## 
 ## Packager does not seem to work correctly.
 ##

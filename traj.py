@@ -30,6 +30,9 @@ except:
 if ctraj._name==None:
   raise ImportError("Can not load whisk or traj shared library");
 
+_param_file = "default.parameters"
+if ctraj.Load_Params_File(_param_file)==1: #returns 0 on success, 1 on failure
+  raise Exception("Could not load tracing parameters from file: %s"%_param_file)
 
 class cMeasurements(Structure):
   """ Proxy for Measurements struct. 
@@ -161,6 +164,8 @@ class MeasurementsTable(object):
     >>> print (shape[:,3:]==data[:,3:]).all()
     True
     """
+    if self._nrows==0:
+      return []
     data = zeros( (self._nrows, self._measurements[0].n+3), dtype=double )
     ctraj.Measurements_Table_Data_To_Doubles(self._measurements, 
                                              self._nrows, 

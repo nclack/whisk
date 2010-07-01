@@ -237,7 +237,8 @@ int main(int argc, char *argv[])
   /* Process Arguments */
   Process_Arguments(argc,argv,Spec,0);
   if(Load_Params_File("default.parameters"))
-  { error("Could not load parameters.\n");
+  { warning("Make sure defualt.parameters is in the calling directory\n");
+    error("Could not load parameters from file: default.parameters\n");
   }
 
   prefix = Get_String_Arg("prefix");
