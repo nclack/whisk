@@ -8,7 +8,13 @@
  * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
  */
 #pragma once
+#ifndef SHARED_EXPORT
+#ifdef _MSC_VER
 #define SHARED_EXPORT __declspec(dllexport)
+#else
+#define SHARED_EXPORT
+#endif
+#endif
 #if !defined(bool) && !defined(_bool_T)
 typedef int bool;
 #endif

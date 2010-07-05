@@ -627,7 +627,13 @@ void kvprintall(tkv *self)
        " * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).\n"
        " */\n"
        "#pragma once\n"
+       "#ifndef SHARED_EXPORT\n"
+       "#ifdef _MSC_VER\n"
        "#define SHARED_EXPORT __declspec(dllexport)\n"
+       "#else\n"
+       "#define SHARED_EXPORT\n"
+       "#endif\n"
+       "#endif\n"
        "#if !defined(bool) && !defined(_bool_T)\n"
        "typedef int bool;\n"
        "#endif\n");

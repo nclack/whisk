@@ -1,23 +1,24 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -28,7 +29,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -46,7 +47,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.4.1"
+#define YYBISON_VERSION "2.3"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -54,20 +55,35 @@
 /* Pure parsers.  */
 #define YYPURE 0
 
-/* Push parsers.  */
-#define YYPUSH 0
-
-/* Pull parsers.  */
-#define YYPULL 1
-
 /* Using locations.  */
 #define YYLSP_NEEDED 1
 
 
 
-/* Copy the first part of user declarations.  */
+/* Tokens.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     COMMENT = 258,
+     INTEGRAL = 259,
+     DECIMAL = 260,
+     TOK_SEED_ON_MHAT_CONTOURS = 261,
+     TOK_SEED_ON_GRID = 262
+   };
+#endif
+/* Tokens.  */
+#define COMMENT 258
+#define INTEGRAL 259
+#define DECIMAL 260
+#define TOK_SEED_ON_MHAT_CONTOURS 261
+#define TOK_SEED_ON_GRID 262
 
-/* Line 189 of yacc.c  */
+
+
+
+/* Copy the first part of user declarations.  */
 #line 1 "param.y"
 
 /*
@@ -187,9 +203,6 @@ char *g_param_string_table[] = {
 	"SHOW_DEBUG_MESSAGES"};
 
 
-/* Line 189 of yacc.c  */
-#line 192 "y.tab.c"
-
 /* Enabling traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 1
@@ -208,41 +221,19 @@ char *g_param_string_table[] = {
 # define YYTOKEN_TABLE 1
 #endif
 
-
-/* Tokens.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     COMMENT = 258,
-     INTEGRAL = 259,
-     DECIMAL = 260,
-     TOK_SEED_ON_MHAT_CONTOURS = 261,
-     TOK_SEED_ON_GRID = 262
-   };
-#endif
-
-
-
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-{
-
-/* Line 214 of yacc.c  */
 #line 119 "param.y"
- int integral;
+{ int integral;
         float decimal;
         enumSEED_METHOD valSEED_METHOD;
-       
-
-
-/* Line 214 of yacc.c  */
-#line 242 "y.tab.c"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+       }
+/* Line 193 of yacc.c.  */
+#line 233 "y.tab.c"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 #if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
@@ -262,8 +253,8 @@ typedef struct YYLTYPE
 /* Copy the second part of user declarations.  */
 
 
-/* Line 264 of yacc.c  */
-#line 267 "y.tab.c"
+/* Line 216 of yacc.c.  */
+#line 258 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -313,7 +304,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -338,14 +329,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int yyi)
+YYID (int i)
 #else
 static int
-YYID (yyi)
-    int yyi;
+YYID (i)
+    int i;
 #endif
 {
-  return yyi;
+  return i;
 }
 #endif
 
@@ -427,9 +418,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss_alloc;
-  YYSTYPE yyvs_alloc;
-  YYLTYPE yyls_alloc;
+  yytype_int16 yyss;
+  YYSTYPE yyvs;
+    YYLTYPE yyls;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
@@ -464,12 +455,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
+# define YYSTACK_RELOCATE(Stack)					\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
-	Stack = &yyptr->Stack_alloc;					\
+	YYCOPY (&yyptr->Stack, Stack, yysize);				\
+	Stack = &yyptr->Stack;						\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -918,7 +909,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -1034,20 +1025,17 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
+yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
 #else
 static void
-yy_stack_print (yybottom, yytop)
-    yytype_int16 *yybottom;
-    yytype_int16 *yytop;
+yy_stack_print (bottom, top)
+    yytype_int16 *bottom;
+    yytype_int16 *top;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; yybottom <= yytop; yybottom++)
-    {
-      int yybot = *yybottom;
-      YYFPRINTF (stderr, " %d", yybot);
-    }
+  for (; bottom <= top; ++bottom)
+    YYFPRINTF (stderr, " %d", *bottom);
   YYFPRINTF (stderr, "\n");
 }
 
@@ -1082,11 +1070,11 @@ yy_reduce_print (yyvsp, yylsp, yyrule)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       , &(yylsp[(yyi + 1) - (yynrhs)])		       );
-      YYFPRINTF (stderr, "\n");
+      fprintf (stderr, "\n");
     }
 }
 
@@ -1368,8 +1356,10 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp)
 	break;
     }
 }
+
 
 /* Prevent warnings from -Wmissing-prototypes.  */
+
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -1385,23 +1375,23 @@ int yyparse ();
 #endif /* ! YYPARSE_PARAM */
 
 
-/* The lookahead symbol.  */
+
+/* The look-ahead symbol.  */
 int yychar;
 
-/* The semantic value of the lookahead symbol.  */
+/* The semantic value of the look-ahead symbol.  */
 YYSTYPE yylval;
-
-/* Location data for the lookahead symbol.  */
-YYLTYPE yylloc;
 
 /* Number of syntax errors so far.  */
 int yynerrs;
+/* Location data for the look-ahead symbol.  */
+YYLTYPE yylloc;
 
 
 
-/*-------------------------.
-| yyparse or yypush_parse.  |
-`-------------------------*/
+/*----------.
+| yyparse.  |
+`----------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -1425,49 +1415,14 @@ yyparse ()
 #endif
 #endif
 {
-
-
-    int yystate;
-    /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
-
-    /* The stacks and their tools:
-       `yyss': related to states.
-       `yyvs': related to semantic values.
-       `yyls': related to locations.
-
-       Refer to the stacks thru separate pointers, to allow yyoverflow
-       to reallocate them elsewhere.  */
-
-    /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
-    yytype_int16 *yyss;
-    yytype_int16 *yyssp;
-
-    /* The semantic value stack.  */
-    YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    /* The location stack.  */
-    YYLTYPE yylsa[YYINITDEPTH];
-    YYLTYPE *yyls;
-    YYLTYPE *yylsp;
-
-    /* The locations where the error started and ended.  */
-    YYLTYPE yyerror_range[2];
-
-    YYSIZE_T yystacksize;
-
+  
+  int yystate;
   int yyn;
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken;
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-  YYLTYPE yyloc;
-
+  /* Number of tokens to shift before error messages enabled.  */
+  int yyerrstatus;
+  /* Look-ahead token as an internal (translated) token number.  */
+  int yytoken = 0;
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -1475,37 +1430,63 @@ yyparse ()
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
+  /* Three stacks and their tools:
+     `yyss': related to states,
+     `yyvs': related to semantic values,
+     `yyls': related to locations.
+
+     Refer to the stacks thru separate pointers, to allow yyoverflow
+     to reallocate them elsewhere.  */
+
+  /* The state stack.  */
+  yytype_int16 yyssa[YYINITDEPTH];
+  yytype_int16 *yyss = yyssa;
+  yytype_int16 *yyssp;
+
+  /* The semantic value stack.  */
+  YYSTYPE yyvsa[YYINITDEPTH];
+  YYSTYPE *yyvs = yyvsa;
+  YYSTYPE *yyvsp;
+
+  /* The location stack.  */
+  YYLTYPE yylsa[YYINITDEPTH];
+  YYLTYPE *yyls = yylsa;
+  YYLTYPE *yylsp;
+  /* The locations where the error started and ended.  */
+  YYLTYPE yyerror_range[2];
+
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
+
+  YYSIZE_T yystacksize = YYINITDEPTH;
+
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+  YYLTYPE yyloc;
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
-
-  yytoken = 0;
-  yyss = yyssa;
-  yyvs = yyvsa;
-  yyls = yylsa;
-  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY; /* Cause a token to be read.  */
+  yychar = YYEMPTY;		/* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
+
   yyssp = yyss;
   yyvsp = yyvs;
   yylsp = yyls;
-
-#if YYLTYPE_IS_TRIVIAL
+#if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
   /* Initialize the default location before parsing starts.  */
   yylloc.first_line   = yylloc.last_line   = 1;
-  yylloc.first_column = yylloc.last_column = 1;
+  yylloc.first_column = yylloc.last_column = 0;
 #endif
 
   goto yysetstate;
@@ -1544,7 +1525,6 @@ yyparse ()
 		    &yyvs1, yysize * sizeof (*yyvsp),
 		    &yyls1, yysize * sizeof (*yylsp),
 		    &yystacksize);
-
 	yyls = yyls1;
 	yyss = yyss1;
 	yyvs = yyvs1;
@@ -1566,9 +1546,9 @@ yyparse ()
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss_alloc, yyss);
-	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
-	YYSTACK_RELOCATE (yyls_alloc, yyls);
+	YYSTACK_RELOCATE (yyss);
+	YYSTACK_RELOCATE (yyvs);
+	YYSTACK_RELOCATE (yyls);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -1589,9 +1569,6 @@ yyparse ()
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
-  if (yystate == YYFINAL)
-    YYACCEPT;
-
   goto yybackup;
 
 /*-----------.
@@ -1600,16 +1577,16 @@ yyparse ()
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     lookahead token if we need one and don't already have one.  */
+     look-ahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to lookahead token.  */
+  /* First try to decide what to do without reference to look-ahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a lookahead token if don't already have one.  */
+  /* Not known => get a look-ahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -1641,16 +1618,20 @@ yybackup:
       goto yyreduce;
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the lookahead token.  */
+  /* Shift the look-ahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token.  */
-  yychar = YYEMPTY;
+  /* Discard the shifted token unless it is eof.  */
+  if (yychar != YYEOF)
+    yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -1691,50 +1672,36 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-
-/* Line 1455 of yacc.c  */
 #line 132 "param.y"
     { debug_grammar("EMPTY INPUT\n"); ;}
     break;
 
   case 3:
-
-/* Line 1455 of yacc.c  */
 #line 133 "param.y"
     { debug_grammar("LINE\n"); ;}
     break;
 
   case 4:
-
-/* Line 1455 of yacc.c  */
 #line 135 "param.y"
     { debug_grammar("\t\tCOMMENT EMPTY\n"); ;}
     break;
 
   case 5:
-
-/* Line 1455 of yacc.c  */
 #line 136 "param.y"
     { debug_grammar("\t\tCOMMENT TAIL\n"); ;}
     break;
 
   case 6:
-
-/* Line 1455 of yacc.c  */
 #line 138 "param.y"
     { debug_grammar("\tEMPTY LINE\n"); ;}
     break;
 
   case 7:
-
-/* Line 1455 of yacc.c  */
 #line 139 "param.y"
     {g_param.paramMIN_LENPRJ=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LENPRJ]=1; debug_grammar("\tMIN_LENPRJ\n");;}
     break;
 
   case 8:
-
-/* Line 1455 of yacc.c  */
 #line 140 "param.y"
     {
                                       fprintf(stderr,
@@ -1750,15 +1717,11 @@ yyreduce:
     break;
 
   case 9:
-
-/* Line 1455 of yacc.c  */
 #line 151 "param.y"
     {g_param.paramMIN_LENSQR=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LENSQR]=1; debug_grammar("\tMIN_LENSQR\n");;}
     break;
 
   case 10:
-
-/* Line 1455 of yacc.c  */
 #line 152 "param.y"
     {
                                       fprintf(stderr,
@@ -1774,15 +1737,11 @@ yyreduce:
     break;
 
   case 11:
-
-/* Line 1455 of yacc.c  */
 #line 163 "param.y"
     {g_param.paramMIN_LENGTH=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LENGTH]=1; debug_grammar("\tMIN_LENGTH\n");;}
     break;
 
   case 12:
-
-/* Line 1455 of yacc.c  */
 #line 164 "param.y"
     {
                                       fprintf(stderr,
@@ -1798,15 +1757,11 @@ yyreduce:
     break;
 
   case 13:
-
-/* Line 1455 of yacc.c  */
 #line 175 "param.y"
     {g_param.paramDUPLICATE_THRESHOLD=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexDUPLICATE_THRESHOLD]=1; debug_grammar("\tDUPLICATE_THRESHOLD\n");;}
     break;
 
   case 14:
-
-/* Line 1455 of yacc.c  */
 #line 176 "param.y"
     {
                                       fprintf(stderr,
@@ -1822,15 +1777,11 @@ yyreduce:
     break;
 
   case 15:
-
-/* Line 1455 of yacc.c  */
 #line 187 "param.y"
     {g_param.paramFRAME_DELTA=(yyvsp[(2) - (4)].integral);g_found_parameters[indexFRAME_DELTA]=1; debug_grammar("\tFRAME_DELTA\n");;}
     break;
 
   case 16:
-
-/* Line 1455 of yacc.c  */
 #line 188 "param.y"
     {
                                       fprintf(stderr,
@@ -1846,15 +1797,11 @@ yyreduce:
     break;
 
   case 17:
-
-/* Line 1455 of yacc.c  */
 #line 199 "param.y"
     {g_param.paramHALF_SPACE_TUNNELING_MAX_MOVES=(yyvsp[(2) - (4)].integral);g_found_parameters[indexHALF_SPACE_TUNNELING_MAX_MOVES]=1; debug_grammar("\tHALF_SPACE_TUNNELING_MAX_MOVES\n");;}
     break;
 
   case 18:
-
-/* Line 1455 of yacc.c  */
 #line 200 "param.y"
     {
                                       fprintf(stderr,
@@ -1870,15 +1817,11 @@ yyreduce:
     break;
 
   case 19:
-
-/* Line 1455 of yacc.c  */
 #line 211 "param.y"
     {g_param.paramHALF_SPACE_ASSYMETRY_THRESH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexHALF_SPACE_ASSYMETRY_THRESH]=1; debug_grammar("\tHALF_SPACE_ASSYMETRY_THRESH\n");;}
     break;
 
   case 20:
-
-/* Line 1455 of yacc.c  */
 #line 212 "param.y"
     {
                                       fprintf(stderr,
@@ -1894,15 +1837,11 @@ yyreduce:
     break;
 
   case 21:
-
-/* Line 1455 of yacc.c  */
 #line 223 "param.y"
     {g_param.paramMAX_DELTA_OFFSET=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMAX_DELTA_OFFSET]=1; debug_grammar("\tMAX_DELTA_OFFSET\n");;}
     break;
 
   case 22:
-
-/* Line 1455 of yacc.c  */
 #line 224 "param.y"
     {
                                       fprintf(stderr,
@@ -1918,15 +1857,11 @@ yyreduce:
     break;
 
   case 23:
-
-/* Line 1455 of yacc.c  */
 #line 235 "param.y"
     {g_param.paramMAX_DELTA_WIDTH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMAX_DELTA_WIDTH]=1; debug_grammar("\tMAX_DELTA_WIDTH\n");;}
     break;
 
   case 24:
-
-/* Line 1455 of yacc.c  */
 #line 236 "param.y"
     {
                                       fprintf(stderr,
@@ -1942,15 +1877,11 @@ yyreduce:
     break;
 
   case 25:
-
-/* Line 1455 of yacc.c  */
 #line 247 "param.y"
     {g_param.paramMAX_DELTA_ANGLE=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMAX_DELTA_ANGLE]=1; debug_grammar("\tMAX_DELTA_ANGLE\n");;}
     break;
 
   case 26:
-
-/* Line 1455 of yacc.c  */
 #line 248 "param.y"
     {
                                       fprintf(stderr,
@@ -1966,15 +1897,11 @@ yyreduce:
     break;
 
   case 27:
-
-/* Line 1455 of yacc.c  */
 #line 259 "param.y"
     {g_param.paramMIN_SIGNAL=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexMIN_SIGNAL]=1; debug_grammar("\tMIN_SIGNAL\n");;}
     break;
 
   case 28:
-
-/* Line 1455 of yacc.c  */
 #line 260 "param.y"
     {
                                       fprintf(stderr,
@@ -1990,15 +1917,11 @@ yyreduce:
     break;
 
   case 29:
-
-/* Line 1455 of yacc.c  */
 #line 271 "param.y"
     {g_param.paramWIDTH_MAX=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexWIDTH_MAX]=1; debug_grammar("\tWIDTH_MAX\n");;}
     break;
 
   case 30:
-
-/* Line 1455 of yacc.c  */
 #line 272 "param.y"
     {
                                       fprintf(stderr,
@@ -2014,15 +1937,11 @@ yyreduce:
     break;
 
   case 31:
-
-/* Line 1455 of yacc.c  */
 #line 283 "param.y"
     {g_param.paramWIDTH_MIN=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexWIDTH_MIN]=1; debug_grammar("\tWIDTH_MIN\n");;}
     break;
 
   case 32:
-
-/* Line 1455 of yacc.c  */
 #line 284 "param.y"
     {
                                       fprintf(stderr,
@@ -2038,15 +1957,11 @@ yyreduce:
     break;
 
   case 33:
-
-/* Line 1455 of yacc.c  */
 #line 295 "param.y"
     {g_param.paramWIDTH_STEP=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexWIDTH_STEP]=1; debug_grammar("\tWIDTH_STEP\n");;}
     break;
 
   case 34:
-
-/* Line 1455 of yacc.c  */
 #line 296 "param.y"
     {
                                       fprintf(stderr,
@@ -2062,15 +1977,11 @@ yyreduce:
     break;
 
   case 35:
-
-/* Line 1455 of yacc.c  */
 #line 307 "param.y"
     {g_param.paramANGLE_STEP=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexANGLE_STEP]=1; debug_grammar("\tANGLE_STEP\n");;}
     break;
 
   case 36:
-
-/* Line 1455 of yacc.c  */
 #line 308 "param.y"
     {
                                       fprintf(stderr,
@@ -2086,15 +1997,11 @@ yyreduce:
     break;
 
   case 37:
-
-/* Line 1455 of yacc.c  */
 #line 319 "param.y"
     {g_param.paramOFFSET_STEP=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexOFFSET_STEP]=1; debug_grammar("\tOFFSET_STEP\n");;}
     break;
 
   case 38:
-
-/* Line 1455 of yacc.c  */
 #line 320 "param.y"
     {
                                       fprintf(stderr,
@@ -2110,15 +2017,11 @@ yyreduce:
     break;
 
   case 39:
-
-/* Line 1455 of yacc.c  */
 #line 331 "param.y"
     {g_param.paramTLEN=(yyvsp[(2) - (4)].integral);g_found_parameters[indexTLEN]=1; debug_grammar("\tTLEN\n");;}
     break;
 
   case 40:
-
-/* Line 1455 of yacc.c  */
 #line 332 "param.y"
     {
                                       fprintf(stderr,
@@ -2134,15 +2037,11 @@ yyreduce:
     break;
 
   case 41:
-
-/* Line 1455 of yacc.c  */
 #line 343 "param.y"
     {g_param.paramMIN_SIZE=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_SIZE]=1; debug_grammar("\tMIN_SIZE\n");;}
     break;
 
   case 42:
-
-/* Line 1455 of yacc.c  */
 #line 344 "param.y"
     {
                                       fprintf(stderr,
@@ -2158,15 +2057,11 @@ yyreduce:
     break;
 
   case 43:
-
-/* Line 1455 of yacc.c  */
 #line 355 "param.y"
     {g_param.paramMIN_LEVEL=(yyvsp[(2) - (4)].integral);g_found_parameters[indexMIN_LEVEL]=1; debug_grammar("\tMIN_LEVEL\n");;}
     break;
 
   case 44:
-
-/* Line 1455 of yacc.c  */
 #line 356 "param.y"
     {
                                       fprintf(stderr,
@@ -2182,15 +2077,11 @@ yyreduce:
     break;
 
   case 45:
-
-/* Line 1455 of yacc.c  */
 #line 367 "param.y"
     {g_param.paramHAT_RADIUS=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexHAT_RADIUS]=1; debug_grammar("\tHAT_RADIUS\n");;}
     break;
 
   case 46:
-
-/* Line 1455 of yacc.c  */
 #line 368 "param.y"
     {
                                       fprintf(stderr,
@@ -2206,15 +2097,11 @@ yyreduce:
     break;
 
   case 47:
-
-/* Line 1455 of yacc.c  */
 #line 379 "param.y"
     {g_param.paramSEED_ACCUM_THRESH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexSEED_ACCUM_THRESH]=1; debug_grammar("\tSEED_ACCUM_THRESH\n");;}
     break;
 
   case 48:
-
-/* Line 1455 of yacc.c  */
 #line 380 "param.y"
     {
                                       fprintf(stderr,
@@ -2230,15 +2117,11 @@ yyreduce:
     break;
 
   case 49:
-
-/* Line 1455 of yacc.c  */
 #line 391 "param.y"
     {g_param.paramSEED_ITERATION_THRESH=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexSEED_ITERATION_THRESH]=1; debug_grammar("\tSEED_ITERATION_THRESH\n");;}
     break;
 
   case 50:
-
-/* Line 1455 of yacc.c  */
 #line 392 "param.y"
     {
                                       fprintf(stderr,
@@ -2254,15 +2137,11 @@ yyreduce:
     break;
 
   case 51:
-
-/* Line 1455 of yacc.c  */
 #line 403 "param.y"
     {g_param.paramSEED_ITERATIONS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSEED_ITERATIONS]=1; debug_grammar("\tSEED_ITERATIONS\n");;}
     break;
 
   case 52:
-
-/* Line 1455 of yacc.c  */
 #line 404 "param.y"
     {
                                       fprintf(stderr,
@@ -2278,15 +2157,11 @@ yyreduce:
     break;
 
   case 53:
-
-/* Line 1455 of yacc.c  */
 #line 415 "param.y"
     {g_param.paramSEED_ON_GRID_LATTICE_SPACING=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSEED_ON_GRID_LATTICE_SPACING]=1; debug_grammar("\tSEED_ON_GRID_LATTICE_SPACING\n");;}
     break;
 
   case 54:
-
-/* Line 1455 of yacc.c  */
 #line 416 "param.y"
     {
                                       fprintf(stderr,
@@ -2302,15 +2177,11 @@ yyreduce:
     break;
 
   case 55:
-
-/* Line 1455 of yacc.c  */
 #line 427 "param.y"
     {g_param.paramSEED_METHOD=(yyvsp[(2) - (4)].valSEED_METHOD);g_found_parameters[indexSEED_METHOD]=1; debug_grammar("\tSEED_METHOD\n");;}
     break;
 
   case 56:
-
-/* Line 1455 of yacc.c  */
 #line 428 "param.y"
     {
                                       fprintf(stderr,
@@ -2326,15 +2197,11 @@ yyreduce:
     break;
 
   case 57:
-
-/* Line 1455 of yacc.c  */
 #line 439 "param.y"
     {g_param.paramIDENTITY_SOLVER_SHAPE_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexIDENTITY_SOLVER_SHAPE_NBINS]=1; debug_grammar("\tIDENTITY_SOLVER_SHAPE_NBINS\n");;}
     break;
 
   case 58:
-
-/* Line 1455 of yacc.c  */
 #line 440 "param.y"
     {
                                       fprintf(stderr,
@@ -2350,15 +2217,11 @@ yyreduce:
     break;
 
   case 59:
-
-/* Line 1455 of yacc.c  */
 #line 451 "param.y"
     {g_param.paramIDENTITY_SOLVER_VELOCITY_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexIDENTITY_SOLVER_VELOCITY_NBINS]=1; debug_grammar("\tIDENTITY_SOLVER_VELOCITY_NBINS\n");;}
     break;
 
   case 60:
-
-/* Line 1455 of yacc.c  */
 #line 452 "param.y"
     {
                                       fprintf(stderr,
@@ -2374,15 +2237,11 @@ yyreduce:
     break;
 
   case 61:
-
-/* Line 1455 of yacc.c  */
 #line 463 "param.y"
     {g_param.paramCOMPARE_IDENTITIES_DISTS_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexCOMPARE_IDENTITIES_DISTS_NBINS]=1; debug_grammar("\tCOMPARE_IDENTITIES_DISTS_NBINS\n");;}
     break;
 
   case 62:
-
-/* Line 1455 of yacc.c  */
 #line 464 "param.y"
     {
                                       fprintf(stderr,
@@ -2398,15 +2257,11 @@ yyreduce:
     break;
 
   case 63:
-
-/* Line 1455 of yacc.c  */
 #line 475 "param.y"
     {g_param.paramHMM_RECLASSIFY_BASELINE_LOG2=(yyvsp[(2) - (4)].decimal);g_found_parameters[indexHMM_RECLASSIFY_BASELINE_LOG2]=1; debug_grammar("\tHMM_RECLASSIFY_BASELINE_LOG2\n");;}
     break;
 
   case 64:
-
-/* Line 1455 of yacc.c  */
 #line 476 "param.y"
     {
                                       fprintf(stderr,
@@ -2422,15 +2277,11 @@ yyreduce:
     break;
 
   case 65:
-
-/* Line 1455 of yacc.c  */
 #line 487 "param.y"
     {g_param.paramHMM_RECLASSIFY_VEL_DISTS_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexHMM_RECLASSIFY_VEL_DISTS_NBINS]=1; debug_grammar("\tHMM_RECLASSIFY_VEL_DISTS_NBINS\n");;}
     break;
 
   case 66:
-
-/* Line 1455 of yacc.c  */
 #line 488 "param.y"
     {
                                       fprintf(stderr,
@@ -2446,15 +2297,11 @@ yyreduce:
     break;
 
   case 67:
-
-/* Line 1455 of yacc.c  */
 #line 499 "param.y"
     {g_param.paramHMM_RECLASSIFY_SHP_DISTS_NBINS=(yyvsp[(2) - (4)].integral);g_found_parameters[indexHMM_RECLASSIFY_SHP_DISTS_NBINS]=1; debug_grammar("\tHMM_RECLASSIFY_SHP_DISTS_NBINS\n");;}
     break;
 
   case 68:
-
-/* Line 1455 of yacc.c  */
 #line 500 "param.y"
     {
                                       fprintf(stderr,
@@ -2470,15 +2317,11 @@ yyreduce:
     break;
 
   case 69:
-
-/* Line 1455 of yacc.c  */
 #line 511 "param.y"
     {g_param.paramSHOW_PROGRESS_MESSAGES=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSHOW_PROGRESS_MESSAGES]=1; debug_grammar("\tSHOW_PROGRESS_MESSAGES\n");;}
     break;
 
   case 70:
-
-/* Line 1455 of yacc.c  */
 #line 512 "param.y"
     {
                                       fprintf(stderr,
@@ -2494,15 +2337,11 @@ yyreduce:
     break;
 
   case 71:
-
-/* Line 1455 of yacc.c  */
 #line 523 "param.y"
     {g_param.paramSHOW_DEBUG_MESSAGES=(yyvsp[(2) - (4)].integral);g_found_parameters[indexSHOW_DEBUG_MESSAGES]=1; debug_grammar("\tSHOW_DEBUG_MESSAGES\n");;}
     break;
 
   case 72:
-
-/* Line 1455 of yacc.c  */
 #line 524 "param.y"
     {
                                       fprintf(stderr,
@@ -2518,15 +2357,11 @@ yyreduce:
     break;
 
   case 73:
-
-/* Line 1455 of yacc.c  */
 #line 535 "param.y"
     { debug_grammar("\tCOMMENT LINE\n"); ;}
     break;
 
   case 74:
-
-/* Line 1455 of yacc.c  */
 #line 536 "param.y"
     { fprintf(stderr,"Problem encountered loading parameters file at line %d, columns %d-%d\n"
                                                        "\tCould not interpret parameter name.\n",
@@ -2538,51 +2373,38 @@ yyreduce:
     break;
 
   case 75:
-
-/* Line 1455 of yacc.c  */
 #line 544 "param.y"
     {(yyval.decimal)=(yyvsp[(1) - (1)].integral);;}
     break;
 
   case 76:
-
-/* Line 1455 of yacc.c  */
 #line 545 "param.y"
     {(yyval.decimal)=(yyvsp[(1) - (1)].decimal);;}
     break;
 
   case 77:
-
-/* Line 1455 of yacc.c  */
 #line 546 "param.y"
     {(yyval.integral)=(yyvsp[(1) - (1)].integral);;}
     break;
 
   case 78:
-
-/* Line 1455 of yacc.c  */
 #line 547 "param.y"
     {(yyval.decimal)=(yyvsp[(1) - (1)].decimal);;}
     break;
 
   case 79:
-
-/* Line 1455 of yacc.c  */
 #line 548 "param.y"
     {(yyval.valSEED_METHOD)=SEED_ON_MHAT_CONTOURS;;}
     break;
 
   case 80:
-
-/* Line 1455 of yacc.c  */
 #line 549 "param.y"
     {(yyval.valSEED_METHOD)=SEED_ON_GRID;;}
     break;
 
 
-
-/* Line 1455 of yacc.c  */
-#line 2586 "y.tab.c"
+/* Line 1267 of yacc.c.  */
+#line 2408 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2658,7 +2480,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse lookahead token after an
+      /* If just tried and failed to reuse look-ahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -2675,7 +2497,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse lookahead token after shifting the error
+  /* Else will try to reuse look-ahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -2733,11 +2555,14 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
+  if (yyn == YYFINAL)
+    YYACCEPT;
+
   *++yyvsp = yylval;
 
   yyerror_range[1] = yylloc;
   /* Using YYLLOC is tempting, but would change the location of
-     the lookahead.  YYLOC is available though.  */
+     the look-ahead.  YYLOC is available though.  */
   YYLLOC_DEFAULT (yyloc, (yyerror_range - 1), 2);
   *++yylsp = yyloc;
 
@@ -2762,7 +2587,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#if !defined(yyoverflow) || YYERROR_VERBOSE
+#ifndef yyoverflow
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -2773,7 +2598,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEMPTY)
+  if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval, &yylloc);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -2799,8 +2624,6 @@ yyreturn:
 }
 
 
-
-/* Line 1675 of yacc.c  */
 #line 551 "param.y"
 
 FILE *fp=NULL;                                               // when a file is opened, this points to the file
