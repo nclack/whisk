@@ -37,8 +37,9 @@
 #include "parameters/param.h"
 
 #if 0
-#define DEBUG_DETECTOR_BANK
 #define DEBUG_READ_LINE_DETECTOR_BANK
+#define DEBUG_WRITE_LINE_DETECTOR_BANK
+#define DEBUG_DETECTOR_BANK
 #define SHOW_HALF_SPACE_DETECTOR
 #define SHOW_LINE_DETECTOR
 #define DEBUG_SEEDING_FIELDS
@@ -692,18 +693,31 @@ void remove_duplicate_segments( Whisker_Seg *wv, int *n )
 SHARED_EXPORT
 int  write_line_detector_bank( char *filename, Array *bank, Range *off, Range *wid, Range *ang )
 { FILE *fp = fopen(filename,"wb");
-//  printf("%s %p\n",filename,fp);
+#ifdef DEBUG_WRITE_LINE_DETECTOR_BANK
+  progress("Writing file: %s handle: %p\n",filename,fp);
+#endif
 
   if(fp != NULL)
   { fflush(fp);
     fseek(fp,0,SEEK_SET);
-//    Print_Range(stdout, off);
+#ifdef DEBUG_WRITE_LINE_DETECTOR_BANK
+    progress("Write off (%p), ",off);
+    Print_Range(stdout, off);
+#endif
     Write_Range(fp, off);
-//    Print_Range(stdout, wid);
+#ifdef DEBUG_WRITE_LINE_DETECTOR_BANK
+    progress("Write wid (%p), ",wid);
+    Print_Range(stdout, wid);
+#endif
     Write_Range(fp, wid);
-//    Print_Range(stdout, ang);
+#ifdef DEBUG_WRITE_LINE_DETECTOR_BANK
+    progress("Write ang (%p), ",ang);
+    Print_Range(stdout, ang);
+#endif
     Write_Range(fp, ang);
-//    printf("write bank\n");
+#ifdef DEBUG_WRITE_LINE_DETECTOR_BANK
+    progress("write bank\n");
+#endif
     Write_Array(fp, bank);
     fclose(fp);
     return 1;
@@ -724,6 +738,12 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
   progress("%s %p\n"
            "pointer to banks pointer: %p\n"
            "           banks pointer: %p\n",filename,fp,bank,*bank);
+  progress("Expect off (%p), ",off);
+  Print_Range(stderr, off);    
+  progress("Expect wid, ");
+  Print_Range(stderr, wid);
+  progress("Expect ang, ");
+  Print_Range(stderr, ang);
 #endif  
   if(fp)
   { int n = fseek(fp,0,SEEK_SET);
@@ -740,7 +760,7 @@ int  read_line_detector_bank( char *filename, Array **bank, Range *off, Range *w
     progress("read wid, ");
     Print_Range(stderr, &w);
 #endif
-    Read_Range(fp, ang);
+    Read_Range(fp, &a);
 #ifdef DEBUG_READ_LINE_DETECTOR_BANK
     progress("read ang, ");
     Print_Range(stderr, &a);

@@ -41,7 +41,7 @@ void  Read_Range( FILE *fp, Range *r )
   progress("READ RANGE: fp = %p\n"
            "             r = %p\n"
            " sizeof(Range) = %d\n", fp, r, sizeof(Range) );
-  progress("errno: %d\n",errno);
+  //progress("errno: %d\n",errno);
   progress("ftell: %d\n",ftell(fp));
   progress("feof : %d\n",feof(fp));
 #endif
@@ -53,6 +53,7 @@ void  Read_Range( FILE *fp, Range *r )
   progress("errno: %d\n",errno);
 #endif
 #ifdef DEBUG_READ_RANGE
+  Print_Range(stdout,r);
   progress("READ RANGE (done): Read %d items.\n",n);
 #endif
 }

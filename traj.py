@@ -20,7 +20,7 @@ import warnings
 
 import pdb
 
-os.environ['PATH'] += r';.\\'
+os.environ['PATH'] = r'.//;"%s";'%os.path.split(__file__)[0] + os.environ['PATH']
 #ctraj = cdll.LoadLibrary( find_library('traj') )
 #if ctraj._name==None:
 try:

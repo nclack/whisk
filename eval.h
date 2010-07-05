@@ -26,6 +26,7 @@ void scale( point* pbuf, int n, float sc);
 void rotate( point *pbuf, int n, float angle);
 void translate( point* pbuf, int n, point ori);
 
+void Print_Range( FILE *fp, Range *r);
 void Read_Range( FILE *fp, Range *r );
 void Write_Range( FILE *fp, Range *r );
 int  Is_Same_Range( Range *a, Range *b );
