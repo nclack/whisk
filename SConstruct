@@ -7,7 +7,7 @@ Progress('Scanning:  $TARGET\r',overwrite=True)
 
 # Currently, TARGET_ARCH only effects Windows builds.  It's set here to force
 # an x86 build on x64 windows systems because there is no x64 FFMPEG support 
-# there.
+# there.  Also, x64 numpy installers are lacking.
 
 env = Environment(ENV = os.environ,
                   TOOLS = ['default','packaging'],

@@ -585,17 +585,19 @@ void print_epilogue()
      "{ //fprintf(stderr,\"Parse Error:\\n---\\n\\t%%s\\n---\\n\",s);\n"
      "}\n"
      "\n"
+     "SHARED_EXPORT\n"
      "int Load_Params_File(char *filename)\n"
      "{ int sts; //0==success, 1==failure\n"
+     "  // FILE *fp is global\n"
      "  g_nparse_errors=0;\n"
      "  memset(g_found_parameters,0,sizeof(g_found_parameters));\n"
      "  fp = fopen(filename,\"r\");\n"
      "  if(!fp)\n"
      "  { fprintf(stderr,\"Could not open parameter file at %%s.\\n\",filename);\n"
-     "    exit(1);\n"
+     "    return 1;\n"
      "  }\n"
      "  sts = yyparse();\n"
-     "  fclose(fp);\n"
+     "  if(fp) fclose(fp);\n"
      "  sts |= (g_nparse_errors>0);\n"
      "  {\n"
      "    int i;\n"
@@ -625,6 +627,7 @@ void kvprintall(tkv *self)
        " * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).\n"
        " */\n"
        "#pragma once\n"
+       "#define SHARED_EXPORT __declspec(dllexport)\n"
        "#if !defined(bool) && !defined(_bool_T)\n"
        "typedef int bool;\n"
        "#endif\n");
@@ -646,7 +649,7 @@ void kvprintall(tkv *self)
   kvprint_line_grammar(self);
   kvprint_value_grammar(self);
   CPRN("%%%%\n");
-  HPRN("int Load_Params_File(char *filename);\n");
+  HPRN("SHARED_EXPORT int Load_Params_File(char *filename);\n");
   print_epilogue();
 }
 

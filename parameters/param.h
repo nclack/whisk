@@ -8,6 +8,7 @@
  * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
  */
 #pragma once
+#define SHARED_EXPORT __declspec(dllexport)
 #if !defined(bool) && !defined(_bool_T)
 typedef int bool;
 #endif
@@ -81,4 +82,4 @@ typedef struct _t_params {
 	bool	paramSHOW_DEBUG_MESSAGES;
 } t_params;
 t_params g_param;
-int Load_Params_File(char *filename);
+SHARED_EXPORT int Load_Params_File(char *filename);
