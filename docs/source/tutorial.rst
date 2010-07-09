@@ -11,8 +11,6 @@ Tracing Tutorial
 
    .. figure:: images/tut-data-raw.png
      :alt: Video frame with raw data.
-     :align: right
-     :width: 2in
 
      *Figure 1* Raw data.
 
@@ -70,17 +68,16 @@ Tracing Tutorial
    :file:`.measurements` file.  You can also explicitly add these files on the
    command line.
    
-  .. _`Figure 2`:
+   .. _`Figure 2`:
 
-  .. figure:: images/ui2-post-reclassify-screenshot.tiff
-    :alt: Screenshot of ui2.py looking at the :program:`reclassify` result.
-    :align: right
-    :width: 4in
+   .. figure:: images/ui2-post-reclassify-screenshot.png
+      :alt: Screenshot of ui2.py looking at the :program:`reclassify` result.
+      :width: 3in
 
-    *Figure 2* Screenshot of ui2.py looking at the :program:`reclassify` result.
-    Identified whiskers are labelled red, green, and blue.  Light yellow traces
-    are "non-whisker" traces.  The green ball identifies the follicle of the
-    selected whisker.
+      *Figure 2* Screenshot of ui2.py looking at the :program:`reclassify` result.
+      Identified whiskers are labelled red, green, and blue.  Light yellow traces
+      are "non-whisker" traces.  The green ball identifies the follicle of the
+      selected whisker.
 
 .. _Python: http://www.python.org
 .. _Matlab: http://www.mathworks.com

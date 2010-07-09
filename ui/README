@@ -1,6 +1,6 @@
-===============================
-Whisker tracking user interface
-===============================
+================
+ui2.py Interface
+================
 
 Usage: ui2.py [options] moviefile [dataprefix]
 

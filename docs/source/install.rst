@@ -12,15 +12,20 @@ both 32 and 64-bit machines.
 
 .. _`Table 1`:
 
+
+
+
 *Table 1*  Pre-built packages.
+
+.. tabularcolumns: |C|C|C|C|C|
 
 +-------+-----------+--------+-------+------+
 |CPU    |OSX 10.5   |OSX 10.6|WinXP  |Win7  |
 +=======+===========+========+=======+======+
-|i386   | yes, but  |        |yes    |yes   |
+|i386   | yes, but  | no     |yes    |yes   |
 |       | no FFMPEG |        |       |      |
 +-------+-----------+--------+-------+------+
-|x86_64 |           | yes    | 32bit | 32bit|
+|x86_64 | yes?      | yes    | 32bit | 32bit|
 +-------+-----------+--------+-------+------+
 
 Quick-start

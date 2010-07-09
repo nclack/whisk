@@ -14,13 +14,18 @@ Contents
 
    command-line-tools.rst
 
-   extras.rst
+   graphical-user-interface.rst
 
+   glossary.rst
+
+   special-files.rst
+
+   todolist.rst
+
+   environment.rst
 
 .. 
    command-line-tools.rst
-
-   graphical-user-interface.rst
 
    matlab-interface.rst
 
@@ -32,3 +37,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`search`
 * :ref:`modindex`
+* :doc:`glossary`
+* :doc:`todolist`
+* :doc:`environment`

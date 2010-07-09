@@ -171,6 +171,17 @@ div.clearer {
     clear: both;
 }
 
+div.figure {
+    margin: auto;
+    width: 3in;
+    float: none;
+}
+
+div[class="figure align-right"] {
+    margin-left: auto;
+    margin-right: 0;
+}
+
 div.related h3 {
     display: none;
 }
@@ -281,7 +292,8 @@ h2 {
 }
 
 h3 {
-    margin: 1em 0 -0.3em 0;
+    margin: 2em 0 -0.3em 0;
+    font-variant: small-caps;
     font-size: 1.2em;
 }
 
@@ -314,9 +326,8 @@ table {
     margin-bottom: 2em;
     border-bottom: 2px black solid;
     border-top: 2px black solid;
-    border-left-style: hidden; 
-    border-right-style: hidden; 
-    text-align: center;
+    border-left-style: hidden;
+    border-right-style: hidden;
 }
 
 th {
@@ -330,7 +341,7 @@ td {
     border-left-style: hidden; 
     border-right-style: hidden; 
     border-bottom: 1px #ccc solid;
-    padding:0px;
+    padding: 0px 0.5em 0px 0.5em;
     height: 1.2em;
 }
 
