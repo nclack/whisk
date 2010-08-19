@@ -4,8 +4,8 @@ LDFLAGS = -lm #-lSaturn
 CFLAGS = -g  #-ftree-vectorize #-Wall  #-finstrument-functions
 
 # comment these in to build with FFMPEG included
-LDFLAGS = -lm -lavcodec -lavformat -lavutil -lswscale #-lSaturn
-CFLAGS = -g -DHAVE_FFMPEG #-ftree-vectorize #-Wall  #-finstrument-functions
+LDFLAGS = -L/usr/local/lib -lm -lavbin -lavdevice -lavcodec -lavformat -lavutil -lswscale -lz -lbz2 -lpthread#-lSaturn
+CFLAGS = -I/usr/local/include -g -DHAVE_FFMPEG #-ftree-vectorize #-Wall  #-finstrument-functions
 
 pmodules = utilities.o image_lib.o draw_lib.o image_filters.o level_set.o contour_lib.o\
 					 water_shed.o
@@ -17,7 +17,8 @@ cmodules = common.o tiff_io.o tiff_image.o aip.o eval.o seq.o trace.o\
 					 bar_io.o \
 					 measurements_io.o measurements_io_v0.o measurements_io_v1.o \
 					 whisker_io_whiskpoly1.o \
-					 ffmpeg_adapt.o
+					 ffmpeg_adapt.o \
+           parameters/param.o
 modules = $(pmodules) $(cmodules)
 TESTS = test_whisker_io evaltest aiptest viterbi_test
 APPS  = whisk whisker_convert test_measure_1 test_classify_1 test_hmm_reclassify_3 test_hmm_reclassify_5
@@ -43,12 +44,13 @@ all: $(APPS)
 tests: $(TESTS)
 
 whisk: whisk.c $(modules) $(modules:.o=.h)
+	$(CC) $(CFLAGS) $+ $(LDFLAGS) -o $@
 
 whisker_io_main.o: whisker_io.c
-	$(CC) -c $(LDFLAGS) $(CFLAGS) -DWHISKER_IO_CONVERTER $< -o $@
+	$(CC) -c $(CFLAGS) -DWHISKER_IO_CONVERTER $< $(LDFLAGS) -o $@
 
 whisker_convert: whisker_io_main.o $(filter-out whisker_io.o,$(modules)) $(modules:.o=.h)
-	$(CC) $(LDFLAGS) $(CFLAGS) $+ -o $@
+	$(CC) $(CFLAGS) $+ $(LDFLAGS) -o $@
 
 libwhisk.so: $(modules)
 	ar cru $@ $+
@@ -74,24 +76,26 @@ awk: $(pmodules:.o=.toawk)
 $(cmodules): $(cmodules:.o=.h)
 
 test_measure_1: measure.c $(modules)
-	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_MEASURE_1 $+ -o $@
+	$(CC) $(CFLAGS) -DTEST_MEASURE_1 $+ $(LDFLAGS) -o $@
 
-test_classify_1: classify.c utilities.o traj.o common.o error.o viterbi.o measurements_io.o measurements_io_v0.o measurements_io_v1.o
-	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_CLASSIFY_1 $+ -o $@
+test_classify_1: classify.c utilities.o traj.o common.o error.o viterbi.o measurements_io.o measurements_io_v0.o measurements_io_v1.o parameters/param.o
+	$(CC) $(CFLAGS) -DTEST_CLASSIFY_1 $+ $(LDFLAGS) -o $@
 
 test_hmm_reclassify_3: hmm-reclassify.c utilities.o  traj.o  common.o \
                        error.o viterbi.o \
                        hmm-reclassify-lrmodel.o \
                        hmm-reclassify-lrmodel-w-deletions.o \
-                       measurements_io.o measurements_io_v0.o measurements_io_v1.o
-	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_HMM_RECLASSIFY_3 $+ -o $@
+                       measurements_io.o measurements_io_v0.o measurements_io_v1.o \
+                       parameters/param.o
+	$(CC) $(CFLAGS) -DTEST_HMM_RECLASSIFY_3 $+ $(LDFLAGS) -o $@
 
 test_hmm_reclassify_5: hmm-reclassify.c utilities.o  traj.o  common.o \
                        error.o viterbi.o \
                        hmm-reclassify-lrmodel.o \
                        hmm-reclassify-lrmodel-w-deletions.o \
-                       measurements_io.o measurements_io_v0.o measurements_io_v1.o
-	$(CC) $(LDFLAGS) $(CFLAGS) -DTEST_HMM_RECLASSIFY_5 $+ -o $@
+                       measurements_io.o measurements_io_v0.o measurements_io_v1.o \
+                       parameters/param.o
+	$(CC) $(CFLAGS) -DTEST_HMM_RECLASSIFY_5 $+ $(LDFLAGS) -o $@
 
 test_whisker_io: test_whisker_io.c $(modules) 
 
