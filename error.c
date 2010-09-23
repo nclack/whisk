@@ -19,9 +19,18 @@ int check_params_loaded()
 { char f[] = "default.parameters";
   if(_g_params_inited==0)
   { if(Load_Params_File(f))
-    { warning("Make sure %s is in the calling directory\n"  
-              "Could not load parameters from file: %s\n",f,f);
-      return 0;
+    { 
+      warning("Make sure %s is in the calling directory\n"  
+              "Could not load parameters from file: %s\n"
+              "Writing defaults to current directory.\n"
+              "\tTrying again...\n",f,f);
+      Print_Params_File(f);
+      if(Load_Params_File(f))
+      { warning("\tStill couldn't load parameters from file.\n");
+        return 0;
+      }
+      _g_params_inited = 1;
+      return 1;
     }
     else
       _g_params_inited = 1;

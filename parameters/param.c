@@ -304,7 +304,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -909,7 +909,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -1483,7 +1483,7 @@ yyparse ()
   yyssp = yyss;
   yyvsp = yyvs;
   yylsp = yyls;
-#if YYLTYPE_IS_TRIVIAL
+#if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
   /* Initialize the default location before parsing starts.  */
   yylloc.first_line   = yylloc.last_line   = 1;
   yylloc.first_column = yylloc.last_column = 0;
@@ -2777,6 +2777,65 @@ int Load_Params_File(char *filename)
         fprintf(stderr,"Failed to load parameter: %s\n",g_param_string_table[i]);
       }
   }
+  return sts;
+}
+
+SHARED_EXPORT
+int Print_Params_File(char *filename)
+{ int sts=0; //0==success, 1==failure
+  FILE *fp;
+  fp = fopen(filename,"w");
+  if(!fp)
+  { fprintf(stderr,"Could not open parameter file for writing: %s\n",filename);
+    return 1;
+  }
+  {
+    fprintf(fp,"[error]\n");
+    fprintf(fp,"SHOW_DEBUG_MESSAGES     1\n");
+    fprintf(fp,"SHOW_PROGRESS_MESSAGES  1\n");
+    fprintf(fp,"\n");
+    fprintf(fp,"[reclassify]\n");
+    fprintf(fp,"HMM_RECLASSIFY_SHP_DISTS_NBINS 16\n");
+    fprintf(fp,"HMM_RECLASSIFY_VEL_DISTS_NBINS 8096\n");
+    fprintf(fp,"HMM_RECLASSIFY_BASELINE_LOG2   -500.0\n");
+    fprintf(fp,"COMPARE_IDENTITIES_DISTS_NBINS 8096\n");
+    fprintf(fp,"IDENTITY_SOLVER_VELOCITY_NBINS 8096\n");
+    fprintf(fp,"IDENTITY_SOLVER_SHAPE_NBINS    16\n");
+    fprintf(fp,"\n");
+    fprintf(fp,"[trace]\n");
+    fprintf(fp,"SEED_METHOD                    SEED_ON_GRID // Specify seeding method: may be SEED_ON_MHAT_CONTOURS or SEED_ON_GRID\n");
+    fprintf(fp,"SEED_ON_GRID_LATTICE_SPACING   50           // (pixels)\n");
+    fprintf(fp,"SEED_ITERATIONS                4            // Maxium number of iterations to re-estimate a seed.\n");
+    fprintf(fp,"SEED_ITERATION_THRESH          0.4          // (0 to 1) Threshold score determining when a seed should be reestimated.\n");
+    fprintf(fp,"SEED_ACCUM_THRESH              0.4          // (0 to 1) Threshold score determining when to accumulate statistics\n");
+    fprintf(fp,"\n");
+    fprintf(fp,"HAT_RADIUS                     1.5          // Mexican-hat radius for whisker detection (seeding)\n");
+    fprintf(fp,"MIN_LEVEL                      1            // Level-set threshold for mexican hat result.  Used for seeding on mexican hat contours.\n");
+    fprintf(fp,"MIN_SIZE                       20           // Minimum # of pixels in an object considered for mexican-hat based seeding.\n");
+    fprintf(fp,"\n");
+    fprintf(fp,"                                            // detector banks parameterization.  If any of these change, the detector banks\n");
+    fprintf(fp,"                                            // should be deleted.  They will be regenerated on the next run.\n");
+    fprintf(fp,"                                            //\n");
+    fprintf(fp,"TLEN                           8            // (px) half the size of the detector support.  If this is changed, the detector banks must be deleted.\n");
+    fprintf(fp,"OFFSET_STEP                    .1           // pixels\n");
+    fprintf(fp,"ANGLE_STEP                     18.          // divisions of pi/4\n");
+    fprintf(fp,"WIDTH_STEP                     .2           // (pixels)\n");
+    fprintf(fp,"WIDTH_MIN                      0.4          // (pixels) must be a multiple of WIDTH_STEP\n");
+    fprintf(fp,"WIDTH_MAX                      6.5          // (pixels) must be a multiple of WIDTH_STEP\n");
+    fprintf(fp,"MIN_SIGNAL                     5.0          // minimum detector response per detector column.  Typically: (2*TLEN+1)*MIN_SIGNAL is the threshold determining when tracing stops.\n");
+    fprintf(fp,"MAX_DELTA_ANGLE                10.1         // (degrees)  The detector is constrained to turns less than this value at each step.\n");
+    fprintf(fp,"MAX_DELTA_WIDTH                6.0          // (pixels)   The detector width is constrained to change less than this value at each step.\n");
+    fprintf(fp,"MAX_DELTA_OFFSET               6.0          // (pixels)   The detector offset is constrained to change less than this value at each step.\n");
+    fprintf(fp,"HALF_SPACE_ASSYMETRY_THRESH    0.15         // (between 0 and 1)  1 is completely insensitive to asymmetry\n");
+    fprintf(fp,"HALF_SPACE_TUNNELING_MAX_MOVES 10           // (pixels)  This should be the largest size of an occluding area to cross\n");
+    fprintf(fp,"\n");
+    fprintf(fp,"FRAME_DELTA                    1            // [depricated?] used in compute_zone to look for moving objects\n");
+    fprintf(fp,"DUPLICATE_THRESHOLD            5.0          // [depricated?]\n");
+    fprintf(fp,"MIN_LENGTH                     20           // [depricated?]           If span of object is not 20 pixels will not use as a seed\n");
+    fprintf(fp,"MIN_LENSQR                     100          // [depricated?]           (MIN_LENGTH/2)^2\n");
+    fprintf(fp,"MIN_LENPRJ                     14           // [depricated?] [unused]  floor(MIN_LENGTH/sqrt(2))\n");
+  }
+  fclose(fp);
   return sts;
 }
 

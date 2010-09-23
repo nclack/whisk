@@ -57,6 +57,54 @@ char *g_headername = NULL;
 int  yylex  (void);
 void yyerror(char const *);
 
+char *default_params[] = {
+  "[error]\\n",
+  "SHOW_DEBUG_MESSAGES     1\\n",
+  "SHOW_PROGRESS_MESSAGES  1\\n",
+  "\\n",
+  "[reclassify]\\n",
+  "HMM_RECLASSIFY_SHP_DISTS_NBINS 16\\n",
+  "HMM_RECLASSIFY_VEL_DISTS_NBINS 8096\\n",
+  "HMM_RECLASSIFY_BASELINE_LOG2   -500.0\\n",
+  "COMPARE_IDENTITIES_DISTS_NBINS 8096\\n",
+  "IDENTITY_SOLVER_VELOCITY_NBINS 8096\\n",
+  "IDENTITY_SOLVER_SHAPE_NBINS    16\\n",
+  "\\n",
+  "[trace]\\n",
+  "SEED_METHOD                    SEED_ON_GRID // Specify seeding method: may be SEED_ON_MHAT_CONTOURS or SEED_ON_GRID\\n",
+  "SEED_ON_GRID_LATTICE_SPACING   50           // (pixels)\\n",
+  "SEED_ITERATIONS                4            // Maxium number of iterations to re-estimate a seed.\\n",
+  "SEED_ITERATION_THRESH          0.4          // (0 to 1) Threshold score determining when a seed should be reestimated.\\n",
+  "SEED_ACCUM_THRESH              0.4          // (0 to 1) Threshold score determining when to accumulate statistics\\n",
+  "\\n",
+  "HAT_RADIUS                     1.5          // Mexican-hat radius for whisker detection (seeding)\\n",
+  "MIN_LEVEL                      1            // Level-set threshold for mexican hat result.  Used for seeding on mexican hat contours.\\n",
+  "MIN_SIZE                       20           // Minimum # of pixels in an object considered for mexican-hat based seeding.\\n",
+  "\\n",
+  "                                            // detector banks parameterization.  If any of these change, the detector banks\\n",
+  "                                            // should be deleted.  They will be regenerated on the next run.\\n",
+  "                                            //\\n",
+  "TLEN                           8            // (px) half the size of the detector support.  If this is changed, the detector banks must be deleted.\\n",
+  "OFFSET_STEP                    .1           // pixels\\n",
+  "ANGLE_STEP                     18.          // divisions of pi/4\\n",
+  "WIDTH_STEP                     .2           // (pixels)\\n",
+  "WIDTH_MIN                      0.4          // (pixels) must be a multiple of WIDTH_STEP\\n",
+  "WIDTH_MAX                      6.5          // (pixels) must be a multiple of WIDTH_STEP\\n",
+  "MIN_SIGNAL                     5.0          // minimum detector response per detector column.  Typically: (2*TLEN+1)*MIN_SIGNAL is the threshold determining when tracing stops.\\n",
+  "MAX_DELTA_ANGLE                10.1         // (degrees)  The detector is constrained to turns less than this value at each step.\\n",
+  "MAX_DELTA_WIDTH                6.0          // (pixels)   The detector width is constrained to change less than this value at each step.\\n",
+  "MAX_DELTA_OFFSET               6.0          // (pixels)   The detector offset is constrained to change less than this value at each step.\\n",
+  "HALF_SPACE_ASSYMETRY_THRESH    0.15         // (between 0 and 1)  1 is completely insensitive to asymmetry\\n",
+  "HALF_SPACE_TUNNELING_MAX_MOVES 10           // (pixels)  This should be the largest size of an occluding area to cross\\n",
+  "\\n",                                                                                                                                                                                                                
+  "FRAME_DELTA                    1            // [depricated?] used in compute_zone to look for moving objects\\n",
+  "DUPLICATE_THRESHOLD            5.0          // [depricated?]\\n",
+  "MIN_LENGTH                     20           // [depricated?]           If span of object is not 20 pixels will not use as a seed\\n",
+  "MIN_LENSQR                     100          // [depricated?]           (MIN_LENGTH/2)^2\\n",
+  "MIN_LENPRJ                     14           // [depricated?] [unused]  floor(MIN_LENGTH/sqrt(2))\\n",
+  NULL,
+};
+
 //
 // Type
 //
@@ -610,6 +658,31 @@ void print_epilogue()
      "  return sts;\n"
      "}\n"
      "\n"
+     "SHARED_EXPORT\n"
+     "int Print_Params_File(char *filename)\n"
+     "{ int sts=0; //0==success, 1==failure\n"
+     "  FILE *fp;\n"
+     "  fp = fopen(filename,\"w\");\n"
+     "  if(!fp)\n"
+     "  { fprintf(stderr,\"Could not open parameter file for writing: %%s\\n\",filename);\n"
+     "    return 1;\n"
+     "  }\n"
+     "  {\n");
+    { int iline=0;
+      char *line;
+      char buf[2048];
+      while(line=default_params[iline++])
+      { memset(buf,0,sizeof(buf));
+        snprintf(buf,2048,"    fprintf(fp,\"%s\");\n",line);
+        CPRN(buf);
+      }
+    }
+  CPRN(
+     "  }\n"
+     "  fclose(fp);\n"
+     "  return sts;\n"
+     "}\n"
+     "\n"
      );
 }
 
@@ -656,6 +729,7 @@ void kvprintall(tkv *self)
   kvprint_value_grammar(self);
   CPRN("%%%%\n");
   HPRN("SHARED_EXPORT int Load_Params_File(char *filename);\n");
+  HPRN("SHARED_EXPORT int Print_Params_File(char *filename);\n");
   print_epilogue();
 }
 

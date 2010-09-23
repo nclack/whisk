@@ -89,3 +89,4 @@ typedef struct _t_params {
 } t_params;
 t_params g_param;
 SHARED_EXPORT int Load_Params_File(char *filename);
+SHARED_EXPORT int Print_Params_File(char *filename);
