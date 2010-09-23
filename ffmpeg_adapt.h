@@ -51,9 +51,8 @@
 //--- NOTES
 //
 //    <FFMPEG_Fetch> 
-//      appears to allow random access, but it doesn't in this case.  Fetch
-//      will cache the last retrieved frame.  If iframe refers to the cached
-//      frame,  that frame is returned.  Otherwise, the next frame is
+//      Fetch will cache the last retrieved frame.  If iframe refers to the
+//      cached frame,  that frame is returned.  Otherwise, the next frame is
 //      decompressed and  returned.                                                               
 //                                                                              
 //      Calling FFMPEG_Fetch may invalidate any previous returned Images.       
