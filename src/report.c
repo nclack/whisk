@@ -311,7 +311,7 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef TEST_REPORT_COMPARE_TRAJECTORIES
-//produces a hitogram of #mismatches/frame
+//produces a histogram of #mismatches/frame
 char* Spec[] = {"<measurements1:string> <measurements2:string>",NULL};
 int main(int argc, char* argv[])
 { Measurements *A, *B;

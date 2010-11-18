@@ -843,13 +843,18 @@ main(int argc,char* argv[])
 { int sts;
   //cfile = stdout;
   //hfile = stdout;
-  assert(argc==3);
-  cfile = fopen(argv[1],"w");
-  hfile = fopen(argv[2],"w");
+  if(argc!=4)
+  { printf(
+      "Usage:\n"
+      "  %s <in parameters.schema> <out param.y> <out param.h>\n",argv[0]);
+    return 111;
+  }
+  cfile = fopen(argv[2],"w");
+  hfile = fopen(argv[3],"w");
   assert(cfile);
   assert(hfile);
-  g_headername = argv[2];
-  fp = fopen("parameters.schema","r");
+  g_headername = argv[3];
+  fp = fopen(argv[1],"r");
   assert(fp);
   sts = yyparse();
   fclose(fp);

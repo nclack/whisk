@@ -17,7 +17,7 @@ bogus: schema test
 # ...loaded parameters will be displayed
 param.o: param.c
 param.y param.h: schema parameters.schema
-	./schema param.y param.h
+	./schema parameters.schema param.y param.h
 
 validate.o: param.h
 validate: validate.c param.o

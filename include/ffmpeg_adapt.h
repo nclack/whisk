@@ -33,6 +33,7 @@
 
 #pragma once
 
+#include "config.h"
 #ifdef HAVE_FFMPEG
 
 #ifdef _MSC_VER

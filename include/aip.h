@@ -1,4 +1,18 @@
-/* Author: Nathan Clack <clackn@janelia.hhmi.org>
+/* Area of intersecting polygons
+ * -----------------------------
+ * Adapted from Norman Hardy's excellent implementation
+ * http://www.cap-lore.com/MathPhys/IP/aip.c
+ *
+ * Computes the integral over the plane of the product of the winding numbers
+ * of two polygons.
+ *
+ * Uses "Simulation of simplicity" to handle geometric degenericy.
+ * See: Herbert Edelsbrunner and Ernst Peter
+ *      Simulation of simplicity: a technique to cope with degenerate cases in geometric algorithms.
+ *      ACM Trans. Graph. 9, 1 (January 1990), 66-104.
+ *      DOI: 10.1145/77635.77639 
+ *
+ * Author: Nathan Clack <clackn@janelia.hhmi.org>
  * Date  : May 2009 
  *
  * Copyright 2010 Howard Hughes Medical Institute.

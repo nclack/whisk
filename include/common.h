@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "compat.h"
+#include "config.h"
 
 // #include <vld.h> // for VC++: Visual Leak Detector (v1.9b) 
                     // - comment out if this causes problems

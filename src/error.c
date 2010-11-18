@@ -9,6 +9,10 @@
 
 #define ERR_STREAM stdout
 
+// These defines get resolved in parameters/params.h (included through error.h)
+// SHOW_PROGRESS_MESSAGES
+// SHOW_DEBUG_MESSAGES
+
 #ifdef SKIP_PARAMS_FILE
 #define SHOW_PROGRESS_MESSAGES_ 0
 #define SHOW_DEBUG_MESSAGES_    0

@@ -53,6 +53,8 @@ inline float roundf(float x);
   #define INFINITY FLT_MAX
 #endif
 
+#ifndef SHARED_EXPORT
 #define SHARED_EXPORT __declspec(dllexport)
+#endif
 
 #endif //#define _H_COMPAT_
