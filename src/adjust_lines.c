@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
       "Arguments:\n"
       "----------\n"
       "<source>\n"
-      "\tInput video file.  SEQ and TIFF supported.\n"
+      "\tInput video file.\n"
       "<destination>\n"
       "\tOutput. Only TIFF supported.\n"
       "\n" );

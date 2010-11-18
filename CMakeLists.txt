@@ -255,20 +255,61 @@ set(HMM
 source_group("Source Files\\" FILES ${HMM_SRCS})
 source_group("Header Files\\" FILES ${HMM_HDRS})
 
-#
-# TARGETS
-#
-# COMMON
-# WHISKER_IO
-# MEASUREMENTS_IO
-# BAR_IO
-# VIDEO_IO
-# MATH
-# TRACE
-# TRAJ
-# HMM
+###########
+# TARGETS #
+###########
 
-#MESSAGE("PARAM_MODULE is ${PARAM_MODULE}")
+#
+# LIBS
+#
+
+add_library(whisk SHARED
+  ${COMMON}
+  ${MYLIB}
+  ${WHISKER_IO}
+  ${MEASUREMENTS_IO}
+  ${VIDEO_IO}
+  ${MATH}
+  ${TRACE}
+  ${BAR_IO}
+  ${PARAM_MODULE}
+  ${FFMPEG_INCLUDE_DIRS}
+  ${TRAJ}
+  ${HMM}
+)
+target_link_libraries(whisk ${FFMPEG_LIBRARIES})
+add_dependencies(whisk ParameterParser)
+
+add_library(traj SHARED
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${MATH}
+  ${PARAM_MODULE}
+  ${TRAJ}
+  ${HMM}
+)
+add_dependencies(traj ParameterParser)
+
+add_library(whiskio STATIC
+  ${COMMON}
+  ${MYLIB}
+  ${WHISKER_IO}
+  ${MEASUREMENTS_IO}
+  ${VIDEO_IO}
+  ${MATH}
+  ${TRACE}
+  ${BAR_IO}
+  ${FFMPEG_INCLUDE_DIRS}
+)
+target_link_libraries(whiskio ${FFMPEG_LIBRARIES})
+set_target_properties(whiskio PROPERTIES
+  COMPILE_DEFINITIONS SKIP_PARAMS_FILE
+)
+
+#
+# EXECUTABLES
+#
 
 # trace
 source_group("Source Files" FILES src/whisk.c)
@@ -356,32 +397,107 @@ add_executable(report
 )
 set_target_properties(report
   PROPERTIES
-    COMPILE_DEFINITIONS TEST_REPORT_COMPARE_TRAJECTORIES
+    COMPILE_DEFINITIONS TEST_REPORT_1
 )
 add_dependencies(report ParameterParser)
+
+#preprocess
+source_group("Source Files" FILES src/adjust_lines.c)
+add_executable(preprocess
+  src/adjust_lines.c
+  src/aip.c
+  include/aip.h
+  ${COMMON}
+  ${MYLIB}
+  ${TRACE}
+  ${VIDEO_IO}
+  ${PARAM_MODULE}
+)
+add_dependencies(preprocess ParameterParser)
+target_link_libraries(preprocess ${FFMPEG_LIBRARIES})
+
+#seedtest
+source_group("Source Files" FILES src/seedtest.c)
+add_executable(seedtest
+  src/seedtest.c
+  src/aip.c
+  include/aip.h
+  ${COMMON}
+  ${MYLIB}
+  ${TRACE}
+  ${VIDEO_IO}
+  ${PARAM_MODULE}
+)
+add_dependencies(seedtest ParameterParser)
+target_link_libraries(seedtest ${FFMPEG_LIBRARIES})
+
+#stripetest
+source_group("Source Files" FILES src/stripetest.c)
+add_executable(stripetest
+  src/stripetest.c
+  src/aip.c
+  include/aip.h
+  ${COMMON}
+  ${MYLIB}
+  ${TRACE}
+  ${VIDEO_IO}
+  ${PARAM_MODULE}
+)
+add_dependencies(stripetest ParameterParser)
+target_link_libraries(stripetest ${FFMPEG_LIBRARIES})
+
+#test_whisker_io
+source_group("Source Files" FILES src/test_whisker_io.c)
+add_executable(test_whisker_io
+  src/test_whisker_io.c
+  ${COMMON}
+  ${MATH}
+  ${TRACE}
+  ${MYLIB}
+  ${WHISKER_IO}
+  ${PARAM_MODULE}
+)
+add_dependencies(test_whisker_io ParameterParser)
+
+#evaltest
+source_group("Source Files" FILES src/evaltest.c)
+set(EVALTEST_SRCS 
+  src/evaltest.c
+  ${COMMON}
+  ${MATH}
+  ${TRACE}
+  ${MYLIB}
+  ${WHISKER_IO}
+  ${PARAM_MODULE}
+)
+#add_executable(  test_eval_1 ${EVALTEST_SRCS})
+#add_dependencies(test_eval_1 ParameterParser)
+#set_target_properties(test_eval_1 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_1)
+add_executable(  test_eval_2 ${EVALTEST_SRCS})
+add_dependencies(test_eval_2 ParameterParser)
+set_target_properties(test_eval_2 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_2)
+add_executable(  test_eval_3 ${EVALTEST_SRCS})
+add_dependencies(test_eval_3 ParameterParser)
+set_target_properties(test_eval_3 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_3)
+add_executable(  test_eval_4 ${EVALTEST_SRCS})
+add_dependencies(test_eval_4 ParameterParser)
+set_target_properties(test_eval_4 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_4)
+add_executable(  test_eval_5 ${EVALTEST_SRCS})
+add_dependencies(test_eval_5 ParameterParser)
+set_target_properties(test_eval_5 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_5)
 # APP
 # ---
-# adjust_lines.c
-# whisk.c
-# seedtest.c 
-# stripetest.c
-# test_whisker_io.c
-# classify.c
 #
 # LIB
 # ---
 #
 # TESTS
 # -----
-# evaltest.c                            
-#
-# ???
-# ---
-# match.c
 #
 # TESTED BUT UNUSED
 # -----------------
 # deque.c                               
+# match.c - Hungarian algorithm
 #
 # EXCLUDE
 # -------

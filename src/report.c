@@ -283,37 +283,9 @@ int *Measurements_Tables_Get_Diff_Frames( Measurements *A, int nA, Measurements 
 }
 
 #ifdef TEST_REPORT_1
-//produces a list of mismatched frames
-char* Spec[] = {"<measurements1:string> <measurements2:string>",NULL};
-int main(int argc, char* argv[])
-{ Measurements *A, *B;
-  int nA, nB, nframes, *frames;
 
-  Process_Arguments(argc, argv, Spec, 0);
-  
-  A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), NULL, &nA );
-  if(!A) error("Couldn't read %s\n",Get_String_Arg("measurements1"));
-  B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), NULL, &nB );
-  if(!B) error("Couldn't read %s\n",Get_String_Arg("measurements2"));
-  
-  frames = Measurements_Tables_Get_Diff_Frames( A, nA, B, nB, &nframes );
-
-  { debug("frames vec at %p\n"
-          "         size %d\n",frames, nframes);
-    while(nframes--)
-      debug("%5d\n",frames[nframes]);
-  }
-
-  Free_Measurements_Table(A);
-  Free_Measurements_Table(B);
-  return 0;
-}
-#endif
-
-#ifdef TEST_REPORT_COMPARE_TRAJECTORIES
 //produces a histogram of #mismatches/frame
-char* Spec[] = {"<measurements1:string> <measurements2:string>",NULL};
-int main(int argc, char* argv[])
+int report_histogram_mismatched_frames(void)
 { Measurements *A, *B;
   int nA, nB, nAst, nBst;
   Measurements *rowA, *rowB, *markA, *markB;
@@ -330,8 +302,6 @@ int main(int argc, char* argv[])
   hist = Guarded_Malloc( sizeof(int) * hist_size, "alloc hist");
   memset( hist, 0, hist_size );
 
-  Process_Arguments(argc, argv, Spec, 0);
-  
   A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), NULL, &nA );
   if(!A) error("Couldn't read %s\n",Get_String_Arg("measurements1"));
   B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), NULL, &nB );
@@ -512,6 +482,42 @@ int main(int argc, char* argv[])
   Free_Measurements_Table( B );
 
   return 0;
+}
+
+//produces a list of mismatched frames
+int report_mismatched_frames(void)
+{ Measurements *A, *B;
+  int nA, nB, nframes, *frames;
+
+  A = Measurements_Table_From_Filename( Get_String_Arg("measurements1"), NULL, &nA );
+  if(!A) error("Couldn't read %s\n",Get_String_Arg("measurements1"));
+  B = Measurements_Table_From_Filename( Get_String_Arg("measurements2"), NULL, &nB );
+  if(!B) error("Couldn't read %s\n",Get_String_Arg("measurements2"));
+  
+  frames = Measurements_Tables_Get_Diff_Frames( A, nA, B, nB, &nframes );
+
+  { debug("frames vec at %p\n"
+          "         size %d\n",frames, nframes);
+    while(nframes--)
+      debug("%5d\n",frames[nframes]);
+  }
+
+  Free_Measurements_Table(A);
+  Free_Measurements_Table(B);
+  return 0;
+}
+
+char* Spec[] = {"-(diff|hist) <measurements1:string> <measurements2:string>",NULL};
+int main(int argc, char* argv[])
+{
+  Process_Arguments(argc,argv,Spec,0);
+  if(Is_Arg_Matched("-diff"))
+    return report_mismatched_frames();
+  else if(Is_Arg_Matched("-hist"))
+    return report_histogram_mismatched_frames();
+  else
+    error("Expected either -diff or -hist\n");
+  return 111;
 }
 
 #endif
