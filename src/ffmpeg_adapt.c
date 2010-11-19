@@ -27,16 +27,19 @@
 
 #include "ffmpeg_adapt.h"
 
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
+#include <common.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 //---
 #ifdef HAVE_FFMPEG
-
+//#include <libavcodec/avcodec.h>
+//#include <libavformat/avformat.h>
+//#include <libswscale/swscale.h>
+#include <avcodec.h>
+#include <avformat.h>
+#include <swscale.h>
 //---
 //  FORWARD DECLARATIONS
 //

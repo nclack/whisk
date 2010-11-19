@@ -37,14 +37,6 @@ BISON_TARGET(
     param.grammer
   COMPILE_FLAGS "-t")
 #message("BISON_PARAM_OUTPUTS is ${BISON_PARAM_OUTPUTS}")
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-add_executable(validate
-  validate.c
-  ${PARAM_PARSER_SRC}
-	${BISON_PARAM_OUTPUTS}
-  )
-add_dependencies(validate schema PARAM)
-
 set(PARAM_SRCS   ${CMAKE_CURRENT_BINARY_DIR}/param.tab.c)
 #message(":: PARAM_SRCS is ${PARAM_SRCS}")
 set(PARAM_HDRS   ${CMAKE_CURRENT_BINARY_DIR}/param.h)
@@ -52,3 +44,15 @@ set(PARAM_HDRS   ${CMAKE_CURRENT_BINARY_DIR}/param.h)
 set(PARAM_MODULE ${PARAM_SRCS} ${PARAM_HDRS} PARENT_SCOPE)
 
 add_custom_target(ParameterParser DEPENDS ${PARAM_SRCS} ${PARAM_HDRS})
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+add_executable(validate
+  validate.c
+  ${PARAM_PARSER_SRC}
+	${BISON_PARAM_OUTPUTS}
+  )
+add_dependencies(validate 
+    schema
+    ParameterParser
+)
+

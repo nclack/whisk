@@ -33,14 +33,17 @@
 # Macro to find header and lib directories
 # example: FFMPEG_FIND(AVFORMAT avformat avformat.h)
 MACRO(FFMPEG_FIND varname shortname headername)
+#message("++ ROOT: ${ROOT_3RDPARTY_DIR}")
+#message("++     : ${headername}")
+#message("++     : ${shortname}")
     # old version of ffmpeg put header in $prefix/include/[ffmpeg]
     # so try to find header in include directory
     FIND_PATH(FFMPEG_${varname}_INCLUDE_DIRS ${headername}
+        HINTS
+          ${ROOT_3RDPARTY_DIR}
         PATHS
           ${FFMPEG_ROOT}/include
           $ENV{FFMPEG_DIR}/include
-          $ENV{OSGDIR}/include
-          $ENV{OSG_ROOT}/include
           ~/Library/Frameworks
           /Library/Frameworks
           /usr/local/include
@@ -50,42 +53,21 @@ MACRO(FFMPEG_FIND varname shortname headername)
           /opt/csw/include # Blastwave
           /opt/include
           /usr/freeware/include
-          ${ROOT_3RDPARTY_DIR}
         PATH_SUFFIXES 
           ffmpeg
           ffmpeg/w32/msvc/include
           ffmpeg/w32/ming/include
+          ffmpeg/lib${shortname}
+          ffmpeg/w32/msvc/include/lib${shortname} 
+          ffmpeg/w32/ming/include/lib${shortname} 
         DOC "Location of FFMPEG Headers"
+        NO_DEFAULT_PATH
     )
 
-    # newer version of ffmpeg put header in $prefix/include/[ffmpeg/]lib${shortname}
-    # so try to find lib${shortname}/header in include directory
-    IF(NOT FFMPEG_${varname}_INCLUDE_DIRS)
-        FIND_PATH(FFMPEG_${varname}_INCLUDE_DIRS lib${shortname}/${headername}
-              ${FFMPEG_ROOT}/include
-              $ENV{FFMPEG_DIR}/include
-              $ENV{OSGDIR}/include
-              $ENV{OSG_ROOT}/include
-              ~/Library/Frameworks
-              /Library/Frameworks
-              /usr/local/include
-              /usr/include/
-              /sw/include # Fink
-              /opt/local/include # DarwinPorts
-              /opt/csw/include # Blastwave
-              /opt/include
-              /usr/freeware/include
-              ${ROOT_3RDPARTY_DIR}
-            PATH_SUFFIXES 
-              ffmpeg
-              ffmpeg/w32/msvc/include
-              ffmpeg/w32/ming/include
-            DOC "Location of FFMPEG Headers"
-        )
-    ENDIF(NOT FFMPEG_${varname}_INCLUDE_DIRS)
-
-    FIND_LIBRARY(FFMPEG_${varname}_LIBRARIES
-        NAMES ${shortname}
+    FIND_FILE(FFMPEG_${varname}_LIBRARIES
+        "lib${shortname}.a"                 # same on windows
+        HINTS
+          ${ROOT_3RDPARTY_DIR}
         PATHS
           ${FFMPEG_ROOT}
           $ENV{FFMPEG_DIR}
@@ -98,15 +80,16 @@ MACRO(FFMPEG_FIND varname shortname headername)
           /opt/csw
           /opt
           /usr/freeware
-          ${ROOT_3RDPARTY_DIR}
         PATH_SUFFIXES 
           lib
           lib64
-          w32/msvc/lib
-          w32/ming/lib
+          ffmpeg/w32/msvc/lib
+          ffmpeg/w32/ming/lib
         DOC "Location of FFMPEG Libraries"
     )
 
+#message("++ ${FFMPEG_${varname}_LIBRARIES}")
+#message("++ ${FFMPEG_${varname}_INCLUDE_DIRS}")
     IF (FFMPEG_${varname}_LIBRARIES AND FFMPEG_${varname}_INCLUDE_DIRS)
         SET(FFMPEG_${varname}_FOUND 1)
     ENDIF(FFMPEG_${varname}_LIBRARIES AND FFMPEG_${varname}_INCLUDE_DIRS)
@@ -122,7 +105,6 @@ FFMPEG_FIND(LIBAVUTIL   avutil   avutil.h)
 FFMPEG_FIND(LIBSWSCALE  swscale  swscale.h)
 
 SET(FFMPEG_FOUND "NO")
-# Note we don't check FFMPEG_LIBSWSCALE_FOUND here; it's optional.
 IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODEC_FOUND AND FFMPEG_LIBAVUTIL_FOUND AND FFMPEG_LIBSWSCALE_FOUND)
 
     SET(FFMPEG_FOUND "YES")
@@ -142,6 +124,6 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
 
 ELSE ()
 
-#    MESSAGE(STATUS "Could not find FFMPEG")
+    MESSAGE(STATUS "Could not find FFMPEG")
 
 ENDIF()
