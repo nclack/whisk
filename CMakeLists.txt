@@ -3,7 +3,6 @@ project(Whisk)
 set(WHISK_VERSION_MAJOR 1)
 set(WHISK_VERSION_MINOR 0)
 
-
 set(ROOT_3RDPARTY_DIR ${CMAKE_SOURCE_DIR}/3rdParty)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ROOT_3RDPARTY_DIR})
 
@@ -306,6 +305,7 @@ target_link_libraries(whiskio ${FFMPEG_LIBRARIES})
 set_target_properties(whiskio PROPERTIES
   COMPILE_DEFINITIONS SKIP_PARAMS_FILE
 )
+add_dependencies(whiskio ParameterParser)
 
 #
 # EXECUTABLES
@@ -485,6 +485,112 @@ set_target_properties(test_eval_4 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_4)
 add_executable(  test_eval_5 ${EVALTEST_SRCS})
 add_dependencies(test_eval_5 ParameterParser)
 set_target_properties(test_eval_5 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_5)
+
+#whisker_convert
+add_executable(whisker_convert
+  ${COMMON}
+  ${MYLIB}
+  ${WHISKER_IO}
+  ${TRACE}
+  ${MATH}
+  ${PARAM_MODULE}
+)
+set_target_properties(whisker_convert
+  PROPERTIES
+    COMPILE_DEFINITIONS WHISKER_IO_CONVERTER
+)
+add_dependencies(whisker_convert ParameterParser)
+
+#measurements_convert
+add_executable(measurements_convert
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${TRAJ}
+  ${MATH}
+  ${PARAM_MODULE}
+)
+set_target_properties(measurements_convert
+  PROPERTIES
+    COMPILE_DEFINITIONS MEASUREMENTS_IO_CONVERTER
+)
+add_dependencies(measurements_convert ParameterParser)
+
+#
+# INSTALL
+#
+install(
+  TARGETS
+    trace
+    measure
+    classify
+    reclassify
+  RUNTIME DESTINATION WhiskerTracking/bin
+  CONFIGURATIONS Release
+  COMPONENT commandline
+)
+install(
+  TARGETS
+    report
+    whisker_convert
+    measurements_convert
+  RUNTIME DESTINATION WhiskerTracking/bin
+  CONFIGURATIONS Release
+  COMPONENT tools
+)
+install(
+  TARGETS
+    whisk
+    traj
+    whiskio
+  LIBRARY DESTINATION WhiskerTracking/lib
+  ARCHIVE DESTINATION WhiskerTracking/lib
+  CONFIGURATIONS Release
+  COMPONENT libraries
+)
+
+include(InstallRequiredSystemLibraries)
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Whisker tracking")
+SET(CPACK_PACKAGE_VENDOR "Howard Hughes Medical Institute")
+
+SET(CPACK_COMPONENT_COMMANDLINE_DISPLAY_NAME "Command line tools")
+SET(CPACK_COMPONENT_COMMANDLINE_GROUP "Core")
+SET(CPACK_COMPONENT_COMMANDLINE_DESCRIPTION 
+    "These are the core tools for doing automated whisker tracking.")
+
+SET(CPACK_COMPONENT_COMMANDLINE_DISPLAY_NAME "Tools")
+SET(CPACK_COMPONENT_COMMANDLINE_GROUP "Extras")
+SET(CPACK_COMPONENT_COMMANDLINE_DESCRIPTION 
+    "Utilities for manipulating files")
+
+SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME   "Libraries")
+SET(CPACK_COMPONENT_LIBRARIES_GROUP "Extras")
+SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION
+    "Currently, these libraries are used for interfacing with other languages like Matlab and Python.")
+
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+SET(CPACK_RESOURCE_FILE_README  "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
+SET(CPACK_PACKAGE_VERSION_MAJOR ${WHISK_VERSION_MAJOR})
+SET(CPACK_PACKAGE_VERSION_MINOR ${WHISK_VERSION_MINOR})
+SET(CPACK_PACKAGE_VERSION_PATCH "0")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Whisk ${WHISK_VERSION_MAJOR}.${WHISK_VERSION_MINOR}")
+IF(WIN32 AND NOT UNIX)
+  # There is a bug in NSI that does not handle full unix paths properly. Make
+  # sure there is at least one set of four (4) backlasshes.
+  SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/ui\\\\icon.png")
+  SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\trace.exe")
+  SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} Whisker Tracking")
+  SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
+  SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
+  SET(CPACK_NSIS_CONTACT "clackn@janelia.hhmi.org")
+  SET(CPACK_NSIS_MODIFY_PATH ON)
+ELSE(WIN32 AND NOT UNIX)
+ENDIF(WIN32 AND NOT UNIX)
+#SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable") # for Start Menu links
+include(CPack)
+
+
 # APP
 # ---
 #

@@ -8,6 +8,8 @@
 #include "error.h"
 #include "trace.h"
 
+#include <string.h>
+
 #define WF_CALL(a,name)  (*(((_WhiskerFile*)a)->name))
 #define WF_DEREF(a,name) (((_WhiskerFile*)a)->name)
  
