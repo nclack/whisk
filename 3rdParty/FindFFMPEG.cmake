@@ -36,9 +36,7 @@ MACRO(FFMPEG_FIND varname shortname headername)
 #message("++ ROOT: ${ROOT_3RDPARTY_DIR}")
 #message("++     : ${headername}")
 #message("++     : ${shortname}")
-    # old version of ffmpeg put header in $prefix/include/[ffmpeg]
-    # so try to find header in include directory
-    FIND_PATH(FFMPEG_${varname}_INCLUDE_DIRS ${headername}
+    FIND_PATH(FFMPEG_${varname}_INCLUDE_DIRS lib${shortname}/${headername}
         HINTS
           ${ROOT_3RDPARTY_DIR}
         PATHS
@@ -113,14 +111,23 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
 
     SET(FFMPEG_LIBRARY_DIRS ${FFMPEG_LIBAVFORMAT_LIBRARY_DIRS})
 
-    # Note we don't add FFMPEG_LIBSWSCALE_LIBRARIES here; it will be added if found later.
-    SET(FFMPEG_LIBRARIES
-        ${FFMPEG_LIBAVFORMAT_LIBRARIES}
-        ${FFMPEG_LIBAVDEVICE_LIBRARIES}
-        ${FFMPEG_LIBAVCODEC_LIBRARIES}
-        ${FFMPEG_LIBAVUTIL_LIBRARIES}
-        ${FFMPEG_LIBSWSCALE_LIBRARIES}
-        )
+    if(WIN32) 
+      get_filename_component(
+          FFMPEG_KITCHEN_SINK_PATH
+          ${FFMPEG_LIBAVCODEC_LIBRARIES}
+          PATH)
+      FILE(GLOB FFMPEG_LIBRARIES ${FFMPEG_KITCHEN_SINK_PATH}/*.a)      
+#message("FFMPEG_KITCHEN_SINK_PATH is ${FFMPEG_KITCHEN_SINK_PATH}")        
+    else()
+      SET(FFMPEG_LIBRARIES
+          ${FFMPEG_LIBAVFORMAT_LIBRARIES}
+          ${FFMPEG_LIBAVDEVICE_LIBRARIES}
+          ${FFMPEG_LIBAVCODEC_LIBRARIES}
+          ${FFMPEG_LIBAVUTIL_LIBRARIES}
+          ${FFMPEG_LIBSWSCALE_LIBRARIES}
+          )
+    endif()
+#message("FFMPEG_LIBRARIES are ${FFMPEG_LIBRARIES}")        
 
 ELSE ()
 
