@@ -3,6 +3,7 @@ project(Whisk)
 set(WHISK_VERSION_MAJOR 1)
 set(WHISK_VERSION_MINOR 0)
 
+
 set(ROOT_3RDPARTY_DIR ${CMAKE_SOURCE_DIR}/3rdParty)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ROOT_3RDPARTY_DIR})
 
@@ -522,13 +523,12 @@ add_dependencies(measurements_convert ParameterParser)
 # INSTALL
 #
 install(
-  TARGETS
+  TARGETS 
     trace
     measure
     classify
     reclassify
-  RUNTIME DESTINATION WhiskerTracking/bin
-  CONFIGURATIONS Release
+  RUNTIME DESTINATION "WhiskerTracking/bin"
   COMPONENT commandline
 )
 install(
@@ -536,8 +536,7 @@ install(
     report
     whisker_convert
     measurements_convert
-  RUNTIME DESTINATION WhiskerTracking/bin
-  CONFIGURATIONS Release
+  RUNTIME DESTINATION "WhiskerTracking/bin"
   COMPONENT tools
 )
 install(
@@ -545,52 +544,107 @@ install(
     whisk
     traj
     whiskio
-  LIBRARY DESTINATION WhiskerTracking/lib
-  ARCHIVE DESTINATION WhiskerTracking/lib
-  CONFIGURATIONS Release
+  LIBRARY DESTINATION "WhiskerTracking/lib"
+  ARCHIVE DESTINATION "WhiskerTracking/lib"
   COMPONENT libraries
 )
+
+#
+# PACKAGING
+#
 
 include(InstallRequiredSystemLibraries)
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Whisker tracking")
 SET(CPACK_PACKAGE_VENDOR "Howard Hughes Medical Institute")
 
-SET(CPACK_COMPONENT_COMMANDLINE_DISPLAY_NAME "Command line tools")
-SET(CPACK_COMPONENT_COMMANDLINE_GROUP "Core")
-SET(CPACK_COMPONENT_COMMANDLINE_DESCRIPTION 
-    "These are the core tools for doing automated whisker tracking.")
+#SET(CPACK_COMPONENT_COMMANDLINE_DISPLAY_NAME "Command line tools")
+#SET(CPACK_COMPONENT_COMMANDLINE_GROUP "Core")
+#SET(CPACK_COMPONENT_COMMANDLINE_DESCRIPTION 
+#    "These are the core tools for doing automated whisker tracking.")
 
-SET(CPACK_COMPONENT_TOOLS_DISPLAY_NAME "Tools")
-SET(CPACK_COMPONENT_TOOLS_GROUP "Extras")
-SET(CPACK_COMPONENT_TOOLS_DESCRIPTION 
-    "Utilities for manipulating files")
+#SET(CPACK_COMPONENT_TOOLS_DISPLAY_NAME "Tools")
+#SET(CPACK_COMPONENT_TOOLS_GROUP "Extras")
+#SET(CPACK_COMPONENT_TOOLS_DESCRIPTION 
+#    "Utilities for manipulating files")
 
-SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME   "Libraries")
-SET(CPACK_COMPONENT_LIBRARIES_GROUP "Extras")
-SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION
-    "Currently, these libraries are used for interfacing with other languages like Matlab and Python.")
+#SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME   "Libraries")
+#SET(CPACK_COMPONENT_LIBRARIES_GROUP "Extras")
+#SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION
+#    "Currently, these libraries are used for interfacing with other languages like Matlab and Python.")
 
+SET(CPACK_OSX_PACKAGE_VERSION 10.5)
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 SET(CPACK_RESOURCE_FILE_README  "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
 SET(CPACK_PACKAGE_VERSION_MAJOR ${WHISK_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${WHISK_VERSION_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH "0")
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "Whisk ${WHISK_VERSION_MAJOR}.${WHISK_VERSION_MINOR}")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WhiskerTracking ${WHISK_VERSION_MAJOR}.${WHISK_VERSION_MINOR}")
+#SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/ui/icon.png")
 IF(WIN32 AND NOT UNIX)
+#SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\ui\\icon.png")
   # There is a bug in NSI that does not handle full unix paths properly. Make
   # sure there is at least one set of four (4) backlasshes.
-  SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/ui\\\\icon.png")
-  SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\trace.exe")
-  SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY} Whisker Tracking")
-  SET(CPACK_NSIS_HELP_LINK "http:\\\\\\\\wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
-  SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
+  SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\trace.exe")
+  SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY}")
+  SET(CPACK_NSIS_HELP_LINK "http://wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
+  SET(CPACK_NSIS_URL_INFO_ABOUT "http://wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
   SET(CPACK_NSIS_CONTACT "clackn@janelia.hhmi.org")
   SET(CPACK_NSIS_MODIFY_PATH ON)
 ELSE(WIN32 AND NOT UNIX)
 ENDIF(WIN32 AND NOT UNIX)
-#SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable") # for Start Menu links
+
 include(CPack)
+cpack_add_install_type(minimal_install
+  DISPLAY_NAME "Minimal"
+)
+
+cpack_add_install_type(everything_install
+  DISPLAY_NAME "Everything"
+)
+
+cpack_add_component_group(Core
+  DISPLAY_NAME Core
+  EXPANDED
+  BOLD_TITLE
+)
+
+cpack_add_component_group(Extras
+  DISPLAY_NAME Extras
+  EXPANDED
+  BOLD_TITLE
+)
+
+cpack_add_component(
+  commandline
+  DISPLAY_NAME "Command line tools"
+  DESCRIPTION  "These are the core tools for automating whisker tracking."
+  REQUIRED
+  INSTALL_TYPES minimal_install everything_install
+  GROUP Core
+)
+
+cpack_add_component(
+  tools
+  DISPLAY_NAME "Tools"
+  DESCRIPTION  "Utilities for manipulating files"  
+  DISABLED
+  INSTALL_TYPES everything_install
+  GROUP Extras
+)
+
+cpack_add_component(
+  libraries
+  DISPLAY_NAME "Libraries"
+  DESCRIPTION  "Currently, these libraries are used for interfacing with other languages like Matlab and Python."
+  DISABLED
+  INSTALL_TYPES everything_install
+  GROUP Extras
+)
+
+
+#SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable") # for Start Menu links
+
 
 
 # APP
