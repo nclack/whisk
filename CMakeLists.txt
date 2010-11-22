@@ -10,6 +10,7 @@ find_package(FFMPEG)
 set(HAVE_FFMPEG 0)
 if(FFMPEG_FOUND)
   set(HAVE_FFMPEG 1)
+  include_directories(${FFMPEG_INCLUDE_DIRS})
 endif()
 
 # p-file transform
@@ -302,6 +303,7 @@ add_library(whiskio STATIC
   ${FFMPEG_INCLUDE_DIRS}
 )
 target_link_libraries(whiskio ${FFMPEG_LIBRARIES})
+add_dependencies(whiskio ParameterParser) #still need param.h
 set_target_properties(whiskio PROPERTIES
   COMPILE_DEFINITIONS SKIP_PARAMS_FILE
 )

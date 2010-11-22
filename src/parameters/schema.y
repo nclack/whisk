@@ -48,6 +48,10 @@
   #define debug_grammar(...)
 #endif
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 #define CPRN(...) fprintf(cfile,__VA_ARGS__)
 #define HPRN(...) fprintf(hfile,__VA_ARGS__)
 
