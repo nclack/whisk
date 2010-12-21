@@ -29,7 +29,27 @@
 #                                                       (in new version case, use by ffmpeg header) 
 # and ${FFMPEG_libname_INCLUDE_DIRS/libname}             (in new version case, use by osg plugin code)
 
-
+if(WIN32)
+  set(FFMPEG_INCLUDE_PATH_SUFFIXES
+            ffmpeg/w32/msvc/include
+            ffmpeg/w32/ming/include
+            ffmpeg/w32/msvc/include/lib${shortname} 
+            ffmpeg/w32/ming/include/lib${shortname} 
+  )
+  set(FFMPEG_LIB_PATH_SUFFIXES
+            ffmpeg/w32/msvc/lib
+            ffmpeg/w32/ming/lib
+  )
+else()
+  set(FFMPEG_INCLUDE_PATH_SUFFIXES
+            ffmpeg
+            ffmpeg/lib${shortname}
+  )
+  set(FFMPEG_LIB_PATH_SUFFIXES
+            lib
+            lib64
+  )
+endif()
 # Macro to find header and lib directories
 # example: FFMPEG_FIND(AVFORMAT avformat avformat.h)
 MACRO(FFMPEG_FIND varname shortname headername)
@@ -52,12 +72,7 @@ MACRO(FFMPEG_FIND varname shortname headername)
           /opt/include
           /usr/freeware/include
         PATH_SUFFIXES 
-          ffmpeg
-          ffmpeg/w32/msvc/include
-          ffmpeg/w32/ming/include
-          ffmpeg/lib${shortname}
-          ffmpeg/w32/msvc/include/lib${shortname} 
-          ffmpeg/w32/ming/include/lib${shortname} 
+          ${FFMPEG_INCLUDE_PATH_SUFFIXES}
         DOC "Location of FFMPEG Headers"
         NO_DEFAULT_PATH
     )
@@ -79,10 +94,7 @@ MACRO(FFMPEG_FIND varname shortname headername)
           /opt
           /usr/freeware
         PATH_SUFFIXES 
-          lib
-          lib64
-          ffmpeg/w32/msvc/lib
-          ffmpeg/w32/ming/lib
+          ${FFMPEG_LIB_PATH_SUFFIXES}
         DOC "Location of FFMPEG Libraries"
     )
 
@@ -119,12 +131,28 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
       FILE(GLOB FFMPEG_LIBRARIES ${FFMPEG_KITCHEN_SINK_PATH}/*.a)      
 #message("FFMPEG_KITCHEN_SINK_PATH is ${FFMPEG_KITCHEN_SINK_PATH}")        
     else()
+      find_package(zlib)
+      find_package(bzip2)
+      find_package(vorbis)
+      find_package(Lame)
+      find_package(x264)
+      find_package(xvid)
+      find_package(theora)
+
       SET(FFMPEG_LIBRARIES
           ${FFMPEG_LIBAVFORMAT_LIBRARIES}
           ${FFMPEG_LIBAVDEVICE_LIBRARIES}
           ${FFMPEG_LIBAVCODEC_LIBRARIES}
           ${FFMPEG_LIBAVUTIL_LIBRARIES}
           ${FFMPEG_LIBSWSCALE_LIBRARIES}
+          ${ZLIB_LIBRARY}
+          ${BZIP2_LIBRARIES}
+          ${OGG_LIBRARY}
+          ${VORBIS_LIBRARIES}
+          ${Lame_LIBRARY}
+          ${X264_LIBRARY}
+          ${XVID_LIBRARY}
+          ${THEORA_LIBRARY}
           )
     endif()
 #message("FFMPEG_LIBRARIES are ${FFMPEG_LIBRARIES}")        
