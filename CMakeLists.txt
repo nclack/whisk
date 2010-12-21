@@ -264,7 +264,7 @@ source_group("Header Files\\" FILES ${HMM_HDRS})
 # LIBS
 #
 
-add_library(whisk SHARED
+add_library(whisk MODULE #SHARED
   ${COMMON}
   ${MYLIB}
   ${WHISKER_IO}
@@ -281,7 +281,7 @@ add_library(whisk SHARED
 target_link_libraries(whisk ${FFMPEG_LIBRARIES})
 add_dependencies(whisk ParameterParser)
 
-add_library(traj SHARED
+add_library(traj MODULE #SHARED
   ${COMMON}
   ${MYLIB}
   ${MEASUREMENTS_IO}
@@ -292,7 +292,7 @@ add_library(traj SHARED
 )
 add_dependencies(traj ParameterParser)
 
-add_library(whiskio STATIC
+add_library(whiskio MODULE #STATIC
   ${COMMON}
   ${MYLIB}
   ${WHISKER_IO}
@@ -300,6 +300,7 @@ add_library(whiskio STATIC
   ${VIDEO_IO}
   ${MATH}
   ${TRACE}
+  ${TRAJ}
   ${BAR_IO}
   ${FFMPEG_INCLUDE_DIRS}
 )
@@ -522,13 +523,28 @@ add_dependencies(measurements_convert ParameterParser)
 #
 # INSTALL
 #
+
+if(WIN32)
+  set(DEST_BIN    "bin")
+  set(DEST_LIB    "lib")
+  set(DEST_UI     ".")
+  set(DEST_MATLAB ".")
+  set(DEST_PYTHON ".")
+else()
+  set(DEST_BIN "bin/whisk")
+  set(DEST_LIB "lib/whisk")
+  set(DEST_UI  "bin/whisk")
+  set(DEST_MATLAB "share/whisk")
+  set(DEST_PYTHON "share/whisk")
+endif()
+
 install(
   TARGETS 
     trace
     measure
     classify
     reclassify
-  RUNTIME DESTINATION "WhiskerTracking/bin"
+  RUNTIME DESTINATION ${DEST_BIN}
   COMPONENT commandline
 )
 install(
@@ -536,7 +552,7 @@ install(
     report
     whisker_convert
     measurements_convert
-  RUNTIME DESTINATION "WhiskerTracking/bin"
+  RUNTIME DESTINATION ${DEST_BIN}
   COMPONENT tools
 )
 install(
@@ -544,11 +560,37 @@ install(
     whisk
     traj
     whiskio
-  LIBRARY DESTINATION "WhiskerTracking/lib"
-  ARCHIVE DESTINATION "WhiskerTracking/lib"
+  LIBRARY DESTINATION ${DEST_LIB}
+  ARCHIVE DESTINATION ${DEST_LIB}
   COMPONENT libraries
 )
 
+install(DIRECTORY matlab
+    DESTINATION ${DEST_MATLAB}
+    COMPONENT matlab
+)
+
+install(DIRECTORY python
+    DESTINATION ${DEST_PYTHON}
+    COMPONENT python
+)
+
+install(DIRECTORY ui
+    DESTINATION ${DEST_UI}
+    COMPONENT GUI)
+install(
+    TARGETS
+      whisk
+    RUNTIME DESTINATION "${DEST_UI}/ui"
+    LIBRARY DESTINATION "${DEST_UI}/ui"
+    ARCHIVE DESTINATION "${DEST_UI}/ui"
+    COMPONENT GUI)
+install(
+    FILES
+      python/trace.py
+      python/traj.py
+    DESTINATION "${DEST_UI}/ui"
+    COMPONENT GUI)
 #
 # PACKAGING
 #
@@ -556,21 +598,6 @@ install(
 include(InstallRequiredSystemLibraries)
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Whisker tracking")
 SET(CPACK_PACKAGE_VENDOR "Howard Hughes Medical Institute")
-
-#SET(CPACK_COMPONENT_COMMANDLINE_DISPLAY_NAME "Command line tools")
-#SET(CPACK_COMPONENT_COMMANDLINE_GROUP "Core")
-#SET(CPACK_COMPONENT_COMMANDLINE_DESCRIPTION 
-#    "These are the core tools for doing automated whisker tracking.")
-
-#SET(CPACK_COMPONENT_TOOLS_DISPLAY_NAME "Tools")
-#SET(CPACK_COMPONENT_TOOLS_GROUP "Extras")
-#SET(CPACK_COMPONENT_TOOLS_DESCRIPTION 
-#    "Utilities for manipulating files")
-
-#SET(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME   "Libraries")
-#SET(CPACK_COMPONENT_LIBRARIES_GROUP "Extras")
-#SET(CPACK_COMPONENT_LIBRARIES_DESCRIPTION
-#    "Currently, these libraries are used for interfacing with other languages like Matlab and Python.")
 
 SET(CPACK_OSX_PACKAGE_VERSION 10.5)
 SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.txt")
@@ -625,9 +652,36 @@ cpack_add_component(
 )
 
 cpack_add_component(
+  GUI
+  DISPLAY_NAME "Graphical interface."
+  DESCRIPTION  "Python based GUI for proofreading."
+  REQUIRED
+  INSTALL_TYPES minimal_install everything_install
+  GROUP Core
+)
+
+cpack_add_component(
   tools
   DISPLAY_NAME "Tools"
   DESCRIPTION  "Utilities for manipulating files"  
+  DISABLED
+  INSTALL_TYPES everything_install
+  GROUP Extras
+)
+
+cpack_add_component(
+  matlab
+  DISPLAY_NAME "Matlab Interface"
+  DESCRIPTION  "Matlab scripts and mex-files for reading and writing tracking files."
+  DISABLED
+  INSTALL_TYPES everything_install
+  GROUP Extras
+)
+
+cpack_add_component(
+  python
+  DISPLAY_NAME "Python Interface"
+  DESCRIPTION  "Python interface to the tracing and tracking libraries."
   DISABLED
   INSTALL_TYPES everything_install
   GROUP Extras

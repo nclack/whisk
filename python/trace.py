@@ -33,7 +33,9 @@ cWhisk = CDLL( find_library("whisk") )
 
 _param_file = "default.parameters"
 if cWhisk.Load_Params_File(_param_file)==1: #returns 0 on success, 1 on failure
-  raise Exception("Could not load tracing parameters from file: %s"%_param_file)
+  cWhisk.Print_Params_File(_param_file)
+  if cWhisk.Load_Params_File(_param_file)==1: #returns 0 on success, 1 on failure
+    raise Exception("Could not load tracing parameters from file: %s"%_param_file)
 
 #
 # DATA STRUCTURE TRANSLATIONS
@@ -420,57 +422,60 @@ def Save_Whiskers( filename, whiskers ):
 # Bipartite Match
 #
 
-cWhisk.assignmentoptimal.restype = None
-cWhisk.assignmentoptimal.argtypes = [
-  POINTER( c_double ),                  # assignment buffer ( sizeof(double)*nOfRows )
-  POINTER( c_double ),                  # cost: output by reference
-  POINTER( c_double ),                  # distance matrix ( sizeof(double)*nOfRows*nOfCols )
-  c_int,                                # nOfRows
-  c_int ]                               # nOfCols
+try:
+  cWhisk.assignmentoptimal.restype = None
+  cWhisk.assignmentoptimal.argtypes = [
+    POINTER( c_double ),                  # assignment buffer ( sizeof(double)*nOfRows )
+    POINTER( c_double ),                  # cost: output by reference
+    POINTER( c_double ),                  # distance matrix ( sizeof(double)*nOfRows*nOfCols )
+    c_int,                                # nOfRows
+    c_int ]                               # nOfCols
 
-def bipartite_matching( costs ):
-  """ Returns mapping of rows to columns and the cost of the matching.
-  
-  assignment[i] = j ==> row i <--> column j
+  def bipartite_matching( costs ):
+    """ Returns mapping of rows to columns and the cost of the matching.
+    
+    assignment[i] = j ==> row i <--> column j
 
-  """
-  from numpy import double
-  assignment = zeros( (costs.shape[0],), dtype = double )
-  cost = c_double()
-  cWhisk.assignmentoptimal( assignment.ctypes.data_as( POINTER(c_double) ),
-                            byref(cost),
-                            costs.T.ctypes.data_as( POINTER(c_double) ),
-                            costs.shape[1],
-                            costs.shape[0] )
-  print assignment
-  map = {}
-  for i,j in enumerate(assignment):
-    if j != -1:
-      map[i]=int(j)
-  return map,cost
+    """
+    from numpy import double
+    assignment = zeros( (costs.shape[0],), dtype = double )
+    cost = c_double()
+    cWhisk.assignmentoptimal( assignment.ctypes.data_as( POINTER(c_double) ),
+                              byref(cost),
+                              costs.T.ctypes.data_as( POINTER(c_double) ),
+                              costs.shape[1],
+                              costs.shape[0] )
+    print assignment
+    map = {}
+    for i,j in enumerate(assignment):
+      if j != -1:
+        map[i]=int(j)
+    return map,cost
 
-def test_bipartite_matching():
-  from pylab import plot, rand
-  from numpy import zeros, arange
-  N = 10
-  a = rand(N,2)
-  a[:,0] = arange(N)
-  a[:,1] = 0
-  b = rand(N+2,2)
-  b[:,0] = arange(N+2)
-  b[:,1] = 1
-  d = zeros((a.shape[0],b.shape[0]))
-  for i,ai in enumerate(a):
-    for j,bi in enumerate(b):
-      d[i,j] = ((ai-bi)**2).sum()
-  assignment,cost = bipartite_matching( d )
-  print "Matching cost: ", cost.value
-  plot(a[:,0],a[:,1],'o')
-  plot(b[:,0],b[:,1],'s')
-  for i,j in assignment.iteritems():
-    plot([ a[i,0], b[j,0] ], [ a[i,1], b[j,1] ],'k--')
-  return assignment
+  def test_bipartite_matching():
+    from pylab import plot, rand
+    from numpy import zeros, arange
+    N = 10
+    a = rand(N,2)
+    a[:,0] = arange(N)
+    a[:,1] = 0
+    b = rand(N+2,2)
+    b[:,0] = arange(N+2)
+    b[:,1] = 1
+    d = zeros((a.shape[0],b.shape[0]))
+    for i,ai in enumerate(a):
+      for j,bi in enumerate(b):
+        d[i,j] = ((ai-bi)**2).sum()
+    assignment,cost = bipartite_matching( d )
+    print "Matching cost: ", cost.value
+    plot(a[:,0],a[:,1],'o')
+    plot(b[:,0],b[:,1],'s')
+    for i,j in assignment.iteritems():
+      plot([ a[i,0], b[j,0] ], [ a[i,1], b[j,1] ],'k--')
+    return assignment
 
+except AttributeError: #assignmentoptimal not found - usually because match.c wasn't linked in
+  pass                 #This isn't typically a big deal because I don't use it anywhere
 
 
 #

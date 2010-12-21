@@ -28,6 +28,7 @@ macro(mylib_preprocess CFILES_OUT PFILES MANAGER)
       DEPENDS ${f}
       )
   endforeach(f)
+  set_source_files_properties(${${CFILES_OUT}} PROPERTIES GENERATED 1)
   #message(":: ${CFILES_OUT} is ${${CFILES_OUT}}")
 endmacro(mylib_preprocess)
 
