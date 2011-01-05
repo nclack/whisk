@@ -3,6 +3,7 @@ project(Whisk)
 set(WHISK_VERSION_MAJOR 1)
 set(WHISK_VERSION_MINOR 0)
 
+set(CMAKE_VERBOSE_MAKEFILE 1)
 
 set(ROOT_3RDPARTY_DIR ${CMAKE_SOURCE_DIR}/3rdParty)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ROOT_3RDPARTY_DIR})
@@ -49,6 +50,7 @@ source_group("Mylib\\Awk"          FILES ${MANAGER})
 # parameter parsing
 add_subdirectory(src/parameters)
 set_source_files_properties(${PARAM_MODULE} PROPERTIES GENERATED 1)
+source_group("Source Files\\Parameters" FILES ${PARAM_MODULE})
 
 #
 # Configure

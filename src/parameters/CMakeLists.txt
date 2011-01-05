@@ -18,6 +18,7 @@ set(PARAM_PARSER_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/param.y
     ${CMAKE_CURRENT_BINARY_DIR}/param.h
     )
+set_source_files_properties(${PARAM_PARSER_SRC} PROPERTIES GENERATED 1)
 add_custom_command(
   OUTPUT ${PARAM_PARSER_SRC}
   COMMAND
@@ -37,11 +38,18 @@ BISON_TARGET(
     param.grammer
   COMPILE_FLAGS "-t")
 #message("BISON_PARAM_OUTPUTS is ${BISON_PARAM_OUTPUTS}")
-set(PARAM_SRCS   ${CMAKE_CURRENT_BINARY_DIR}/param.tab.c)
+set(PARAM_SRCS ${CMAKE_CURRENT_BINARY_DIR}/param.tab.c)
 #message(":: PARAM_SRCS is ${PARAM_SRCS}")
 set(PARAM_HDRS   ${CMAKE_CURRENT_BINARY_DIR}/param.h)
 #message(":: PARAM_HDRS is ${PARAM_HDRS}")
-set(PARAM_MODULE ${PARAM_SRCS} ${PARAM_HDRS} PARENT_SCOPE)
+set(PARAM_MODULE
+    ${CMAKE_CURRENT_SOURCE_DIR}/schema.y
+    ${CMAKE_CURRENT_SOURCE_DIR}/parameters.schema
+    ${PARAM_SRCS}
+    ${PARAM_HDRS}
+    PARENT_SCOPE
+)
+source_group("Source Files\\Parameters" FILES ${PARAM_MODULE})
 
 add_custom_target(ParameterParser DEPENDS ${PARAM_SRCS} ${PARAM_HDRS})
 

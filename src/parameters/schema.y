@@ -36,6 +36,8 @@
 #define DEBUG_GRAMMAR
 #endif
 
+#define ASRT(e) do {size_t v = (size_t)(e); assert(v); } while(0)
+
 #ifdef DEBUG_LEXER
   #define debug_lexer(...) printf(__VA_ARGS__)
 #else
@@ -141,14 +143,14 @@ struct t_specials specials[] = { {BOOL, "BOOL"},
                                  {0, NULL }};
 Type *newtype(void)
 { Type *self;
-  assert(self=malloc(sizeof(Type)));
+  ASRT(self=malloc(sizeof(Type)));
   memset(self,0,sizeof(Type));
   return self;
 }
 
 struct enumlist *newenumnode(void)
 { struct enumlist *self;
-  assert(self=malloc(sizeof(struct enumlist)));
+  ASRT(self=malloc(sizeof(struct enumlist)));
   memset(self,0,sizeof(struct enumlist));
   return self;
 }
@@ -168,7 +170,7 @@ Type *gentype(Type *left, char *right)
     self->e = newenumnode();
     self->e->name = right;
     if(left)                           // need to append to left (it's an enum list)
-    { assert(left->id == ENUM );
+    { ASRT(left->id == ENUM );
       self->e->last = left->e;
       free(left);
     } else {                           // this is a new enum list, so make the root node
@@ -191,7 +193,7 @@ tkv *g_kv = NULL;
 
 tkv *new_keyvalue(void)
 { tkv *self;
-  assert(self = malloc(sizeof(tkv)));
+  ASRT(self = malloc(sizeof(tkv)));
   memset(self,0,sizeof(tkv));
   return self;
 }
@@ -201,7 +203,7 @@ void kvprint_enum_defn(tkv *self)
   {
         HPRN("typedef enum _t_enum_%s {",self->key);
         { struct enumlist *cur;
-          assert(self->value->e);
+          ASRT(self->value->e);
           for(cur=self->value->e;cur->last;cur=cur->last)
             HPRN("%s, ",cur->name);
           HPRN("%s} enum%s;\n",cur->name, self->key);
@@ -220,7 +222,7 @@ void kvprint_enum_defns(tkv* self)
 void kvprint_enum_token(tkv *self)
 { if(self->value && self->value->id==ENUM)
   { struct enumlist *cur;
-    assert(self->value->e);
+    ASRT(self->value->e);
     for(cur=self->value->e;cur->last;cur=cur->last)
       CPRN("%%token <val%s> TOK_%s \"%s\"\n",self->key,cur->name,cur->name);
     CPRN("%%token <val%s> TOK_%s \"%s\"\n",self->key,cur->name,cur->name);
@@ -258,7 +260,7 @@ void kvprint_params_struct_item(tkv *self)
         HPRN("\tenum%s\t",self->key);
         break;
       default:
-        assert(0);
+        ASRT(0);
     }
   }
   if(self->key)
@@ -349,7 +351,7 @@ void kvprint_line_grammer_item_type(tkv *self)
         CPRN("val%s",self->key);
         break;
       default:
-        assert(0);
+        ASRT(0);
     }
   }
 }
@@ -371,7 +373,7 @@ void kvprint_line_grammer_item(tkv* self)
       CPRN("value");
       break;
     default:
-      assert(0);
+      ASRT(0);
   }
   CPRN(" comment '\\n'  {g_param.param%s=$<",self->key);
   kvprint_line_grammer_item_type(self);
@@ -427,7 +429,7 @@ void kvprint_line_grammar(tkv* self)
 void kvprint_enum_grammar_value(tkv *self)
 { if(self->value && self->value->id==ENUM)
   { struct enumlist *cur;
-    assert(self->value->e);
+    ASRT(self->value->e);
     for(cur=self->value->e;cur->last;cur=cur->last)
       CPRN("       | TOK_%s          {$<val%s>$=%s;}\n",cur->name,self->key,cur->name); 
     CPRN("       | TOK_%s          {$<val%s>$=%s;}\n",cur->name,self->key,cur->name); 
@@ -470,6 +472,8 @@ void print_prelude(char *headername)
      "#include <assert.h>\n"
      "#include \"%s\"\n"
      "\n"
+     "#define ASRT(e) do {size_t v = (size_t)(e); assert(v); } while(0)\n"
+     "\n"
      "#define YYPRINT\n"
      "#if 0\n"
      "#define DEBUG_LEXER\n"
@@ -510,12 +514,12 @@ void print_epilogue()
      "{ int c;\n"
      "  static char *str = NULL;\n"
      "  static size_t str_max_size = 0;\n"
-     "  assert(fp);\n"
+     "  ASRT(fp);\n"
      "\n"
      "\n"
      "  if(!str)\n"
      "  { str = malloc(1024);\n"
-     "    assert(str);\n"
+     "    ASRT(str);\n"
      "    str_max_size = 1024;\n"
      "  }\n"
      "\n"
@@ -543,7 +547,7 @@ void print_epilogue()
      "      if( n >= str_max_size )                    // resize if necessary\n"
      "      { str_max_size = 1.2*n+50;\n"
      "        str = realloc(str,str_max_size);\n"
-     "        assert(str);\n"
+     "        ASRT(str);\n"
      "      }\n"
      "      str[n++] = c;\n"
      "      c = getc(fp);\n"
@@ -582,7 +586,7 @@ void print_epilogue()
      "    { if( n >= str_max_size )        //resize if necessary\n"
      "      { str_max_size = 1.2*n+50;\n"
      "        str = realloc(str,str_max_size);\n"
-     "        assert(str);\n"
+     "        ASRT(str);\n"
      "      }\n"
      "      str[n++] = c;\n"
      "      c = getc(fp);\n"
@@ -786,7 +790,7 @@ int isnamechar(int c)
 FILE *fp=NULL;                                               // when a file is opened, this points to the file
 int yylex(void)
 { int c;
-  assert(fp);
+  ASRT(fp);
   while( (c=getc(fp))==' '||c=='\t' );                       // skip whitespace
   if(c==0)
   { if(feof(fp))
@@ -800,13 +804,13 @@ int yylex(void)
   {
     int n,max=1024;
     char *str = malloc(max);
-    assert(str);
+    ASRT(str);
     str[0] = c;
     n = 1;
     while(isnamechar(c=getc(fp)))
     { if(n>=max)
       { str = realloc(str, 1.2*n+50);
-        assert(str);
+        ASRT(str);
       }
       str[n++]=c;
     }
@@ -855,11 +859,11 @@ main(int argc,char* argv[])
   }
   cfile = fopen(argv[2],"w");
   hfile = fopen(argv[3],"w");
-  assert(cfile);
-  assert(hfile);
+  ASRT(cfile);
+  ASRT(hfile);
   g_headername = argv[3];
   fp = fopen(argv[1],"r");
-  assert(fp);
+  ASRT(fp);
   sts = yyparse();
   fclose(fp);
   fclose(hfile);
