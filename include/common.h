@@ -71,6 +71,13 @@ void *request_storage(
     size_t *maxlen  , 
     size_t  nbytes  , 
     size_t  minindex, 
+    char   *msg );    
+
+void *request_storage_zeroed( 
+    void   *buffer  , 
+    size_t *maxlen  , 
+    size_t  nbytes  , 
+    size_t  minindex, 
     char   *msg );
 
 void *request_storage_pow2items( 

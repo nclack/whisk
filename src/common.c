@@ -34,6 +34,19 @@ void *request_storage( void *buffer, size_t *maxlen, size_t nbytes, size_t minin
   return buffer;
 }
 
+void *request_storage_zeroed( void *buffer, size_t *maxlen, size_t nbytes, size_t minindex, char *msg )
+{ if( (nbytes*minindex) > *maxlen )
+  { size_t newsize = (size_t) (1.25 * minindex + 64) * nbytes;
+#ifdef DEBUG_REQUEST_STORAGE
+    printf("REQUEST %7d bytes (%7d items) above current %7d bytes by %s\n",minindex * nbytes, minindex, *maxlen,msg);
+#endif
+    buffer = Guarded_Realloc( buffer, newsize, msg );
+    memset((char*)buffer+*maxlen,0,newsize-*maxlen);
+    *maxlen = newsize; 
+  }
+  return buffer;
+}
+
 inline size_t _next_pow2_uint32(uint32_t v)
 { v--;
   v |= v >> 1;

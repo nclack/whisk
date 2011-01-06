@@ -19,9 +19,8 @@ if sys.platform == 'win32':
 else:
   lib ='libwhisk.dylib'
 
-#dllpath = os.path.join(*os.path.split(__file__)[:-1])
-#cReader = CDLL(os.path.join( dllpath,lib) )
-os.environ['PATH']+=';.\\'
+dllpath = os.path.split(os.path.split(__file__)[0])[0]
+os.environ['PATH']+=';.\\;%s'%dllpath
 cReader = CDLL( find_library("whisk") )
 
 _bpp = { 8: numpy.uint8,

@@ -7,8 +7,9 @@
 #include "measurements_io.h"
 
 #include "parameters/param.h"
+     
 
-#if 0
+#if 1
 #define DEBUG_REPORT_1
 #define DEBUG_MEASUREMENTS_TABLE_GET_DIFF_FRAMES
 #endif
@@ -319,8 +320,7 @@ int report_histogram_mismatched_frames(void)
   nAst = _count_n_states( A, nA, 0, &minstateA, NULL);
   
   Sort_Measurements_Table_State_Time(B, nB);
-  Measurements_Table_Compute_Velocities(A, nA);
-
+  Measurements_Table_Compute_Velocities(B, nB);
   distB = Build_Velocity_Distributions( B, nB, COMPARE_IDENTITIES_DISTS_NBINS );
   Distributions_Normalize( distB );
   Distributions_Apply_Log2( distB );
@@ -383,7 +383,7 @@ int report_histogram_mismatched_frames(void)
   { //print the counts matrix
     int i,j;
     int *c = counts;
-    debug("Identity correspondance matrix:\n");
+    debug("Identity correspondence matrix:\n");
     for(j=0; j<nBst; j++)
     { for(i=0; i<nAst; i++)
         debug("%5d ",*c++);
@@ -413,7 +413,7 @@ int report_histogram_mismatched_frames(void)
   { // print mapping of identities in A to B
     int i;
     debug("\n"
-          "Identity correspondance\n"
+          "Identity correspondence\n"
           "  A      B\n"
           " ---    ---\n");
     for( i=0; i<nAst; i++ )
@@ -465,7 +465,7 @@ int report_histogram_mismatched_frames(void)
       }
     }
     
-    hist = request_storage( hist, &hist_size, sizeof(int), mismatch+1, "request bin for hist" );
+    hist = request_storage_zeroed( hist, &hist_size, sizeof(int), mismatch+1, "request bin for hist" );
     hist[mismatch]++;
     mismatch_total += mismatch;
     mismatch_max = MAX( mismatch_max, mismatch );
@@ -496,8 +496,8 @@ int report_mismatched_frames(void)
   
   frames = Measurements_Tables_Get_Diff_Frames( A, nA, B, nB, &nframes );
 
-  { debug("frames vec at %p\n"
-          "         size %d\n",frames, nframes);
+  { debug("frames vec at   0x%p\n"
+          "           size %d\n",frames, nframes);
     while(nframes--)
       debug("%5d\n",frames[nframes]);
   }
@@ -511,6 +511,17 @@ char* Spec[] = {"-(diff|hist) <measurements1:string> <measurements2:string>",NUL
 int main(int argc, char* argv[])
 {
   Process_Arguments(argc,argv,Spec,0);
+  { char* paramfile = "default.parameters";
+    if(Load_Params_File("default.parameters"))
+    { warning(
+              "Could not load parameters from file: %s\n"
+              "Writing %s\n"
+              "\tTrying again\n",paramfile,paramfile);
+      Print_Params_File(paramfile);
+      if(Load_Params_File("default.parameters"))
+        error("\tStill could not load parameters.\n");
+    }
+  }
   if(Is_Arg_Matched("-diff"))
     return report_mismatched_frames();
   else if(Is_Arg_Matched("-hist"))
