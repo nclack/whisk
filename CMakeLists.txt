@@ -1,9 +1,17 @@
+## Author: Nathan Clack <clackn@janelia.hhmi.org>
+## Date  : 2010 
+##
+## Copyright 2010 Howard Hughes Medical Institute.
+## All rights reserved.
+## Use is subject to Janelia Farm Research Campus Software Copyright 1.1
+## license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
+## 
 cmake_minimum_required(VERSION 2.8)
 project(whisk)
 set(WHISK_VERSION_MAJOR 1)
 set(WHISK_VERSION_MINOR 0)
 
-set(CMAKE_VERBOSE_MAKEFILE 1)
+set(CMAKE_VERBOSE_MAKEFILE 0)
 
 set(ROOT_3RDPARTY_DIR ${CMAKE_SOURCE_DIR}/3rdParty)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ROOT_3RDPARTY_DIR})

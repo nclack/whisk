@@ -7,6 +7,14 @@ in a single frame.
 One symptom that this is violated is that, on any given frame, many small overlaps will be detected.
 Overlaps that should be merged will be missed.
 """
+"""
+Author: Nathan Clack
+Date  : 2009
+
+Copyright (c) 2009 HHMI. Free downloads and distribution are allowed for any
+non-profit research and educational purposes as long as proper credit is given
+to the author. All other rights reserved.
+"""
 from ui.genetiff import Reader
 from numpy import hypot, zeros, vander, array, matrix, matrix, diff, linspace
 from numpy import polyder, polymul, polyval, polyadd, polysub, roots

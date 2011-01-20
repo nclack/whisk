@@ -1,3 +1,11 @@
+"""
+Author: Nathan Clack
+Date  : 2009
+
+Copyright (c) 2009 HHMI. Free downloads and distribution are allowed for any
+non-profit research and educational purposes as long as proper credit is given
+to the author. All other rights reserved.
+"""
 #!/usr/bin/env python
 # TODO: Refactor so the names make more sense given their jobs
 #       e.g. 'train' should be something else

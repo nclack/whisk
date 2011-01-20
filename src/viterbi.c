@@ -1,3 +1,11 @@
+/* Author: Nathan Clack <clackn@janelia.hhmi.org>
+ * Date  : May 2009 
+ *
+ * Copyright 2010 Howard Hughes Medical Institute.
+ * All rights reserved.
+ * Use is subject to Janelia Farm Research Campus Software Copyright 1.1
+ * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
+ */
 // FIXME: there are probably bugs when the sequence is not just 1,2,3,4,...
 //        that is, need to make sure <sequence> mapping to observables is
 //        honored.

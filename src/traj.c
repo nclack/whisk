@@ -1,3 +1,11 @@
+/* Author: Nathan Clack <clackn@janelia.hhmi.org>
+ * Date  : May 2009 
+ *
+ * Copyright 2010 Howard Hughes Medical Institute.
+ * All rights reserved.
+ * Use is subject to Janelia Farm Research Campus Software Copyright 1.1
+ * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
+ */
 // TODO: change the name of this file to something else, like identity.c
 // TODO: make the .h
 #pragma warning(disable : 4996)

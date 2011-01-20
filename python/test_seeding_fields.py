@@ -1,3 +1,11 @@
+"""
+Author: Nathan Clack
+Date  : 2009
+
+Copyright (c) 2009 HHMI. Free downloads and distribution are allowed for any
+non-profit research and educational purposes as long as proper credit is given
+to the author. All other rights reserved.
+"""
 from pylab import *
 from numpy import *
 import trace
