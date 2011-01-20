@@ -1,8 +1,21 @@
 from SCons.Script import *
-from ui.genetiff import Reader
-from traj import MeasurementsTable
 import os
 import re
+
+try:
+  from traj import MeasurementsTable
+except ImportError:
+  def MeasurementsTable(x):
+    raise Exception("No module named traj")
+
+try:
+  from ui.genetiff import Reader
+  def thumbnail(target, source, env):
+    import Image
+    Image.fromarray( Reader(source[0].path)[0] ).save( target[0].path )
+except ImportError:
+  def thumbnail(target,source,env):
+    raise Exception("No module named ui.genetiff")
 
 def change_label( name, newlabel ):
   if name.rfind(']')==-1:
@@ -16,9 +29,6 @@ def change_ext( node, newext ):
   target = env.File( os.path.split(prefix)[1] + newext )
   return target
 
-def thumbnail(target, source, env):
-  import Image
-  Image.fromarray( Reader(source[0].path)[0] ).save( target[0].path )
 
 def length_v_score_plot(target,source,env):
   import matplotlib
@@ -106,17 +116,12 @@ def pipeline_production(env, sources):
 
   builders = [ 
     sources,           #start with movie files
-    ( env.Bar,
-      (env.Precious,),
-    ),
     env.Whisk,
     (env.Precious,),
     lambda j: env.Command( change_ext(j[0], '.measurements'), j, 
-                          [ "test_measure_1 --face $FACEHINT $SOURCE $TARGET" ,
-                            "test_classify_1 $TARGET $TARGET $FACEHINT -n $WHISKER_COUNT --px2mm $PX2MM --follicle $FOLLICLE_THRESH",
-                            "test_hmm_reclassify_5 -n $WHISKER_COUNT $TARGET $TARGET",
-                            "test_traj_solve_gray_areas $TARGET $TARGET"] ),
-    env.Summary,
+                          [ "measure --face $FACEHINT $SOURCE $TARGET" ,
+                            "classify $TARGET $TARGET $FACEHINT -n $WHISKER_COUNT --px2mm $PX2MM",
+                            "reclassify -n $WHISKER_COUNT $TARGET $TARGET"]),
   ]
 
   compose = lambda a,b: b(a)
@@ -171,7 +176,7 @@ def lit(s):
 
 def whisk_generator( source, target, env, for_signature ):
   if not target[0].exists():
-    return Action("whisk $SOURCE $TARGET --no-bar")
+    return Action("trace $SOURCE $TARGET")
   else:
     return Action("")
 
@@ -182,6 +187,7 @@ def bar_generator( source, target, env, for_signature ):
     return Action("")
 
 env  = Environment(
+  ENV = {'PATH':os.environ['PATH']},
   PX2MM = 0,
   BUILDERS = {
     'Thumbnail' : Builder(action = thumbnail),
