@@ -12,21 +12,21 @@ Building
 This package uses a [Cmake][] based build system.  The basic build steps are similar
 under Windows, OS X, and Linux.  On a unix-y system, the procedure looks like this:
 
-# Install CMake 2.8 or better.
+1. Install CMake 2.8 or better.
 
-# Install bison if it's not already available on your system.
+2. Install bison if it's not already available on your system.
 
    For windows, use [GnuWin32 Bison](http://gnuwin32.sourceforge.net/packages/bison.htm).
 
-# Install awk. 
+3. Install awk. 
    
    For windows, use [GnuWin32 Gawk](http://gnuwin32.sourceforge.net/packages/gawk.htm).
 
-# On Windows and OS X, you'll have to install developer tools.  On Windows,
+4. On Windows and OS X, you'll have to install developer tools.  On Windows,
    that's Visual Studio; one of the free "Express Edition" versions is fine.
    On OS X, the "XCode developer tools" should be downloadable for free.
 
-# Start in the root of the source directory (in a terminal).
+5. Start in the root of the source directory (in a terminal).
    The contents of this directory look something like this:
 
     3rdParty/
@@ -45,7 +45,7 @@ under Windows, OS X, and Linux.  On a unix-y system, the procedure looks like th
     src/
     ui/
 
-# Type these commands:
+6. Type these commands:
 
     mkdir build
     cd build
