@@ -1,3 +1,18 @@
+Git on Windows
+===========
+
+1. Install [msysgit][].
+
+2. You may need to run the following command so that the https protocol will work correctly
+
+       git config --global http.sslcainfo "/c/Program Files (x86)/Git/bin/curl-ca-bundle.crt"
+
+3. Clone the repository
+
+       git clone https://github.com/nclack/whisk.git
+
+[msysgit]: http://code.google.com/p/msysgit/
+
 Notes on the source
 ===============
 
