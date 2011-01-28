@@ -29,28 +29,28 @@ under Windows, OS X, and Linux.  On a unix-y system, the procedure looks like th
 5. Start in the root of the source directory (in a terminal).
    The contents of this directory look something like this:
 
-    3rdParty/
-    CMakeLists.txt
-    LICENSE.txt
-    README.txt
-    TODO
-    build/
-    config.h.in
-    docs/
-    include/
-    matlab/
-    oldbuild/
-    pipeline/
-    python/
-    src/
-    ui/
+        3rdParty/
+        CMakeLists.txt
+        LICENSE.txt
+        README.txt
+        TODO
+        build/
+        config.h.in
+        docs/
+        include/
+        matlab/
+        oldbuild/
+        pipeline/
+        python/
+        src/
+        ui/
 
 6. Type these commands:
 
-    mkdir build
-    cd build
-    cmake ..
-    make
+        mkdir build
+        cd build
+        cmake ..
+        make
    
 CMake works by building the Makefile, or other required project files, in the 
 "build" directory you created.  You don't have to use a Makefile; XCode projects,
@@ -62,6 +62,8 @@ GUI will show available options.  See the CMake documentation for more details.
 
 Whisker tracking
 ============
+
+Detailed instructions and a tutorial may be found [here](http://research.janelia.org/labs/display/MyersLab/Whisker+Tracking).
 
 File formats
 -----------------
@@ -84,7 +86,7 @@ number of data points describing the shape as output from the tracing program.
 A text file.  Each line corresponds to a whisker segment.  The line is formated
 as:
 
-    trajectory_id, frame_id, whisker_id
+      trajectory_id, frame_id, whisker_id
 
 The frame_id, whisker_id pair uniquely specify the whisker.  The trajectory_id
 is an integer that acts like a label.
@@ -93,7 +95,7 @@ is an integer that acts like a label.
 
 A text file.  Each line corresponds to a frame.  The line is formated as:
 
-    frame_id, x, y
+      frame_id, x, y
 
 where x, y are real numbers giving the position in pixels, and frame_id is a
 natural number indicating the correspondng time point in the movie (in frames).
@@ -103,4 +105,4 @@ Graphical interface
 
 See ui/README for instructions on how to use the graphical user interface.
 
-ui2.py --help
+      ui2.py --help
