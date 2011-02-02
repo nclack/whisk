@@ -1,0 +1,3 @@
+Fully automated tracking of single rows of whiskers in high-speed video.
+For more information see: 
+http://research.janelia.org/labs/display/MyersLab/Whisker+Tracking
