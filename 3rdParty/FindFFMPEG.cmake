@@ -132,13 +132,17 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
 #message("FFMPEG_KITCHEN_SINK_PATH is ${FFMPEG_KITCHEN_SINK_PATH}")        
 #message("FFMPEG_LIBRARIES is ${FFMPEG_LIBRARIES}")
     else()
-      find_package(zlib)
-      find_package(bzip2)
-      find_package(vorbis)
+      find_package(ZLIB)
+      find_package(BZip2)
+      find_package(Vorbis)
       find_package(Lame)
       find_package(x264)
       find_package(xvid)
       find_package(theora)
+
+      set(CMAKE_THREAD_PREFER_PTHREAD)
+      find_package(Threads)
+      set(THREAD_LIBRARY ${CMAKE_THREAD_LIBS_INIT})
 
       SET(FFMPEG_LIBRARIES
           ${FFMPEG_LIBAVFORMAT_LIBRARIES}
@@ -154,6 +158,7 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
           ${X264_LIBRARY}
           ${XVID_LIBRARY}
           ${THEORA_LIBRARY}
+          ${THREAD_LIBRARY}
           )
     endif()
 #message("FFMPEG_LIBRARIES are ${FFMPEG_LIBRARIES}")        

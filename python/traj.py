@@ -8,7 +8,7 @@ All rights reserved.
 Use is subject to Janelia Farm Research Campus Software Copyright 1.1
 license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
 """
-import os
+import os,sys
 from ctypes import *
 from ctypes.util import find_library
 import numpy
@@ -20,11 +20,17 @@ import warnings
 
 import pdb
 
-os.environ['PATH'] = r'.//;"%s";'%os.path.split(__file__)[0] + os.environ['PATH']
-#ctraj = cdll.LoadLibrary( find_library('traj') )
-#if ctraj._name==None:
+dllpath = os.path.split(os.path.abspath(__file__))[0]
+if sys.platform == 'win32':
+  lib = os.path.join(dllpath,'whisk.dll')
+else:
+  lib = os.path.join(dllpath,'libwhisk.so')
+os.environ['PATH']+=os.pathsep + os.pathsep.join(['.','..',dllpath])
+name = find_library('whisk')
+if not name:
+  name=lib
 try:
-  ctraj = cdll.LoadLibrary( find_library('whisk') )
+  ctraj = cdll.LoadLibrary( name )
 except:
   raise ImportError("Can not load whisk or traj shared library"); 
 if ctraj._name==None:

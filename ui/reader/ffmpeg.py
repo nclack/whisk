@@ -14,11 +14,17 @@ from numpy import zeros
 from reader import StackReader
 import os,sys
 
-os.environ['PATH']=('%s;.\\;'%os.path.split(__file__)[0])+os.environ['PATH']
-# cReader_path = find_library("whisk");
-# print cReader_path
-# print os.path.split(__file__)[0]
-cReader = CDLL( find_library("whisk") )
+dllpath = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
+if sys.platform == 'win32':
+  lib = os.path.join(dllpath,'whisk.dll')
+else:
+  lib = os.path.join(dllpath,'libwhisk.so')
+#import pdb; pdb.set_trace()
+os.environ['PATH']+=os.pathsep + os.pathsep.join(['.','..',dllpath])
+name = find_library('whisk')
+if not name:
+  name=lib
+cReader = CDLL(name)
 
 cReader.FFMPEG_Get_Stack_Dimensions.restype = c_int
 cReader.FFMPEG_Get_Stack_Dimensions.argtypes = [
