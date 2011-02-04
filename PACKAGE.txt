@@ -1,3 +1,7 @@
-Fully automated tracking of single rows of whiskers in high-speed video.
+This will install a set of tools for fully automated tracking of single
+rows of whiskers in high-speed video.  This includes command line tools,
+a graphical user interface for semi-automated tracking, python libraries
+and Matlab scripts for reading data files.
+
 For more information see: 
 http://research.janelia.org/labs/display/MyersLab/Whisker+Tracking
