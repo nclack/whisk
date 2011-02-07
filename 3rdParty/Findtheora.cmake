@@ -22,20 +22,38 @@ find_path( THEORA_INCLUDE_DIR theora/theora.h
   /mingw
 )
 
+set(THEORA_PATH
+    /usr/local
+    /usr
+    /sw
+    /opt/local
+    /opt/csw
+    /opt
+    /mingw
+    )
 find_library( THEORA_LIBRARY
-  NAMES theora theoraenc theoradec 
+  NAME theora
   HINTS
   PATH_SUFFIXES lib64 lib
-  PATHS
-  /usr/local
-  /usr
-  /sw
-  /opt/local
-  /opt/csw
-  /opt
-  /mingw
+  PATHS ${THEORA_PATH}
+)
+find_library( THEORA_ENC_LIBRARY
+  NAME theoraenc
+  HINTS
+  PATH_SUFFIXES lib64 lib
+  PATHS ${THEORA_PATH}
+)
+find_library( THEORA_DEC_LIBRARY
+  NAME theoradec 
+  HINTS
+  PATH_SUFFIXES lib64 lib
+  PATHS ${THEORA_PATH}
 )
 
-if(THEORA_LIBRARY)
-set( THEORA_FOUND "YES" )
-endif(THEORA_LIBRARY)
+if(THEORA_LIBRARY AND THEORA_ENC_LIBRARY AND THEORA_DEC_LIBRARY)
+  set( THEORA_LIBRARIES 
+       ${THEORA_LIBRARY}
+       ${THEORA_ENC_LIBRARY}
+       ${THEORA_DEC_LIBRARY})
+  set( THEORA_FOUND "YES" )
+endif()

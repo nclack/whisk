@@ -139,6 +139,11 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
       find_package(x264)
       find_package(xvid)
       find_package(theora)
+      find_package(va)
+      find_package(VPX)
+      find_package(Schroedinger)
+      find_package(Speex)
+      find_package(GSM)
 
       set(CMAKE_THREAD_PREFER_PTHREAD)
       find_package(Threads)
@@ -157,7 +162,12 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
           ${Lame_LIBRARY}
           ${X264_LIBRARY}
           ${XVID_LIBRARY}
-          ${THEORA_LIBRARY}
+          ${THEORA_LIBRARIES}
+          ${VAAPI_LIBRARY}
+          ${VPX_LIBRARY}
+          ${SCHROEDINGER_LIBRARY}
+          ${SPEEX_LIBRARY}
+          ${GSM_LIBRARY}
           ${THREAD_LIBRARY}
           )
     endif()
