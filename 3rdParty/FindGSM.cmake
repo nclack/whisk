@@ -36,6 +36,6 @@ find_library( GSM_LIBRARY
   /mingw
 )
 
-if(GSM_LIBRARY)
+if(GSM_LIBRARY)                     
 set( GSM_FOUND "YES" )
 endif(GSM_LIBRARY)
