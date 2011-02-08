@@ -69,6 +69,12 @@ configure_file(
   "${PROJECT_BINARY_DIR}/config.h"
 )
 
+if(WIN32)
+set(LIBM )
+else()
+set(LIBM ${LIBM})
+endif()
+
 #
 # Source Groups
 # -------------
@@ -287,7 +293,7 @@ add_library(whisk MODULE #SHARED
   ${TRAJ}
   ${HMM}
 )
-target_link_libraries(whisk ${FFMPEG_LIBRARIES} m)
+target_link_libraries(whisk ${FFMPEG_LIBRARIES} ${LIBM})
 add_dependencies(whisk ParameterParser)
 
 add_library(traj MODULE #SHARED
@@ -300,7 +306,7 @@ add_library(traj MODULE #SHARED
   ${HMM}
 )
 add_dependencies(traj ParameterParser)
-target_link_libraries(traj m)
+target_link_libraries(traj ${LIBM})
 
 add_library(whiskio MODULE #STATIC
   ${COMMON}
@@ -314,7 +320,7 @@ add_library(whiskio MODULE #STATIC
   ${BAR_IO}
   ${FFMPEG_INCLUDE_DIRS}
 )
-target_link_libraries(whiskio ${FFMPEG_LIBRARIES} m)
+target_link_libraries(whiskio ${FFMPEG_LIBRARIES} ${LIBM})
 add_dependencies(whiskio ParameterParser) #still need param.h
 set_target_properties(whiskio PROPERTIES
   COMPILE_DEFINITIONS SKIP_PARAMS_FILE
@@ -339,7 +345,7 @@ add_executable(trace
   ${PARAM_MODULE}
   ${FFMPEG_INCLUDE_DIRS}
 )
-target_link_libraries(trace ${FFMPEG_LIBRARIES} m)
+target_link_libraries(trace ${FFMPEG_LIBRARIES} ${LIBM})
 add_dependencies(trace ParameterParser)
   
 #measure
@@ -360,7 +366,7 @@ set_target_properties(measure PROPERTIES
   COMPILE_DEFINITIONS TEST_MEASURE_1
 )
 add_dependencies(measure ParameterParser)
-target_link_libraries(measure m)
+target_link_libraries(measure ${LIBM})
 
 #classify
 source_group("Source Files" FILES src/classify.c)
@@ -378,7 +384,7 @@ set_target_properties(classify
     COMPILE_DEFINITIONS TEST_CLASSIFY_1
 )
 add_dependencies(classify ParameterParser)
-target_link_libraries(classify m)
+target_link_libraries(classify ${LIBM})
 
 #reclassify
 source_group("Source Files" FILES src/hmm-reclassify.c)
@@ -397,7 +403,7 @@ set_target_properties(reclassify
     COMPILE_DEFINITIONS TEST_HMM_RECLASSIFY_5
 )
 add_dependencies(reclassify ParameterParser)
-target_link_libraries(reclassify m)
+target_link_libraries(reclassify ${LIBM})
 
 #report
 source_group("Source Files" FILES src/report.c)
@@ -417,7 +423,7 @@ set_target_properties(report
     COMPILE_DEFINITIONS TEST_REPORT_1
 )
 add_dependencies(report ParameterParser)
-target_link_libraries(report m)
+target_link_libraries(report ${LIBM})
 
 #preprocess
 source_group("Source Files" FILES src/adjust_lines.c)
@@ -432,7 +438,7 @@ add_executable(preprocess
   ${PARAM_MODULE}
 )
 add_dependencies(preprocess ParameterParser)
-target_link_libraries(preprocess ${FFMPEG_LIBRARIES} m)
+target_link_libraries(preprocess ${FFMPEG_LIBRARIES} ${LIBM})
 
 #seedtest
 source_group("Source Files" FILES src/seedtest.c)
@@ -447,7 +453,7 @@ add_executable(seedtest
   ${PARAM_MODULE}
 )
 add_dependencies(seedtest ParameterParser)
-target_link_libraries(seedtest ${FFMPEG_LIBRARIES} m)
+target_link_libraries(seedtest ${FFMPEG_LIBRARIES} ${LIBM})
 
 #stripetest
 source_group("Source Files" FILES src/stripetest.c)
@@ -462,7 +468,7 @@ add_executable(stripetest
   ${PARAM_MODULE}
 )
 add_dependencies(stripetest ParameterParser)
-target_link_libraries(stripetest ${FFMPEG_LIBRARIES} m)
+target_link_libraries(stripetest ${FFMPEG_LIBRARIES} ${LIBM})
 
 #test_whisker_io
 source_group("Source Files" FILES src/test_whisker_io.c)
@@ -476,7 +482,7 @@ add_executable(test_whisker_io
   ${PARAM_MODULE}
 )
 add_dependencies(test_whisker_io ParameterParser)
-target_link_libraries(test_whisker_io m)
+target_link_libraries(test_whisker_io ${LIBM})
 
 #evaltest
 source_group("Source Files" FILES src/evaltest.c)
@@ -495,19 +501,19 @@ set(EVALTEST_SRCS
 add_executable(  test_eval_2 ${EVALTEST_SRCS})
 add_dependencies(test_eval_2 ParameterParser)
 set_target_properties(test_eval_2 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_2)
-target_link_libraries(test_eval_2 m)
+target_link_libraries(test_eval_2 ${LIBM})
 add_executable(  test_eval_3 ${EVALTEST_SRCS})
 add_dependencies(test_eval_3 ParameterParser)
 set_target_properties(test_eval_3 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_3)
-target_link_libraries(test_eval_3 m)
+target_link_libraries(test_eval_3 ${LIBM})
 add_executable(  test_eval_4 ${EVALTEST_SRCS})
 add_dependencies(test_eval_4 ParameterParser)
 set_target_properties(test_eval_4 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_4)
-target_link_libraries(test_eval_4 m)
+target_link_libraries(test_eval_4 ${LIBM})
 add_executable(  test_eval_5 ${EVALTEST_SRCS})
 add_dependencies(test_eval_5 ParameterParser)
 set_target_properties(test_eval_5 PROPERTIES COMPILE_DEFINITIONS EVAL_TEST_5)
-target_link_libraries(test_eval_5 m)
+target_link_libraries(test_eval_5 ${LIBM})
 
 #whisker_convert
 add_executable(whisker_convert
@@ -523,7 +529,7 @@ set_target_properties(whisker_convert
     COMPILE_DEFINITIONS WHISKER_IO_CONVERTER
 )
 add_dependencies(whisker_convert ParameterParser)
-target_link_libraries(whisker_convert m)
+target_link_libraries(whisker_convert ${LIBM})
 
 #measurements_convert
 add_executable(measurements_convert
@@ -538,7 +544,7 @@ set_target_properties(measurements_convert
   PROPERTIES
     COMPILE_DEFINITIONS MEASUREMENTS_IO_CONVERTER
 )
-target_link_libraries(measurements_convert m)
+target_link_libraries(measurements_convert ${LIBM})
 add_dependencies(measurements_convert ParameterParser)
 
 #
