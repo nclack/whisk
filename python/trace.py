@@ -28,8 +28,16 @@ from warnings import warn
 
 import pdb
 
-os.environ['PATH'] = r'.//;"%s";'%os.path.split(__file__)[0] + os.environ['PATH']
-cWhisk = CDLL( find_library("whisk") )
+dllpath = os.path.split(os.path.abspath(__file__))[0]
+if sys.platform == 'win32':
+  lib = os.path.join(dllpath,'whisk.dll')
+else:
+  lib = os.path.join(dllpath,'libwhisk.so')
+os.environ['PATH']+=os.pathsep + os.pathsep.join(['.','..',dllpath])
+name = find_library('whisk')
+if not name:
+  name=lib
+cWhisk = CDLL(name)
 
 _param_file = "default.parameters"
 if cWhisk.Load_Params_File(_param_file)==1: #returns 0 on success, 1 on failure

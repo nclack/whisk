@@ -14,14 +14,17 @@ from numpy import zeros
 from reader import IMovieReader
 import os,sys
 
+dllpath = os.path.split(os.path.split(os.path.abspath(__file__))[0])[0]
 if sys.platform == 'win32':
-  lib = 'whisk.dll'
+  lib = os.path.join(dllpath,'whisk.dll')
 else:
-  lib ='libwhisk.dylib'
-
-dllpath = os.path.split(os.path.split(__file__)[0])[0]
-os.environ['PATH']+=';.\\;%s'%dllpath
-cReader = CDLL( find_library("whisk") )
+  lib = os.path.join(dllpath,'libwhisk.so')
+#import pdb; pdb.set_trace()
+os.environ['PATH']+=os.pathsep + os.pathsep.join(['.','..',dllpath])
+name = find_library('whisk')
+if not name:
+  name=lib
+cReader = CDLL(name)
 
 _bpp = { 8: numpy.uint8,
         16: numpy.uint16,

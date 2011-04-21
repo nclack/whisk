@@ -132,13 +132,33 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
 #message("FFMPEG_KITCHEN_SINK_PATH is ${FFMPEG_KITCHEN_SINK_PATH}")        
 #message("FFMPEG_LIBRARIES is ${FFMPEG_LIBRARIES}")
     else()
-      find_package(zlib)
-      find_package(bzip2)
-      find_package(vorbis)
+      find_package(ZLIB)
+      find_package(BZip2)
+      find_package(Vorbis)
       find_package(Lame)
       find_package(x264)
       find_package(xvid)
       find_package(theora)
+      find_package(va)
+      find_package(VPX)
+      find_package(Schroedinger)
+      find_package(Speex)
+      find_package(GSM)
+
+      set(CMAKE_THREAD_PREFER_PTHREAD)
+      find_package(Threads)
+      set(THREAD_LIBRARY ${CMAKE_THREAD_LIBS_INIT})
+
+macro(ADDLIB VAR NAME)
+  if(${NAME}_FOUND)
+    set(${VAR} ${${VAR}} ${${NAME}_LIBRARY})
+  endif()
+endmacro()
+macro(ADDLIBS VAR NAME)
+  if(${NAME}_FOUND)
+    set(${VAR} ${${VAR}} ${${NAME}_LIBRARIES})
+  endif()
+endmacro()
 
       SET(FFMPEG_LIBRARIES
           ${FFMPEG_LIBAVFORMAT_LIBRARIES}
@@ -153,8 +173,14 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
           ${Lame_LIBRARY}
           ${X264_LIBRARY}
           ${XVID_LIBRARY}
-          ${THEORA_LIBRARY}
+          ${THREAD_LIBRARY}
           )
+      ADDLIBS(FFMPEG_LIBRARIES THEORA)
+      ADDLIB (FFMPEG_LIBRARIES VAAPI)
+      ADDLIB (FFMPEG_LIBRARIES VPX)
+      ADDLIB (FFMPEG_LIBRARIES SCHROEDINGER)
+      ADDLIB (FFMPEG_LIBRARIES SPEEX)
+      ADDLIB (FFMPEG_LIBRARIES GSM)
     endif()
 #message("FFMPEG_LIBRARIES are ${FFMPEG_LIBRARIES}")        
 

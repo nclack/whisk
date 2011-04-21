@@ -682,7 +682,7 @@ void print_epilogue()
       while(line=default_params[iline++])
       { memset(buf,0,sizeof(buf));
         snprintf(buf,2048,"    fprintf(fp,\"%s\");\n",line);
-        CPRN(buf);
+        CPRN("%s",buf);
       }
     }
   CPRN(

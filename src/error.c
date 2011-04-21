@@ -149,7 +149,7 @@ void progress_meter(double cur, double min, double max, int len, char *str, ...)
     n+=sprintf(buf+n,"]\r");
     buf[n] = '\0';
 
-    fprintf(ERR_STREAM,buf);
+    fprintf(ERR_STREAM,"%s",buf);
     fflush(NULL);
   }
 }
