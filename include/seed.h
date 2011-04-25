@@ -48,8 +48,13 @@ SHARED_EXPORT  Seed*         compute_seed_from_point           ( Image *image, i
 SHARED_EXPORT  Seed*         compute_seed_from_point_ex        ( Image *image, int p, int maxr,                
                                                                  float *out_m, float *out_stat);               
 SHARED_EXPORT  void          compute_seed_from_point_histogram ( Image *image, int maxr, Image *hist);         
-SHARED_EXPORT  void          compute_seed_from_point_field     ( Image *image, int maxr, Image *hist,          
-                                                                 Image *slopes, Image *stats);                 
+SHARED_EXPORT  void          compute_seed_from_point_field     ( Image *image, int maxr,
+                                                                 Image *hist , Image *slopes, Image *stats);                 
+SHARED_EXPORT  void          compute_seed_from_point_field_windowed 
+                                                               ( Image *image, 
+                                                                 int maxr, int maxiter,
+                                                                 float statlow, float stathigh,      
+                                                                 Image *hist , Image *slopes, Image *stats);                 
 SHARED_EXPORT  void          compute_seed_from_point_field_windowed_on_contour                                 
                                                                ( Image *image, Contour *trace,                 
                                                                  int maxr, float statlow, float stathigh,      

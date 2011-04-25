@@ -446,6 +446,16 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
             h,th,s );
       }
       break;
+    case SEED_EVERYWHERE:
+      {
+        compute_seed_from_point_field_windowed( image,
+            SEED_ITERATIONS,              // maxr
+            SEED_ITERATIONS,              // maxiter
+            SEED_ITERATION_THRESH,        // iteration threshold
+            SEED_ACCUM_THRESH,            // accumulation threshold
+            h,th,s );
+      }
+      break;
     default:
       error("Did not recognize value for SEED_METHOD.  Got: %d\n",SEED_METHOD);
   }

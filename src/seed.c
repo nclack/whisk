@@ -407,7 +407,8 @@ Seed *compute_seed_from_point_ex( Image *image, int p, int maxr, float *out_m, f
   /* Spiral out from center
    * Collect pixels minimal over set of pixels with same L0 distance from p
    * Form seed by computing center and slope of collected pixels
-   * Use linear regression
+   * Analyze eigenvalues from covariance of minima positions
+   * Exclude center.
    */
   int tp, cx,cy,x,y;
   cx=cy=0;
@@ -663,12 +664,32 @@ void compute_seed_from_point_histogram( Image *image, int maxr, Image *hist)
 }
 
 
+// Assumes `image` and 'hist' are 8bit grayscale
+//         `slopes` and `stats` should be float
+// `statlow` is the threshold under which iteration is stopped
+// `stathigh` is the threshold for recording the result 
+//            (below threshold is discarded)
 SHARED_EXPORT
-void compute_seed_from_point_field_windowed( Image *image, int maxr, float statlow, float stathigh,
-                                    Image *hist, Image *slopes, Image *stats)
-  // Assumes `image` and 'hist' are 8bit grayscale
-  //         `slopes` and `stats` should be float
-{ int a = image->width * image->height;
+void compute_seed_from_point_field_windowed( 
+    Image *image, 
+    int maxr, int maxiter, 
+    float statlow, float stathigh,
+    Image *hist, Image *slopes, Image *stats)
+{ 
+#ifdef DEBUG_COMPUTE_SEED
+  { printf("### compute_seed_from_point_field_windowed\n",
+           "Image   : 0x%p\n"
+           "maxr    : %d\n"
+           "maxiter : %d\n"
+           "thresh  : (%g,%g)\n"
+           "hist    : 0x%p\n"
+           "slopes  : 0x%p\n"
+           "stats   : 0x%p\n",
+           image,maxr,maxiter,statlow,stathigh,hist,slopes,stats);
+  }
+#endif
+
+  int a = image->width * image->height;
   int stride = image->width;
   uint8 *h = hist->array;
   float *sl = (float*) slopes->array;
@@ -683,7 +704,7 @@ void compute_seed_from_point_field_windowed( Image *image, int maxr, float statl
     //int newp=index[a], p=index[a];
     int newp=a, p=a;
     int i;
-    for( i=0; i< maxr/*maxiter*/; i++ ) // iterate - detector attracts to nearest line
+    for( i=0; i< maxiter; i++ ) // iterate - detector attracts to nearest line
     { p = newp;
       s = compute_seed_from_point_ex(image, p, maxr, &m, &stat); //return NULL on boundary
       if( !s ) break;
@@ -705,12 +726,13 @@ void compute_seed_from_point_field_windowed( Image *image, int maxr, float statl
       //st[a] /= n;
     }
   }
+
 }                                     
 
 SHARED_EXPORT
 void compute_seed_from_point_field( Image *image, int maxr,
                                     Image *hist, Image *slopes, Image *stats)
-{ compute_seed_from_point_field_windowed( image, maxr, 0.1, 0.4, hist, slopes, stats );
+{ compute_seed_from_point_field_windowed( image, maxr, maxr, 0.1, 0.4, hist, slopes, stats );
 }
 
 SHARED_EXPORT

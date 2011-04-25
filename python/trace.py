@@ -549,6 +549,17 @@ cWhisk.compute_seed_from_point_field.argtypes = [
   POINTER( cImage ),
   POINTER( cImage )]
 
+cWhisk.compute_seed_from_point_field_windowed.restype = None
+cWhisk.compute_seed_from_point_field_windowed.argtypes = [
+  POINTER( cImage ),    # image
+  c_int,                # maxr
+  c_int,                # maxiter
+  c_float,              # stat window: low
+  c_float,              # stat window: high
+  POINTER( cImage ),    # output - histogram
+  POINTER( cImage ),    # output - slopes
+  POINTER( cImage )]    # output - stats
+
 cWhisk.compute_seed_from_point_field_windowed_on_contour.restype = None
 cWhisk.compute_seed_from_point_field_windowed_on_contour.argtypes = [
   POINTER( cImage ),    # image
@@ -652,6 +663,26 @@ def compute_seed_fields( image, maxr = 4 ):
   cslopes = cImage.fromarray(slopes)
   cstats  = cImage.fromarray(stats)
   cWhisk.compute_seed_from_point_field( cim, c_int(maxr), chist, cslopes, cstats )
+  return hist, slopes, stats
+
+def compute_seed_fields_windowed( image,  maxr = 4, maxiter = 4, window = (0.4,0.4) ):
+  cim     = cImage.fromarray( image )
+  hist    = zeros( image.shape, dtype = uint8 )
+  slopes  = zeros( image.shape, dtype = float32 )
+  stats   = zeros( image.shape, dtype = float32 )
+  chist   = cImage.fromarray(hist)
+  cslopes = cImage.fromarray(slopes)
+  cstats  = cImage.fromarray(stats)
+
+  cWhisk.compute_seed_from_point_field_windowed( cim,
+                                                 c_int(maxr),
+                                                 c_int(maxiter),
+                                                 window[0], window[1], 
+                                                 chist, cslopes, cstats )
+
+  mask = hist>0
+  stats[mask]  = stats [mask]/hist[mask]
+  slopes[mask] = slopes[mask]/hist[mask]
   return hist, slopes, stats
 
 def compute_seed_fields_windowed_on_objects( image,  maxr = 4, window = (0.4,0.4) ):
