@@ -13,9 +13,11 @@ IDENTITY_SOLVER_SHAPE_NBINS    INT
 [trace]
 SEED_METHOD                    SEED_ON_GRID | SEED_ON_MHAT_CONTOURS | SEED_EVERYWHERE // Specify seeding method: may be SEED_ON_MHAT_CONTOURS or SEED_ON_GRID
 SEED_ON_GRID_LATTICE_SPACING   INT                                  // (pixels)
+SEED_SIZE_PX                   INT                                  // Width of the seed detector in pixels.
 SEED_ITERATIONS                INT                                  // Maxium number of iterations to re-estimate a seed.
-SEED_ITERATION_THRESH          FLOAT                                // (0 to 1) Threshold score determining when a seed should be reestimated.
+SEED_ITERATION_THRESH          FLOAT                                // (0 to 1) Threshold score determining when a seed score should be reestimated.
 SEED_ACCUM_THRESH              FLOAT                                // (0 to 1) Threshold score determining when to accumulate statistics
+SEED_THRESH                    FLOAT                                // (0 to 1) Threshold score determining when to generate a seed
 
 HAT_RADIUS                     FLOAT                                // Mexican-hat radius for whisker detection (seeding)
 MIN_LEVEL                      INT                                  // Level-set threshold for mexican hat result.  Used for seeding on mexican hat contours.

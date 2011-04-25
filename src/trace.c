@@ -427,7 +427,8 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
         { int i;
           for( i=0; i < omap->num_objects; i++ )
           { compute_seed_from_point_field_windowed_on_contour( image, omap->objects[i],
-              SEED_ITERATIONS,       // maxr
+              SEED_SIZE_PX,          // maxr
+              SEED_ITERATIONS,       // maxiter
               SEED_ITERATION_THRESH, // iteration threshold
               SEED_ACCUM_THRESH,     // accumulation threshold
               h, th, s );
@@ -440,7 +441,8 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
       {
         compute_seed_from_point_field_on_grid( image,
             SEED_ON_GRID_LATTICE_SPACING, // lattice spacing
-            SEED_ITERATIONS,              // maxr
+            SEED_SIZE_PX,                 // maxr
+            SEED_ITERATIONS,              // maxiter
             SEED_ITERATION_THRESH,        // iteration threshold
             SEED_ACCUM_THRESH,            // accumulation threshold
             h,th,s );
@@ -449,7 +451,7 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
     case SEED_EVERYWHERE:
       {
         compute_seed_from_point_field_windowed( image,
-            SEED_ITERATIONS,              // maxr
+            SEED_SIZE_PX,                 // maxr
             SEED_ITERATIONS,              // maxiter
             SEED_ITERATION_THRESH,        // iteration threshold
             SEED_ACCUM_THRESH,            // accumulation threshold
@@ -493,7 +495,7 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
     }
     i = sarea;
     while( i-- )
-    { if( sa[i] > 0.0 )
+    { if( sa[i] > SEED_THRESH )
       { maska[i] = 1;
         nseeds ++;
       }
@@ -507,7 +509,7 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
 
       i = sarea;
       while( i-- )
-      { if( sa[i] > 0.0 )
+      { if( maska[i]==1 )
         { Seed seed = { i%stride,
               i/stride,
               (int) 100 * cos( tha[i] ),
@@ -539,7 +541,7 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
             w->time = iFrame;
             w->id  = n_segs;
             wsegs[n_segs++] = *w;
-            draw_whisker( mask , w, 2, 3 ); // set to 3 for debug, could be anything but 1
+            draw_whisker( mask , w, SEED_SIZE_PX/2.0, 3 ); // "color" set to 3 for debug, could be anything but 1
             free(w);
 #ifdef DEBUG_SEEDING_MASK
             //Write_Image("trace_seed_mask.tif",mask);

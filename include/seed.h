@@ -57,10 +57,12 @@ SHARED_EXPORT  void          compute_seed_from_point_field_windowed
                                                                  Image *hist , Image *slopes, Image *stats);                 
 SHARED_EXPORT  void          compute_seed_from_point_field_windowed_on_contour                                 
                                                                ( Image *image, Contour *trace,                 
-                                                                 int maxr, float statlow, float stathigh,      
+                                                                 int maxr, int maxiter,
+                                                                 float statlow, float stathigh,      
                                                                  Image *hist, Image *slopes, Image *stats );   
 SHARED_EXPORT  void compute_seed_from_point_field_on_grid( Image *image, int spacing,                          
-                                                           int maxr, float statlow, float stathigh,            
+                                                           int maxr, int maxiter,
+                                                           float statlow, float stathigh,            
                                                            Image *hist, Image *slopes, Image *stats );         
 SHARED_EXPORT  Seed_Vector*  find_seeds2       ( Contour *trace, Image *image );                               
 #endif //  _H_SEED

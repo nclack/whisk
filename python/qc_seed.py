@@ -8,9 +8,9 @@ rc('image',interpolation='nearest');
 rc('figure.subplot',bottom=0.05,left=0.05,top=0.95,right=0.95);
 rc('figure',facecolor='w');
 
-def play_seed_angles(video,thresh=0.45,alpha=0.75,bg=63,every=slice(None),renderto=None):
+def play_seed_angles(video,maxr=9,thresh=0.99,alpha=0.75,bg=63,every=slice(None),renderto=None):
   mask = video[::100].max(axis=0)>bg
-  f = lambda im: trace.compute_seed_fields_windowed(im,maxr=4,maxiter=1,window=(0.0,0.0))
+  f = lambda im: trace.compute_seed_fields_windowed(im,maxr=maxr,maxiter=1,window=(0.0,0.0))
   def make(im):
     angles = abs(f(im)[1]*180/pi);
     out = cm.hsv(angles/180.0);
@@ -86,4 +86,11 @@ def trace_all(image,r=10,thresh=100):
         out.append(t)
   return out
 
-  
+def genmask(video,border=10):
+  mask = video[::100].max(axis=0)>63;
+  mask[:border,:] = 0
+  mask[-border:,:] = 0
+  mask[:,:border] = 0
+  mask[:,-border:] = 0
+  return mask
+

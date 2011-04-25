@@ -572,9 +572,9 @@ Seed *compute_seed_from_point_ex( Image *image, int p, int maxr, float *out_m, f
 
 #endif
       desc = sqrtf(desc);
-      eig0  = 0.5f*( trace + desc );
+      eig0  = 0.5f*( trace + desc ); // eig0 > eig1
       eig1  = 0.5f*( trace - desc );
-      lstat  = eig0 - eig1; //1.0f - eig1/eig0;
+      lstat  = 1.0f - eig1/eig0;
       lm   = atan2( cxx - eig0, -cxy );
 #ifdef DEBUG_COMPUTE_SEED_FROM_POINT
       printf(" (%7.5g, %7.5g) (%7.5g, %7.5g) L m = %g\n", lsx/lnpoints, lsy/lnpoints, eig0, eig1, lm );
@@ -604,7 +604,7 @@ Seed *compute_seed_from_point_ex( Image *image, int p, int maxr, float *out_m, f
       desc = sqrtf(desc);
       eig0  = 0.5f*( trace + desc );
       eig1  = 0.5f*( trace - desc );
-      rstat  = eig0 - eig1;  //1.0f - eig1/eig0;
+      rstat  = 1.0f - eig1/eig0;
       rm   = atan2( cxx - eig0, -cxy );
 #ifdef DEBUG_COMPUTE_SEED_FROM_POINT
       printf(" (%7.5g, %7.5g) (%7.5g, %7.5g) R m = %g\n", rsx/rnpoints, rsy/rnpoints, eig0, eig1, rm );
@@ -619,7 +619,7 @@ Seed *compute_seed_from_point_ex( Image *image, int p, int maxr, float *out_m, f
         myseed.xdir = 100*cos(lm);
         myseed.ydir = (int) (100*sin(lm));
 
-        norm = maxr * _compute_seed_from_point_eigennorm( lm ); // weights by length of line in square
+        norm = 1.0; //_compute_seed_from_point_eigennorm( lm ); // weights by length of line in square
         *out_m = lm;
         *out_stat = lstat/( norm*norm ); // normalize by length squared since the eigenvalue is variance
       } else
@@ -628,7 +628,7 @@ Seed *compute_seed_from_point_ex( Image *image, int p, int maxr, float *out_m, f
         myseed.xdir = 100*cos(rm);
         myseed.ydir = (int) (100*sin(rm));
 
-        norm = maxr * _compute_seed_from_point_eigennorm( rm );
+        norm = 1.0; //_compute_seed_from_point_eigennorm( rm );
         *out_m = rm;
         *out_stat = rstat/( norm * norm );
       }
@@ -737,7 +737,8 @@ void compute_seed_from_point_field( Image *image, int maxr,
 
 SHARED_EXPORT
 void compute_seed_from_point_field_windowed_on_contour( Image *image, Contour *trace,
-                                                        int maxr, float statlow, float stathigh,
+                                                        int maxr, int maxiter,
+                                                        float statlow, float stathigh,
                                                         Image *hist, Image *slopes, Image *stats )
   // Assumes `image` and 'hist' are 8bit grayscale
   //         `slopes` and `stats` should be float
@@ -753,7 +754,7 @@ void compute_seed_from_point_field_windowed_on_contour( Image *image, Contour *t
     int newp, p;
     int i;
     newp = p = trace->tour[idx];
-    for( i=0; i< maxr/*maxiter*/; i++ ) // iterate - detector attracts to nearest line
+    for( i=0; i< maxiter; i++ ) // iterate - detector attracts to nearest line
     { p = newp;
       s = compute_seed_from_point_ex(image, p, maxr, &m, &stat); //return NULL on boundary
       if( !s ) break;
@@ -771,7 +772,8 @@ void compute_seed_from_point_field_windowed_on_contour( Image *image, Contour *t
 
 SHARED_EXPORT
 void compute_seed_from_point_field_on_grid( Image *image, int spacing,
-                                            int maxr, float statlow, float stathigh,
+                                            int maxr, int maxiter,
+                                            float statlow, float stathigh,
                                             Image *hist, Image *slopes, Image *stats )
 { int     a       = image->width * image->height;
   int     stride  = image->width;
@@ -790,7 +792,7 @@ void compute_seed_from_point_field_on_grid( Image *image, int spacing,
     { for( y=0; y<image->height; y += spacing )
       { newp = x+y*stride;
         p = newp;
-        for( i=0; i < maxr; i++ )
+        for( i=0; i < maxiter; i++ )
         { p = newp;
           s = compute_seed_from_point_ex(image, x+y*stride, maxr, &m, &stat);
           if( !s ) break;
