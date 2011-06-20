@@ -345,6 +345,7 @@ Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int
     row->state =  0;
     row->face_x = facex;
     row->face_y = facey;
+    row->face_axis = face_axis;
     row->col_follicle_x = 4;
     row->col_follicle_y = 5;
     row->valid_velocity = 0;

@@ -139,11 +139,13 @@ set(MEASUREMENTS_IO_SRCS
   src/measurements_io.c
   src/measurements_io_v0.c
   src/measurements_io_v1.c
+  src/measurements_io_v2.c
 )
 set(MEASUREMENTS_IO_HDRS
   include/measurements_io.h
   include/measurements_io_v0.h
   include/measurements_io_v1.h
+  include/measurements_io_v2.h
 )
 set(MEASUREMENTS_IO
   ${MEASUREMENTS_IO_SRCS}
