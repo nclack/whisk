@@ -16,6 +16,7 @@ from reader import TransposedReader, AdjustStippledGainReader
 import os
 warnings.simplefilter( "default", UserWarning )
 
+
 def Reader(filename, transpose = False, adjuststipple = False):
   """
   Factory function for generating `IMovieInterface` objects.
@@ -24,11 +25,15 @@ def Reader(filename, transpose = False, adjuststipple = False):
   """
   ret = None
   ext = os.path.splitext( filename )[-1]
+  def is_ffmpeg_ext(y)
+    std = [ '.mp4', '.mov', '.avi', '.mpg',  '.mp3' ]
+    test = lambda x: y==x
+    return any(map(test,std))
   if ext == '.seq':
     ret = SeqReader( filename )
   elif ext == '.tiff' or ext == '.tif' or ext=='.lsm':
     ret = TiffReader( filename )
-  elif ext == '.mp4' or ext == '.avi':
+  elif is_ffmpeg_ext(ext):
     ret = FFMPEGReader( filename )
   else:
     raise Exception,"File type (%s) not supported."%ext
