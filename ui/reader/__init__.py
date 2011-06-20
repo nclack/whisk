@@ -28,7 +28,7 @@ def Reader(filename, transpose = False, adjuststipple = False):
     ret = SeqReader( filename )
   elif ext == '.tiff' or ext == '.tif' or ext=='.lsm':
     ret = TiffReader( filename )
-  elif ext == '.mp4':
+  elif ext == '.mp4' or ext == '.avi':
     ret = FFMPEGReader( filename )
   else:
     raise Exception,"File type (%s) not supported."%ext
