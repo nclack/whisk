@@ -412,7 +412,8 @@ static inline double _cmp_sort_face__ccw_test( Measurements *a, Measurements *b 
 }
 
 static int cmp_sort_face_order( const void* a, const void* b )
-{ return (int) _cmp_sort_face__ccw_test((Measurements*)a,(Measurements*)b);
+{ double v =  _cmp_sort_face__ccw_test((Measurements*)a,(Measurements*)b); 
+  return (v<0.0)?-1:((v>0.0)?1:0); 
 }
 
 static int cmp_sort_time_face_order( const void* a, const void* b )
