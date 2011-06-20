@@ -25,7 +25,7 @@ def Reader(filename, transpose = False, adjuststipple = False):
   """
   ret = None
   ext = os.path.splitext( filename )[-1]
-  def is_ffmpeg_ext(y)
+  def is_ffmpeg_ext(y):
     std = [ '.mp4', '.mov', '.avi', '.mpg',  '.mp3' ]
     test = lambda x: y==x
     return any(map(test,std))
