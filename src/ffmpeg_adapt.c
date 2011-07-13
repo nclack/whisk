@@ -97,7 +97,7 @@ ffmpeg_video *ffmpeg_video_init( char *file, int format )
   /* Find the first ffmpeg_video stream */
   ret->videoStream = -1;
   for( i = 0; i < ret->pFormatCtx->nb_streams; i++ )
-    if( ret->pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO ) 
+    if( ret->pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO ) 
     {
       ret->videoStream = i;
       break;

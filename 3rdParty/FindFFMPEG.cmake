@@ -30,16 +30,26 @@
 # and ${FFMPEG_libname_INCLUDE_DIRS/libname}             (in new version case, use by osg plugin code)
 
 if(WIN32)
+  if(CMAKE_CL_64)
+    set(SYS ffmpeg-git-39dbe9b-win64-dev)
+  else()
+    set(SYS ffmpeg-git-39dbe9b-win32-dev)
+  endif()
+
   set(FFMPEG_INCLUDE_PATH_SUFFIXES
-            ffmpeg/w32/msvc/include
-            ffmpeg/w32/ming/include
-            ffmpeg/w32/msvc/include/lib${shortname} 
-            ffmpeg/w32/ming/include/lib${shortname} 
+            ffmpeg/${SYS}/include
+            ffmpeg/${SYS}/include/lib${shortname} 
   )
   set(FFMPEG_LIB_PATH_SUFFIXES
-            ffmpeg/w32/msvc/lib
-            ffmpeg/w32/ming/lib
+            ffmpeg/${SYS}/lib
+            ffmpeg/${SYS}/lib/lib${shortname} 
   )
+
+  #get path to inttypes
+  FIND_PATH(INTTYPES_INCLUDE_DIR inttypes.h
+      HINTS ${ROOT_3RDPARTY_DIR}
+      PATH_SUFFIXES inttypes
+      )
 else()
   set(FFMPEG_INCLUDE_PATH_SUFFIXES
             ffmpeg
@@ -50,6 +60,8 @@ else()
             lib64
   )
 endif()
+
+
 # Macro to find header and lib directories
 # example: FFMPEG_FIND(AVFORMAT avformat avformat.h)
 MACRO(FFMPEG_FIND varname shortname headername)
@@ -78,7 +90,9 @@ MACRO(FFMPEG_FIND varname shortname headername)
     )
 
     FIND_FILE(FFMPEG_${varname}_LIBRARIES
-        "lib${shortname}.a"                 # same on windows
+        NAMES
+          "lib${shortname}.a"
+          "${shortname}.lib"
         HINTS
           ${ROOT_3RDPARTY_DIR}
         PATHS
@@ -119,7 +133,9 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
 
     SET(FFMPEG_FOUND "YES")
 
-    SET(FFMPEG_INCLUDE_DIRS ${FFMPEG_LIBAVFORMAT_INCLUDE_DIRS})
+    SET(FFMPEG_INCLUDE_DIRS 
+        ${FFMPEG_LIBAVFORMAT_INCLUDE_DIRS}
+        ${INTTYPES_INCLUDE_DIR})
 
     SET(FFMPEG_LIBRARY_DIRS ${FFMPEG_LIBAVFORMAT_LIBRARY_DIRS})
 
