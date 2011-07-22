@@ -371,6 +371,20 @@ set_target_properties(measure PROPERTIES
 add_dependencies(measure ParameterParser)
 target_link_libraries(measure ${LIBM})
 
+#classify-single-whisker
+source_group("Source Files" FILES src/classify-single-whisker.c)
+add_executable(classify-single-whisker
+  src/classify-single-whisker.c
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${MATH}
+  ${TRAJ}
+  ${PARAM_MODULE}
+)
+add_dependencies(classify-single-whisker ParameterParser)
+target_link_libraries(classify-single-whisker ${LIBM})
+
 #classify
 source_group("Source Files" FILES src/classify.c)
 add_executable(classify
