@@ -32,14 +32,19 @@ under Windows, OS X, and Linux.  On a unix-y system, the procedure looks like th
 2. Install bison if it's not already available on your system.
 
    For windows, use [GnuWin32 Bison](http://gnuwin32.sourceforge.net/packages/bison.htm).
+   It's best to install it to a path that lacks spaces such as "C:\gnuwin32".
 
 3. Install awk. 
    
    For windows, use [GnuWin32 Gawk](http://gnuwin32.sourceforge.net/packages/gawk.htm).
 
 4. On Windows and OS X, you'll have to install developer tools.  On Windows,
-   that's Visual Studio; one of the free "Express Edition" versions is fine.
-   On OS X, the "XCode developer tools" should be downloadable for free.
+   that's [Visual Studio](http://www.microsoft.com/express); one of the free
+   "Express Edition" versions is fine.  On OS X, install the 
+   [XCode developer tools](http://developer.apple.com/technologies/tools/).
+
+   If you plan on building a binary redistributable on windows, you may also
+   want to install the [Nullsoft Scriptable Install System](http://nsis.sourceforge.net).
 
 5. Start in the root of the source directory (in a terminal).
    The contents of this directory look something like this:

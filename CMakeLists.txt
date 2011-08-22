@@ -594,6 +594,10 @@ install(
   COMPONENT commandline
 )
 install(
+    FILES ${FFMPEG_SHARED_LIBS}
+    DESTINATION "${DEST_BIN}"
+    COMPONENT commandline)
+install(
   TARGETS
     report
     whisker_convert
@@ -610,6 +614,10 @@ install(
   ARCHIVE DESTINATION ${DEST_LIB}
   COMPONENT libraries
 )
+install(
+    FILES ${FFMPEG_SHARED_LIBS}
+    DESTINATION ${DEST_LIB}
+    COMPONENT libraries)
 
 install(DIRECTORY matlab
     DESTINATION ${DEST_MATLAB}
@@ -625,6 +633,10 @@ install(TARGETS
     RUNTIME DESTINATION "${DEST_PYTHON}/python"
     LIBRARY DESTINATION "${DEST_PYTHON}/python"
     ARCHIVE DESTINATION "${DEST_PYTHON}/python"
+    COMPONENT python)
+install(
+    FILES ${FFMPEG_SHARED_LIBS}
+    DESTINATION "${DEST_PYTHON}/python"
     COMPONENT python)
 install(PROGRAMS
     ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
@@ -646,6 +658,7 @@ install(
     FILES
       python/trace.py
       python/traj.py
+      ${FFMPEG_SHARED_LIBS}
     DESTINATION "${DEST_UI}/ui"
     COMPONENT GUI)
 install(PROGRAMS

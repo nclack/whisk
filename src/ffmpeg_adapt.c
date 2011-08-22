@@ -194,7 +194,7 @@ int ffmpeg_video_next( ffmpeg_video *cur )
   }
 
   /* Decode it! */
-  avcodec_decode_video( cur->pCtx, cur->pRaw, &finished, packet.data, packet.size );
+  avcodec_decode_video2( cur->pCtx, cur->pRaw, &finished, &packet );
 
   /* Success? If not, drop packet. */
   if( !finished ) 

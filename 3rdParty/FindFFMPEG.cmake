@@ -5,13 +5,16 @@
 # FFMPEG_LIBRARIES
 # FFMPEG_FOUND
 # FFMPEG_INCLUDE_DIR
+# FFMPEG_SHARED_LIBS
+#       dynamically loaded libraries that need to be
+#       distributed with any binaries
 #
 # Input
 # -----
 # ROOT_3RDPARTY_DIR
 #    Location of 3rd party libraries for a project
 #    It is searched last, so system libraries will be have priority.
-# $FFMPEG_DIR       
+# FFMPEG_DIR       
 #    an environment variable that would
 #    correspond to the ./configure --prefix=$FFMPEG_DIR
 #
@@ -29,11 +32,14 @@
 #                                                       (in new version case, use by ffmpeg header) 
 # and ${FFMPEG_libname_INCLUDE_DIRS/libname}             (in new version case, use by osg plugin code)
 
+
 if(WIN32)
   if(CMAKE_CL_64)
-    set(SYS ffmpeg-git-39dbe9b-win64-dev)
+    set(SYS  ffmpeg-git-41bf67d-win64-dev)
+    set(DLLS  ffmpeg-git-41bf67d-win64-shared)
   else()
-    set(SYS ffmpeg-git-39dbe9b-win32-dev)
+    set(SYS ffmpeg-git-41bf67d-win32-dev)
+    set(DLLS ffmpeg-git-41bf67d-win32-shared)
   endif()
 
   set(FFMPEG_INCLUDE_PATH_SUFFIXES
@@ -42,8 +48,9 @@ if(WIN32)
   )
   set(FFMPEG_LIB_PATH_SUFFIXES
             ffmpeg/${SYS}/lib
-            ffmpeg/${SYS}/lib/lib${shortname} 
+            ffmpeg/${SYS}/lib/lib${shortname}
   )
+  file(GLOB _FFMPEG_SHARED_LIBS ${ROOT_3RDPARTY_DIR}/ffmpeg/${DLLS}/bin/*.dll)
 
   #get path to inttypes
   FIND_PATH(INTTYPES_INCLUDE_DIR inttypes.h
@@ -60,6 +67,8 @@ else()
             lib64
   )
 endif()
+
+set(FFMPEG_SHARED_LIBS ${_FFMPEG_SHARED_LIBS})
 
 
 # Macro to find header and lib directories
@@ -91,8 +100,8 @@ MACRO(FFMPEG_FIND varname shortname headername)
 
     FIND_FILE(FFMPEG_${varname}_LIBRARIES
         NAMES
-          "lib${shortname}.a"
           "${shortname}.lib"
+          "lib${shortname}.a"
         HINTS
           ${ROOT_3RDPARTY_DIR}
         PATHS
@@ -112,8 +121,8 @@ MACRO(FFMPEG_FIND varname shortname headername)
         DOC "Location of FFMPEG Libraries"
     )
 
-#message("++ ${FFMPEG_${varname}_LIBRARIES}")
-#message("++ ${FFMPEG_${varname}_INCLUDE_DIRS}")
+  #message("++ ${FFMPEG_${varname}_LIBRARIES}")
+  #message("++ ${FFMPEG_${varname}_INCLUDE_DIRS}")
     IF (FFMPEG_${varname}_LIBRARIES AND FFMPEG_${varname}_INCLUDE_DIRS)
         SET(FFMPEG_${varname}_FOUND 1)
     ENDIF(FFMPEG_${varname}_LIBRARIES AND FFMPEG_${varname}_INCLUDE_DIRS)
@@ -144,7 +153,7 @@ IF   (FFMPEG_LIBAVFORMAT_FOUND AND FFMPEG_LIBAVDEVICE_FOUND AND FFMPEG_LIBAVCODE
           FFMPEG_KITCHEN_SINK_PATH
           ${FFMPEG_LIBAVCODEC_LIBRARIES}
           PATH)
-      FILE(GLOB FFMPEG_LIBRARIES ${FFMPEG_KITCHEN_SINK_PATH}/*.a)      
+      FILE(GLOB FFMPEG_LIBRARIES ${FFMPEG_KITCHEN_SINK_PATH}/*.lib)
 #message("FFMPEG_KITCHEN_SINK_PATH is ${FFMPEG_KITCHEN_SINK_PATH}")        
 #message("FFMPEG_LIBRARIES is ${FFMPEG_LIBRARIES}")
     else()
@@ -177,6 +186,7 @@ macro(ADDLIBS VAR NAME)
 endmacro()
 
       SET(FFMPEG_LIBRARIES
+          ${FFMPEG_DLLS}
           ${FFMPEG_LIBAVFORMAT_LIBRARIES}
           ${FFMPEG_LIBAVDEVICE_LIBRARIES}
           ${FFMPEG_LIBAVCODEC_LIBRARIES}
@@ -198,7 +208,7 @@ endmacro()
       ADDLIB (FFMPEG_LIBRARIES SPEEX)
       ADDLIB (FFMPEG_LIBRARIES GSM)
     endif()
-#message("FFMPEG_LIBRARIES are ${FFMPEG_LIBRARIES}")        
+    #message("FFMPEG_LIBRARIES are ${FFMPEG_LIBRARIES}")        
 
 ELSE ()
 
