@@ -484,7 +484,7 @@ def main( filename,
             #trace.compute_object_map(a).draw(screen,(255,255,  0,255),scale[0],drawlines)
           else:
             from pylab import quiver, imshow, show, ion, axis, subplots_adjust, cm, clf
-            h,m,s = trace.compute_seed_fields_windowed_on_objects( a,  maxr = 4, window = (0.4,0.4) );
+            h,m,s = trace.compute_seed_fields_windowed_on_objects( a,maxr = 4,maxiter=1,window = (0.0,0.0) );
             #h,m,s = trace.compute_seed_from_point_field_on_grid(a,spacing=8,maxr=4,window=(0.4,0.4) );
             ii,jj = where( s )
             ion()
