@@ -155,6 +155,7 @@ int Measurements_Table_Best_Frame_Count_By_State( Measurements *table, int n_row
 }
 
 //assumes measurements table sorted by time
+SHARED_EXPORT
 double Measurements_Table_Estimate_Best_Threshold( Measurements *table, int n_rows, int column, double low, double high, int is_gt, int *target_count )
 { double thresh;
   int best = -1.0;

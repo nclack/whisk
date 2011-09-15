@@ -241,6 +241,7 @@ source_group("Header Files\\" FILES ${TRACE_HDRS})
 set(TRAJ_SRCS
   src/measure.c
   src/report.c
+  src/classify.c
   src/traj.c
 )
 set(TRAJ_HDRS
@@ -388,7 +389,6 @@ target_link_libraries(classify-single-whisker ${LIBM})
 #classify
 source_group("Source Files" FILES src/classify.c)
 add_executable(classify
-  src/classify.c
   ${COMMON}
   ${MYLIB}
   ${MEASUREMENTS_IO}
