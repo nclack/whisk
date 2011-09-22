@@ -564,6 +564,37 @@ set_target_properties(measurements_convert
 target_link_libraries(measurements_convert ${LIBM})
 add_dependencies(measurements_convert ParameterParser)
 
+#test_measurementsio_repeated_reads
+add_executable(test_measurementsio_repeated_reads
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${TRAJ}
+  ${MATH}
+  ${PARAM_MODULE}
+)
+set_target_properties(test_measurementsio_repeated_reads
+  PROPERTIES
+    COMPILE_DEFINITIONS MEASUREMENTS_IO_TEST_REPEATED_READS
+)
+target_link_libraries(test_measurementsio_repeated_reads ${LIBM})
+add_dependencies(test_measurementsio_repeated_reads ParameterParser)
+
+#test_measurementsio_repeated_read_writes
+add_executable(test_measurementsio_repeated_read_writes
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${TRAJ}
+  ${MATH}
+  ${PARAM_MODULE}
+)
+set_target_properties(test_measurementsio_repeated_read_writes
+  PROPERTIES
+    COMPILE_DEFINITIONS MEASUREMENTS_IO_TEST_REPEATED_READ_WRITES
+)
+target_link_libraries(test_measurementsio_repeated_read_writess ${LIBM})
+add_dependencies(test_measurementsio_repeated_read_writes ParameterParser)
 #
 # INSTALL
 #
