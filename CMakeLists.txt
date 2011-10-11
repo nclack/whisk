@@ -241,6 +241,7 @@ source_group("Header Files\\" FILES ${TRACE_HDRS})
 set(TRAJ_SRCS
   src/measure.c
   src/report.c
+  src/classify.c
   src/traj.c
 )
 set(TRAJ_HDRS
@@ -388,7 +389,6 @@ target_link_libraries(classify-single-whisker ${LIBM})
 #classify
 source_group("Source Files" FILES src/classify.c)
 add_executable(classify
-  src/classify.c
   ${COMMON}
   ${MYLIB}
   ${MEASUREMENTS_IO}
@@ -582,6 +582,37 @@ set_target_properties(measurements_convert
 target_link_libraries(measurements_convert ${LIBM})
 add_dependencies(measurements_convert ParameterParser)
 
+#test_measurementsio_repeated_reads
+add_executable(test_measurementsio_repeated_reads
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${TRAJ}
+  ${MATH}
+  ${PARAM_MODULE}
+)
+set_target_properties(test_measurementsio_repeated_reads
+  PROPERTIES
+    COMPILE_DEFINITIONS MEASUREMENTS_IO_TEST_REPEATED_READS
+)
+target_link_libraries(test_measurementsio_repeated_reads ${LIBM})
+add_dependencies(test_measurementsio_repeated_reads ParameterParser)
+
+#test_measurementsio_repeated_read_writes
+add_executable(test_measurementsio_repeated_read_writes
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${TRAJ}
+  ${MATH}
+  ${PARAM_MODULE}
+)
+set_target_properties(test_measurementsio_repeated_read_writes
+  PROPERTIES
+    COMPILE_DEFINITIONS MEASUREMENTS_IO_TEST_REPEATED_READ_WRITES
+)
+target_link_libraries(test_measurementsio_repeated_read_writess ${LIBM})
+add_dependencies(test_measurementsio_repeated_read_writes ParameterParser)
 #
 # INSTALL
 #

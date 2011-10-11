@@ -52,6 +52,7 @@ int is_file_measurements_v0( const char* filename)
   }
     
   fscanf(fp,"%32s", format);
+  fclose(fp);
   return strncmp(format,not,sizeof(not)-1) != 0 ;
 }
 
