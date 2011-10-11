@@ -557,7 +557,7 @@ int main(int argc, char*argv[])
   }
 
 #ifdef DEBUG_HMM_RECLASSIFY
-	debug("nwhisk: %d\n",nwhisk);
+    debug("nwhisk: %d\n",nwhisk);
 #endif
   //
   // Compute transitions matrix for model
@@ -871,7 +871,7 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
     return 0;
 
   if( index[fid].n < 1 ) // No segments found in this frame
-	  return 0;
+      return 0;
   (*pf_Compute_Starts_For_Two_Classes_Log2)( S, T, nwhisk, index[fid].first, shp_dists );
   E = (*pf_Request_Static_Resizable_Emissions)( nwhisk, nobs );
 
@@ -1008,10 +1008,10 @@ int HMM_Reclassify_Jump_Gap(               // returns frame id to jump to
   
   while( fid>=0 && fid<nframes && !visited[fid] )
   { (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
-		  nwhisk,
-		  index[fid].first, index[fid].n,
-		  ref,
-		  shp_dists, vel_dists );
+          nwhisk,
+          index[fid].first, index[fid].n,
+          ref,
+          shp_dists, vel_dists );
     if( Measurements_Apply_Model( index, fid, nframes, nwhisk, S,T,E, likelihood ) )
       return fid;
     // else didn't get the right number of whiskers...move on to the next frame
@@ -1226,10 +1226,10 @@ int main(int argc, char*argv[])
   if( minstate > -1 )
   { warning("Doing nothing\n"
             "\tIt looks like all segments were labelled in the previous step.\n"
-			"\tThis step (hmm-reclassify) helps when there are some segments\n"
-			"\t  that do not correspond to whiskers (e.g. hairs).  Since every\n"
-			"\t  segment was positively identified, there is nothing to do\n"
-			"\t  here.\n");
+            "\tThis step (hmm-reclassify) helps when there are some segments\n"
+            "\t  that do not correspond to whiskers (e.g. hairs).  Since every\n"
+            "\t  segment was positively identified, there is nothing to do\n"
+            "\t  here.\n");
     return 0;
   }
 
@@ -1247,7 +1247,7 @@ int main(int argc, char*argv[])
   }
 
 #ifdef DEBUG_HMM_RECLASSIFY
-	debug("nwhisk: %d\n",nwhisk);
+    debug("nwhisk: %d\n",nwhisk);
 #endif
   //
   // Compute transitions matrix for model
@@ -1272,9 +1272,9 @@ int main(int argc, char*argv[])
 
   Sort_Measurements_Table_State_Time(table, nrows);
   if(table[nrows-1].state==0)
-	  error("Measurements table appears to have no labelled segments.\n"
-	        "  This step requires a first guess of the identitiy of a subset of whisker segments.\n"
-			"  Did that step run correctly?\n");
+      error("Measurements table appears to have no labelled segments.\n"
+            "  This step requires a first guess of the identitiy of a subset of whisker segments.\n"
+            "  Did that step run correctly?\n");
   shp_dists = Build_Distributions( table, nrows, HMM_RECLASSIFY_SHP_DISTS_NBINS );
   vel_dists = Build_Velocity_Distributions( table, nrows, HMM_RECLASSIFY_VEL_DISTS_NBINS );
   Distributions_Dilate( shp_dists );
@@ -1422,7 +1422,7 @@ int main(int argc, char*argv[])
           { break;  // no gaps...so all done
           } else if( left_ok = (fid != 0) )
           { Measurements_Reference_Build( left, index[fid-1].first, index[fid-1].n );
-			left_start = fid-1;
+            left_start = fid-1;
             left_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
                                                 left, fid, 1 );
             left_ok &= left_jump < nframes;
@@ -1431,7 +1431,7 @@ int main(int argc, char*argv[])
           if( right_ok = (fid != nframes) )
           { Measurements_Reference_Build( right, index[fid].first, index[fid].n );
             right_start = fid;
-			right_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
+            right_jump = HMM_Reclassify_Jump_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood,
                                                   right, fid-1, -1 );
             right_ok &= right_jump >= 0;
           }
@@ -1493,7 +1493,7 @@ int main(int argc, char*argv[])
     { int fid=0;
       while( fid < nframes )
       { while( visited[fid] && fid<nframes ) fid++; // find the left side of the next gap
-	    if( fid==nframes ) break;
+        if( fid==nframes ) break;
         fid = HMM_Reclassify_Fill_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood, fid);
 #ifdef DEBUG_HMM_RECLASSIFY
         debug("Frame: %5d likelihood: %g\n", fid, likelihood[fid]);
