@@ -17,6 +17,8 @@
 
 #define DEBUG_CLASSIFY_1
 #define DEBUG_CLASSIFY_3
+#define DEBUG_CLASSIFY_4
+
 #if 0
 #define DEBUG_MEAN_SEGMENTS_PER_FRAME_BY_TYPE
 #define DEBUG_ESTIMATE_BEST_LENGTH_THRESHOLD_FOR_KNOWN_COUNT
@@ -90,6 +92,23 @@ void Helper_Get_Follicle_Const_Axis( char* directive, int maxx, int maxy, int* c
       error("Directive supplied to Helper_Get_Follicle_Const_Axis could not be recognized.\n");
   }
 }
+
+inline void Measurements_Table_Label_By_RadialThreshold( Measurements *table, int n_rows, double thresh, int ox, int oy, int colx, int coly)
+{
+  double t2 = thresh*thresh;
+  Measurements *row = table + n_rows;
+  while(row-- > table)
+  { double dx = row->data[colx] - ox,
+           dy = row->data[coly] - oy,
+           r2 = dx*dx + dy*dy;
+    row->state = r2 <= t2;
+#if 0
+    printf("Face->Follicle: %4d %4d %4d %4d t2:%#5.5f dx:%+#5.5f dy:%+#5.5f r2:%#5.5f %c\n",
+        ox,oy,(int)(row->data[colx]),(int)(row->data[coly]),
+        t2,dx,dy,r2,row->state?'*':'.');
+#endif
+  }
+} 
 
 inline void Measurements_Table_Label_By_Threshold( Measurements *table, int n_rows, int col, double threshold, int is_gt )
 { Measurements *row = table + n_rows;
@@ -560,6 +579,196 @@ int main(int argc, char* argv[])
   return 0;
 }
 #endif
+
+#ifdef TEST_CLASSIFY_4
+char *Spec[] = {"[-h|--help] |",
+                "<source:string> <dest:string>",
+                "(<faceX:int> <faceY:int> <faceAxis:string>)",
+                "--px2mm <double>",
+                "-n <int>", 
+                "[--limit<double(1.0)>:<double(50.0)>]",
+                "[--follicle <int>]",
+                NULL};
+int main(int argc, char* argv[])
+{ int n_rows, count;
+  Measurements *table,*cursor;
+  double thresh,
+         px2mm,
+         low_px,
+         high_px;
+  int face_x, face_y;
+  int follicle_thresh = 0,
+      follicle_col = 4,
+      follicle_high;
+  int n_cursor;
+
+  Process_Arguments( argc, argv, Spec, 0);
+
+  if( Is_Arg_Matched("-h") | Is_Arg_Matched("--help") )
+  { Print_Argument_Usage(stdout,0);
+    printf("--------------------------                                                   \n"
+          " Classify 4 (radius filter)                                                   \n"
+          "---------------------------                                                   \n"
+          "                                                                              \n"
+          "  Uses a length threshold to seperate hair/microvibrissae from main whiskers. \n"
+          "  Then, for frames where the expected number of whiskers are found,           \n"
+          "  label the whiskers according to their order on the face.                    \n"
+          "\n"
+          "  This version of classify filters out curves where the follicle side falls \n"
+          "  outside of a circle centered at the face position with the radius specified \n"
+          "  by the --follicle option."
+          "\n"
+          "  <source> Filename with Measurements table.\n"
+          "  <dest>   Filename to which labelled Measurements will be saved.\n"
+          "           This can be the same as <source>.\n"
+          "  <faceX> <faceY> <faceAxis>\n"
+          "           These are used for determining the order of whisker segments along \n"
+          "           the face.  This requires an approximate position for the center of \n"
+          "           the face and can be specified in pixel coordinates with <x> and <y>.\n"
+          "           <axis> indicates the orientaiton of the face.  Values for <axis> may\n"
+          "           be 'x' or 'h' for horizontal. 'y' or 'v' indicate a vertical face. \n"
+          "           If the face is located along the edge of the frame then specify    \n"
+          "           that edge with 'left', 'right', 'top' or 'bottom'.                 \n"
+          "  --px2mm <double>\n"
+          "           The length of a pixel in millimeters.  This is used to determine   \n"
+          "           appropriate thresholds for discriminating hairs from whiskers.     \n"
+          "  -n <int> (Optional) Optimize the threshold to find this number of whiskers. \n"
+          "           If this isn't specified, or if this is set to a number less than 1 \n"
+          "           then the number of whiskers is automatically determined.           \n"
+          "  --follicle <int>\n"
+          "           Only count follicles that lie inside a circle with this radius in  \n"
+          "           (in pixels) and centered at the face position as whiskers.         \n"
+          "--                                                                            \n");
+    return 0;
+  }
+
+  px2mm   = Get_Double_Arg("--px2mm");
+  low_px  = Get_Double_Arg("--limit",1) / px2mm;
+  high_px = Get_Double_Arg("--limit",2) / px2mm;
+#ifdef DEBUG_CLASSIFY_4
+  debug("px/mm %f\n"
+        "  low %f\n"
+        " high %f\n", px2mm, low_px, high_px );
+#endif
+
+  table  = Measurements_Table_From_Filename ( Get_String_Arg("source"), NULL, &n_rows );
+  if(!table) error("Couldn't read %s\n",Get_String_Arg("source"));
+  Sort_Measurements_Table_Time(table,n_rows);
+
+  { int maxx,maxy;
+    const char *axis = Get_String_Arg("faceAxis");
+    static const int x = 4,
+                     y = 5;
+    Measurements_Table_Pixel_Support( table, n_rows, &maxx, &maxy );
+    face_x = Get_Int_Arg("faceX");
+    face_y = Get_Int_Arg("faceY");
+    follicle_thresh = 0;       // set defaults
+    if( Is_Arg_Matched("--follicle") && Get_Int_Arg("--follicle")>0 )
+    { follicle_thresh = Get_Int_Arg("--follicle");
+      switch( axis[0] )        // respond to <follicle> option
+      { case 'x':              // follicle must be between threshold and face
+        case 'h':
+        case 'y':
+        case 'v':
+          break;
+        default:
+          error("Could not recognize <axis>.  Must be 'x','h','y', or 'v'.  Got %s\n",axis);
+      }
+    }
+  }
+  // Follicle location threshold
+  if( Is_Arg_Matched("--follicle") && Get_Int_Arg("--follicle")>0 )
+    follicle_thresh = Get_Int_Arg("--follicle");
+    //inline void Measurements_Table_Label_By_RadialThreshold( Measurements *table, int n_rows, double thresh, int ox, int oy, int colx, int coly)
+  Measurements_Table_Label_By_RadialThreshold( table,
+                                               n_rows,
+                                               follicle_thresh,
+                                               face_x,
+                                               face_y,
+                                               follicle_col,
+                                               follicle_col+1);
+
+#ifdef DEBUG_CLASSIFY_4
+  debug("   Face Position: ( %3d, %3d )\n", face_x, face_y);
+#endif
+  // Shuffle to select subset with good follicles
+  Sort_Measurements_Table_State_Time( table, n_rows );
+  { cursor = table;
+    while( (cursor->state == 0) && (cursor < table+n_rows ) )
+      cursor++;
+    n_cursor = n_rows - (cursor-table);
+  }
+  Sort_Measurements_Table_Time(cursor,n_cursor); //resort selected by time
+
+#ifdef DEBUG_CLASSIFY_1
+  { Measurements *row = cursor + n_cursor; //Assert all state==1
+    while(row-- > cursor)
+      assert(row->state == 1);
+ }
+#endif
+  //
+  // Estimate best length threshold and apply
+  //
+  if( Is_Arg_Matched("-n") && ( (count = Get_Int_Arg("-n"))>=1 ) )
+  { thresh = Measurements_Table_Estimate_Best_Threshold_For_Known_Count( cursor, //table, 
+                                                                         n_cursor, //n_rows, 
+                                                                         0 /*length column*/, 
+                                                                         low_px, 
+                                                                         high_px, 
+                                                                         1, /*use > */
+                                                                         count );
+  } else 
+  { thresh = Measurements_Table_Estimate_Best_Threshold( cursor, //table, 
+                                                         n_cursor, //n_rows, 
+                                                         0 /*length column*/, 
+                                                         low_px, 
+                                                         high_px,
+                                                         1, /* use > */
+                                                         &count );
+  }
+  /*
+  Measurements_Table_Label_By_Threshold    ( cursor,
+                                             n_cursor,
+                                             follicle_col,
+                                             follicle_thresh,
+                                             is_gt);
+  */
+  Measurements_Table_Label_By_RadialThreshold( table,
+                                               n_rows,
+                                               follicle_thresh,
+                                               face_x,
+                                               face_y,
+                                               follicle_col,
+                                               follicle_col+1);
+#ifdef DEBUG_CLASSIFY_4
+  { Measurements *row = cursor + n_cursor; //Assert all state==1
+    while(row-- > cursor)
+      assert(row->state == 1);
+  }
+#endif
+  Measurements_Table_Label_By_Threshold_And ( cursor,
+                                              n_cursor,
+                                              0 /*length column*/, 
+                                              thresh,
+                                              1 /*use gt*/);
+  
+#ifdef DEBUG_CLASSIFY_4
+  debug("   Length threshold: %f\n"
+        "       Target count: %d\n",
+        thresh,count); 
+#endif
+
+  Measurements_Table_Set_Constant_Face_Position     ( table, n_rows, face_x, face_y);
+  Measurements_Table_Set_Follicle_Position_Indices  ( table, n_rows, 4, 5 );
+
+  Measurements_Table_Label_By_Order(table, n_rows, count ); //re-sorts
+
+  Measurements_Table_To_Filename( Get_String_Arg("dest"), NULL, table, n_rows );
+  Free_Measurements_Table(table);
+  return 0;
+}
+#endif
+
 
 // TODO: I may very well be doing this in the very slowest way possible
 // XXX:  problem with getting a good follicle threshold estimate for known #'s
