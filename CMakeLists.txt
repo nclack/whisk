@@ -10,6 +10,7 @@ cmake_minimum_required(VERSION 2.8)
 project(whisk)
 set(WHISK_VERSION_MAJOR 1)
 set(WHISK_VERSION_MINOR 0)
+set(WHISK_VERSION_PATCH 1)
 
 set(CMAKE_VERBOSE_MAKEFILE 0)
 
@@ -139,11 +140,13 @@ set(MEASUREMENTS_IO_SRCS
   src/measurements_io.c
   src/measurements_io_v0.c
   src/measurements_io_v1.c
+  src/measurements_io_v2.c
 )
 set(MEASUREMENTS_IO_HDRS
   include/measurements_io.h
   include/measurements_io_v0.h
   include/measurements_io_v1.h
+  include/measurements_io_v2.h
 )
 set(MEASUREMENTS_IO
   ${MEASUREMENTS_IO_SRCS}
@@ -583,6 +586,8 @@ else()
   set(DEST_PYTHON "share/whisk")
 endif()
 
+include(InstallRequiredSystemLibraries)
+
 install(
   TARGETS 
     trace
@@ -620,6 +625,17 @@ install(DIRECTORY python
     DESTINATION ${DEST_PYTHON}
     COMPONENT python
 )
+install(TARGETS
+    whisk
+    RUNTIME DESTINATION "${DEST_PYTHON}/python"
+    LIBRARY DESTINATION "${DEST_PYTHON}/python"
+    ARCHIVE DESTINATION "${DEST_PYTHON}/python"
+    COMPONENT python)
+install(PROGRAMS
+    ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+    DESTINATION "${DEST_PYTHON}/python"
+    COMPONENT python)
+
 
 install(DIRECTORY ui
     DESTINATION ${DEST_UI}
@@ -637,11 +653,16 @@ install(
       python/traj.py
     DESTINATION "${DEST_UI}/ui"
     COMPONENT GUI)
+install(PROGRAMS
+    ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+    DESTINATION "${DEST_UI}/ui"
+    COMPONENT GUI)
+
 #
 # PACKAGING
 #
 
-include(InstallRequiredSystemLibraries)
+
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Whisker tracking")
 SET(CPACK_PACKAGE_VENDOR "Howard Hughes Medical Institute")
 
@@ -651,7 +672,7 @@ SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 SET(CPACK_RESOURCE_FILE_README  "${CMAKE_CURRENT_SOURCE_DIR}/PACKAGE.txt")
 SET(CPACK_PACKAGE_VERSION_MAJOR ${WHISK_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${WHISK_VERSION_MINOR})
-SET(CPACK_PACKAGE_VERSION_PATCH "0")
+SET(CPACK_PACKAGE_VERSION_PATCH ${WHISK_VERSION_PATCH})
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WhiskerTracking")
 #SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/ui/icon.png")
 IF(WIN32 AND NOT UNIX)

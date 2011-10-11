@@ -27,8 +27,10 @@ typedef struct _Measurements
                                                                            
   int valid_velocity;
   int n;
+  char face_axis;   // used to determine orientation of face for follicle ordering
   double *data;     // array of n elements
   double *velocity; // array of n elements - change in data/time
+  
 } Measurements;
 
 typedef struct _Distributions

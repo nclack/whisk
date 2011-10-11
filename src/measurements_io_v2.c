@@ -11,9 +11,14 @@
 #include "traj.h"
 #include "error.h"
 
+/*
+ * This format is very similar to V1 but will remember the face_axis.
+ * In v1, the face_axis is thrown away.
+ */
+
 // Struct is here as a reference to compute the size of the data payload 
 //   written to the file.  
-typedef struct _Measurements_v1
+typedef struct _Measurements_v2
 { int row;           // offset from head of data buffer ... Note: the type limits size of table
   int fid;
   int wid;
@@ -26,22 +31,23 @@ typedef struct _Measurements_v1
                                                                            
   int valid_velocity;
   int n;
+  char face_axis;   // (v2) used to determine orientation of face for follicle ordering
   double *data;     // array of n elements
   double *velocity; // array of n elements - change in data/time
-} Measurements_v1;
+} Measurements_v2;
 
-void measurements_v1_write_header( FILE *file )
-{ char type[] = "measV1\0";
+void measurements_v2_write_header( FILE *file )
+{ char type[] = "measv2\0";
   fwrite( type, sizeof(type), 1, file );
 }
 
-void measurements_v1_read_header( FILE *file ) 
-{ char type[] = "measV1\0"; 
+void measurements_v2_read_header( FILE *file ) 
+{ char type[] = "measv2\0"; 
   fseek( file, sizeof(type), SEEK_SET ); // just seek to end of header
 }
 
-int is_file_measurements_v1( const char* filename)
-{ char type[] = "measV1\0";
+int is_file_measurements_v2( const char* filename)
+{ char type[] = "measv2\0";
   char buf[33];
   FILE *file = fopen(filename,"rb");
   long pos;
@@ -59,7 +65,7 @@ int is_file_measurements_v1( const char* filename)
   return 0;
 }
 
-FILE* open_measurements_v1( const char* filename, const char* mode )
+FILE* open_measurements_v2( const char* filename, const char* mode )
 { FILE *fp;
   if( *mode == 'w' )
   { fp = fopen(filename,"wb");
@@ -67,10 +73,10 @@ FILE* open_measurements_v1( const char* filename, const char* mode )
     { warning("Could not open file (%s) for writing.\n");
       goto Err;
     }
-    measurements_v1_write_header(fp);
+    measurements_v2_write_header(fp);
   } else if( *mode == 'r' )
   { fp = fopen(filename,"rb");
-    measurements_v1_read_header(fp);
+    measurements_v2_read_header(fp);
   } else {
     warning("Could not recognize mode (%s) for file (%s).\n",mode,filename);
     goto Err;
@@ -80,14 +86,14 @@ Err:
   return NULL;
 }
 
-void close_measurements_v1( FILE *fp )
+void close_measurements_v2( FILE *fp )
 { fclose(fp);
 }
 
-void write_measurements_v1( FILE *fp, Measurements *table, int n_rows )
+void write_measurements_v2( FILE *fp, Measurements *table, int n_rows )
 { int n_measures = table[0].n;
   Measurements *row = table + n_rows;
-  static const int rowsize = sizeof( Measurements_v1 ) - 2*sizeof(double*); //exclude the pointers
+  static const int rowsize = sizeof( Measurements_v2 ) - 2*sizeof(double*); //exclude the pointers
 
   fwrite( &n_rows, sizeof(int), 1, fp );
   fwrite( &n_measures, sizeof(int), 1, fp );
@@ -99,14 +105,11 @@ void write_measurements_v1( FILE *fp, Measurements *table, int n_rows )
   }
 }
 
-Measurements *read_measurements_v1( FILE *fp, int *n_rows)
+Measurements *read_measurements_v2( FILE *fp, int *n_rows)
 { Measurements *table, *row;
-  Measurements_v1 temp;
-  static const int rowsize = sizeof( Measurements_v1 ) - 2*sizeof(double*); //exclude the pointers
+  static const int rowsize = sizeof( Measurements_v2 ) - 2*sizeof(double*); //exclude the pointers
   double *head;
   int n_measures;
-
-  memset(&temp,0,sizeof(temp));
 
   fread( n_rows, sizeof(int), 1, fp);
   fread( &n_measures, sizeof(int), 1, fp );
@@ -119,7 +122,6 @@ Measurements *read_measurements_v1( FILE *fp, int *n_rows)
   while( row-- > table )
   { fread( row, rowsize, 1, fp );
     row->row = (row->data - head)/sizeof(double);
-    row->face_axis = 'u'; // mark as unknown
     fread( row->data, sizeof(double), n_measures, fp);
     fread( row->velocity, sizeof(double), n_measures, fp);
   }

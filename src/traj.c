@@ -344,7 +344,7 @@ int test_Measurements_Table_FileIO( char* filename,  Measurements *table, int n_
   
   while( n_rows-- )
   { Measurements *a = table + n_rows,
-                *b = t2    + n_rows;
+                 *b = t2    + n_rows;
     if( (a->fid != b->fid) ||
         (a->wid != b->wid) ||
         (a->state != b->state) ||
@@ -393,26 +393,67 @@ static int cmp_sort_segment_uid( const void* a, const void* b )
   return (d!=0) ? d: (rowa->wid - rowb->wid);
 }
 
+/*
 static inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
 { int ix = a->col_follicle_x, 
-      iy = a->col_follicle_y;
-  error("Don't use...use ccw test instead\n");
-  return atan2( a->data[iy] - a->face_y,
-                a->data[ix] - a->face_x );
+      iy = a->col_follicle_y,
+       v = atan2( a->data[iy] - a->face_y,
+                  a->data[ix] - a->face_x ); 
+  //error("Don't use...use ccw test instead\n");  //why did I put this here :\
+  return (v<0.0)?-1:((v>0.0)?1:0); 
 }
+*/
 
-static inline double _cmp_sort_face__ccw_test( Measurements *a, Measurements *b )
+
+static inline int _cmp_sort_face__ccw_test( Measurements *a, Measurements *b )
 { int ix = a->col_follicle_x, 
       iy = a->col_follicle_y;  
   double ax = a->data[ix] - a->face_x,
          ay = a->data[iy] - a->face_y,
          bx = b->data[ix] - b->face_x,
-         by = b->data[iy] - b->face_y;
-  return ax*by - ay*bx;
+         by = b->data[iy] - b->face_y,
+         v  = ax*by - ay*bx; 
+  debug("(%s:%d)\n\tDon't use...ccw test has is fragile when a and b are colinear\n",__FILE__,__LINE__);
+  return (v<0.0)?-1:((v>0.0)?1:0); 
+}
+
+static inline int _cmp_sort_face__angle_wrt_face( Measurements *a, Measurements *b )
+{ int ix = a->col_follicle_x, 
+      iy = a->col_follicle_y;  
+  double ax = a->data[ix] - a->face_x, // translate origin to face pos
+         ay = a->data[iy] - a->face_y,
+         bx = b->data[ix] - b->face_x,
+         by = b->data[iy] - b->face_y,
+         a_angle,
+         b_angle;
+  { // compute follicle angles wrt face orientation (face is 0 deg)
+    // assert(a->face_axis == b->face_axis);
+    switch(a->face_axis)
+    { case 'h':
+      case 'x':
+        a_angle = atan2(ay,ax);
+        b_angle = atan2(by,bx);
+        break;
+      case 'v':
+      case 'y':
+        a_angle = atan2(ax,ay);
+        b_angle = atan2(bx,by);
+        break;
+      default:
+        debug("In %s:Line %d \n"
+              "\tParameter <face_axis> must take on a value of 'x','h','v' or 'y'\n"
+              "\tGot value %c\n"
+              "\tUsing backup whisker ordering function.\n",__FILE__,__LINE__,a->face_axis);
+        return _cmp_sort_face__ccw_test(a,b);
+    }
+  }
+  return (a_angle<b_angle)?-1:((a_angle>b_angle)?1:0);
 }
 
 static int cmp_sort_face_order( const void* a, const void* b )
-{ return (int) _cmp_sort_face__ccw_test((Measurements*)a,(Measurements*)b);
+{ 
+  return _cmp_sort_face__angle_wrt_face((Measurements*)a,(Measurements*)b);
+  //return _cmp_sort_face__ccw_test((Measurements*)a,(Measurements*)b);
 }
 
 static int cmp_sort_time_face_order( const void* a, const void* b )
@@ -420,7 +461,7 @@ static int cmp_sort_time_face_order( const void* a, const void* b )
                *rowb = (Measurements*)b;
   int dt = rowa->fid - rowb->fid;
   if(dt==0)
-    return (int) _cmp_sort_face__ccw_test(rowa,rowb); 
+    return (int) cmp_sort_face_order(a,b); 
   return dt;
 }
 
@@ -431,7 +472,7 @@ static int cmp_sort_time_state_face_order( const void* a, const void *b )
   if(d==0)
   { d = rowa->state - rowb->state;
     if(d==0)
-      return (int) _cmp_sort_face__ccw_test(rowa,rowb); 
+      return (int) cmp_sort_face_order(a,b); 
   }
   return d;
 }
