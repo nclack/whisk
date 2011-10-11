@@ -90,16 +90,38 @@ void close_measurements_v2( FILE *fp )
 { fclose(fp);
 }
 
+#define HERE printf("%s(%d)\n",__FILE__,__LINE__)
+
 void write_measurements_v2( FILE *fp, Measurements *table, int n_rows )
 { int n_measures = table[0].n;
   Measurements *row = table + n_rows;
   static const int rowsize = sizeof( Measurements_v2 ) - 2*sizeof(double*); //exclude the pointers
-
+  
   fwrite( &n_rows, sizeof(int), 1, fp );
   fwrite( &n_measures, sizeof(int), 1, fp );
 
   while( row-- > table )
   { fwrite( row, rowsize, 1, fp );
+
+    
+    //if(row->data==-1)
+    //{
+    //  HERE;
+    //  printf("table: %p\trow: %p\tdata: %p\tvel: %p\n",table,row,row->data,row->velocity);
+    //  printf("row:%6d fid:%5d wid:%3d state:%2d face:(%4d,%4d) col:(%1d,%1d) valid vel:%1d n:%d face_axis:%c\n",
+    //    row->row,
+    //    row->fid,
+    //    row->wid,
+    //    row->state,
+    //    row->face_x,
+    //    row->face_y,
+    //    row->col_follicle_x,
+    //    row->col_follicle_y,
+    //    row->valid_velocity,
+    //    row->n,
+    //    row->face_axis);   
+    //}
+
     fwrite( row->data,     sizeof(double), n_measures, fp );
     fwrite( row->velocity, sizeof(double), n_measures, fp );
   }

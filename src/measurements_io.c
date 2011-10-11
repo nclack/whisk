@@ -123,6 +123,8 @@ MeasurementsFile Measurements_File_Open(const char* filename, char* format, cons
     } else {
       ifmt = MEASUREMENTS_FILE_DEFAULT_FORMAT;
     }
+    if(ifmt==-1)
+      goto Err;
   } else  // Check against table
   { int i; 
     for( i=0; i < Measurements_File_Format_Count; i++ )
@@ -198,7 +200,8 @@ Measurements *Measurements_Table_From_Filename(const char *filename, char* forma
 SHARED_EXPORT
 void Measurements_Table_To_Filename(const char *filename, char* format, Measurements *table, int n )
 { MeasurementsFile mf;
-  char *def = Measurements_File_Formats[MEASUREMENTS_FILE_DEFAULT_FORMAT];
+  char *def;
+  def = Measurements_File_Formats[MEASUREMENTS_FILE_DEFAULT_FORMAT];
   mf = Measurements_File_Open(filename, format, "w"); 
   if(!mf)
   { warning("Could not open %s\n",filename);
@@ -242,3 +245,59 @@ int main(int argc, char *argv[]) {
 };
 #endif
 
+#ifdef MEASUREMENTS_IO_TEST_REPEATED_READS
+#include "utilities.h"
+static char *Spec[] = {"[-help] <source:string>", NULL};
+int main(int argc, char *argv[]) {
+  int i;
+  Process_Arguments(argc,argv,Spec,0);
+  if( Is_Arg_Matched("-help") )
+  { printf("\n"  
+           "This test will open and close the <source> file in an infinite loop\n"
+           "\n");
+    return 0;
+  }
+        
+  i=0;
+  while(++i)
+  { Measurements *table;
+    int n;
+    if(i%10 == 0)
+      printf("Attempt: %d.\n",i);
+    table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n);
+    if(!table) error("Could not read %s\n",Get_String_Arg("source"));
+    Free_Measurements_Table(table);
+  }
+
+  return 0;
+};
+#endif
+
+#ifdef MEASUREMENTS_IO_TEST_REPEATED_READ_WRITES
+#include "utilities.h"
+static char *Spec[] = {"[-help] <source:string>", NULL};
+int main(int argc, char *argv[]) {
+  int i;
+  Process_Arguments(argc,argv,Spec,0);
+  if( Is_Arg_Matched("-help") )
+  { printf("\n"  
+           "This test will open and close the <source> file in an infinite loop\n"
+           "\n");
+    return 0;
+  }
+        
+  i=0;
+  while(++i)
+  { Measurements *table;
+    int n;
+    if(i%10 == 0)
+      printf("Attempt: %d.\n",i);
+    table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n);
+    if(!table) error("Could not read %s\n",Get_String_Arg("source"));
+    Measurements_Table_To_Filename( "test.measurements",NULL, table, n);
+    Free_Measurements_Table(table);
+  }
+
+  return 0;
+};
+#endif

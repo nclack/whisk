@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
   
   // save the table
   Measurements_Table_To_Filename( argv[2],                    // the filename
-                                  NULL,                       // the file format - NULL means use the default format
+                                  "v1",                       // the file format - NULL means use the default format
                                   table,                      // the data
                                   number_of_rows );           // the size of the table
   

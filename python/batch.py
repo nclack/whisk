@@ -35,8 +35,8 @@ Copyright (c) 2009 HHMI. Free downloads and distribution are allowed for any
 non-profit research and educational purposes as long as proper credit is given
 to the author. All other rights reserved.
 """
-from processing import freezeSupport as freeze_support
-from processing import Pool
+from multiprocessing import freeze_support
+from multiprocessing import Pool
 import subprocess
 from glob import glob
 import os,sys

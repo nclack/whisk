@@ -567,6 +567,18 @@ class MeasurementsTable(object):
                                                         byref(nframes) )
     return [frames[i] for i in xrange(nframes.value)]
 
+  def est_length_threshold(self,lowpx=1.0/0.04,highpx=50.0/0.04):
+    ncount = c_int(0)
+    thresh = ctraj.Measurements_Table_Estimate_Best_Threshold(
+        self._measurements,
+        self._nrows,
+        c_int(0),           # length column
+        lowpx,highpx,
+        1,                  # use greater than
+        byref(ncount))      # estimated number of whiskers
+    return thresh,ncount
+        
+
 class Distributions(object):
   def __init__(self, table = None, nbins = 32):
     """
@@ -884,6 +896,18 @@ ctraj.Measurements_Tables_Get_Diff_Frames.argtypes = [
   POINTER( cMeasurements ), #table B                   
   c_int,                    #number of rows for table B
   POINTER( c_int ) ]        #size of returned static array
+
+ctraj.Measurements_Table_Estimate_Best_Threshold.restype = c_double
+ctraj.Measurements_Table_Estimate_Best_Threshold.argtypes = [
+  POINTER( cMeasurements ), # table
+  c_int,                    # n_rows
+  c_int,                    # column index of the feature to use
+  c_double,                 # low (px)
+  c_double,                 # high (px)
+  c_int,                    # is_gt
+  POINTER(c_int)            # (output) target count
+]
+
 
 if __name__=='__main__':
   testcases = [ 
