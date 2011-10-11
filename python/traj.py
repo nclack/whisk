@@ -60,6 +60,7 @@ class cMeasurements(Structure):
               ("col_follicle_y", c_int               ),             #// index of the column corresponding to the folicle y position                                                          
               ("valid_velocity", c_int               ),                                                           
               ("n",              c_int               ),                                                           
+              ("face_axis",      c_char              ),
               ("data",           POINTER( c_double ) ),             # // array of n elements                      
               ("velocity",       POINTER( c_double ) )]             # // array of n elements - change in data/time
 
