@@ -403,6 +403,24 @@ set_target_properties(classify
 add_dependencies(classify ParameterParser)
 target_link_libraries(classify ${LIBM})
 
+#classify_radial
+source_group("Source Files" FILES src/classify.c)
+add_executable(classify_radial
+  src/classify.c
+  ${COMMON}
+  ${MYLIB}
+  ${MEASUREMENTS_IO}
+  ${MATH}
+  ${TRAJ}
+  ${PARAM_MODULE}
+)
+set_target_properties(classify_radial
+  PROPERTIES
+    COMPILE_DEFINITIONS TEST_CLASSIFY_4
+)
+add_dependencies(classify_radial ParameterParser)
+target_link_libraries(classify_radial ${LIBM})
+
 #reclassify
 source_group("Source Files" FILES src/hmm-reclassify.c)
 add_executable(reclassify
@@ -589,6 +607,7 @@ install(
     trace
     measure
     classify
+    classify_radial
     reclassify
   RUNTIME DESTINATION ${DEST_BIN}
   COMPONENT commandline
