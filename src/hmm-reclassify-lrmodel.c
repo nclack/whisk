@@ -103,8 +103,8 @@ void LRModel_Estimate_Transitions(real *T, int nwhisk, Measurements *table, int 
           int delta = 1;              //delta state (1 for cases j->w and w->j)
           if( c == last ) //j->j or w->w
             delta = 2*( c&1 );  // 0 or 2
-		  if( state+delta >= N ) //FIXME: HACK: this is necessary when trying to use a 3 whisker model when there are 4 whiskers
-			  delta = 0;
+          if( state+delta >= N ) //FIXME: HACK: this is necessary when trying to use a 3 whisker model when there are 4 whiskers
+              delta = 0;
 #ifdef DEBUG_LRMODEL_ESTIMATE_TRANSITIONS
           progress("Frame: %5d  Whisker: %3d  State: %3d Transition: %2d -> %2d\n", 
               row->fid, row->wid, row->state, state, state+delta );

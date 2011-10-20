@@ -549,11 +549,23 @@ cWhisk.compute_seed_from_point_field.argtypes = [
   POINTER( cImage ),
   POINTER( cImage )]
 
+cWhisk.compute_seed_from_point_field_windowed.restype = None
+cWhisk.compute_seed_from_point_field_windowed.argtypes = [
+  POINTER( cImage ),    # image
+  c_int,                # maxr
+  c_int,                # maxiter
+  c_float,              # stat window: low
+  c_float,              # stat window: high
+  POINTER( cImage ),    # output - histogram
+  POINTER( cImage ),    # output - slopes
+  POINTER( cImage )]    # output - stats
+
 cWhisk.compute_seed_from_point_field_windowed_on_contour.restype = None
 cWhisk.compute_seed_from_point_field_windowed_on_contour.argtypes = [
   POINTER( cImage ),    # image
   POINTER( cContour ),  # trace
   c_int,                # maxr
+  c_int,                # maxiter
   c_float,              # stat window: low
   c_float,              # stat window: high
   POINTER( cImage ),    # output - histogram
@@ -565,6 +577,7 @@ cWhisk.compute_seed_from_point_field_on_grid.argtypes = [
   POINTER( cImage ),    # image
   c_int,                # lattice spacing for grid
   c_int,                # maxr
+  c_int,                # maxiter
   c_float,              # stat window: low
   c_float,              # stat window: high
   POINTER( cImage ),    # output - histogram
@@ -654,7 +667,27 @@ def compute_seed_fields( image, maxr = 4 ):
   cWhisk.compute_seed_from_point_field( cim, c_int(maxr), chist, cslopes, cstats )
   return hist, slopes, stats
 
-def compute_seed_fields_windowed_on_objects( image,  maxr = 4, window = (0.4,0.4) ):
+def compute_seed_fields_windowed( image,  maxr = 4, maxiter = 4, window = (0.4,0.4) ):
+  cim     = cImage.fromarray( image )
+  hist    = zeros( image.shape, dtype = uint8 )
+  slopes  = zeros( image.shape, dtype = float32 )
+  stats   = zeros( image.shape, dtype = float32 )
+  chist   = cImage.fromarray(hist)
+  cslopes = cImage.fromarray(slopes)
+  cstats  = cImage.fromarray(stats)
+
+  cWhisk.compute_seed_from_point_field_windowed( cim,
+                                                 c_int(maxr),
+                                                 c_int(maxiter),
+                                                 window[0], window[1], 
+                                                 chist, cslopes, cstats )
+
+  mask = hist>0
+  stats[mask]  = stats [mask]/hist[mask]
+  slopes[mask] = slopes[mask]/hist[mask]
+  return hist, slopes, stats
+
+def compute_seed_fields_windowed_on_objects( image,  maxr = 4, maxiter=1, window = (0.0,0.0) ):
   cim = cImage.fromarray( image )
   hist = zeros( image.shape, dtype = uint8 )
   slopes = zeros( image.shape, dtype = float32 )
@@ -667,14 +700,15 @@ def compute_seed_fields_windowed_on_objects( image,  maxr = 4, window = (0.4,0.4
   for i in xrange( objs.num_objects ):
     ptrace = objs.objects[i]
     cWhisk.compute_seed_from_point_field_windowed_on_contour( cim, ptrace, 
-                                                              c_int(maxr), window[0], window[1], 
+                                                              c_int(maxr), c_int(maxiter),
+                                                              window[0], window[1], 
                                                               chist, cslopes, cstats )
   mask = hist>0
   stats[mask]  = stats [mask]/hist[mask]
   slopes[mask] = slopes[mask]/hist[mask]
   return hist, slopes, stats
 
-def compute_seed_from_point_field_on_grid(image, spacing=8, maxr=4, window=(0.4,0.4) ):
+def compute_seed_from_point_field_on_grid(image, spacing=8, maxr=4, maxiter=1, window=(0.0,0.0) ):
   cim = cImage.fromarray( image )
   hist = zeros( image.shape, dtype = uint8 )
   slopes = zeros( image.shape, dtype = float32 )
@@ -682,7 +716,7 @@ def compute_seed_from_point_field_on_grid(image, spacing=8, maxr=4, window=(0.4,
   chist   = cImage.fromarray(hist)
   cslopes = cImage.fromarray(slopes)
   cstats  = cImage.fromarray(stats)
-  cWhisk.compute_seed_from_point_field_on_grid( cim, c_int(spacing), c_int(maxr), window[0], window[1],
+  cWhisk.compute_seed_from_point_field_on_grid( cim, c_int(spacing), c_int(maxr), c_int(maxiter), window[0], window[1],
                                                 chist, cslopes, cstats )
   mask = hist>0
   stats[mask]  = stats [mask]/hist[mask]
