@@ -261,6 +261,101 @@ def plot_specgrams(isession):
       imshow(acc,interpolation='nearest')
       axis("tight")
 
+def gen_trial_matrix_summary(trialtypes=None,sessions=None):
+  a = annotate_trials(r"F:\CuratedSessions", filename=r"F:\CuratedSessions\all.trialtypes.pickle")
+  out = a.by_type_session()
+
+  if trialtypes is None:
+    trialtypes = out.keys()
+  if sessions is None:
+    sessions = out.values()[0].keys()
+
+  def gen_trials():
+    for t in trialtypes:
+      for s in sessions:
+        for e in out.get(str(t),{}).get(s,[]):
+          yield e
+
+  def count_trials():
+    return len(list(gen_trials()))
+
+  def get_n_timepoints():
+    table = traj.MeasurementsTable(
+        list(seq2measurements([a.data.keys()[0]]))[0] ) # -_-;
+    data = table.asarray()
+    return data[:,1].max() + 10 # add a fudge factor
+
+  ntrials = count_trials()
+  ntime   = get_n_timepoints()
+  nfeat   = 4 # average angle, angle spread, projected mean follicle position,
+              # projected follicle position spread
+  index = zeros((ntrials,2),dtype=uint8)
+  im = nan*zeros((nfeat,ntrials,ntime))
+
+  session_index = {}
+  for i,k in enumerate(out.values()[0].iterkeys()):
+    session_index[k] = i
+
+  def gen_trial_index():
+    for t in trialtypes:
+      for s in sessions:
+        for e in out.get(str(t),{}).get(s,[]):
+          yield int(t),session_index[s]
+
+  row = 0;
+  for i,(filename,code) in enumerate(zip(seq2measurements(gen_trials()),gen_trial_index())):
+    print "[%5d of %5d] %s"%(i,ntrials,filename)
+    try:
+      data = traj.MeasurementsTable(filename).asarray();
+      index[row,:] = code
+      nwhiskers = max(data[:,0].astype(int))+1
+      count   = zeros((nwhiskers,ntime))
+      working = zeros((nwhiskers,ntime))
+      mask = data[:,0]>=0
+      count[data[mask,0].astype(int),data[mask,1].astype(int)] = 1 # [whisker,time] = 1
+      #angles
+      for iwhisker in xrange(nwhiskers):
+        mask = data[:,0]==iwhisker
+        working[iwhisker,data[mask,1].astype(int)] = data[mask,5]
+      #mean angle
+      im[0,row,:] = working.sum(0)/count.sum(0)
+      #angle spread
+      im[1,row,:] = working.ptp(0)
+
+      #follicle position
+      #For leo's data, just use the xposition (column 7)
+      for iwhisker in xrange(nwhiskers):
+        mask = data[:,0]==iwhisker
+        working[iwhisker,data[mask,1].astype(int)] = data[mask,7]
+      #mean follicle
+      im[2,row,:] = working.sum(0)/count.sum(0)
+      #angle follcile
+      im[3,row,:] = working.ptp(0)
+      row += 1
+
+    except IOError:
+      pass
+  return index,im
+
+
+def render_angle_spread_over_time(outdir,index,im,isession=0,itrials=[1,2,3,4,5],dt=50,every=10):
+  """index,im should be returned from gen_trial_matrix_summary"""
+  figure()
+  colors = ['r','c','g','b','k']
+  for i,itime in enumerate(xrange(0,im.shape[2]-dt,every)):
+    clf()
+    for t in reversed(itrials):
+      mask = (index[:,0]==t)*(index[:,1]==isession)      
+      plot(im[0,mask,itime:(itime+dt)].ravel(),
+           im[1,mask,itime:(itime+dt)].ravel(),
+           '.',markersize=2,color=colors[t-1],alpha=0.5)
+    title("%5d"%itime)
+    axis([-150,-20,0,90])
+    grid("on")
+    show()
+    savefig("%s/%04d.png"%(outdir,i),dpi=96,facecolor=(1,1,1))
+
+
 def gen_trial_matrix_all_whiskers(n_whiskers=3,ifeatures=[5,6]):
   a = annotate_trials(r"F:\CuratedSessions", filename=r"F:\CuratedSessions\all.trialtypes.pickle")
   out = a.by_type_session()
