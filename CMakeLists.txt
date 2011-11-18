@@ -611,7 +611,7 @@ set_target_properties(test_measurementsio_repeated_read_writes
   PROPERTIES
     COMPILE_DEFINITIONS MEASUREMENTS_IO_TEST_REPEATED_READ_WRITES
 )
-target_link_libraries(test_measurementsio_repeated_read_writess ${LIBM})
+target_link_libraries(test_measurementsio_repeated_read_writes ${LIBM})
 add_dependencies(test_measurementsio_repeated_read_writes ParameterParser)
 #
 # INSTALL
