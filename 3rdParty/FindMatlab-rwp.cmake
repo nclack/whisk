@@ -54,14 +54,17 @@ IF(WIN32)
 
 ELSE(WIN32)
 
-  FILE(GLOB _auto_matlab_prefixes "/usr/local/matlab-*" "/opt/matlab-*")
+  FILE(GLOB _auto_matlab_prefixes 
+      "/usr/local/matlab-*" 
+      "/opt/matlab-*"
+      "/Applications/MATLAB_*")
 
   IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
     # Regular x86
-    SET(_matlab_path_suffixes "bin/glnx86")
+    SET(_matlab_path_suffixes "bin/glnx86" "bin/maci")
     SET(MATLAB_MEX_SUFFIX mexglx)
   ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    SET(_matlab_path_suffixes "bin/glnxa64")
+    SET(_matlab_path_suffixes "bin/glnxa64" "bin/maci64")
     SET(MATLAB_MEX_SUFFIX mexa64)
   ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
 
@@ -100,9 +103,9 @@ FOREACH(_matlab_prefix ${_matlab_path_prefixes})
     SET(_matlab_libdir ${_matlab_prefix}/${_matlab_path_suffix})
     MESSAGE("Searching ${_matlab_prefix} ... ${_matlab_libdir}")
     IF(NOT MATLAB_MEX_LIBRARY)
-      FIND_LIBRARY(MATLAB_MEX_LIBRARY ${_libmex_name} ${_matlab_libdir})
-      FIND_LIBRARY(MATLAB_MX_LIBRARY ${_libmx_name} ${_matlab_libdir})
-      FIND_LIBRARY(MATLAB_ENG_LIBRARY ${_libeng_name} ${_matlab_libdir})
+      FIND_LIBRARY(MATLAB_MEX_LIBRARY ${_libmex_name} ${_matlab_libdir} NO_CMAKE_SYSTEM_PATH)
+      FIND_LIBRARY(MATLAB_MX_LIBRARY ${_libmx_name} ${_matlab_libdir} NO_CMAKE_SYSTEM_PATH)
+      FIND_LIBRARY(MATLAB_ENG_LIBRARY ${_libeng_name} ${_matlab_libdir} NO_CMAKE_SYSTEM_PATH)
     ENDIF(NOT MATLAB_MEX_LIBRARY)
   ENDFOREACH(_matlab_path_suffix)
 ENDFOREACH(_matlab_prefix)

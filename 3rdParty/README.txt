@@ -22,6 +22,7 @@ FFMPEG licenses are in the appropriate subdirectories.
 
 The Matlab related cmake macros were pulled from the kitware bug tracker [1].
 I've only used them to a limited extent.  When I downloaded the code, the
-latest update to that bug had occured on May 23, 2011.
+latest update to that bug had occured on May 23, 2011.  I've made a few
+modifications.
 
 [1] http://public.kitware.com/Bug/view.php?id=8207 
