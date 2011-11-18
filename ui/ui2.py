@@ -178,11 +178,14 @@ def draw_whisker( surf, w, radius=12, color=(0,255,255,200) , scale=1, color2=(0
         int(radius))
 
 def draw_bar( surf, x, y, radius, color, scale=1 ):
-  pygame.draw.circle( surf, color, 
-              ( scale*(x+1.0), 
-                scale*(y+1.0) ), 
-              int(scale*radius),
-              1)
+  try:
+    pygame.draw.circle( surf, color, 
+                ( int(scale*(x+1.0)), 
+                  int(scale*(y+1.0)) ), 
+                int(scale*radius),
+                1)
+  except ValueError:
+    pass # NaN's give value errors
   
 def distance( (x,y), w):
   r = (w.x-x)**2 + (w.y-y)**2
