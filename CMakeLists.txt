@@ -10,10 +10,25 @@ cmake_minimum_required(VERSION 2.8)
 project(whisk)
 set(WHISK_VERSION_MAJOR 1)
 set(WHISK_VERSION_MINOR 0)
-set(WHISK_VERSION_PATCH 1)
+set(WHISK_VERSION_PATCH 2)
 
+#
+# Setup output directories for visual studio
+#
+if(MSVC OR XCODE)
+  set(USE_GENERATOR_SPECIFIC_OUTPUT_DIR FALSE CACHE BOOL "Put built files into a directory named for the generator.  Helps support side-by-side 32-bit and 64-bit builds.")
+  #message("!! ${CMAKE_CURRENT_SOURCE_DIR}")
+  if(${USE_GENERATOR_SPECIFIC_OUTPUT_DIR})
+    set(dir ${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_GENERATOR})
+    set(EXECUTABLE_OUTPUT_PATH ${dir} CACHE PATH "Build directory" FORCE)
+    set(LIBRARY_OUTPUT_PATH ${dir} CACHE PATH "Build directory" FORCE)
+  endif()
+endif()
 set(CMAKE_VERBOSE_MAKEFILE 0)
 
+#
+# 3rdParty support
+#
 set(ROOT_3RDPARTY_DIR ${CMAKE_SOURCE_DIR}/3rdParty)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ROOT_3RDPARTY_DIR})
 find_package(FFMPEG)
@@ -23,7 +38,7 @@ if(FFMPEG_FOUND)
   include_directories(${FFMPEG_INCLUDE_DIRS})
 endif()
 
-# p-file transform
+# Mylib: p-file transform
 file(GLOB PFILES  src/*.p)
 file(GLOB MANAGER src/manager.awk)
 include(MylibPreproc)
