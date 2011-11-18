@@ -24,6 +24,10 @@
 #include <float.h> // for -DBL_MAX
 #define LOG2_ADD(x,y) ( (x) + log2( 1.0 + pow(2.0, (y)-(x) ) ) ) // this works b.c. x and y are always same sign (negative)
 
+#if 0
+#define DEBUG_VITERBI
+#endif
+
 typedef struct _ViterbiNode
 { int                  state;
   struct _ViterbiNode *next;
@@ -431,7 +435,9 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
   { iobs = sequence[iseq];
     memset( next, 0, sizeof( ViterbiState ) * nstates );
 
-    //print_viterbi_state_vec( last, nstates );
+#ifdef DEBUG_VITERBI
+    print_viterbi_state_vec( last, nstates );
+#endif
 
     for( idst = 0; idst < nstates; idst++ )
     { ViterbiState *argmax = next + idst;
@@ -444,9 +450,11 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
                       vprob  = src->prob;
         ViterbiPath  *vpath  = src->path;
 
-        //printf("Last : "); print_viterbi_state( last );
-        //printf("Next : "); print_viterbi_state( next );
-        //printf("\n");
+#ifdef DEBUG_VITERBI
+        printf("Last : "); print_viterbi_state( last );
+        printf("Next : "); print_viterbi_state( next );
+        printf("\n");
+#endif
 
         prob  += p;
         vprob += p;
@@ -469,14 +477,15 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
                       vprob  = src->prob;
         ViterbiPath  *vpath  = src->path;
 
-        //printf("Last : "); print_viterbi_state( last );
-        //printf("Next : "); print_viterbi_state( next );
-        //printf("\n");
+#ifdef DEBUG_VITERBI
+        printf("Last : "); print_viterbi_state( last );
+        printf("Next : "); print_viterbi_state( next );
+        printf("\n");
+#endif 
 
         prob  += p;
         vprob += p;
         argmax->total = LOG2_ADD( argmax->total, prob );
-        //argmax->total += prob; // FIXME: need log(x+y)
         if( vprob > valmax )        // Look for most likely source path to dst
         { ViterbiPath *this;
           valmax = vprob;
@@ -512,7 +521,6 @@ ViterbiResult *Forward_Viterbi_Log2(   int  *sequence,         // size: nobs
     { ViterbiState *this = last + isrc;
       real p = this->prob;
       total = LOG2_ADD( total, this->total );
-      //total += this->total;  //FIXME: need log(x+y)
       if( p > valmax )
       { argmax = this;
         valmax = p;
