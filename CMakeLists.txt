@@ -721,8 +721,8 @@ install(DIRECTORY matlab
 )
 install(
     TARGETS
-      mexLoadWhiskers
       mexLoadMeasurements
+      mexSaveMeasurements
       mexLoadWhiskers
     DESTINATION ${DEST_MATLAB}/matlab
     COMPONENT matlab
