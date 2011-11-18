@@ -68,8 +68,13 @@ else()
   )
 endif()
 
-set(FFMPEG_SHARED_LIBS ${_FFMPEG_SHARED_LIBS})
+if(APPLE) #FFMPEG may rely on these Frameworks
+  find_library(CF_LIBS  CoreFoundation)
+  find_library(VDA_LIBS VideoDecodeAcceleration)
+  find_library(CV_LIBS CoreVideo)
+endif()
 
+set(FFMPEG_SHARED_LIBS ${_FFMPEG_SHARED_LIBS})
 
 # Macro to find header and lib directories
 # example: FFMPEG_FIND(AVFORMAT avformat avformat.h)
@@ -200,6 +205,9 @@ endmacro()
           ${X264_LIBRARY}
           ${XVID_LIBRARY}
           ${THREAD_LIBRARY}
+          ${CF_LIBS}
+          ${VDA_LIBS}
+          ${CV_LIBS}
           )
       ADDLIBS(FFMPEG_LIBRARIES THEORA)
       ADDLIB (FFMPEG_LIBRARIES VAAPI)

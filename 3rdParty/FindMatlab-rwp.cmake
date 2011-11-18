@@ -58,6 +58,7 @@ ELSE(WIN32)
       "/usr/local/matlab-*" 
       "/opt/matlab-*"
       "/Applications/MATLAB_*")
+  list(REVERSE _auto_matlab_prefixes) # newer versions will get searched first
 
   IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
     # Regular x86
@@ -107,6 +108,9 @@ FOREACH(_matlab_prefix ${_matlab_path_prefixes})
       FIND_LIBRARY(MATLAB_MX_LIBRARY ${_libmx_name} ${_matlab_libdir} NO_CMAKE_SYSTEM_PATH)
       FIND_LIBRARY(MATLAB_ENG_LIBRARY ${_libeng_name} ${_matlab_libdir} NO_CMAKE_SYSTEM_PATH)
     ENDIF(NOT MATLAB_MEX_LIBRARY)
+    IF( MATLAB_MEX_LIBRARY )
+      SET(MATLAB_SYS ${_matlab_libdir} CACHE PATH "Location of Matlab system libraries")
+    ENDIF()
   ENDFOREACH(_matlab_path_suffix)
 ENDFOREACH(_matlab_prefix)
 
@@ -129,6 +133,7 @@ MARK_AS_ADVANCED(
   MATLAB_MEX_SUFFIX
   MATLAB_MEX_VERSIONFILE
   MATLAB_FOUND
+  MATLAB_SYS
 )
 
 # vim: set ts=2 sw=2 et:

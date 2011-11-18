@@ -53,11 +53,13 @@ ELSE( WIN32 )
     # Regular x86
     SET(MATLAB_SYS
       ${MATLAB_ROOT}/bin/glnx86
+      CACHE PATH "Location of Matlab system libraries" PARENT_SCOPE 
       )
   ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
     # AMD64:
     SET(MATLAB_SYS
       ${MATLAB_ROOT}/bin/glnxa64
+      CACHE PATH "Location of Matlab system libraries" PARENT_SCOPE 
       )
   ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
   FIND_LIBRARY(MATLAB_MEX_LIBRARY
@@ -108,6 +110,7 @@ MARK_AS_ADVANCED(
   MATLAB_ENG_LIBRARY
   MATLAB_INCLUDE_DIR
   MATLAB_ROOT
+  MATLAB_SYS
 )
 
 INCLUDE(FindPackageHandleStandardArgs)
