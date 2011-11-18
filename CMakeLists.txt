@@ -331,6 +331,51 @@ set_target_properties(whiskio PROPERTIES
 )
 add_dependencies(whiskio ParameterParser)
 
+add_library(whiskio_static STATIC
+  ${COMMON}
+  ${MYLIB}
+  ${WHISKER_IO}
+  ${MEASUREMENTS_IO}
+  ${VIDEO_IO}
+  ${MATH}
+  ${TRACE}
+  ${TRAJ}
+  ${BAR_IO}
+  ${FFMPEG_INCLUDE_DIRS}
+)
+target_link_libraries(whiskio_static ${FFMPEG_LIBRARIES} ${LIBM})
+add_dependencies(whiskio_static ParameterParser) #still need param.h
+set_target_properties(whiskio_static PROPERTIES
+  COMPILE_DEFINITIONS SKIP_PARAMS_FILE
+)
+add_dependencies(whiskio_static ParameterParser)
+
+#
+# MATLAB
+#
+
+  find_package(Matlab-rwp) #optional
+  include(MatlabMexMacro)
+
+  if(MATLAB_FOUND)
+    add_mex_file(mexLoadMeasurements matlab/src/measurements_io.mex.c)
+    target_link_libraries(mexLoadMeasurements whiskio_static)
+    set_target_properties(mexLoadMeasurements
+        PROPERTIES
+        COMPILE_DEFINITIONS LOAD_MEASUREMENTS
+        )
+
+    add_mex_file(mexSaveMeasurements matlab/src/measurements_io.mex.c)
+    target_link_libraries(mexSaveMeasurements whiskio_static)
+    set_target_properties(mexSaveMeasurements
+        PROPERTIES
+        COMPILE_DEFINITIONS SAVE_MEASUREMENTS
+        )
+
+    add_mex_file(mexLoadWhiskers matlab/src/whisker_io.mex.c)
+    target_link_libraries(mexLoadWhiskers whiskio_static)
+  endif()
+
 #
 # EXECUTABLES
 #
@@ -613,6 +658,7 @@ set_target_properties(test_measurementsio_repeated_read_writes
 )
 target_link_libraries(test_measurementsio_repeated_read_writess ${LIBM})
 add_dependencies(test_measurementsio_repeated_read_writes ParameterParser)
+
 #
 # INSTALL
 #
@@ -673,6 +719,14 @@ install(DIRECTORY matlab
     DESTINATION ${DEST_MATLAB}
     COMPONENT matlab
 )
+install(
+    TARGETS
+      mexLoadWhiskers
+      mexLoadMeasurements
+      mexLoadWhiskers
+    DESTINATION ${DEST_MATLAB}/matlab
+    COMPONENT matlab
+    )
 
 install(DIRECTORY python
     DESTINATION ${DEST_PYTHON}
