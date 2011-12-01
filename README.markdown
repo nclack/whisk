@@ -1,5 +1,21 @@
-Git on Windows
+Whisker tracking
+================
+
+A description of this software as well as detailed instructions and a tutorial
+may be found
+[here](http://research.janelia.org/labs/display/MyersLab/Whisker+Tracking).
+
+Downloading
 ===========
+
+Pre-built binaries are available for [download][].
+
+[download]: http://www.neuroptikon.org/projects/display/MyersLab/Whisker+Tracking+Downloads
+
+Source code is available on here.  See the instructions for building below.
+
+Tip: Git on Windows
+-------------------
 
 1. Install [msysgit][].
 
@@ -13,16 +29,8 @@ Git on Windows
 
 [msysgit]: http://code.google.com/p/msysgit/
 
-Notes on the source
-===============
-
-This project has moved from a development stage, where we were figuring out
-exactly how to solve the problem, to more of a production stage.  If you try to
-read the source code, you'll find that a lot of the development code has been
-left in. Caveat emptor.
-
 Building
-======
+========
 
 This package uses a [Cmake][] based build system.  The basic build steps are similar
 under Windows, OS X, and Linux.  On a unix-y system, the procedure looks like this:
@@ -80,13 +88,9 @@ GUI will show available options.  See the CMake documentation for more details.
 
 [Cmake]: http://www.cmake.org
 
-Whisker tracking
-============
-
-Detailed instructions and a tutorial may be found [here](http://research.janelia.org/labs/display/MyersLab/Whisker+Tracking).
 
 File formats
------------------
+============
 
 ### Whiskers
 
@@ -101,28 +105,49 @@ The most detailed description of each format can be found in the corresponding
 In general, each whisker segment in a file is comprised of a unique id and a 
 number of data points describing the shape as output from the tracing program.
 
-### Trajectories
+### Measurements 
 
-A text file.  Each line corresponds to a whisker segment.  The line is formated
-as:
-
-      trajectory_id, frame_id, whisker_id
-
-The frame_id, whisker_id pair uniquely specify the whisker.  The trajectory_id
-is an integer that acts like a label.
-
-### Bar
-
-A text file.  Each line corresponds to a frame.  The line is formated as:
-
-      frame_id, x, y
-
-where x, y are real numbers giving the position in pixels, and frame_id is a
-natural number indicating the correspondng time point in the movie (in frames).
+The measurements file stores the features of traced curves used for
+classification, such as follicle position, angle and whisker length.
+Additionally, after classification, this file records the determined identity
+of each traced curve.
 
 Graphical interface
----------------------------
+===================
 
 See ui/README for instructions on how to use the graphical user interface.
 
       ui2.py --help
+
+Changes
+=======
+
+v1.0.0 to v1.0.2
+----------------
+- improved FFMpeg support
+
+  - more video formats supported
+
+  - newer version of FFMPEG used on windows and 64-bit support added
+
+- change how whiskers were ordered to better support videos imaging both sides
+  of a mouse's face.
+
+- added a special heuristic classifier for tracking single whiskers
+
+- added a special heuristic classifier adapted for tracking whiskers on both
+  sides of a mouse's face.
+
+- added Matlab mex binaries to support reading and writing of measurements
+  files, as well as reading of whiskers files.
+
+- seeding function used to initially find whiskers is now more efficient
+  and provides more accurate estimates of local whisker angle.
+
+- Improved the installer so python and Matlab functionality is better
+  supported.
+
+- added another measurements file format that remembers the face position.
+  The new format is now the default.  A warning may be issued for files
+  that use the old format.  Run the measurements_convert command to update
+  your files, if necessary.
