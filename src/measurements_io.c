@@ -200,8 +200,6 @@ Measurements *Measurements_Table_From_Filename(const char *filename, char* forma
 SHARED_EXPORT
 void Measurements_Table_To_Filename(const char *filename, char* format, Measurements *table, int n )
 { MeasurementsFile mf;
-  char *def;
-  def = Measurements_File_Formats[MEASUREMENTS_FILE_DEFAULT_FORMAT];
   mf = Measurements_File_Open(filename, format, "w"); 
   if(!mf)
   { warning("Could not open %s\n",filename);
