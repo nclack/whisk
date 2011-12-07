@@ -1,6 +1,13 @@
 """
   >>> meta = loadmeta()
   >>> m2 = filter_trial_type(meta,'CR')
+
+  ## NOTE
+
+  The useful routines ended up being pretty slow due to how I chose to 
+  implement them.  I'm guessing pretty giant speed ups could be gained
+  by rewriting.
+
 """
 import traj
 from numpy import *
@@ -55,7 +62,7 @@ def backup_measurements(root,backupname):
 
 def loadmeta():
   import yaml
-  return yaml.load(open(META,"r"))
+  return yaml.load(open(META,"r"))/ployy
 
 def savemeta(meta):
   import yaml
@@ -210,8 +217,12 @@ def awrap(th):
   v[th>0.0] = -180.0;
   return th+v
 
+
 def build_histograms(fname,min_ms,max_ms,norm=True,dth_deg=2.5):
-  data = traj.MeasurementsTable(fname).asarray()  
+  # Tried memoizing here. AFAICT, no speed up.
+  table = traj.MeasurementsTable(fname)  
+    
+  data = table.asarray()  
   out = {}
 
   nframes = data[:,1].max()
@@ -269,6 +280,19 @@ def plot_hist_matrix_means(meta,**kwargs):
     except:
       pass
 
+def plot_hist_matrix_ptps(meta,**kwargs):
+  for anm in meta.keys():
+    try:
+      figure()
+      days = sorted([str(d) for d in meta[anm.upper()] if type(d) is datetime.date])
+      for d in days:
+          out = hist_matrix(meta,anm,d,**kwargs)
+          plot(out.ptp(axis=0))
+      legend(days)
+      title(anm)
+    except:
+      pass
+
 def plot_hist_matrix_over_time(meta,anm,day,from_ms,to_ms,every_ms,**kwargs):
   ncols = len(range(from_ms,to_ms,every_ms))
   kwargs['min_ms'] = from_ms
@@ -290,6 +314,110 @@ def plot_hist_matrix_over_time(meta,anm,day,from_ms,to_ms,every_ms,**kwargs):
   colorbar()
   show()
   return out
+
+def all_anm_hist_matrix_over_time(meta,from_ms,to_ms,every_ms,**kwargs):
+  results = {}
+  for anm in meta.keys():
+    print anm
+    ncols = len(range(from_ms,to_ms,every_ms))
+    kwargs['min_ms'] = from_ms
+    kwargs['max_ms'] = from_ms+every_ms
+    tmp = hist_matrix(meta,meta.keys()[0],None,**kwargs)
+    nrows = tmp.shape[1]
+    out = nan*zeros((nrows,ncols)) #cols are time, rows are feature, value is density
+    
+    hists = {}
+    for day in [k for k in meta[anm].keys() if type(k) is datetime.date]:
+      print day,
+      try:
+        for i,t in enumerate(xrange(from_ms,to_ms,every_ms)):
+          print '.',
+          kwargs['min_ms'] = t
+          kwargs['max_ms'] = t+every_ms
+          tmp = hist_matrix(meta,anm,day,**kwargs)
+          out[:,i] = tmp.mean(axis=0)
+        hists[day] = out
+      except:
+        pass
+      finally:
+        print 'Done'
+    results[anm] = hists
+  return results
+
+
+def plot_hist_matrix_ptps_over_time(meta,anm,day,from_ms,to_ms,every_ms,**kwargs):
+  ncols = len(range(from_ms,to_ms,every_ms))
+  kwargs['min_ms'] = from_ms
+  kwargs['max_ms'] = from_ms+every_ms
+  tmp = hist_matrix(meta,meta.keys()[0],None,**kwargs)
+  nrows = tmp.shape[1]
+  out = nan*zeros((nrows,ncols)) #cols are time, rows are feature, value is density
+
+  figure()
+  for i,t in enumerate(xrange(from_ms,to_ms,every_ms)):
+    kwargs['min_ms'] = t
+    kwargs['max_ms'] = t+every_ms
+    tmp = hist_matrix(meta,anm,day,**kwargs)
+    out[:,i] = tmp.ptp(axis=0)
+  imshow(log(out+0.001),interpolation='nearest')
+  xlabel('time')
+  title(anm + ':' + str(day))
+  axis('tight')
+  colorbar()
+  show()
+  return out
+
+def plot_mean_deflection_over_time(meta,anm,from_ms,to_ms,every_ms,**kwargs):
+  ncols = len(range(from_ms,to_ms,every_ms))
+  kwargs['min_ms'] = from_ms
+  kwargs['max_ms'] = from_ms+every_ms
+  tmp = hist_matrix(meta,meta.keys()[0],None,**kwargs)
+  nrows = tmp.shape[1]
+  out = nan*zeros((nrows,ncols)) #cols are time, rows are feature, value is density
+  
+  figure()
+  means = {}
+  for day in [k for k in meta[anm].keys() if type(k) is datetime.date]:
+    for i,t in enumerate(xrange(from_ms,to_ms,every_ms)):
+      kwargs['min_ms'] = t
+      kwargs['max_ms'] = t+every_ms
+      tmp = hist_matrix(meta,anm,day,**kwargs)
+      out[:,i] = tmp.mean(axis=0)
+    means[day] = matrix(arange(out.shape[0]))*matrix(out)
+    plot(means[day].T)
+    title(anm)
+  return means
+
+def all_anm_mean_deflection_over_time(meta,from_ms,to_ms,every_ms,**kwargs):
+  results = {}
+  for anm in meta.keys():
+    print anm
+    ncols = len(range(from_ms,to_ms,every_ms))
+    kwargs['min_ms'] = from_ms
+    kwargs['max_ms'] = from_ms+every_ms
+    tmp = hist_matrix(meta,meta.keys()[0],None,**kwargs)
+    nrows = tmp.shape[1]
+    out = nan*zeros((nrows,ncols)) #cols are time, rows are feature, value is density
+          
+    means = {}
+    for day in [k for k in meta[anm].keys() if type(k) is datetime.date]:
+      print day,
+      try:
+        for i,t in enumerate(xrange(from_ms,to_ms,every_ms)):
+          print '.',
+          kwargs['min_ms'] = t
+          kwargs['max_ms'] = t+every_ms
+          tmp = hist_matrix(meta,anm,day,**kwargs)          
+          out[:,i] = tmp.mean(axis=0)
+          ### out[:,i] = zeros((nrows,)) # a test
+        means[day] = matrix(arange(out.shape[0]))*matrix(out)
+      except:                
+        pass
+      finally:
+        print 'Done'      
+    results[anm] = means
+  return results
+
 
 def rates(meta):
   out = {}
