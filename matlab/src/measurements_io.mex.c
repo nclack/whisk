@@ -262,7 +262,7 @@ void assertFieldNames(const mxArray *s)
   for(i=0;i<n;++i)
     if(strcmp(fields[i],mxGetFieldNameByNumber(s,i))!=0)
     { mexPrintf("Expected field %d to have name %s.  Got %s.\n",i,fields[i],mxGetFieldNameByNumber(s,i));
-      mxerror("Could not interprect struct array.\n");
+      mxerror("Could not interpret struct array.\n");
     }
 }
 
