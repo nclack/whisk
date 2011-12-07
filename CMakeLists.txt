@@ -12,6 +12,10 @@ set(WHISK_VERSION_MAJOR 1)
 set(WHISK_VERSION_MINOR 0)
 set(WHISK_VERSION_PATCH 2)
 
+macro(show v)
+  message("${v} is ${${v}}")
+endmacro()
+
 #
 # Setup output directories for visual studio
 #
@@ -692,7 +696,14 @@ else()
   set(DEST_PYTHON "share/whisk")
 endif()
 
+set(CMAKE_INSTALL_DEBUG_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
+# show(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+# show(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP)
+# show(CMAKE_INSTALL_DEBUG_LIBRARIES)
+# show(CMAKE_INSTALL_MFC_LIBRARIES)
+# show(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION)
+# show(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
 
 install(
   TARGETS 
@@ -734,14 +745,21 @@ install(DIRECTORY matlab
     DESTINATION ${DEST_MATLAB}
     COMPONENT matlab
 )
-install(
-    TARGETS
-      mexLoadMeasurements
-      mexSaveMeasurements
-      mexLoadWhiskers
+if(MATLAB_FOUND)
+  install(
+      TARGETS
+        mexLoadMeasurements
+        mexSaveMeasurements
+        mexLoadWhiskers
+      DESTINATION ${DEST_MATLAB}/matlab
+      COMPONENT matlab
+      )
+  install(PROGRAMS
+    ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
     DESTINATION ${DEST_MATLAB}/matlab
     COMPONENT matlab
     )
+endif()
 
 install(DIRECTORY python
     DESTINATION ${DEST_PYTHON}
