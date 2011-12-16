@@ -41,7 +41,7 @@ SeqReader *Seq_Open( const char* path )
   h = (SeqReader*) Guarded_Malloc( sizeof(SeqReader), "seq_open" );
   fp = fopen( path, "rb" );
   if( !fp )
-    return NULL;
+    goto ErrorIO;
   h->fp = fp;
 
   SEQ_ASSERT( fseek(fp, 548, SEEK_SET)                     );
@@ -63,6 +63,10 @@ error:
   error( "Problem reading header of seq file\n" );
   if(h)  free(h);
   if(fp) fclose(fp);
+  return NULL;
+
+ErrorIO:
+  error( "Could not open file at: %s\n",path );
   return NULL;
 }
 
