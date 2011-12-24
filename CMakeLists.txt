@@ -355,14 +355,12 @@ add_library(whiskio_static STATIC
   ${MYLIB}
   ${WHISKER_IO}
   ${MEASUREMENTS_IO}
-  ${VIDEO_IO}
   ${MATH}
   ${TRACE}
   ${TRAJ}
   ${BAR_IO}
-  ${FFMPEG_INCLUDE_DIRS}
 )
-target_link_libraries(whiskio_static ${FFMPEG_LIBRARIES} ${LIBM})
+target_link_libraries(whiskio_static ${LIBM})
 add_dependencies(whiskio_static ParameterParser) #still need param.h
 set_target_properties(whiskio_static PROPERTIES
   COMPILE_DEFINITIONS SKIP_PARAMS_FILE
