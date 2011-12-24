@@ -16,7 +16,9 @@ SET(MATLAB_FOUND 0)
 
 IF(WIN32)
 
-  FILE(GLOB _auto_matlab_prefixes "C:/Program Files/MATLAB*/R20*")
+  FILE(GLOB _auto_matlab_prefixes 
+    "C:/Program Files*/MATLAB*/R20*"
+    )
 
   IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
     # Regular x86
