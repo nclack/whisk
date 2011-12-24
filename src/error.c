@@ -51,45 +51,69 @@ int check_params_loaded()
 }
 #endif
 
-SHARED_EXPORT
+//
+// Default reporters
+//
+
+void report_(char *str, va_list argList)
+{ vfprintf(ERR_STREAM,str,argList);
+}
+
+//
+// Interface
+//
+
+reporter report = NULL;
+
+void set_reporter(reporter f)
+{
+  report = f;
+}
+
+
+void maybe_init_reporters()
+{ if(report==NULL)
+    report = report_;
+}
+
 void error(char *str, ... )
 {
   va_list argList;
+  maybe_init_reporters();
   va_start( argList, str );
   fprintf(ERR_STREAM, "*** ERROR: ");
-  vfprintf(ERR_STREAM, str, argList);
+  report(str, argList);
   va_end( argList );
   fflush(NULL);
   exit(-1);
 }
 
-SHARED_EXPORT
 void warning(char *str, ... )
 {
   va_list argList;
+  maybe_init_reporters();
   va_start( argList, str );
   fprintf(ERR_STREAM, "--- Warning: ");
-  vfprintf(ERR_STREAM, str, argList);
+  report(str, argList);
   va_end( argList );
   fflush(NULL);
 }
 
-SHARED_EXPORT
 void debug(char *str, ... )
 {
   va_list argList;
+  maybe_init_reporters();
   va_start( argList, str );
 #ifdef SKIP_PARAMS_FILE
   if(SHOW_DEBUG_MESSAGES_)
 #else
   if(check_params_loaded() && SHOW_DEBUG_MESSAGES)
 #endif
-    vfprintf(ERR_STREAM, str, argList);
+  report(str, argList);
   va_end( argList );
   fflush(NULL);
 }
 
-SHARED_EXPORT
 void help(int show, char *str, ... )
 { if(show)
   { va_list argList;
@@ -102,7 +126,6 @@ void help(int show, char *str, ... )
   }
 }
 
-SHARED_EXPORT
 void progress(char *str, ... )
 { va_list argList;
   va_start( argList, str );
@@ -116,7 +139,6 @@ void progress(char *str, ... )
   fflush(NULL);
 }
 
-SHARED_EXPORT
 void progress_meter(double cur, double min, double max, int len, char *str, ...)
 { 
 #ifdef SKIP_PARAMS_FILE

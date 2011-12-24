@@ -76,11 +76,27 @@
 #include "trace.h"
 #include <string.h>
 
+#include <stdarg.h>
+#define TRY(e) if(!(e)) goto Error;
+void mxreport(char *str, va_list argList)
+{ char *buf = NULL;
+  size_t  n = 0;
+  TRY(buf=calloc(n=1024,1));
+  while(  ((unsigned)vsnprintf(buf,n,str,argList)) >= n ) // have to convert to unsigned for win32 version, which returns -1 on error
+    TRY(buf = (char*)realloc(buf,n=(1.2*n+1024)));
+  mexPrintf("[WHISK] %s",buf);
+  return;
+Error:
+  mexPrintf("%s(%d): Something went wrong trying to print an error message.\n",__FILE__,__LINE__);
+}
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 { size_t buflen; 
   int nwhisk;
   char *filename;
   Whisker_Seg *ws;
+
+  set_reporter(mxreport);
   
   /* check for proper number of arguments */
   if(nrhs!=1) 

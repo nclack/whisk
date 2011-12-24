@@ -35,4 +35,9 @@ function [whiskers,format] = LoadWhiskers(filename)
 %  Use is subject to Janelia Farm Research Campus Software Copyright 1.1
 %  license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
 
-[whiskers,format] = mexLoadWhiskers(filename);
+[s,attr,id] = fileattrib(filename); % get abs path
+if(s)
+  [whiskers,format] = mexLoadWhiskers(attr.Name);
+else
+  error(attr)
+end

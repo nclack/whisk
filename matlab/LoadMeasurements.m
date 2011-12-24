@@ -51,4 +51,9 @@ function measurements = LoadMeasurements(filename)
 %  license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
    
 
-measurements = mexLoadMeasurements(filename);
+[s,attr,id] = fileattrib(filename); % get abs path
+if(s)
+  measurements = mexLoadMeasurements(attr.Name);
+else
+  error(attr)
+end
