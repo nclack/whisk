@@ -62,7 +62,7 @@ def backup_measurements(root,backupname):
 
 def loadmeta():
   import yaml
-  return yaml.load(open(META,"r"))/ployy
+  return yaml.load(open(META,"r"))
 
 def savemeta(meta):
   import yaml
@@ -323,13 +323,13 @@ def all_anm_hist_matrix_over_time(meta,from_ms,to_ms,every_ms,**kwargs):
     kwargs['min_ms'] = from_ms
     kwargs['max_ms'] = from_ms+every_ms
     tmp = hist_matrix(meta,meta.keys()[0],None,**kwargs)
-    nrows = tmp.shape[1]
-    out = nan*zeros((nrows,ncols)) #cols are time, rows are feature, value is density
+    nrows = tmp.shape[1]    
     
     hists = {}
     for day in [k for k in meta[anm].keys() if type(k) is datetime.date]:
       print day,
       try:
+        out = nan*zeros((nrows,ncols)) #cols are time, rows are feature, value is density
         for i,t in enumerate(xrange(from_ms,to_ms,every_ms)):
           print '.',
           kwargs['min_ms'] = t
@@ -338,6 +338,7 @@ def all_anm_hist_matrix_over_time(meta,from_ms,to_ms,every_ms,**kwargs):
           out[:,i] = tmp.mean(axis=0)
         hists[day] = out
       except:
+        print 'x',
         pass
       finally:
         print 'Done'
