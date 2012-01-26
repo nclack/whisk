@@ -15,12 +15,16 @@
 #include <config.h>
 #include <parameters/param.h>
 #include <compat.h>
+#include <stdarg.h>
 
-SHARED_EXPORT void error(char *str, ... );
-SHARED_EXPORT void warning(char *str, ... );
-SHARED_EXPORT void help(int show, char *str, ... );
-SHARED_EXPORT void debug(char *str, ... );
-SHARED_EXPORT void progress(char *str, ... );
-SHARED_EXPORT void progress_meter(double cur, double min, double max, int len, char *str, ...);
+typedef void (*reporter)(char *str,va_list argList);
+void set_reporter(reporter f);
+
+void error(char *str, ... );
+void warning(char *str, ... );
+void help(int show, char *str, ... );
+void debug(char *str, ... );
+void progress(char *str, ... );
+void progress_meter(double cur, double min, double max, int len, char *str, ...);
 
 #endif//_H_ERROR_REPORT

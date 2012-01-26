@@ -3,14 +3,14 @@ Whisker tracking
 
 A description of this software as well as detailed instructions and a tutorial
 may be found
-[here](http://research.janelia.org/labs/display/MyersLab/Whisker+Tracking).
+[here](http://openwiki.janelia.org/wiki/display/MyersLab/Whisker+Tracking).
 
 Downloading
 ===========
 
 Pre-built binaries are available for [download][].
 
-[download]: http://www.neuroptikon.org/projects/display/MyersLab/Whisker+Tracking+Downloads
+[download]: http://openwiki.janelia.org/wiki/display/MyersLab/Whisker+Tracking+Downloads
 
 Source code is available on here.  See the instructions for building below.
 
