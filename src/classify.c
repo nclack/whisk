@@ -143,8 +143,10 @@ inline void Measurements_Table_Label_By_Threshold_And( Measurements *table, int 
   }
 }
 
+#define countof(e) (sizeof(e)/sizeof(*e))
+#define show(e) printf("%s is %d\n",#e,(e))
 int Measurements_Table_Best_Frame_Count_By_State( Measurements *table, int n_rows, int label, int *argmax )
-{ int hist[64];    // make this larger if imaging more whiskers - this has to be greater than the largest observed count
+{ int hist[64];    // this has to be greater than the largest observed trace count in a frame
   Measurements *row = table + n_rows;
   int counter = 0;
   int last = table->fid;
@@ -155,6 +157,7 @@ int Measurements_Table_Best_Frame_Count_By_State( Measurements *table, int n_row
   { int fid = row->fid;
     if( fid - last != 0 )
     { last = fid;
+      counter = MIN(counter,countof(hist)-1); // histogram saturation 
       hist[counter]++;
       counter = 0;
     }
@@ -162,7 +165,7 @@ int Measurements_Table_Best_Frame_Count_By_State( Measurements *table, int n_row
   }
 
   { int max = -1;                // max,argmax on hist
-    int *h = hist + 64;
+    int *h = hist + countof(hist);
     while(h-- > hist)
     { if( (*h)>max )
       { max = *h;
