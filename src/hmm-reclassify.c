@@ -36,6 +36,7 @@
 #if 0
 #define DEBUG_HMM_RECLASSIFY
 #define DEBUG_HMM_RECLASSIFY_EXTRA
+FILE *fp_visited = NULL;
 #endif
 
 #if 1 // setup tests
@@ -850,11 +851,17 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
     int propigate)                         // Recursively propigate to neighbors?
 { int prev  = fid - 1,
       next  = fid + 1,
+      wasprev,
+      wasnext,
       ref,
       nobs = index[fid].n;
   static const real tol = 1e-3;
   static Measurements_Reference *hist  = NULL;
   static Measurements_Reference *hist2 = NULL;
+
+#ifdef DEBUG_HMM_RECLASSIFY  
+  if(fp_visited) fwrite( visited, sizeof(real*), nframes, fp_visited );
+#endif
 
   if(!hist)
   { hist  = Measurements_Reference_Alloc(nwhisk);
@@ -892,6 +899,7 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
     ref = next;
   else
     ref = prev;
+
   { Measurements_Reference_Build( hist, index[ref].first, index[ref].n );
     (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
         nwhisk,
@@ -906,6 +914,8 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
     return 0;
   }
 
+  wasprev=prev;
+  wasnext=next;
   if(propigate)
   { prev = fid-1;
     next = fid+1;
@@ -953,13 +963,15 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
                                         next,
                                         1 /*propigate*/ );
     }
+
+    prev = ((    fid>0      )&&visited[fid-1])?(fid-1):-1; //MAX(prev,wasprev);
+    next = (((fid+1)<nframes)&&visited[fid+1])?(fid+1):-1; //MAX(next,wasnext);
     Measurements_Reference_Reset(hist);
     Measurements_Reference_Reset(hist2);
     if( prev > -1 )
       Measurements_Reference_Build( hist, index[prev].first, index[prev].n );
     if( next > -1 )
       Measurements_Reference_Build( hist2, index[next].first, index[next].n );
-
     { int ok_prev = Measurements_Reference_Has_Full_Count(hist),
           ok_next = Measurements_Reference_Has_Full_Count(hist2);
       if( ok_next || ok_prev )  // ,then recompute emissions and reapply
@@ -982,9 +994,14 @@ int HMM_Reclassify_Frame_W_Neighbors(      // returns 1 if likelihood changed, o
               hist2,
               shp_dists, vel_dists );
         }
-        return Measurements_Apply_Model( index, fid, nframes, nwhisk,
-                                  S,T,E,
-                                  NULL /*likelihood*/ );
+        if(Measurements_Apply_Model( index, fid, nframes, nwhisk,
+                                     S,T,E,
+                                     NULL /*likelihood*/ ))
+        { return 1; 
+        } else
+        { visited[fid]=NULL;
+          return 0;
+        }
       }
     }
   }
@@ -1298,7 +1315,8 @@ int main(int argc, char*argv[])
     frame_index *index = build_frame_index(table,nrows);
     heap *q;
 #ifdef DEBUG_HMM_RECLASSIFY
-    FILE *fp = fopen("visited.raw","w+b");
+    fp_visited = fopen("visited.raw","w+b");
+    if(fp_visited) fwrite( visited, sizeof(real*), nframes, fp_visited );
 #endif
 
     //  Initialize
@@ -1350,7 +1368,7 @@ int main(int argc, char*argv[])
 
 #ifdef DEBUG_HMM_RECLASSIFY
         debug("Frame: %5d Q size: %5d/%-5d likelihood: %g\n", fid, q->size, q->maxsize, likelihood[fid]);
-        fwrite( visited, sizeof(real*), nframes, fp );
+        if(fp_visited) fwrite( visited, sizeof(real*), nframes, fp_visited );        
 #endif
 
         // fill local interval
@@ -1476,7 +1494,7 @@ int main(int argc, char*argv[])
                 left_ok? "ok":"  ",  (left->frame)?  left_start : -1, left_jump, ( left->frame)? left_jump   - left_start : -1,
                 right_ok?"ok":"  ", (right->frame)? right_start : -1, right_jump,(right->frame)? right_start - right_jump : -1,
                 fid);
-          fwrite( visited, sizeof(real*), nframes, fp );
+          if(fp_visited) fwrite( visited, sizeof(real*), nframes, fp_visited );          
 #endif
 
         }
@@ -1496,15 +1514,15 @@ int main(int argc, char*argv[])
         if( fid==nframes ) break;
         fid = HMM_Reclassify_Fill_Gap( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, likelihood, fid);
 #ifdef DEBUG_HMM_RECLASSIFY
-        debug("Frame: %5d likelihood: %g\n", fid, likelihood[fid]);
-        fwrite( visited, sizeof(real*), nframes, fp );
+        debug("Frame: %5d likelihood: %g\n", fid, likelihood[fid]);        
+        if(fp_visited) fwrite( visited, sizeof(real*), nframes, fp_visited );
 #endif
       }
     }
 
 
 #ifdef DEBUG_HMM_RECLASSIFY
-    fclose(fp);
+    if(fp_visited) fclose(fp_visited);
 #endif
     //
     // Cleanup
