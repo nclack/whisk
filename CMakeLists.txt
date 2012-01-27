@@ -92,7 +92,7 @@ configure_file(
 if(WIN32)
 set(LIBM )
 else()
-set(LIBM ${LIBM})
+set(LIBM m)
 endif()
 
 #
