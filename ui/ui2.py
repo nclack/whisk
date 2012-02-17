@@ -232,7 +232,7 @@ def main( filename,
   pygame.mouse.set_cursor((8, 8), (4, 4), 
         (24, 24, 24, 231, 231, 24, 24, 24), 
         (0, 0, 0, 0, 0, 0, 0, 0))
-  font = pygame.font.SysFont('times',24);
+  font = pygame.font.SysFont(pygame.font.get_default_font(),24);
   pygame.key.set_repeat(200, 10)
   
   im = Reader( filename, transpose, not noadjuststripes )
