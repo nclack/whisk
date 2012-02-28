@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
       { //int i=174;
         int k;
         image = load(movie,i,NULL);
-        progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth);
+        progress_meter(i, 0, depth, 79, "Finding segments: [%5d/%5d]",i,depth-1);
         wv = find_segments(i, image, bg, &wv_n);                                                // Thrashing heap
         k = Remove_Overlapping_Whiskers_One_Frame( wv, wv_n, 
                                                    image->width, image->height, 

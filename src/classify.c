@@ -326,7 +326,7 @@ int main(int argc, char* argv[])
   low_px  = Get_Double_Arg("--limit",1) / px2mm;
   high_px = Get_Double_Arg("--limit",2) / px2mm;
 #ifdef DEBUG_CLASSIFY_1
-  debug("px/mm %f\n"
+  debug("mm/px %f\n"
         "  low %f\n"
         " high %f\n", px2mm, low_px, high_px );
 #endif
@@ -650,7 +650,7 @@ int main(int argc, char* argv[])
   low_px  = Get_Double_Arg("--limit",1) / px2mm;
   high_px = Get_Double_Arg("--limit",2) / px2mm;
 #ifdef DEBUG_CLASSIFY_4
-  debug("px/mm %f\n"
+  debug("mm/px %f\n"
         "  low %f\n"
         " high %f\n", px2mm, low_px, high_px );
 #endif
