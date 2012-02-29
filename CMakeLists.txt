@@ -195,6 +195,7 @@ set(VIDEO_IO_SRCS
   src/tiff_adapt.c 
   src/image_adapt.c                         
   src/seq.c
+  src/video.c
   src/ffmpeg_adapt.c
 )
 set(VIDEO_IO_HDRS
@@ -202,6 +203,7 @@ set(VIDEO_IO_HDRS
   include/tiff_io.h    
   include/image_adapt.h                         
   include/seq.h
+  include/video.h
   include/ffmpeg_adapt.h
 )
 set(VIDEO_IO

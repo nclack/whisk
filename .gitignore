@@ -1,3 +1,9 @@
 *.swp
+*.so
+*.detectorbank
+*.parameters
+*.pyc
+ui/trace.py
+ui/traj.py
 build
 xcode

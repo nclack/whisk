@@ -717,8 +717,8 @@ void kvprintall(tkv *self)
        "#define SHARED_EXPORT\n"
        "#endif\n"
        "#endif\n"
-       "#if !defined(bool) && !defined(_bool_T)\n"
-       "typedef int bool;\n"
+       "#if !defined(__cplusplus) && !defined(bool) && !defined(_bool_T)\n"
+       "typedef char bool;\n"
        "#endif\n");
   kvprint_enum_defns(self);
   kvprint_API_defn_getters(self);

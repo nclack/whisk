@@ -285,7 +285,7 @@ void ffmpeg_video_debug_ppm( ffmpeg_video *cur, char *file )
 int _handle_open_status(char *filename, void *c)
 {
   if(c==NULL)
-  { warning("Could not open file: %s\n",filename);
+  { //warning("Could not open file: %s\n",filename);
     if(c) ffmpeg_video_quit(c); 
     return 0;
   }
