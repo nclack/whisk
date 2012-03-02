@@ -109,6 +109,8 @@ endif()
 # TRACE
 # TRAJ
 # HMM
+# QTUI
+
 include_directories(include)
 include_directories("${PROJECT_BINARY_DIR}")
 
@@ -296,6 +298,41 @@ set(HMM
 source_group("Source Files\\" FILES ${HMM_SRCS})
 source_group("Header Files\\" FILES ${HMM_HDRS})
 
+# QTUI
+SET(QTLIBLIST
+  QtMain
+  QtGui
+  QtCore
+  QtOpenGL
+  QtSvg
+)
+#set(QT_USE_IMPORTED_TARGETS TRUE)
+find_package(Qt4 4.7 COMPONENTS ${QTLIBLIST})
+set(QTUI_HDRS)
+set(QTUI_SRCS)
+set(QTUI_SUBDIR qtui)
+if(QT_FOUND)
+  include(${QT_USE_FILE})
+  include_directories(${QT_INCLUDE_DIRS})
+  show(QT_LIBRARIES)
+  show(QT_USE_FILE)
+  show(QT_INCLUDE_DIRS)
+  file(GLOB QTUI_HDRS ${CMAKE_SOURCE_DIR}/${QTUI_SUBDIR}/*.h)
+  file(GLOB QTUI_SRCS ${CMAKE_SOURCE_DIR}/${QTUI_SUBDIR}/*.cpp)
+  source_group("Source Files\\ui" FILES ${QTUI_SRCS})
+  source_group("Header Files\\ui" FILES ${QTUI_HDRS})
+
+  qt4_wrap_cpp(MOC_SRCS
+    qtui/MainWindow.h
+    qtui/Display.h
+  )
+  qt4_add_resources(RCC_SRCS qtui/qtui.qrc)
+  source_group("Source Files\\Qt Generated" FILES
+    ${MOC_SRCS}
+    ${RCC_SRCS}
+  )
+endif()
+
 ###########
 # TARGETS #
 ###########
@@ -398,6 +435,38 @@ add_dependencies(whiskio_static ParameterParser)
 #
 # EXECUTABLES
 #
+
+# whiski - Qt GUI
+# see: http://developer.qt.nokia.com/doc/qt-4.8/appicon.html
+if(QT_FOUND)
+  set(ICONS qtui/resources/icons/whiski.icns)
+  set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
+  add_executable(whiski WIN32 MACOSX_BUNDLE
+    ${QTUI_HDRS}
+    ${QTUI_SRCS}
+    ${MOC_SRCS}
+    ${RCC_SRCS}
+    ${ICONS}
+    ${COMMON}
+    ${MYLIB}
+    ${WHISKER_IO}
+    ${MEASUREMENTS_IO}
+    ${VIDEO_IO}
+    ${MATH}
+    ${TRACE}
+    ${BAR_IO}
+    ${PARAM_MODULE}
+    ${FFMPEG_INCLUDE_DIRS}
+    ${TRAJ}
+    ${HMM}
+    )
+  target_link_libraries(whiski ${QT_LIBRARIES})
+  target_link_libraries(whiski ${FFMPEG_LIBRARIES} ${LIBM})
+  add_dependencies(whiski ParameterParser)
+  set_property(TARGET whiski PROPERTY 
+      MACOSX_BUNDLE_ICON_FILE whiski.icns)
+endif()
+
 
 # trace
 source_group("Source Files" FILES src/whisk.c)

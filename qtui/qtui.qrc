@@ -1,0 +1,12 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/images">
+  <file alias="droptarget">resources/droptarget.svg</file>
+</qresource>
+<qresource prefix="/icons">
+  <file alias="fullscreen">resources/icons/fullscreen.svg</file>
+  <file alias="quit">resources/icons/quit.png</file>
+  <file alias="open">resources/icons/open.jpg</file>
+  <file alias="save">resources/icons/save.png</file>
+  <file alias="saveas">resources/icons/saveas.png</file>
+</qresource>
+</RCC>
