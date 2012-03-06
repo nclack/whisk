@@ -1,11 +1,12 @@
 #include <QWidget>
 #include <QGraphicsView>
+#include "Data.h"
 
 class QGraphicsScene;
 class QGraphicsSvgItem;
+class QGraphicsWidget;
 class QUrl;
-typedef struct _video_t video_t;
-
+class LoadingGraphicsWidget;
 ////////////////////////////////////////////////////////////////////////////////
 // VIEW                                                            QGRAPHICSVIEW
 ////////////////////////////////////////////////////////////////////////////////
@@ -30,7 +31,7 @@ class View : public QGraphicsView
     void resizeEvent(QResizeEvent *event);
     void wheelEvent(QWheelEvent *event);
 
-    const QGraphicsItem *lockitem_;
+    const QGraphicsItem *lockitem_;                 ///< View transforms the scene to fit to this item
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +46,7 @@ class Display : public QWidget
   public slots:
     void open(const QUrl& path);
     void showFrame(int index);
+    void showCurrentFrame();
     void nextFrame();
     void nextFrame10();
     void nextFrame100();
@@ -57,21 +59,24 @@ class Display : public QWidget
     void lastFrame();
 
   signals:
+    void loadStarted();
     void opened(const QString& path);
 
   protected:
     void makeActions_();
     void wheelEvent(QWheelEvent *event);
 
-    QAction             *nextFrame_,
-                        *prevFrame_, 
-                        *lastFrame_, 
-                        *firstFrame_;
-    View                *view_;
-    QGraphicsScene      *scene_;
-    QGraphicsSvgItem    *droptarget_;
-    QGraphicsPixmapItem *image_;
-    video_t             *video_;
+    QAction                *nextFrame_,     
+                           *prevFrame_,     
+                           *lastFrame_,     
+                           *firstFrame_;    
+    View                   *view_;          
+    QGraphicsScene         *scene_;         
+    QGraphicsSvgItem       *droptarget_;    
+    QGraphicsWidget        *dataItemsRoot_; 
+    QGraphicsPixmapItem    *image_;         
+    LoadingGraphicsWidget  *loadingGraphics_;
+    Data                    data_;
 
     int     iframe_;
 };

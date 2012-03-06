@@ -20,6 +20,6 @@ SHARED_EXPORT void             Measurements_File_Write      (MeasurementsFile fp
 SHARED_EXPORT Measurements*    Measurements_File_Read       (MeasurementsFile fp, int *n);
 
 SHARED_EXPORT Measurements*    Measurements_Table_From_Filename (const char *filename, char *format, int *n );
-SHARED_EXPORT void             Measurements_Table_To_Filename   (const char *filename, char *format, Measurements *table, int n );
+SHARED_EXPORT int              Measurements_Table_To_Filename   (const char *filename, char *format, Measurements *table, int n );
 
 #endif //H_WHISKER_IO

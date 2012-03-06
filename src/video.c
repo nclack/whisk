@@ -4,7 +4,7 @@
 #include "seq.h"
 #include "ffmpeg_adapt.h"
 #include "adjust_scan_bias.h"
-
+#include "error.h"
 #include <string.h>
 
 #define ENDL "\n"
@@ -14,6 +14,7 @@
 #define REPORT(expr)
 #endif
 #define TRY(expr) if(!(expr)) {REPORT(expr); goto Error;}
+#define HERE debug("%s(%d): HERE"ENDL, __FILE__,__LINE__)
 
 //
 // UTILITIES
@@ -86,14 +87,45 @@ static unsigned int Seq_Get_Depth( SeqReader* s)
 static unsigned int Stack_Get_Depth( Stack* s)
 { return (unsigned int)s->depth; }
 
+static int Is_Tiff(const char *path)
+{ TIFF *r = Open_Tiff((char*)path,"r");
+  if(r)
+  { Close_Tiff(r);
+    return 1;
+  }
+  return 0;
+}
+
+static int Is_Seq(const char *path)
+{ SeqReader *r = Seq_Open(path);
+  if(r)
+  { Seq_Close(r);
+    return 1;
+  }
+  return 0;
+}
+
+static int Is_FFMPEG(const char *path)
+{ void *r;
+  debug("path: %s"ENDL,path);
+  r = FFMPEG_Open(path);
+  debug("path: %s"ENDL,path);
+  if(r)
+  { FFMPEG_Close(r);
+    return 1;
+  }
+  return 0;
+}
+
+
 //
 // INTERNAL INTERFACE
 //
 typedef void*        (*pf_opener)( const char* ); 
 typedef void         (*pf_closer)( void* );       
 typedef Image*       (*pf_fetch) ( void*, int );       
-typedef unsigned int (*pf_get_nframes) (void* );  
-
+typedef unsigned int (*pf_get_nframes) (void* );
+typedef int          (*pf_is_valid)(const char*);
 
 typedef enum _kind_t
 { K_TIFF= 0,
@@ -102,6 +134,12 @@ typedef enum _kind_t
   MAX_KIND,
   UNKNOWN
 } kind_t;
+
+static pf_is_valid is_valid_[] =
+{ Is_Tiff,
+  Is_Seq,
+  Is_FFMPEG
+};
 
 static pf_opener open_[] =
 { Read_Stack,
@@ -269,10 +307,8 @@ Error:
 
 
 int is_video(const char *path)
-{ video_t *v;
-  int ok;
-  v=video_open(path);
-  ok = (v!=NULL);
-  video_close(&v);
-  return ok;
+{ kind_t k = guess_format(path);
+  if(k==UNKNOWN)
+    k=FFMPEG;
+  return is_valid_[k](path);
 }

@@ -7,6 +7,7 @@
  * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
  */
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include "poly.h"
 #include "error.h"

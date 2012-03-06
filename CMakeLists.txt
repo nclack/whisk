@@ -128,7 +128,6 @@ set(COMMON_HDRS
 set(COMMON
   ${COMMON_SRCS}
   ${COMMON_HDRS}
-  ${BISON_PARAM_OUTPUTS}
   )
 source_group("Source Files\\Common" FILES ${COMMON_SRCS})
 source_group("Header Files\\Common" FILES ${COMMON_HDRS})
@@ -314,9 +313,6 @@ set(QTUI_SUBDIR qtui)
 if(QT_FOUND)
   include(${QT_USE_FILE})
   include_directories(${QT_INCLUDE_DIRS})
-  show(QT_LIBRARIES)
-  show(QT_USE_FILE)
-  show(QT_INCLUDE_DIRS)
   file(GLOB QTUI_HDRS ${CMAKE_SOURCE_DIR}/${QTUI_SUBDIR}/*.h)
   file(GLOB QTUI_SRCS ${CMAKE_SOURCE_DIR}/${QTUI_SUBDIR}/*.cpp)
   source_group("Source Files\\ui" FILES ${QTUI_SRCS})
@@ -325,6 +321,7 @@ if(QT_FOUND)
   qt4_wrap_cpp(MOC_SRCS
     qtui/MainWindow.h
     qtui/Display.h
+    qtui/Data.h
   )
   qt4_add_resources(RCC_SRCS qtui/qtui.qrc)
   source_group("Source Files\\Qt Generated" FILES
@@ -372,6 +369,7 @@ target_link_libraries(traj ${LIBM})
 
 add_library(whiskio MODULE #STATIC
   ${COMMON}
+  ${PARAM_MODULE}
   ${MYLIB}
   ${WHISKER_IO}
   ${MEASUREMENTS_IO}

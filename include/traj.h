@@ -46,9 +46,9 @@ SHARED_EXPORT Measurements  *Alloc_Measurements_Table                          (
 SHARED_EXPORT void           Free_Measurements_Table                           ( Measurements *table );
 
 SHARED_EXPORT Distributions *Alloc_Distributions                               ( int n_bins, int n_measures, int n_states );
-SHARED_EXPORT void           Free_Distributions                                ( Distributions *this );
-SHARED_EXPORT void           Copy_Distribution_To_Doubles                      ( Distributions *this, double *destination );
-SHARED_EXPORT void           Distributions_Bins_To_Doubles                     ( Distributions *this, double *destination );
+SHARED_EXPORT void           Free_Distributions                                ( Distributions *self );
+SHARED_EXPORT void           Copy_Distribution_To_Doubles                      ( Distributions *self, double *destination );
+SHARED_EXPORT void           Distributions_Bins_To_Doubles                     ( Distributions *self, double *destination );
 
 SHARED_EXPORT void           Measurements_Table_Set_Constant_Face_Position     ( Measurements *table, int n_rows, int x, int y );
 SHARED_EXPORT void           Measurements_Table_Set_Follicle_Position_Indices  ( Measurements *table, int n_rows, int ix, int iy );

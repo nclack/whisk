@@ -198,15 +198,16 @@ Measurements *Measurements_Table_From_Filename(const char *filename, char* forma
 }
 
 SHARED_EXPORT
-void Measurements_Table_To_Filename(const char *filename, char* format, Measurements *table, int n )
+int  Measurements_Table_To_Filename(const char *filename, char* format, Measurements *table, int n )
 { MeasurementsFile mf;
   mf = Measurements_File_Open(filename, format, "w"); 
   if(!mf)
   { warning("Could not open %s\n",filename);
-    return;
+    return 0;
   }
   Measurements_File_Write(mf,table,n);
   Measurements_File_Close(mf);
+  return 1;
 }
 
 #ifdef MEASUREMENTS_IO_CONVERTER

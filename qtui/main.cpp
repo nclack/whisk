@@ -6,9 +6,7 @@
 #include <QtOpenGL>
 #include <QDebug>
 #include "MainWindow.h"
-extern "C" {
-#include "parameters/param.h"
-}
+#include "LockedCalls.h"
 
 #define log(...)   qDebug(__VA_ARGS__)
 #define error(...) qFatal(__VA_ARGS__)
@@ -16,11 +14,11 @@ extern "C" {
 void Init()
 {
   { const char* paramfile = "default.parameters";
-    if(Load_Params_File((char*)paramfile))
+    if(locked::Load_Params_File((char*)paramfile))
     { log("Writing %s\n",paramfile);
-      Print_Params_File((char*)paramfile);
-      if(Load_Params_File((char*)paramfile))
-        error("\tStill could not load parameters.\n");
+      locked::Print_Params_File((char*)paramfile);
+      if(locked::Load_Params_File((char*)paramfile))
+        qFatal("\tStill could not load parameters.\n");
     }
   }
 }

@@ -41,8 +41,27 @@
 //#include <avformat.h>
 //#include <swscale.h>
 //---
-//  FORWARD DECLARATIONS
 //
+#define ENDL "\n"
+#define HERE         printf("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
+#define REPORT(expr) printf("%s(%d):"ENDL "\t%s"ENDL "\tExpression evaluated as false."ENDL,__FILE__,__LINE__,#expr) 
+#define TRY(expr)    if(!(expr)) {REPORT(expr); goto Error;}
+#define DIE          do{printf("%s(%d): Fatal error.  Aborting."ENDL,__FILE__,__LINE__); exit(-1);}while(0)
+#define AVTRY(expr,msg) \
+  do{                                                   \
+    int v=(expr);                                       \
+    if(v<0 && v!=AVERROR_EOF)                       \
+    { char buf[1024];                                   \
+      av_strerror(v,buf,sizeof(buf));                 \
+      if(msg) \
+        printf("%s(%d): %s"ENDL "%s"ENDL "FFMPEG Error: %s"ENDL,   \
+            __FILE__,__LINE__,#expr,msg,buf);                 \
+      else \
+        printf("%s(%d): %s"ENDL "FFMPEG Error: %s"ENDL,   \
+            __FILE__,__LINE__,#expr,buf);                 \
+      goto Error;                                         \
+    }                                                   \
+  }while(0)
 
 typedef struct _ffmpeg_video 
 {
@@ -57,7 +76,7 @@ typedef struct _ffmpeg_video
    int videoStream, width, height, format;
 } ffmpeg_video;
 
-ffmpeg_video *ffmpeg_video_init(char          *file, int format);
+ffmpeg_video *ffmpeg_video_init(const char *file, int format);
 
 int           ffmpeg_video_bytes_per_frame(   void );
 long          ffmpeg_video_bytes_all_frames(  void );
@@ -73,48 +92,55 @@ void ffmpeg_video_video_debug_ppm(ffmpeg_video *cur, char *file);
 static int numBytes = 0;
 static int numFrames = 0;
 
+static int is_one_time_inited = 0;
+
+/* Init ffmpeg */
+void maybeInit()
+{ if(is_one_time_inited)
+    return;
+  avcodec_register_all();
+  av_register_all();
+  avformat_network_init();
+  is_one_time_inited = 1;
+}
+
 /* Init ffmpeg_video source 
  * file: path to open
  * format: PIX_FMT_GRAY8 or PIX_FMT_RGB24
  * Returns ffmpeg_video context on succes, NULL otherwise
  */
-ffmpeg_video *ffmpeg_video_init( char *file, int format ) 
+ffmpeg_video *ffmpeg_video_init(const char *filename, int format ) 
 {
   int i = 0;
+  static char* fname = 0;
+  static int   bytesof_fname = 0;
+  ffmpeg_video *ret;
+  maybeInit();
 
-  ffmpeg_video *ret = malloc( sizeof( ffmpeg_video ) );
-  memset( ret, 0, sizeof( ffmpeg_video ) );
+  /* Copy filename...avformat_open_input changes the string */
+  { int n = strlen(filename);
+    if(bytesof_fname<n);
+    { TRY(fname=realloc(fname,2*n));
+      memset(fname,0,2*n);
+      bytesof_fname=2*n;
+    }
+    memcpy(fname,filename,n);
+  }
+  
+  TRY(ret=malloc(sizeof(ffmpeg_video)));
+  memset(ret,0,sizeof(ffmpeg_video));
   ret->format = format;
 
-  /* Init ffmpeg */
-  av_register_all();
-
   /* Open file, check usability */
-  if( av_open_input_file( &ret->pFormatCtx, file, NULL, 0, NULL ) ||
-      av_find_stream_info( ret->pFormatCtx ) < 0 )
-    return ffmpeg_video_quit( ret );
-
-  /* Find the first ffmpeg_video stream */
-  ret->videoStream = -1;
-  for( i = 0; i < ret->pFormatCtx->nb_streams; i++ )
-    if( ret->pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO ) 
-    {
-      ret->videoStream = i;
-      break;
-    }
-
-  if( ret->videoStream == -1 )
-    return ffmpeg_video_quit( ret );
-
-  /* Get context for codec, pin down target width/height, find codec */
-  ret->pCtx = ret->pFormatCtx->streams[ret->videoStream]->codec;
-  ret->width = ret->pCtx->width;
+  AVTRY(avformat_open_input(&ret->pFormatCtx,fname,NULL,NULL),fname);
+  AVTRY(avformat_find_stream_info(ret->pFormatCtx,NULL),"Cannot find stream information.");
+  AVTRY(ret->videoStream=av_find_best_stream(ret->pFormatCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&ret->pCodec,0),"Cannot find a video stream."); 
+  ret->pCtx=ret->pFormatCtx->streams[ret->videoStream]->codec;
+  if(ret->pCodec->capabilities&CODEC_CAP_TRUNCATED) // seed ffmpeg decode example: <ffmpeg>/doc/examples/decoding_encodng.c:361
+    ret->pCtx->flags |= CODEC_FLAG_TRUNCATED;
+  ret->width  = ret->pCtx->width;
   ret->height = ret->pCtx->height;
-  ret->pCodec = avcodec_find_decoder( ret->pCtx->codec_id );
-
-  if( !ret->pCodec ||
-      avcodec_open( ret->pCtx, ret->pCodec ) < 0 )
-    return ffmpeg_video_quit( ret );
+  AVTRY(avcodec_open2(ret->pCtx,ret->pCodec,NULL),"Cannot open video decoder.");
 
   /* Frame rate fix for some codecs */
   if( ret->pCtx->time_base.num > 1000 && ret->pCtx->time_base.den == 1 )
@@ -125,33 +151,30 @@ ffmpeg_video *ffmpeg_video_init( char *file, int format )
   numFrames = (int)(( ret->pFormatCtx->duration / (double)AV_TIME_BASE ) * ret->pCtx->time_base.den );
 
   /* Get framebuffers */
-  ret->pRaw = avcodec_alloc_frame();
-  ret->pDat = avcodec_alloc_frame();
-
-  if( !ret->pRaw || !ret->pDat )
-    return ffmpeg_video_quit( ret );
+  TRY(ret->pRaw = avcodec_alloc_frame());
+  TRY(ret->pDat = avcodec_alloc_frame());
 
   /* Create data buffer */
-  numBytes = avpicture_get_size( ret->format, 
-      ret->pCtx->width, ret->pCtx->height );
-  ret->buffer   = malloc( numBytes );
-  ret->rawimage = malloc( ret->width * ret->height * 1/*Bpp*/ );
-  assert(ret->buffer);
-  assert(ret->rawimage);
+  numBytes = avpicture_get_size( ret->format, ret->pCtx->width, ret->pCtx->height );
+  TRY(ret->buffer   = av_malloc(numBytes));
+  TRY(ret->rawimage = av_malloc(ret->width*ret->height/* 1 Bpp*/));
 
   /* Init buffers */
   avpicture_fill( (AVPicture * ) ret->pDat, ret->buffer, ret->format, 
       ret->pCtx->width, ret->pCtx->height );
 
   /* Init scale & convert */
-  ret->Sctx = sws_getContext( ret->pCtx->width, ret->pCtx->height, ret->pCtx->pix_fmt,
-      ret->width, ret->height, ret->format, SWS_BICUBIC, NULL, NULL, NULL );
-
-  if( !ret->Sctx )
-    return ffmpeg_video_quit( ret );
+  TRY(ret->Sctx=sws_getContext(
+        ret->pCtx->width,
+        ret->pCtx->height,
+        ret->pCtx->pix_fmt,
+        ret->width,
+        ret->height,
+        ret->format,
+        SWS_BICUBIC,NULL,NULL,NULL));
 
   /* Give some info on stderr about the file & stream */
-  //dump_format(ret->pFormatCtx, 0, file, 0);
+  //dump_format(ret->pFormatCtx, 0, fname, 0);
 
   /* copy out raw data */
   { int i;
@@ -161,6 +184,9 @@ ffmpeg_video *ffmpeg_video_init( char *file, int format )
             ret->width);
   }
   return ret;
+Error:
+  ffmpeg_video_quit(ret);
+  return NULL;
 }
 
 int ffmpeg_video_bytes_per_frame( void )
@@ -202,9 +228,13 @@ int ffmpeg_video_next( ffmpeg_video *cur )
     av_free_packet( &packet );
     return -3;
   }
-
-  sws_scale( cur->Sctx, cur->pRaw->data, cur->pRaw->linesize, 
-      0, cur->pCtx->height, cur->pDat->data, cur->pDat->linesize );
+  sws_scale(cur->Sctx,              // sws context
+            cur->pRaw->data,        // src slice
+            cur->pRaw->linesize,    // src stride
+            0,                      // src slice y
+            cur->pCtx->height,      // src slice height
+            cur->pDat->data,        // dst
+            cur->pDat->linesize );  // dst stride
   av_free_packet( &packet );
 
   /* copy out raw data */
@@ -236,22 +266,18 @@ int ffmpeg_video_seek( ffmpeg_video *cur, int64_t iframe )
  * This function is also called on failed init, so check existence before de-init
  */
 ffmpeg_video *ffmpeg_video_quit( ffmpeg_video *cur ) 
-{
-  if( cur->Sctx )
-    sws_freeContext( cur->Sctx );
+{ if(!cur) return;
+  if( cur->Sctx ) sws_freeContext( cur->Sctx );
 
-  if( cur->pRaw )
-    av_free( cur->pRaw );
-  if( cur->pDat )
-    av_free( cur->pDat );
+  if( cur->pRaw ) av_free( cur->pRaw );
+  if( cur->pDat ) av_free( cur->pDat );
 
-  if( cur->pCtx )
-    avcodec_close( cur->pCtx );
-  if( cur->pFormatCtx )
-    av_close_input_file( cur->pFormatCtx );
+  if( cur->pCtx ) avcodec_close( cur->pCtx );
+  if( cur->pFormatCtx ) av_close_input_file( cur->pFormatCtx );
 
-  free( cur->buffer );
-  free( cur );
+  if(cur->rawimage) av_free(cur->rawimage);
+  if(cur->buffer)   av_free(cur->buffer);
+  free(cur);
 
   return NULL;
 }
@@ -282,7 +308,7 @@ void ffmpeg_video_debug_ppm( ffmpeg_video *cur, char *file )
 
 #include "image_lib.h"
 
-int _handle_open_status(char *filename, void *c)
+int _handle_open_status(const char *filename, void *c)
 {
   if(c==NULL)
   { //warning("Could not open file: %s\n",filename);

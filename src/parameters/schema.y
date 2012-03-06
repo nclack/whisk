@@ -242,7 +242,7 @@ void kvprint_enum_tokens(tkv* self)
 void kvprint_API_defn_getters(tkv *self)
 { tkv* cur;
   for(cur=self;cur->last;cur=cur->last)
-    HPRN("#define %s (g_param.param%s)\n",cur->key,cur->key);
+    HPRN("#define %s (Params()->param%s)\n",cur->key,cur->key);
 }
 
 void kvprint_params_struct_item(tkv *self)
@@ -250,7 +250,7 @@ void kvprint_params_struct_item(tkv *self)
   if(self->value)
   { switch( self->value->id )
     { case BOOL:
-        HPRN("\tbool\t");
+        HPRN("\tchar\t");
         break;
       case INT:
         HPRN("\tint\t");
@@ -278,8 +278,8 @@ void kvprint_params_struct(tkv* self)
   { self = self->last;
     kvprint_params_struct_item(self);
   }
-  HPRN("} t_params;\n"
-         "t_params g_param;\n");
+  HPRN("} t_params;\n");
+  CPRN("t_params g_param;\n");
 }
 
 void kvprint_param_string_table(tkv* self)
@@ -644,6 +644,9 @@ void print_epilogue()
      "}\n"
      "\n"
      "SHARED_EXPORT\n"
+     "t_params *Params(void) {return &g_param;}\n"
+     "\n"
+     "SHARED_EXPORT\n"
      "int Load_Params_File(char *filename)\n"
      "{ int sts; //0==success, 1==failure\n"
      "  // FILE *fp is global\n"
@@ -716,9 +719,6 @@ void kvprintall(tkv *self)
        "#else\n"
        "#define SHARED_EXPORT\n"
        "#endif\n"
-       "#endif\n"
-       "#if !defined(__cplusplus) && !defined(bool) && !defined(_bool_T)\n"
-       "typedef char bool;\n"
        "#endif\n");
   kvprint_enum_defns(self);
   kvprint_API_defn_getters(self);
@@ -738,6 +738,7 @@ void kvprintall(tkv *self)
   kvprint_line_grammar(self);
   kvprint_value_grammar(self);
   CPRN("%%%%\n");
+  HPRN("SHARED_EXPORT t_params* Params();\n");
   HPRN("SHARED_EXPORT int Load_Params_File(char *filename);\n");
   HPRN("SHARED_EXPORT int Print_Params_File(char *filename);\n");
   print_epilogue();
