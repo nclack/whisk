@@ -5,10 +5,11 @@
 #define countof(e) (sizeof(e)/sizeof(*(e)))
 
 #define ENDL "\n"
-#define HERE         qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
-#define REPORT(expr) qDebug("%s(%d):"ENDL "\t%s"ENDL "\tExpression evaluated as false."ENDL,__FILE__,__LINE__,#expr) 
-#define TRY(expr)    if(!(expr)) {REPORT(expr); goto Error;}
-#define DIE          qFatal("%s(%d): Fatal error.  Aborting."ENDL,__FILE__,__LINE__)
+#define HERE            qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
+#define REPORT(expr)    qDebug("%s(%d):"ENDL "\t%s"ENDL "\tExpression evaluated as false."ENDL,__FILE__,__LINE__,#expr) 
+#define TRY(expr)       if(!(expr)) {REPORT(expr); goto Error;}
+#define SILENTTRY(expr) if(!(expr)) {              goto Error;}
+#define DIE             qFatal("%s(%d): Fatal error.  Aborting."ENDL,__FILE__,__LINE__)
 
 
 enum KIND       ///< Order is important. See maybeLoadAll()
@@ -299,25 +300,26 @@ void Data::save()
 void Data::buildCurveIndex_()
 { 
   curveIndex_.clear();
-  curveCounts_.clear();
   if(curves_)
     for(Whisker_Seg *c=curves_;c<curves_+ncurves_;++c)
-    { curveIndex_[qMakePair(c->time,c->id)] = c;
-      curveCounts_.insert(  // i.e. a safe curveCounts[time]++
-          c->time,
-          curveCounts_.value(c->time,0)+1);
+    { curveIdMap_t cs = curveIndex_[c->time];
+      cs.insert(c->id,c);
+      curveIndex_.insert(c->time,cs);
     }
 }
 
 void Data::buildMeasurementsIndex_()
-{ minIdent_=maxIdent_=-1;
+{ 
+  minIdent_=maxIdent_=-1;
   measIndex_.clear();
   if(measurements_)
-  { maxIdent_=measurements_->data[0];
+  { maxIdent_=measurements_->state;
     for(Measurements *m=measurements_;m<measurements_+nmeasurements_;++m)
-    { measIndex_[qMakePair(m->fid,m->wid)] = m;
-      minIdent_ = qMin(minIdent_,(int)m->data[0]);
-      maxIdent_ = qMax(maxIdent_,(int)m->data[0]);
+    { measIdMap_t ms = measIndex_[m->fid];                // ... maybe make a new map for frame
+      ms.insert(m->wid,m);
+      measIndex_.insert(m->fid,ms);
+      minIdent_ = qMin(minIdent_,(int)m->state);
+      maxIdent_ = qMax(maxIdent_,(int)m->state);
     }
   }
 }
@@ -327,7 +329,7 @@ void Data::buildMeasurementsIndex_()
 const QPixmap Data::frame(int iframe, bool autocorrect)
 { Image *im;
   TRY(video_);
-  TRY(im=video_get(video_,iframe,autocorrect));
+  SILENTTRY(im=video_get(video_,iframe,autocorrect));
   { QImage qim(im->array,im->width,im->height,QImage::Format_Indexed8);
     QVector<QRgb> grayscale;
     for(int i=0;i<256;++i)
@@ -348,26 +350,49 @@ int Data::frameCount()
     return 0;
 }
 
-QList<QPointF> Data::curve(int iframe, int icurve)
-{ QList<QPointF> c;
+Whisker_Seg* Data::get_curve_(int iframe, int icurve)
+{ QList<Whisker_Seg*> cs;
+  cs = curveIndex_.value(iframe,curveIdMap_t())
+                  .values();
+  TRY(0<=icurve && icurve<cs.size());
+  return cs.at(icurve);
+Error:
+  return NULL;
+}
+
+Measurements* Data::get_meas_(int iframe, int icurve)
+{ QList<Measurements*> ms;
+  ms = measIndex_.value(iframe,measIdMap_t())
+                 .values();
+  TRY(0<icurve && icurve<ms.size());
+  return ms.at(icurve);
+Error:
+  return NULL;
+}
+
+QPolygonF Data::curve(int iframe, int icurve)
+{ QPolygonF c;
   Whisker_Seg *w=0;
-  TRY(w=curveIndex_.value(qMakePair(iframe,icurve),NULL));
+  TRY(w=get_curve_(iframe,icurve));
   for(int i=0;i<w->len;++i)
-    c.append(QPointF(w->x[i],w->y[i]));
+    c << QPointF(w->x[i],w->y[i]);
 Error:
   return c;
 }
 
 int Data::curveCount(int iframe)
-{ return curveCounts_.value(iframe,0);
+{ return curveIndex_.value(iframe,curveIdMap_t()).size();
 }
 
 int Data::identity(int iframe, int icurve)
-{ Measurements *row; 
-  TRY(row=measIndex_.value(qMakePair(iframe,icurve),NULL));
-  return row->data[0];
+{ Measurements *row;
+  Whisker_Seg  *w;
+  TRY(  w=get_curve_(iframe,icurve))  // icurve is not necessarily the whisker id, so look up the whisker first
+  TRY(row= measIndex_.value(iframe,measIdMap_t())
+                     .value(w->id,NULL));
+  return row->state;
 Error:
-  return -1;
+  return -1; //unknown
 }
 
 int Data::minIdentity()

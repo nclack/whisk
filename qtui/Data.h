@@ -10,6 +10,7 @@
  *   respective indexes need to be rebuilt. 
  */
 #include <QtCore>
+#include <QtGui>
 #include "LockedCalls.h"
 
 struct result_t;
@@ -22,14 +23,17 @@ class Data : public QObject
 
     const QPixmap  frame       (int iframe, bool autocorrect=true);
               int  frameCount  ();
-    QList<QPointF> curve       (int iframe, int icurve); ///< \returns the curve as an ordered set of points
+        QPolygonF  curve       (int iframe, int icurve); ///< \returns the curve as an ordered set of points
               int  curveCount  (int iframe);
-              int  identity    (int iframe, int icurve);
+              int  identity    (int iframe, int icurve); ///< \returns the identity (typ. an int >=0) of the curve or -1 if unknown.
               int  minIdentity ();                       ///< \returns the minimum identity label across the entire data set
               int  maxIdentity ();                       ///< \returns the minimum identity label across the entire data set 
 
     static bool isValidPath(const QString& path);        ///< \returns true if, at first glance, the path seems to point to something relevant.
 
+  protected:
+    Whisker_Seg   *get_curve_(int iframe,int icurve);    ///< icurve is NOT the "whisker id"
+    Measurements  *get_meas_(int iframe,int icurve);     ///< icurve is NOT the "whisker id" 
   public slots:
     void open(const QString& path);
     void open(const QUrl& path);                         ///< Currently only handle local paths
@@ -42,21 +46,20 @@ class Data : public QObject
     void commit();                                         ///< recieves a finished QFutureWatcher*
                                                          
   public: //pseudo-private
-    typedef QPair<int,int>                   curveKey_t;   ///< (frameid,wid)
-    typedef QMap<curveKey_t,Whisker_Seg*>    curveIndex_t;
-    typedef QMap<int,int>                    curveCount_t;
-    typedef QMap<curveKey_t,Measurements*>   measIndex_t;
+    typedef QMap<int,Whisker_Seg*>           curveIdMap_t;///<        id->Whisker_Seg* 
+    typedef QMap<int,curveIdMap_t>           curveMap_t;  ///< frame->id->Whisker_Seg*
+    typedef QMap<int,Measurements*>          measIdMap_t; ///<        id->Measurements*
+    typedef QMap<int,measIdMap_t>            measMap_t;   ///< frame->id->Measurements* 
 
     video_t          *video_;
 
     Whisker_Seg      *curves_;        
     int               ncurves_;       
-    curveIndex_t      curveIndex_;
-    curveCount_t      curveCounts_;
+    curveMap_t        curveIndex_;
 
     Measurements     *measurements_;  
     int               nmeasurements_;
-    measIndex_t       measIndex_;
+    measMap_t         measIndex_;
     int               minIdent_;
     int               maxIdent_;
 

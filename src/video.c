@@ -13,7 +13,8 @@
 #else
 #define REPORT(expr)
 #endif
-#define TRY(expr) if(!(expr)) {REPORT(expr); goto Error;}
+#define TRY(expr)       if(!(expr)) {REPORT(expr); goto Error;}
+#define SILENTTRY(expr) if(!(expr)) {              goto Error;}
 #define HERE debug("%s(%d): HERE"ENDL, __FILE__,__LINE__)
 
 //
@@ -247,7 +248,7 @@ Image* video_get(video_t *self, unsigned int iframe, int apply_line_bias_correct
 { Image *im;
   kind_t k = self->kind;
   TRY( is_valid_kind(k));
-  TRY( iframe<self->nframes);
+  SILENTTRY( iframe<self->nframes);
   TRY( im=get_[k](self->fp,iframe));
   im = Copy_Image(im);
   if(apply_line_bias_correction)

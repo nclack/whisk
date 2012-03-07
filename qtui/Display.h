@@ -78,6 +78,7 @@ class Display : public QWidget
     LoadingGraphicsWidget  *loadingGraphics_;
     QGraphicsTextItem      *framePositionDisplay_;
     Data                    data_;
+    QList<QGraphicsPathItem*> curves_;
 
     int     iframe_;
 };

@@ -13,6 +13,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // LoadingGraphicsWidget                                         QGRAPHICSWIDGET
+// (doesn't work)
 ////////////////////////////////////////////////////////////////////////////////
 
 class LoadingGraphicsWidget : public QGraphicsWidget
@@ -21,6 +22,7 @@ class LoadingGraphicsWidget : public QGraphicsWidget
     :QGraphicsWidget(parent)
     { QGraphicsTextItem *item = new QGraphicsTextItem("LOADING");
       item->setParent(this);
+      setGraphicsItem(item);
     }
 };
 
@@ -33,7 +35,7 @@ View::View(QGraphicsScene *scene, QWidget *parent)
   , lockitem_(0)
 { setAcceptDrops(true);
   setResizeAnchor(AnchorViewCenter);
-  setDragMode(ScrollHandDrag);
+  setDragMode(NoDrag);
   setAlignment(Qt::AlignCenter);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -44,7 +46,7 @@ View::View(QGraphicsScene *scene, QWidget *parent)
       );
   //setBackgroundBrush(QBrush(Qt::black));
 
-  QGLWidget *viewport = new QGLWidget ;
+  QGLWidget *viewport = new QGLWidget(QGLFormat(QGL::SampleBuffers));
   setViewport(viewport);
   viewport->makeCurrent();
   TRY( viewport->context()->isValid(),ErrorViewport);
@@ -143,7 +145,7 @@ Display::Display(QWidget *parent,Qt::WindowFlags f)
     scene_->addItem(loadingGraphics_);
   }
 
-  ///// Init the viewport
+  ///// Init the graphicsview
   { QVBoxLayout *layout = new QVBoxLayout;
     view_ = new View(scene_,this);
     layout->setContentsMargins(0,0,0,0);
@@ -166,10 +168,12 @@ Display::Display(QWidget *parent,Qt::WindowFlags f)
     empty->assignProperty(loadingGraphics_,"visible",false);
 
     loading->assignProperty(view_,"backgroundBrush",QBrush(Qt::red));
+    loading->assignProperty(view_->viewport(),"cursor",Qt::WaitCursor);
     loading->assignProperty(droptarget_,"visible",false);
     loading->assignProperty(loadingGraphics_,"visible",true);
 
     loaded->assignProperty(view_,"backgroundBrush",QBrush(Qt::black));
+    loaded->assignProperty(view_->viewport(),"cursor",Qt::CrossCursor);
     loaded->assignProperty(dataItemsRoot_,"visible",true);
     loaded->assignProperty(loadingGraphics_,"visible",false);
 
@@ -203,6 +207,38 @@ void Display::showFrame(int index)
     image_->setPixmap(p);
     
     framePositionDisplay_->setPlainText(QString("Frame: %1").arg(iframe_,5));
+
+    // add whisker curves
+    { int i;
+      for(i=0;i<data_.curveCount(iframe_);++i)
+      { QPainterPath p;
+        p.addPolygon(data_.curve(iframe_,i));
+        if(i<curves_.size())
+          curves_[i]->setPath(p);                      // use existing curves
+        else
+        { QGraphicsPathItem *pp;
+          curves_.append(pp=new QGraphicsPathItem(p)); // or add a new one
+          scene_->addItem(pp);
+        }
+        // determine color based on identity
+        QColor color(255,155,55,200); // default
+        int ident,
+            nidents = data_.maxIdentity()-data_.minIdentity(); // should add one, but one identity (-1) doesn't count
+                      //e.g. 5 - (-1) = 6 ... 0,1,2,3,4,5
+        if(-1!=(ident=data_.identity(iframe_,i)))
+          color.setHsvF(ident/(qreal)nidents,1.0,1.0);
+        curves_[i]->setPen(QPen(
+              QBrush(color),
+              2,               //width
+              Qt::DotLine,     //pen style
+              Qt::RoundCap,    //pen cap style
+              Qt::RoundJoin)); //join style
+        curves_[i]->show();
+      }
+      // hide unused curves
+      for(;i<curves_.size();++i)
+        curves_[i]->hide();
+    }
   }
   return;
 }
