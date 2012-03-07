@@ -45,7 +45,7 @@
 #define ENDL "\n"
 #define HERE         printf("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
 #define REPORT(expr) printf("%s(%d):"ENDL "\t%s"ENDL "\tExpression evaluated as false."ENDL,__FILE__,__LINE__,#expr) 
-#define TRY(expr)    if(!(expr)) {REPORT(expr); goto Error;}
+#define TRY(expr)    do{if(!(expr)) {REPORT(expr); goto Error;}}while(0)
 #define DIE          do{printf("%s(%d): Fatal error.  Aborting."ENDL,__FILE__,__LINE__); exit(-1);}while(0)
 #define AVTRY(expr,msg) \
   do{                                                   \
@@ -77,6 +77,7 @@ typedef struct _ffmpeg_video
    int numBytes;
    int numFrames;
    Image currentImage;
+   int last;
 } ffmpeg_video;
 
 void ffmpeg_video_video_debug_ppm(ffmpeg_video *cur, char *file);
@@ -122,24 +123,11 @@ ffmpeg_video *ffmpeg_video_quit( ffmpeg_video *cur )
  * format: PIX_FMT_GRAY8 or PIX_FMT_RGB24
  * Returns ffmpeg_video context on succes, NULL otherwise
  */
-ffmpeg_video *ffmpeg_video_init(const char *filename, int format ) 
+ffmpeg_video *ffmpeg_video_init(const char *fname, int format ) 
 {
   int i = 0;
-  static char* fname = 0;         ///< resizable buffer for holding filename
-  static int   bytesof_fname = 0;
   ffmpeg_video *ret;
   maybeInit();
-
-  /* Copy filename...avformat_open_input changes the string (probably not
-   * needed now)*/
-  { int n = strlen(filename);
-    if(bytesof_fname<n);
-    { TRY(fname=realloc(fname,2*n));
-      memset(fname,0,2*n);
-      bytesof_fname=2*n;
-    }
-    memcpy(fname,filename,n);
-  }
   
   TRY(ret=(ffmpeg_video*)malloc(sizeof(ffmpeg_video)));
   memset(ret,0,sizeof(ffmpeg_video));
@@ -202,6 +190,8 @@ ffmpeg_video *ffmpeg_video_init(const char *filename, int format )
   ret->currentImage.height = ret->height;
   ret->currentImage.text   = "\0";
   ret->currentImage.array  = ret->rawimage;
+
+  ret->last = -1;
   return ret;
 Error:
   ffmpeg_video_quit(ret);
@@ -222,15 +212,17 @@ int ffmpeg_video_next( ffmpeg_video *cur, int target )
   int finished = 0;
   do
   { finished=0;
-    AVTRY(av_read_frame( cur->pFormatCtx, &packet ),NULL);   // !!NOTE: see docs on packet.convergence_duration for proper seeking    
+    AVTRY(av_read_frame( cur->pFormatCtx, &packet ),NULL);   // !!NOTE: see docs on packet.convergence_duration for proper seeking        
     if( packet.stream_index != cur->videoStream ) /* Is it what we're trying to parse? */
     { av_free_packet( &packet );
       continue;
     }    
-    AVTRY(avcodec_decode_video2( cur->pCtx, cur->pRaw, &finished, &packet ),NULL);    
+    AVTRY(avcodec_decode_video2( cur->pCtx, cur->pRaw, &finished, &packet ),NULL); 
+    //printf("Packet - pts:%5d dts:%5d (%5d) - flag: %1d - finished: %3d - Frame pts:%5d %5d\n",packet.pts,packet.dts,target,packet.flags,finished,cur->pRaw->pts,cur->pRaw->best_effort_timestamp);
     av_free_packet( &packet );
-    TRY(packet.pts>=0 && packet.pts<cur->pFormatCtx->streams[cur->videoStream]->duration);
-  } while(!finished || packet.pts<target);
+    if(!finished)
+      TRY(packet.pts!=AV_NOPTS_VALUE);    
+  } while(!finished || cur->pRaw->best_effort_timestamp<target);
 
   sws_scale(cur->Sctx,              // sws context
             cur->pRaw->data,        // src slice
@@ -267,8 +259,7 @@ int ffmpeg_video_seek( ffmpeg_video *cur, int64_t iframe )
                             ts,              //target timestamp
                             0),//AVSEEK_FLAG_ANY),//flags
     "Failed to seek.");
-#else
-  //avcodec_flush_buffers(cur->pCtx);
+#else  
   AVTRY(avformat_seek_file( cur->pFormatCtx, //format context
                             cur->videoStream,//stream id
                             0,               //min timestamp
@@ -277,6 +268,7 @@ int ffmpeg_video_seek( ffmpeg_video *cur, int64_t iframe )
                             0),//AVSEEK_FLAG_ANY),//flags
     "Failed to seek.");
 #endif
+  avcodec_flush_buffers(cur->pCtx);
   
   TRY(ffmpeg_video_next(cur,iframe)==0);
   return iframe;
@@ -332,22 +324,16 @@ SHARED_EXPORT void *FFMPEG_Open(const char* filename)
 SHARED_EXPORT void FFMPEG_Close(void *context)
 { if(context) ffmpeg_video_quit(context);
 }
-/*
-typedef struct _Image
-  { int      kind;
-    int      width; 
-    int      height;
-    char    *text;
-    uint8   *array;   // Array of pixel values lexicographically ordered on (y,x,c).
-  } Image;            //    Pixel (0,0) is the lower left-hand corner of an image.
-  */
-
 
 SHARED_EXPORT Image *FFMPEG_Fetch(void *context, int iframe)
 { 
   ffmpeg_video *v = (ffmpeg_video*)context;
   TRY(iframe>=0 && iframe<v->numFrames);     // ensure iframe is in bounds
-  TRY(ffmpeg_video_seek(v,iframe)>=0);
+  if(iframe==v->last+1)
+    TRY(ffmpeg_video_next(v,iframe)>=0);
+  else
+    TRY(ffmpeg_video_seek(v,iframe)>=0);
+  v->last = iframe;
   v->currentImage.array  = v->rawimage;      // just in case the pointer changed...which it didn't
   return &v->currentImage;
 Error:
