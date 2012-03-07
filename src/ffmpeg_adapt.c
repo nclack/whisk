@@ -55,7 +55,7 @@
       av_strerror(v,buf,sizeof(buf));                 \
       if(msg) \
         printf("%s(%d):"ENDL "%s"ENDL "%s"ENDL "FFMPEG: %s"ENDL,   \
-            __FILE__,__LINE__,#expr,msg,buf);                 \
+            __FILE__,__LINE__,#expr,(char*)msg,buf);                 \
       else \
         printf("%s(%d):"ENDL "%s"ENDL "FFMPEG Error: %s"ENDL,   \
             __FILE__,__LINE__,#expr,buf);                 \
@@ -76,7 +76,8 @@ typedef struct _ffmpeg_video
    int videoStream, width, height, format;
    int numBytes;
    int numFrames;
-} ffmpeg_video;;
+   Image currentImage;
+} ffmpeg_video;
 
 void ffmpeg_video_video_debug_ppm(ffmpeg_video *cur, char *file);
 
@@ -124,12 +125,13 @@ ffmpeg_video *ffmpeg_video_quit( ffmpeg_video *cur )
 ffmpeg_video *ffmpeg_video_init(const char *filename, int format ) 
 {
   int i = 0;
-  static char* fname = 0;
+  static char* fname = 0;         ///< resizable buffer for holding filename
   static int   bytesof_fname = 0;
   ffmpeg_video *ret;
   maybeInit();
 
-  /* Copy filename...avformat_open_input changes the string */
+  /* Copy filename...avformat_open_input changes the string (probably not
+   * needed now)*/
   { int n = strlen(filename);
     if(bytesof_fname<n);
     { TRY(fname=realloc(fname,2*n));
@@ -193,6 +195,13 @@ ffmpeg_video *ffmpeg_video_init(const char *filename, int format )
             ret->pDat->data[0] + i * ret->pDat->linesize[0],
             ret->width);
   }
+
+  // setup currentImage
+  ret->currentImage.kind   = 1;
+  ret->currentImage.width  = ret->width;
+  ret->currentImage.height = ret->height;
+  ret->currentImage.text   = "\0";
+  ret->currentImage.array  = ret->rawimage;
   return ret;
 Error:
   ffmpeg_video_quit(ret);
@@ -335,36 +344,12 @@ typedef struct _Image
 
 
 SHARED_EXPORT Image *FFMPEG_Fetch(void *context, int iframe)
-{ static int   last=0;
-  static Image *cur=NULL;
+{ 
   ffmpeg_video *v = (ffmpeg_video*)context;
-
-  TRY(iframe>=0 && iframe<v->numFrames);                     // ensure iframe is in bounds
-
-  if(cur==0)
-  { cur = Guarded_Malloc(sizeof(Image), __FILE__);
-    last = iframe;
-    cur->kind = 1;
-    cur->width  = v->width;
-    cur->height = v->height;
-    cur->text   = "\0";
-  }
-  TRY(last=ffmpeg_video_seek(v,iframe)>=0);
-#if 0
-  } else
-  { if(iframe == last)                                       // nothing to do
-    { return cur;
-    } else if(iframe == last+1)                              // read in next frame
-    { int sts;
-      TRY(ffmpeg_video_next(v,iframe)==0);      
-      ++last;
-    } else                                                   // must seek
-    { TRY( (last = ffmpeg_video_seek(v,iframe))>=0 );
-    }
-  }
-#endif
-  cur->array  = v->rawimage;
-  return cur;
+  TRY(iframe>=0 && iframe<v->numFrames);     // ensure iframe is in bounds
+  TRY(ffmpeg_video_seek(v,iframe)>=0);
+  v->currentImage.array  = v->rawimage;      // just in case the pointer changed...which it didn't
+  return &v->currentImage;
 Error:
   return NULL;
 }
