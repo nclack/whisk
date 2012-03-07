@@ -148,8 +148,6 @@ ffmpeg_video *ffmpeg_video_init(const char *filename, int format )
   AVTRY(avformat_find_stream_info(ret->pFormatCtx,NULL),"Cannot find stream information.");
   AVTRY(ret->videoStream=av_find_best_stream(ret->pFormatCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&ret->pCodec,0),"Cannot find a video stream."); 
   ret->pCtx=ret->pFormatCtx->streams[ret->videoStream]->codec;
-  if(ret->pCodec->capabilities&CODEC_CAP_TRUNCATED) // seed ffmpeg decode example: <ffmpeg>/doc/examples/decoding_encodng.c:361
-    ret->pCtx->flags |= CODEC_FLAG_TRUNCATED;
   ret->width  = ret->pCtx->width;
   ret->height = ret->pCtx->height;
   AVTRY(avcodec_open2(ret->pCtx,ret->pCodec,NULL),"Cannot open video decoder.");

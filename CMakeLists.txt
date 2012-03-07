@@ -308,7 +308,9 @@ SET(QTLIBLIST
   QtOpenGL
   QtSvg
 )
+if(WIN32) #this is a bit specific to me...should use imported targets if you build qt yourself
 set(QT_USE_IMPORTED_TARGETS TRUE)
+endif()
 find_package(Qt4 4.7 COMPONENTS ${QTLIBLIST})
 set(QTUI_HDRS)
 set(QTUI_SRCS)
