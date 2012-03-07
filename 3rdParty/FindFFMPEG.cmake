@@ -34,12 +34,13 @@
 
 
 if(WIN32)
+  set(HASH a4c22e3)
   if(CMAKE_CL_64)
-    set(SYS  ffmpeg-git-41bf67d-win64-dev)
-    set(DLLS  ffmpeg-git-41bf67d-win64-shared)
+    set(SYS   ffmpeg-git-${HASH}-win64-dev)
+    set(DLLS  ffmpeg-git-${HASH}-win64-shared)
   else()
-    set(SYS ffmpeg-git-41bf67d-win32-dev)
-    set(DLLS ffmpeg-git-41bf67d-win32-shared)
+    set(SYS ffmpeg-git-${HASH}-win32-dev)
+    set(DLLS ffmpeg-git-${HASH}-win32-shared)
   endif()
 
   set(FFMPEG_INCLUDE_PATH_SUFFIXES

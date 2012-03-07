@@ -1,11 +1,10 @@
-#include "Display.h"
-
 #include <QtGui>
 #include <QGLWidget>
 #include <QGraphicsView>
 #include <QGraphicsSvgItem>
-
 #include <QDebug>
+
+#include "Display.h"
 
 #define ENDL "\n"
 #define HERE         qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
@@ -69,7 +68,7 @@ void View::dragEnterEvent(QDragEnterEvent *event)
 {
   if(event->mimeData()->hasFormat("text/uri-list"))
     foreach(QUrl url, event->mimeData()->urls())
-    { if( url.isLocalFile() && Data::isValidPath(url.toLocalFile()))
+    { if( Data::isValidPath(url.toLocalFile()))
       { event->acceptProposedAction();
         return;
       }
@@ -83,7 +82,7 @@ void View::dragMoveEvent(QDragMoveEvent *event)
 void View::dropEvent(QDropEvent *event)
 { if(event->mimeData()->hasFormat("text/uri-list"))
     foreach(QUrl url, event->mimeData()->urls())
-      if( url.isLocalFile() && Data::isValidPath(url.toLocalFile()))
+      if( Data::isValidPath(url.toLocalFile()))
       { emit dropped(url);
         event->acceptProposedAction();
         return;
@@ -118,6 +117,7 @@ Display::Display(QWidget *parent,Qt::WindowFlags f)
   , loadingGraphics_(0)
   , data_(this)
   , iframe_(0)
+  , framePositionDisplay_(0)
 { makeActions_();
 
   ///// Setup the initial scene
@@ -130,12 +130,15 @@ Display::Display(QWidget *parent,Qt::WindowFlags f)
   //      \-- loading item
   { scene_->setBackgroundBrush(Qt::white);
 
-    image_         = new QGraphicsPixmapItem();
-    droptarget_    = new QGraphicsSvgItem(":/images/droptarget");
-    dataItemsRoot_ = new QGraphicsWidget;
+    image_           = new QGraphicsPixmapItem();
+    droptarget_      = new QGraphicsSvgItem(":/images/droptarget");
+    dataItemsRoot_   = new QGraphicsWidget;
     loadingGraphics_ = new LoadingGraphicsWidget;
+    framePositionDisplay_ = new QGraphicsTextItem("Frame: 0");
     scene_->addItem(droptarget_);
     image_->setParentItem(dataItemsRoot_);
+    framePositionDisplay_->setParentItem(dataItemsRoot_);
+    framePositionDisplay_->setDefaultTextColor(Qt::yellow);
     scene_->addItem(dataItemsRoot_);
     scene_->addItem(loadingGraphics_);
   }
@@ -162,6 +165,7 @@ Display::Display(QWidget *parent,Qt::WindowFlags f)
     empty->assignProperty(dataItemsRoot_,"visible",false);
     empty->assignProperty(loadingGraphics_,"visible",false);
 
+    loading->assignProperty(view_,"backgroundBrush",QBrush(Qt::red));
     loading->assignProperty(droptarget_,"visible",false);
     loading->assignProperty(loadingGraphics_,"visible",true);
 
@@ -197,6 +201,8 @@ void Display::showFrame(int index)
   if(!p.isNull())
   { iframe_=index;  // only updates if read was successful
     image_->setPixmap(p);
+    
+    framePositionDisplay_->setPlainText(QString("Frame: %1").arg(iframe_,5));
   }
   return;
 }

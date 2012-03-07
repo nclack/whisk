@@ -54,10 +54,10 @@
     { char buf[1024];                                   \
       av_strerror(v,buf,sizeof(buf));                 \
       if(msg) \
-        printf("%s(%d): %s"ENDL "%s"ENDL "FFMPEG Error: %s"ENDL,   \
+        printf("%s(%d):"ENDL "%s"ENDL "%s"ENDL "FFMPEG: %s"ENDL,   \
             __FILE__,__LINE__,#expr,msg,buf);                 \
       else \
-        printf("%s(%d): %s"ENDL "FFMPEG Error: %s"ENDL,   \
+        printf("%s(%d):"ENDL "%s"ENDL "FFMPEG Error: %s"ENDL,   \
             __FILE__,__LINE__,#expr,buf);                 \
       goto Error;                                         \
     }                                                   \
@@ -74,23 +74,15 @@ typedef struct _ffmpeg_video
            *rawimage;
    struct SwsContext *Sctx;
    int videoStream, width, height, format;
-} ffmpeg_video;
-
-ffmpeg_video *ffmpeg_video_init(const char *file, int format);
-
-int           ffmpeg_video_bytes_per_frame(   void );
-long          ffmpeg_video_bytes_all_frames(  void );
-
-int           ffmpeg_video_next(ffmpeg_video  *cur);
-ffmpeg_video *ffmpeg_video_quit(ffmpeg_video  *cur);
+   int numBytes;
+   int numFrames;
+} ffmpeg_video;;
 
 void ffmpeg_video_video_debug_ppm(ffmpeg_video *cur, char *file);
 
 //---
 //  IMPLEMENTATION
 //
-static int numBytes = 0;
-static int numFrames = 0;
 
 static int is_one_time_inited = 0;
 
@@ -102,6 +94,26 @@ void maybeInit()
   av_register_all();
   avformat_network_init();
   is_one_time_inited = 1;
+}
+
+/* Close & Free cur video context 
+ * This function is also called on failed init, so check existence before de-init
+ */
+ffmpeg_video *ffmpeg_video_quit( ffmpeg_video *cur ) 
+{ if(!cur) return;
+  if( cur->Sctx ) sws_freeContext( cur->Sctx );
+
+  if( cur->pRaw ) av_free( cur->pRaw );
+  if( cur->pDat ) av_free( cur->pDat );
+
+  if( cur->pCtx ) avcodec_close( cur->pCtx );
+  if( cur->pFormatCtx ) av_close_input_file( cur->pFormatCtx );
+
+  if(cur->rawimage) av_free(cur->rawimage);
+  if(cur->buffer)   av_free(cur->buffer);
+  free(cur);
+
+  return NULL;
 }
 
 /* Init ffmpeg_video source 
@@ -127,7 +139,7 @@ ffmpeg_video *ffmpeg_video_init(const char *filename, int format )
     memcpy(fname,filename,n);
   }
   
-  TRY(ret=malloc(sizeof(ffmpeg_video)));
+  TRY(ret=(ffmpeg_video*)malloc(sizeof(ffmpeg_video)));
   memset(ret,0,sizeof(ffmpeg_video));
   ret->format = format;
 
@@ -148,16 +160,16 @@ ffmpeg_video *ffmpeg_video_init(const char *filename, int format )
 
   /* Compute the total number of frames in the file */
   /* duration is in microsecs */
-  numFrames = (int)(( ret->pFormatCtx->duration / (double)AV_TIME_BASE ) * ret->pCtx->time_base.den );
+  ret->numFrames = (int)(( ret->pFormatCtx->duration / (double)AV_TIME_BASE ) * ret->pCtx->time_base.den );
 
   /* Get framebuffers */
   TRY(ret->pRaw = avcodec_alloc_frame());
   TRY(ret->pDat = avcodec_alloc_frame());
 
   /* Create data buffer */
-  numBytes = avpicture_get_size( ret->format, ret->pCtx->width, ret->pCtx->height );
-  TRY(ret->buffer   = av_malloc(numBytes));
-  TRY(ret->rawimage = av_malloc(ret->width*ret->height/* 1 Bpp*/));
+  ret->numBytes = avpicture_get_size( ret->format, ret->pCtx->width, ret->pCtx->height );
+  TRY(ret->buffer   = (uint8_t*)av_malloc(ret->numBytes));
+  TRY(ret->rawimage = (uint8_t*)av_malloc(ret->width*ret->height/* 1 Bpp*/));
 
   /* Init buffers */
   avpicture_fill( (AVPicture * ) ret->pDat, ret->buffer, ret->format, 
@@ -189,45 +201,30 @@ Error:
   return NULL;
 }
 
-int ffmpeg_video_bytes_per_frame( void )
+int ffmpeg_video_bytes_per_frame( ffmpeg_video* v )
 {
-  return numBytes;
-}
-
-long ffmpeg_video_bytes_all_frames( void )
-{
-  return numFrames * numBytes;
+  return v->numBytes;
 }
 
 /* Parse next packet from cur video
- * Returns 0 on succes, -1 on read error,
- * -2 when not a video packet (ignore these) and -3 for invalid frames (skip these)
+ * Returns 0 on success, -1 otherwise
  */
-int ffmpeg_video_next( ffmpeg_video *cur ) 
+int ffmpeg_video_next( ffmpeg_video *cur, int target ) 
 {
-  AVPacket packet;
+  AVPacket packet = {0};
   int finished = 0;
-
-  /* Can we read a frame? */
-  if( av_read_frame( cur->pFormatCtx, &packet ) < 0 )
-    return -1;
-
-  /* Is it what we're trying to parse? */
-  if( packet.stream_index != cur->videoStream ) 
-  {
+  do
+  { finished=0;
+    AVTRY(av_read_frame( cur->pFormatCtx, &packet ),NULL);   // !!NOTE: see docs on packet.convergence_duration for proper seeking    
+    if( packet.stream_index != cur->videoStream ) /* Is it what we're trying to parse? */
+    { av_free_packet( &packet );
+      continue;
+    }    
+    AVTRY(avcodec_decode_video2( cur->pCtx, cur->pRaw, &finished, &packet ),NULL);    
     av_free_packet( &packet );
-    return -2;
-  }
+    TRY(packet.pts>=0 && packet.pts<cur->pFormatCtx->streams[cur->videoStream]->duration);
+  } while(!finished || packet.pts<target);
 
-  /* Decode it! */
-  avcodec_decode_video2( cur->pCtx, cur->pRaw, &finished, &packet );
-
-  /* Success? If not, drop packet. */
-  if( !finished ) 
-  {
-    av_free_packet( &packet );
-    return -3;
-  }
   sws_scale(cur->Sctx,              // sws context
             cur->pRaw->data,        // src slice
             cur->pRaw->linesize,    // src stride
@@ -235,7 +232,6 @@ int ffmpeg_video_next( ffmpeg_video *cur )
             cur->pCtx->height,      // src slice height
             cur->pDat->data,        // dst
             cur->pDat->linesize );  // dst stride
-  av_free_packet( &packet );
 
   /* copy out raw data */
   { int i;
@@ -245,42 +241,42 @@ int ffmpeg_video_next( ffmpeg_video *cur )
             cur->width);
   }
   return 0;
+Error:
+  av_free_packet( &packet );
+  return -1;
 }
 
-// Returns the current frame on success.
-// Panics on failure.
+
+// \returns current frame on success, otherwise -1
 int ffmpeg_video_seek( ffmpeg_video *cur, int64_t iframe )
-{ int sts;
-  assert(iframe>=0 && iframe<numFrames);
-  sts=av_seek_frame(cur->pFormatCtx,
-                    cur->videoStream,
-                    iframe*cur->pCtx->time_base.num/cur->pCtx->time_base.den,  /* convert to microsec */
-                    //iframe*AV_TIME_BASE*cur->pCtx->time_base.num/cur->pCtx->time_base.den,  /* convert to microsec */
-                    AVSEEK_FLAG_ANY);
-  assert(sts>=0);
-  assert(ffmpeg_video_next(cur)==0);
+{ int64_t duration = cur->pFormatCtx->streams[cur->videoStream]->duration;
+  int64_t ts = av_rescale(duration,iframe,cur->numFrames),
+         tol = av_rescale(duration,1,2*cur->numFrames);
+  TRY(iframe>=0 && iframe<cur->numFrames);
+
+#if 0
+  AVTRY(av_seek_frame(      cur->pFormatCtx, //format context
+                            cur->videoStream,//stream id
+                            ts,              //target timestamp
+                            0),//AVSEEK_FLAG_ANY),//flags
+    "Failed to seek.");
+#else
+  //avcodec_flush_buffers(cur->pCtx);
+  AVTRY(avformat_seek_file( cur->pFormatCtx, //format context
+                            cur->videoStream,//stream id
+                            0,               //min timestamp
+                            ts,              //target timestamp
+                            ts,              //max timestamp
+                            0),//AVSEEK_FLAG_ANY),//flags
+    "Failed to seek.");
+#endif
+  
+  TRY(ffmpeg_video_next(cur,iframe)==0);
   return iframe;
+Error:
+  return -1;
 }
 
-/* Close & Free cur video context 
- * This function is also called on failed init, so check existence before de-init
- */
-ffmpeg_video *ffmpeg_video_quit( ffmpeg_video *cur ) 
-{ if(!cur) return;
-  if( cur->Sctx ) sws_freeContext( cur->Sctx );
-
-  if( cur->pRaw ) av_free( cur->pRaw );
-  if( cur->pDat ) av_free( cur->pDat );
-
-  if( cur->pCtx ) avcodec_close( cur->pCtx );
-  if( cur->pFormatCtx ) av_close_input_file( cur->pFormatCtx );
-
-  if(cur->rawimage) av_free(cur->rawimage);
-  if(cur->buffer)   av_free(cur->buffer);
-  free(cur);
-
-  return NULL;
-}
 
 /* Output frame to file in PPM format */
 void ffmpeg_video_debug_ppm( ffmpeg_video *cur, char *file ) 
@@ -338,28 +334,14 @@ typedef struct _Image
     uint8   *array;   // Array of pixel values lexicographically ordered on (y,x,c).
   } Image;            //    Pixel (0,0) is the lower left-hand corner of an image.
   */
-void _handle_ffmpeg_video_next_error(int sts)
-{ char prefix[] = "Decoding next frame:";
-  switch(sts)
-  { case 0:
-      warning("%s Success\n",prefix); break;
-    case -1:
-      error("%s Read Error\n",prefix); break;
-    case -2:
-      warning("%s Not a video packet\n",prefix); break;
-    case -3:
-      warning("%s Invalid frame\n",prefix); break;
-    default:
-      error("Unrecognized status code during attempt to decode the next frame\n");
-  };
-}
+
 
 SHARED_EXPORT Image *FFMPEG_Fetch(void *context, int iframe)
 { static int   last=0;
   static Image *cur=NULL;
-  ffmpeg_video *v = context;
+  ffmpeg_video *v = (ffmpeg_video*)context;
 
-  assert(iframe>=0 && iframe<numFrames);                     // ensure iframe is in bounds
+  TRY(iframe>=0 && iframe<v->numFrames);                     // ensure iframe is in bounds
 
   if(cur==0)
   { cur = Guarded_Malloc(sizeof(Image), __FILE__);
@@ -368,25 +350,29 @@ SHARED_EXPORT Image *FFMPEG_Fetch(void *context, int iframe)
     cur->width  = v->width;
     cur->height = v->height;
     cur->text   = "\0";
-    ffmpeg_video_seek(v,iframe);
+  }
+  TRY(last=ffmpeg_video_seek(v,iframe)>=0);
+#if 0
   } else
   { if(iframe == last)                                       // nothing to do
     { return cur;
     } else if(iframe == last+1)                              // read in next frame
     { int sts;
-      while((sts=ffmpeg_video_next(v))!=0)
-          _handle_ffmpeg_video_next_error(sts);
+      TRY(ffmpeg_video_next(v,iframe)==0);      
       ++last;
     } else                                                   // must seek
-    { last = ffmpeg_video_seek(v,iframe);
+    { TRY( (last = ffmpeg_video_seek(v,iframe))>=0 );
     }
   }
+#endif
   cur->array  = v->rawimage;
   return cur;
+Error:
+  return NULL;
 }
 
 SHARED_EXPORT unsigned int  FFMPEG_Frame_Count(void* ctx)
-{ return numFrames; }
+{ return ((ffmpeg_video*)ctx)->numFrames; }
 
 //--- UI2.PY interface
 
@@ -396,28 +382,28 @@ int FFMPEG_Get_Stack_Dimensions(char *filename, int *width, int *height, int *de
     return 0;
   *width = ctx->width;
   *height = ctx->height;
-  *depth = numFrames;
+  *depth = ctx->numFrames;
   *kind = 1;
   if(ctx) ffmpeg_video_quit(ctx);
   return 1;
 }
 
-// This, unfortunantly, involves an unneccesary copy.
+// This involves an unneccesary copy.
 int FFMPEG_Read_Stack_Into_Buffer(char *filename, unsigned char *buf)
-{ ffmpeg_video *ctx = ffmpeg_video_init(filename,PIX_FMT_GRAY8); 
-  if(!_handle_open_status(filename,ctx))
-    return 0;  
-  { int planestride = ffmpeg_video_bytes_per_frame();
+{ ffmpeg_video *ctx;
+  TRY(ctx=ffmpeg_video_init(filename,PIX_FMT_GRAY8));  
+  { int planestride = ffmpeg_video_bytes_per_frame(ctx);
     int i;
-    for(i=0;i<numFrames;++i)
+    for(i=0;i<ctx->numFrames;++i)
     { int sts;
-      while((sts=ffmpeg_video_next(ctx))!=0)
-        _handle_ffmpeg_video_next_error(sts);
+      TRY(ffmpeg_video_next(ctx,i)==0);
       memcpy(buf+i*planestride,ctx->buffer,planestride);
     }
   }
   if(ctx) ffmpeg_video_quit(ctx);
   return 1;
+Error:
+  return 0;
 }
 
 

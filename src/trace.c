@@ -972,7 +972,7 @@ float *get_nearest_from_line_detector_bank(float offset, float width, float angl
   //  This mechanism lets me store only half the detectors.
   if( !is_small_angle( angle ) )  // if large angle then transpose
   { angle = 3.0*M_PI/2.0 - angle; //   to small ones ( <45deg )
-	//offset = -offset;			  // The transpose is a rotation and flip
+  //offset = -offset;			  // The transpose is a rotation and flip
   }								  // T = R(3pi/2) Flip
   WRAP_ANGLE_2PI( angle );        // rotating as angle -= 3pi/2 also flips the offset
                                   //    so it doesn't need to be done explicitly
@@ -1090,7 +1090,7 @@ float *get_nearest_from_half_space_detector_bank(float offset, float width, floa
 
   if( !is_small_angle( angle ) )  // if large angle then transpose
   { angle = 3.0*M_PI/2.0 - angle; //   to small ones ( <45deg )
-	//offset = -offset;
+  //offset = -offset;
   }
   WRAP_ANGLE_2PI( angle );
 
@@ -1219,7 +1219,7 @@ int *get_offset_list( Image *image, int support, float angle, int p, int *npx )
           }
         }
 
-		// put out of bounds pixels at end
+    // put out of bounds pixels at end
         for( j=0; j<support; j++ )
         { ty = oy + j;
           if( (ty<0) || (ty>=hh) || (tx < 0) || (tx>=ww) ) //out of bounds
@@ -1258,15 +1258,15 @@ float round_anchor_and_offset( Line_Params *line, int *p, int stride )
   dry = ry - ppy;                  // ppy - ry;
   t   = drx*ex + dry*ey;           // dr dot e (projection along normal to line)
   
-	// Max error is ~0.6 px
+  // Max error is ~0.6 px
 
   //if( ppx != px || ppy != py)
   //{
-	 // float rx2 = ppx + t * ex,
-		//    ry2 = ppy + t * ey;
-	 // float err = sqrt((rx2-rx)*(rx2-rx) + (ry2-ry)*(ry2-ry));
-	 // printf("(%3d, %3d) off: %5.5f --> (%3d, %3d) off: %5.5f\terr:%g\n",
-	 //			(int)px,(int)py,line->offset, (int)ppx, (int)ppy,t, err);
+   // float rx2 = ppx + t * ex,
+    //    ry2 = ppy + t * ey;
+   // float err = sqrt((rx2-rx)*(rx2-rx) + (ry2-ry)*(ry2-ry));
+   // printf("(%3d, %3d) off: %5.5f --> (%3d, %3d) off: %5.5f\terr:%g\n",
+   //			(int)px,(int)py,line->offset, (int)ppx, (int)ppy,t, err);
   //}
   *p = ((int)ppx) + stride*( (int) ppy );
   return t;
@@ -1949,10 +1949,10 @@ SHARED_EXPORT
 void Print_Position(Line_Params *line, int p, int stride)
 { float dx,dy;
   int x = p%stride,
-	  y = p/stride;
+    y = p/stride;
   compute_dxdy(line,&dx,&dy);
   printf("(%3d%+3.2f, %3d%+3.2f)  offset = %3.2f\tangle = %f\n", 
-	  x, dx, y, dy, line->offset, line->angle*180/M_PI );
+    x, dx, y, dy, line->offset, line->angle*180/M_PI );
 
 }
 
@@ -2002,39 +2002,39 @@ int adjust_line_start_old(Line_Params *line, Image *image, int *pp,
 #endif
     // optimize offset/thickness first 
     if( ! adjust_line_walk( line, image, pp, roff, rang, rwid ) )
-		return 0; //not trusted 
+    return 0; //not trusted 
     best = line->score;
 
-	i=6;
-	ca = line->angle;
-	co = line->offset;
-	while(i--)
-	{	angles[i]  += ca;
-		offsets[i] += co;
-	}
+  i=6;
+  ca = line->angle;
+  co = line->offset;
+  while(i--)
+  {	angles[i]  += ca;
+    offsets[i] += co;
+  }
 
     // Test moves in offset-angle plane.  Take first better.
     ibest = -1;
     for( i=0; i<6; i++ )
     { line->angle  = angles[i];
       line->offset = offsets[i];
-	  if( (line->angle  >= rang->min) &&
-		  (line->angle  <= rang->max) &&
-		  (line->offset >= roff->min) &&
-		  (line->offset <= roff->max) )
-	  { v = eval_line( line, image, p );
-	  printf("\tv:%+5.5f\tbest:%+5.5f : (%5.5g, %3.3g)\n",v,best, line->angle *180.0/M_PI, line->offset);
-  	    if ((v - best) > 1e-5)
-		{ best   =  v;
-		  better =  1;
-		  ibest  =  i;
-		  break;
-		}
-	  }
+    if( (line->angle  >= rang->min) &&
+      (line->angle  <= rang->max) &&
+      (line->offset >= roff->min) &&
+      (line->offset <= roff->max) )
+    { v = eval_line( line, image, p );
+    printf("\tv:%+5.5f\tbest:%+5.5f : (%5.5g, %3.3g)\n",v,best, line->angle *180.0/M_PI, line->offset);
+        if ((v - best) > 1e-5)
+    { best   =  v;
+      better =  1;
+      ibest  =  i;
+      break;
+    }
+    }
     }
     if( ibest == -1 ) // no improvement
     { printf("No Improvement in (angle,offset)\n");
-	  line->angle = ca;
+    line->angle = ca;
       line->offset = co;
     } // else line is alread set
 

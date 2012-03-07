@@ -40,6 +40,9 @@ set(HAVE_FFMPEG 0)
 if(FFMPEG_FOUND)
   set(HAVE_FFMPEG 1)
   include_directories(${FFMPEG_INCLUDE_DIRS})
+  if(WIN32)
+    file(COPY ${FFMPEG_SHARED_LIBS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}) #convenient for debugging
+  endif()
 endif()
 
 # Mylib: p-file transform
@@ -305,7 +308,7 @@ SET(QTLIBLIST
   QtOpenGL
   QtSvg
 )
-#set(QT_USE_IMPORTED_TARGETS TRUE)
+set(QT_USE_IMPORTED_TARGETS TRUE)
 find_package(Qt4 4.7 COMPONENTS ${QTLIBLIST})
 set(QTUI_HDRS)
 set(QTUI_SRCS)
@@ -437,9 +440,13 @@ add_dependencies(whiskio_static ParameterParser)
 # whiski - Qt GUI
 # see: http://developer.qt.nokia.com/doc/qt-4.8/appicon.html
 if(QT_FOUND)
+  if(WIN32)
+    file(GLOB RC_SRCS qtui/*.rc)
+  endif()
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
-  add_executable(whiski WIN32 MACOSX_BUNDLE
+  add_executable(whiski MACOSX_BUNDLE #WIN32 
+    ${RC_SRCS}
     ${QTUI_HDRS}
     ${QTUI_SRCS}
     ${MOC_SRCS}

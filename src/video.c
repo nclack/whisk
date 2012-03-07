@@ -107,9 +107,7 @@ static int Is_Seq(const char *path)
 
 static int Is_FFMPEG(const char *path)
 { void *r;
-  debug("path: %s"ENDL,path);
   r = FFMPEG_Open(path);
-  debug("path: %s"ENDL,path);
   if(r)
   { FFMPEG_Close(r);
     return 1;

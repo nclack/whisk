@@ -2,11 +2,11 @@
   \author Nathan Clack <clackn@janelia.hhmi.org>
   \copyright 2012, HHMI
   */
+#include <QtGui>
+#include <QKeySequence>
 #include "MainWindow.h"
 #include "Display.h"
 
-#include <QtGui>
-#include <QKeySequence>
 
 #define ENDL "\n"
 #define HERE         qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 

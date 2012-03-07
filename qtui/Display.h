@@ -76,6 +76,7 @@ class Display : public QWidget
     QGraphicsWidget        *dataItemsRoot_; 
     QGraphicsPixmapItem    *image_;         
     LoadingGraphicsWidget  *loadingGraphics_;
+    QGraphicsTextItem      *framePositionDisplay_;
     Data                    data_;
 
     int     iframe_;

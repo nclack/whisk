@@ -122,7 +122,7 @@ void help(int show, char *str, ... )
     vfprintf(ERR_STREAM, str, argList);
     va_end( argList );
     fflush(NULL);
-	exit(0);
+  exit(0);
   }
 }
 

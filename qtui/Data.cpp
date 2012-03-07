@@ -1,5 +1,6 @@
-#include "Data.h"
 #include <QtGui>
+#include "Data.h"
+
 
 #define countof(e) (sizeof(e)/sizeof(*(e)))
 
@@ -54,23 +55,25 @@ QFileInfo    whiskersFile    (const QString & keypath); ///< The keypath will be
 QFileInfo    videoFile       (const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist. 
 QFileInfo    getInfoForKind  (const QString & keypath, KIND k);
 
-static const char* fname(const QFileInfo & info)
-{ return info.absoluteFilePath().toLocal8Bit().data(); }
+//static const char* fname(const QFileInfo & info)
+//{ return info.absoluteFilePath().toLocal8Bit().data(); }
 
 KIND guessKind(const QString & path)
-{ QFileInfo info(path);
+{ QFileInfo info(path);  
+  QByteArray b = info.absoluteFilePath().toLocal8Bit();
+  const char* fname = b.data();
   char *fmt=0;
   if(!info.isFile()) return UNKNOWN;
   if(!info.exists()) return UNKNOWN;
   if( info.suffix() == "measurements" )
-  { TRY(locked::Measurements_File_Autodetect(fname(info),&fmt));
+  { TRY(locked::Measurements_File_Autodetect(fname,&fmt));
     return MEASUREMENTS;
   }
   if( info.suffix() == "whiskers" )
-  { TRY(locked::Whisker_File_Autodetect(fname(info),&fmt));
+  { TRY(locked::Whisker_File_Autodetect(fname,&fmt));
     return WHISKERS;
   }
-  if(locked::is_video(fname(info)))
+  if(locked::is_video(fname))
     return VIDEO;
 Error:
   return UNKNOWN;
@@ -81,8 +84,9 @@ Error:
  */
 QFileInfo measurementsFile(const QString &keypath)
 { QFileInfo info(keypath);
-  QString newname = info.completeBaseName()+".measurements"; 
-  return QFileInfo(newname);
+  QString newname = info.completeBaseName()+ ".measurements"; 
+  info.setFile(info.absoluteDir(),newname);
+  return info;
 }
 
 /** Assume keypath is a valid path as determined by isValidPath()
@@ -90,8 +94,9 @@ QFileInfo measurementsFile(const QString &keypath)
  */
 QFileInfo whiskersFile(const QString &keypath)
 { QFileInfo info(keypath);
-  QString newname = info.completeBaseName()+".whiskers"; 
-  return QFileInfo(newname);
+  QString newname = info.completeBaseName()+ ".whiskers"; 
+  info.setFile(info.absoluteDir(),newname);
+  return info;
 }
 
 /** Assume keypath is a valid path as determined by isValidPath().
@@ -129,16 +134,18 @@ QFileInfo getInfoForKind(const QString & keypath, KIND k)
 result_t loadOne(const QString &path)
 { result_t  r;
   QFileInfo cur(path);
+  QByteArray b = cur.absoluteFilePath().toLocal8Bit();
+  const char *fname = b.data();
   switch(r.kind=guessKind(path))
   { case VIDEO:
-      TRY(r.v=locked::video_open(fname(cur)));
+      TRY(r.v=locked::video_open(fname));
     break;
     case MEASUREMENTS:
-      TRY(r.m=locked::Measurements_Table_From_Filename(fname(cur),NULL,&r.mn));
+      TRY(r.m=locked::Measurements_Table_From_Filename(fname,NULL,&r.mn));
       r.measurement_path = cur.absoluteFilePath();
     break;
     case WHISKERS:
-      TRY(r.w=locked::Load_Whiskers(fname(cur),NULL,&r.wn));
+      TRY(r.w=locked::Load_Whiskers(fname,NULL,&r.wn));
       r.whisker_path = cur.absoluteFilePath();
     break;
     break;
@@ -164,7 +171,7 @@ result_t maybeLoadAll(const QString &path)
       break;
     }
   }
-Error:
+
   //assemble results
   sync.waitForFinished();
   foreach(QFuture<result_t> f,sync.futures())
@@ -246,10 +253,7 @@ void Data::open(const QString& path)
 }
 
 void Data::open(const QUrl& path)
-{ TRY(path.isLocalFile());
-  open(path.toLocalFile());
-Error:
-  ;
+{ open(path.toLocalFile());
 }
 
 /**
@@ -271,7 +275,7 @@ void Data::commit()
     buildMeasurementsIndex_();
   }
   if(r.w)
-  { if(curves_) Free_Whisker_Seg_Vec(curves_,ncurves_); 
+  { if(curves_) Free_Whisker_Seg_Vec(curves_,ncurves_); // this takes a huge amount of time (in Debug on Win7)
     curves_  = r.w;
     ncurves_ = r.wn;
     lastWhiskerFile_ = r.whisker_path;
