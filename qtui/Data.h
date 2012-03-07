@@ -9,6 +9,8 @@
  * - If the whiskers or measurements arrays get reordered or changed, their
  *   respective indexes need to be rebuilt. 
  */
+#pragma once
+
 #include <QtCore>
 #include <QtGui>
 #include "LockedCalls.h"

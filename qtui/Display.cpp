@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include "Display.h"
+#include "GraphicsWhiskerCurve.h"
 
 #define ENDL "\n"
 #define HERE         qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
@@ -211,13 +212,15 @@ void Display::showFrame(int index)
     // add whisker curves
     { int i;
       for(i=0;i<data_.curveCount(iframe_);++i)
-      { QPainterPath p;
-        p.addPolygon(data_.curve(iframe_,i));
+      { // \todo set wid
+        // \todo manage selection?
+        QPolygonF shape = data_.curve(iframe_,i);
         if(i<curves_.size())
-          curves_[i]->setPath(p);                      // use existing curves
+          curves_[i]->setMidline(shape); // use existing curve items
         else
-        { QGraphicsPathItem *pp;
-          curves_.append(pp=new QGraphicsPathItem(p)); // or add a new one
+        { GraphicsWhiskerCurve *pp;
+          curves_.append(pp=new GraphicsWhiskerCurve()); // or add a new one
+          pp->setMidline(shape);
           scene_->addItem(pp);
         }
         // determine color based on identity

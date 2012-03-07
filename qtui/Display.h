@@ -1,3 +1,4 @@
+#pragma once
 #include <QWidget>
 #include <QGraphicsView>
 #include "Data.h"
@@ -7,6 +8,8 @@ class QGraphicsSvgItem;
 class QGraphicsWidget;
 class QUrl;
 class LoadingGraphicsWidget;
+class GraphicsWhiskerCurve;
+
 ////////////////////////////////////////////////////////////////////////////////
 // VIEW                                                            QGRAPHICSVIEW
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +81,7 @@ class Display : public QWidget
     LoadingGraphicsWidget  *loadingGraphics_;
     QGraphicsTextItem      *framePositionDisplay_;
     Data                    data_;
-    QList<QGraphicsPathItem*> curves_;
+    QList<GraphicsWhiskerCurve*> curves_;
 
     int     iframe_;
 };
