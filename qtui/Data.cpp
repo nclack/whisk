@@ -360,6 +360,11 @@ int Data::frameCount()
     return 0;
 }
 
+int Data::wid(int iframe, int icurve)
+{ Whisker_Seg* w = get_curve_(iframe,icurve);
+  return w->id;
+}
+
 Whisker_Seg* Data::get_curve_(int iframe, int icurve)
 { QList<Whisker_Seg*> cs;
   cs = curveIndex_.value(iframe,curveIdMap_t())

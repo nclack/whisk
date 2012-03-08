@@ -211,6 +211,7 @@ void Display::showFrame(int index)
 
     // add whisker curves
     { int i;
+      int nident = data_.maxIdentity()-data_.minIdentity();
       for(i=0;i<data_.curveCount(iframe_);++i)
       { // \todo set wid
         // \todo manage selection?
@@ -223,19 +224,8 @@ void Display::showFrame(int index)
           pp->setMidline(shape);
           scene_->addItem(pp);
         }
-        // determine color based on identity
-        QColor color(255,155,55,200); // default
-        int ident,
-            nidents = data_.maxIdentity()-data_.minIdentity(); // should add one, but one identity (-1) doesn't count
-                      //e.g. 5 - (-1) = 6 ... 0,1,2,3,4,5
-        if(-1!=(ident=data_.identity(iframe_,i)))
-          color.setHsvF(ident/(qreal)nidents,1.0,1.0);
-        curves_[i]->setPen(QPen(
-              QBrush(color),
-              2,               //width
-              Qt::DotLine,     //pen style
-              Qt::RoundCap,    //pen cap style
-              Qt::RoundJoin)); //join style
+        curves_[i]->setColorByIdentity(data_.identity(iframe_,i),nident);
+        curves_[i]->setWid(data_.wid(iframe_,i));
         curves_[i]->show();
       }
       // hide unused curves

@@ -9,6 +9,7 @@ class GraphicsWhiskerCurve : public QGraphicsObject
   Q_PROPERTY(int           wid READ wid        WRITE setWid)
   Q_PROPERTY(QPolygonF midline READ midline    WRITE setMidline)
   Q_PROPERTY(QPen          pen READ pen        WRITE setPen)
+  Q_PROPERTY(QColor      color READ color      WRITE setColor)
   Q_PROPERTY(bool     selected READ isSelected WRITE setSelected NOTIFY selected)
   public:
     GraphicsWhiskerCurve(QGraphicsItem *parent=0);
@@ -20,11 +21,15 @@ class GraphicsWhiskerCurve : public QGraphicsObject
     void setWid(int wid);
     void setMidline(const QPolygonF& midline);
     void setPen(const QPen& pen);
+    void setColor(const QColor& color);
     void setSelected(bool select=true);
+
+    void setColorByIdentity(int ident, int nident);
 
     int              wid()   const;
     const QPolygonF& midline() const;
     const QPen&      pen()   const;
+    const QColor     color() const;
     bool             isSelected() const;
 
   public slots:

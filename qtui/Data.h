@@ -27,6 +27,7 @@ class Data : public QObject
               int  frameCount  ();
         QPolygonF  curve       (int iframe, int icurve); ///< \returns the curve as an ordered set of points
               int  curveCount  (int iframe);
+              int  wid         (int iframe, int icurve);
               int  identity    (int iframe, int icurve); ///< \returns the identity (typ. an int >=0) of the curve or -1 if unknown.
               int  minIdentity ();                       ///< \returns the minimum identity label across the entire data set
               int  maxIdentity ();                       ///< \returns the minimum identity label across the entire data set 
