@@ -8,7 +8,7 @@ class QGraphicsSvgItem;
 class QGraphicsWidget;
 class QUrl;
 class LoadingGraphicsWidget;
-class GraphicsWhiskerCurve;
+class CurveGroup;
 
 ////////////////////////////////////////////////////////////////////////////////
 // VIEW                                                            QGRAPHICSVIEW
@@ -22,12 +22,13 @@ class View : public QGraphicsView
 
   public slots:
     void lockTo(const QGraphicsItem *item);
+    void setFrame(int iframe);
 
   signals:
     void dropped(const QUrl& url);
 
   protected:
-
+    void drawForeground(QPainter *painter,const QRectF &rect);
     void dragEnterEvent(QDragEnterEvent *event);
     void dragMoveEvent(QDragMoveEvent *event);
     void dropEvent(QDropEvent *event);
@@ -35,6 +36,8 @@ class View : public QGraphicsView
     void wheelEvent(QWheelEvent *event);
 
     const QGraphicsItem *lockitem_;                 ///< View transforms the scene to fit to this item
+
+    int iframe_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -60,28 +63,26 @@ class Display : public QWidget
     void prevFrame1000();
     void firstFrame();
     void lastFrame();
+    void deleteSelected();
 
   signals:
     void loadStarted();
     void opened(const QString& path);
+    void frameId(int iframe);
 
   protected:
     void makeActions_();
     void wheelEvent(QWheelEvent *event);
 
-    QAction                *nextFrame_,     
-                           *prevFrame_,     
-                           *lastFrame_,     
-                           *firstFrame_;    
+    QMap<QString,QAction*>  actions_;
     View                   *view_;          
     QGraphicsScene         *scene_;         
     QGraphicsSvgItem       *droptarget_;    
     QGraphicsWidget        *dataItemsRoot_; 
     QGraphicsPixmapItem    *image_;         
     LoadingGraphicsWidget  *loadingGraphics_;
-    QGraphicsTextItem      *framePositionDisplay_;
     Data                    data_;
-    QList<GraphicsWhiskerCurve*> curves_;
+    CurveGroup             *curves_;
 
     int     iframe_;
 };

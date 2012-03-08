@@ -1,10 +1,10 @@
 /** \file
- *  \todo rename to CurveItem
+ *  \todo rename to Curve
  */
 #pragma once
 #include <QtGui>
 
-class GraphicsWhiskerCurve : public QGraphicsObject
+class Curve : public QGraphicsObject
 { Q_OBJECT
   Q_PROPERTY(int           wid READ wid        WRITE setWid)
   Q_PROPERTY(QPolygonF midline READ midline    WRITE setMidline)
@@ -12,17 +12,11 @@ class GraphicsWhiskerCurve : public QGraphicsObject
   Q_PROPERTY(QColor      color READ color      WRITE setColor)
   Q_PROPERTY(bool     selected READ isSelected WRITE setSelected NOTIFY selected)
   public:
-    GraphicsWhiskerCurve(QGraphicsItem *parent=0);
+    Curve(QGraphicsItem *parent=0);
 
     QRectF boundingRect() const;
     void   paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
     QPainterPath shape() const;
-
-    void setWid(int wid);
-    void setMidline(const QPolygonF& midline);
-    void setPen(const QPen& pen);
-    void setColor(const QColor& color);
-    void setSelected(bool select=true);
 
     void setColorByIdentity(int ident, int nident);
 
@@ -34,6 +28,15 @@ class GraphicsWhiskerCurve : public QGraphicsObject
 
   public slots:
     void select();
+    void setWid(int wid);
+    void setMidline(const QPolygonF& midline);
+    void setPen(const QPen& pen);
+    void setColor(const QColor& color);
+    void setSelected(bool select=true);
+
+  protected slots:
+    void light();
+    void dark();
 
   signals:
     void clicked(int wid);
@@ -41,12 +44,37 @@ class GraphicsWhiskerCurve : public QGraphicsObject
 
   protected:
     void mousePressEvent(QGraphicsSceneMouseEvent*);
+    void hoverEnterEvent(QGraphicsSceneHoverEvent*);
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent*); 
 
   protected:
     int       wid_;
     QPolygonF midline_;
     QPolygonF outline_;
+    QPainterPath collisionBounds_;
     QPen      pen_;
     int       is_selected_;
+    int       is_hovered_;
+    float     highlight_alpha_;
+};
 
+class CurveGroup : public QObject
+{ Q_OBJECT
+  public:
+    CurveGroup(QGraphicsScene* scene, QObject *parent=NULL);
+
+  public slots:
+    void beginAdding();
+    void add(QPolygonF shape,int wid,int ident,int nident);
+    void endAdding();
+    void removeSelected();
+
+  protected slots:
+    void selection(QObject* target);    ///< ensures only one curve is selected
+
+  protected:
+    QSignalMapper   mapper_;
+    int             cursor_;
+    QGraphicsScene *scene_;
+    QList<Curve*>   curves_;
 };

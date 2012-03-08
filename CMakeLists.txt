@@ -327,7 +327,7 @@ if(QT_FOUND)
     qtui/MainWindow.h
     qtui/Display.h
     qtui/Data.h
-    qtui/GraphicsWhiskerCurve.h
+    qtui/Curve.h
   )
   qt4_add_resources(RCC_SRCS qtui/qtui.qrc)
   source_group("Source Files\\Qt Generated" FILES
