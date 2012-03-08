@@ -268,24 +268,34 @@ void Data::commit()
   // commit in measurements -> whiskers -> video order
   // to respect dependencies
   saving_.waitForFinished();
+  // Get rid of the old stuff
+  { int dirty_whiskers = ((r.v!=NULL) || (r.w!=NULL)) && (curves_!=NULL);
+    if(dirty_whiskers)
+    { Free_Whisker_Seg_Vec(curves_,ncurves_); // this takes a huge amount of time (in Debug on Win7)
+      curves_=NULL;
+    }
+    if(measurements_)
+    { Free_Measurements_Table(measurements_);
+      measurements_=NULL;
+    }
+  }
+  // Load the new stuff
   if(r.m)
-  { if(measurements_) Free_Measurements_Table(measurements_);
-    measurements_  = r.m;
+  { measurements_  = r.m;
     nmeasurements_ = r.mn;
-    lastMeasurementsFile_ = r.measurement_path;
-    buildMeasurementsIndex_();
+    lastMeasurementsFile_ = r.measurement_path;    
   }
   if(r.w)
-  { if(curves_) Free_Whisker_Seg_Vec(curves_,ncurves_); // this takes a huge amount of time (in Debug on Win7)
-    curves_  = r.w;
+  { curves_  = r.w;
     ncurves_ = r.wn;
-    lastWhiskerFile_ = r.whisker_path;
-    buildCurveIndex_();
+    lastWhiskerFile_ = r.whisker_path;    
   }
   if(r.v)
   { if(video_) video_close(&video_);
     video_ = r.v;
   }
+  buildMeasurementsIndex_();
+  buildCurveIndex_();
   emit loaded();
 }
 
