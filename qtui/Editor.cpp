@@ -4,8 +4,9 @@
 #include <QGraphicsSvgItem>
 #include <QDebug>
 
-#include "Display.h"
+#include "Editor.h"
 #include "Curve.h"
+#include "Frame.h"
 
 #define ENDL "\n"
 #define HERE         qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__)
@@ -36,12 +37,14 @@ View::View(QGraphicsScene *scene, QWidget *parent)
   : QGraphicsView(scene,parent)
   , lockitem_(0)
   , iframe_(-1)
+  , ident_(-1)
 { setAcceptDrops(true);
   setResizeAnchor(AnchorViewCenter);
   setDragMode(NoDrag);
   setAlignment(Qt::AlignCenter);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  //setViewportUpdateMode(FullViewportUpdate);
   setRenderHints( QPainter::Antialiasing
                 | QPainter::SmoothPixmapTransform
                 | QPainter::HighQualityAntialiasing
@@ -54,8 +57,18 @@ View::View(QGraphicsScene *scene, QWidget *parent)
   viewport->makeCurrent();
   TRY( viewport->context()->isValid(),ErrorViewport);
   TRY( viewport->isValid()           ,ErrorViewport);
+
+  { QTimer *t=new QTimer(this);
+    connect(t,SIGNAL(timeout()),this,SLOT(invalidateForeground()));
+    t->start(1000.0/30.0);
+  }
 ErrorViewport: //ignore
   return;
+}
+
+void View::invalidateForeground()
+{ 
+  scene()->invalidate(QRectF(),QGraphicsScene::ForegroundLayer);
 }
 
 void View::lockTo(const QGraphicsItem *item)
@@ -73,12 +86,45 @@ void View::setFrame(int iframe)
 { iframe_=iframe; }
 
 void View::drawForeground(QPainter *painter, const QRectF &rect)
-{ if(iframe_>=0)
-  { painter->resetTransform();
-    painter->setFont(QFont("Helvetica",12,QFont::Bold));
-    painter->setPen(QPen(Qt::yellow));
-    painter->drawText(2,14,QString("Frame: %1").arg(iframe_,4));
+{ 
+  if(iframe_>=0)
+  {
+    painter->resetTransform();
+    { QFont font = QFont("Helvetica",20,QFont::Bold);
+      QString msg;
+      painter->setPen(QPen(Qt::white));
+      painter->setFont(font);
+
+      msg=QString("Frame: %1").arg(iframe_,4);
+      painter->drawText(2,22,msg);
+      msg=QString("Whisker: %1").arg(ident_);
+      painter->drawText(2,42,msg);
+    }
+    { QFont font = QFont("Helvetica",10);  
+      QPointF p  = QPointF(   mapFromGlobal(QCursor::pos())),
+              o  = QPointF(10,10),
+              ps = mapToScene(mapFromGlobal(QCursor::pos()));
+      QStaticText txt(QString("(%1,%2)").arg((int)ps.x()).arg((int)ps.y()));
+      txt.prepare();
+      painter->setFont(font);
+      painter->setPen(Qt::white);
+      painter->setBrush(Qt::white);
+      painter->drawText(p+o,QString("(%1,%2)").arg((int)ps.x()).arg((int)ps.y()));
+      //painter->drawStaticText(p,txt);
+      QRectF r(0.0f,0.0f,1.0f,1.0f);
+      r.moveCenter(p);
+      painter->drawEllipse(r);
+    }
   }
+}
+
+int View::ident()
+{return ident_;}
+
+void View::setIdent(int ident)
+{ ident_=ident;
+  invalidateForeground();
+  emit identChanged(ident);
 }
 
 void View::dragEnterEvent(QDragEnterEvent *event)
@@ -120,7 +166,7 @@ void View::wheelEvent(QWheelEvent *event)
 ////////////////////////////////////////////////////////////////////////////////
 // DISPLAY      QWIDGET
 ////////////////////////////////////////////////////////////////////////////////
-Display::Display(QWidget *parent,Qt::WindowFlags f)
+Editor::Editor(QWidget *parent,Qt::WindowFlags f)
   : QWidget(parent,f)
   , view_(0)
   , scene_(0)
@@ -136,15 +182,20 @@ Display::Display(QWidget *parent,Qt::WindowFlags f)
   ///// Setup the initial scene
   scene_ = new QGraphicsScene;
   curves_ = new CurveGroup(scene_,this);
+  
+  TRY(connect(curves_,SIGNAL(removeRequest(int,int)),&data_,SLOT(remove(int,int))),ErrorConnect);
+  TRY(connect(curves_,SIGNAL(clicked(int)),this,SLOT(setToCurrentIdentByWid(int))),ErrorConnect);
+
   // scene
   //      \-- drop target
   //      \-- data items
   //            \-- video (pixmap) item
   //            \-- whisker curves
-  //      \-- loading item
+  //      \-- loading item (BROKEN - DOES NOTHING)
   { scene_->setBackgroundBrush(Qt::white);
 
-    image_           = new QGraphicsPixmapItem();
+    image_           = new Frame(this);
+    image_->setCursor(Qt::CrossCursor);
     droptarget_      = new QGraphicsSvgItem(":/images/droptarget");
     dataItemsRoot_   = new QGraphicsWidget;
     loadingGraphics_ = new LoadingGraphicsWidget;
@@ -165,6 +216,8 @@ Display::Display(QWidget *parent,Qt::WindowFlags f)
                 this ,  SLOT(   open(const QUrl&))),ErrorConnect);
     TRY(connect(this ,SIGNAL( frameId(int)),
                 view_,  SLOT(setFrame(int))),ErrorConnect);
+    TRY(connect(view_,SIGNAL(identChanged(int)),
+                this ,  SLOT(selectByIdent(int))),ErrorConnect);
   }
 
   ///// State machine to handle item visiblity
@@ -211,7 +264,7 @@ ErrorConnect:
  * Updates iframe_, which keeps track of where we are
  * in the movie, if the read was successful.
  */
-void Display::showFrame(int index)
+void Editor::showFrame(int index)
 { QPixmap p = data_.frame(index);
   if(!p.isNull())
   { iframe_=index;  // only updates if read was successful
@@ -221,7 +274,7 @@ void Display::showFrame(int index)
     // add whisker curves
     { int i;
       int nident = data_.maxIdentity()-data_.minIdentity();
-      curves_->beginAdding();
+      curves_->beginAdding(iframe_);
       for(i=0;i<data_.curveCount(iframe_);++i)
       { 
         QPolygonF shape = data_.curve(iframe_,i);
@@ -230,16 +283,27 @@ void Display::showFrame(int index)
         curves_->add(shape,wid,ident,nident);
       }
       curves_->endAdding();
+      if(view_->ident()!=-1)
+        selectByIdent(view_->ident());
     }
   }
   return;
+}
+
+void Editor::setToCurrentIdentByWid(int wid)
+{ data_.setIdentity(iframe_,wid,view_->ident());
+  showFrame(iframe_);
+}
+
+void Editor::traceAt(QPointF r)
+{ HERE;
 }
 
 /**
  * Usually this function is called to referesh the view for a new video.
  * Also calls View::lockTo for the image.
  */
-void Display::showCurrentFrame()
+void Editor::showCurrentFrame()
 { if(iframe_>=0 && iframe_<data_.frameCount())
     showFrame(iframe_);
   else
@@ -247,46 +311,85 @@ void Display::showCurrentFrame()
   view_->lockTo(image_);
 }
 
-void Display::nextFrame()
+void Editor::nextFrame()
 { showFrame(iframe_+1);
 }
 #define NEXTFRAME(X) \
-  void Display::nextFrame##X () \
+  void Editor::nextFrame##X () \
   { showFrame(iframe_+X); \
   }
 NEXTFRAME(10);
 NEXTFRAME(100);
 NEXTFRAME(1000);
 
-void Display::prevFrame()
+void Editor::prevFrame()
 { showFrame(iframe_-1);
 }
 #define PREVFRAME(X) \
-  void Display::prevFrame##X () \
+  void Editor::prevFrame##X () \
   { showFrame(iframe_-X); \
   }
 PREVFRAME(10);
 PREVFRAME(100);
 PREVFRAME(1000);
 
-void Display::firstFrame()
+void Editor::firstFrame()
 { showFrame(0);
 }
 
-void Display::lastFrame()
+void Editor::lastFrame()
 { showFrame(data_.frameCount()-1);
 }
 
-void Display::open(const QUrl& url)
+void Editor::incIdent()
+{ view_->setIdent(view_->ident()+1);
+}
+#define INCIDENT(X) \
+  void Editor::incIdent##X () \
+  { view_->setIdent(view_->ident()+X); \
+  }
+INCIDENT(10);
+INCIDENT(100);
+INCIDENT(1000);
+
+void Editor::decIdent()
+{ view_->setIdent(view_->ident()-1);
+}
+#define DECIDENT(X) \
+  void Editor::decIdent##X () \
+  { view_->setIdent(view_->ident()-X); \
+  }
+DECIDENT(10);
+DECIDENT(100);
+DECIDENT(1000);
+
+void Editor::open(const QString& fname)
+{ data_.open(fname);
+  emit loadStarted();
+}
+
+void Editor::open(const QUrl& url)
 { data_.open(url);
   emit loadStarted();
 }
 
-void Display::deleteSelected()
+void Editor::deleteSelected()
 { curves_->removeSelected();
 }
 
-void Display::makeActions_()
+/** O(ncurves) search.
+ */
+void Editor::selectByIdent(int ident)
+{ for(int i=0;i<data_.curveCount(iframe_);++i)
+    if(ident==data_.identity(iframe_,i))
+    { curves_->selectByWid(data_.wid(iframe_,i)); // O(ncurves) search 
+      return;
+    }
+  // none found
+  curves_->deselectAll();
+}
+
+void Editor::makeActions_()
 { 
   actions_["next"    ]= new QAction(tr("Next frame")             ,this);  
   actions_["next10"  ]= new QAction(tr("Jump ahead 10 frames")   ,this);  
@@ -296,9 +399,17 @@ void Display::makeActions_()
   actions_["prev10"  ]= new QAction(tr("Jump back 10 frames")    ,this);  
   actions_["prev100" ]= new QAction(tr("Jump back 100 frames")   ,this);  
   actions_["prev1000"]= new QAction(tr("Jump back 1000 frames")  ,this);  
-  actions_["last"    ]= new QAction(tr("Jump to end")            ,this);  
-  actions_["first"   ]= new QAction(tr("Jump to start")          ,this);
-  actions_["delete"  ]= new QAction(tr("Delete selected curve.") ,this);
+  actions_["last"    ]= new QAction(tr("Jump to last frame")     ,this);  
+  actions_["first"   ]= new QAction(tr("Jump to first frame")    ,this);
+  actions_["delete"  ]= new QAction(tr("Delete selected curve")  ,this);
+  actions_["incIdent"    ]= new QAction(tr("Increment active identity")  ,this);
+  actions_["incIdent10"  ]= new QAction(tr("Increment active identity by 10")    ,this);
+  actions_["incIdent100" ]= new QAction(tr("Increment active identity by 100")   ,this);
+  actions_["incIdent1000"]= new QAction(tr("Increment active identity by 1000")  ,this);
+  actions_["decIdent"    ]= new QAction(tr("Decrement active identity")  ,this);
+  actions_["decIdent10"  ]= new QAction(tr("Decrement active identity by 10")    ,this);
+  actions_["decIdent100" ]= new QAction(tr("Decrement active identity by 100")   ,this);
+  actions_["decIdent1000"]= new QAction(tr("Decrement active identity by 1000")  ,this);
 
   actions_["next"    ]->setShortcut( QKeySequence( Qt::Key_Right));  
   actions_["next10"  ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT));  
@@ -310,19 +421,35 @@ void Display::makeActions_()
   actions_["prev1000"]->setShortcut( QKeySequence( Qt::Key_Left  + Qt::SHIFT + Qt::CTRL + Qt::ALT));  
   actions_["last"    ]->setShortcut( QKeySequence( "]"));            
   actions_["first"   ]->setShortcut( QKeySequence( "["));            
-  actions_["delete"  ]->setShortcut( QKeySequence( QKeySequence::Delete));
+  actions_["delete"  ]->setShortcut( QKeySequence( Qt::Key_Backspace));
+  actions_["incIdent"        ]->setShortcut( QKeySequence( Qt::Key_Up));  
+  actions_["incIdent10"      ]->setShortcut( QKeySequence( Qt::Key_Up + Qt::SHIFT));                        
+  actions_["incIdent100"     ]->setShortcut( QKeySequence( Qt::Key_Up + Qt::SHIFT + Qt::CTRL));             
+  actions_["incIdent1000"    ]->setShortcut( QKeySequence( Qt::Key_Up + Qt::SHIFT + Qt::CTRL + Qt::ALT));   
+  actions_["decIdent"        ]->setShortcut( QKeySequence( Qt::Key_Down));                                     
+  actions_["decIdent10"      ]->setShortcut( QKeySequence( Qt::Key_Down  + Qt::SHIFT));                        
+  actions_["decIdent100"     ]->setShortcut( QKeySequence( Qt::Key_Down  + Qt::SHIFT + Qt::CTRL));             
+  actions_["decIdent1000"    ]->setShortcut( QKeySequence( Qt::Key_Down  + Qt::SHIFT + Qt::CTRL + Qt::ALT));   
 
-  TRY(connect(actions_["next"     ],SIGNAL(triggered()),this,SLOT(nextFrame())     ),Error);  
-  TRY(connect(actions_["next10"   ],SIGNAL(triggered()),this,SLOT(nextFrame10  ()) ),Error);  
-  TRY(connect(actions_["next100"  ],SIGNAL(triggered()),this,SLOT(nextFrame100 ()) ),Error);  
-  TRY(connect(actions_["next1000" ],SIGNAL(triggered()),this,SLOT(nextFrame1000()) ),Error);  
-  TRY(connect(actions_["prev"     ],SIGNAL(triggered()),this,SLOT(prevFrame())     ),Error);    
-  TRY(connect(actions_["prev10"   ],SIGNAL(triggered()),this,SLOT(prevFrame10  ()) ),Error);  
-  TRY(connect(actions_["prev100"  ],SIGNAL(triggered()),this,SLOT(prevFrame100 ()) ),Error);  
-  TRY(connect(actions_["prev1000" ],SIGNAL(triggered()),this,SLOT(prevFrame1000()) ),Error);  
-  TRY(connect(actions_["last"     ],SIGNAL(triggered()),this,SLOT(lastFrame())     ),Error);    
-  TRY(connect(actions_["first"    ],SIGNAL(triggered()),this,SLOT(firstFrame())    ),Error);    
-  TRY(connect(actions_["delete"   ],SIGNAL(triggered()),this,SLOT(deleteSelected())),Error);    
+  TRY(connect(actions_["next"         ],SIGNAL(triggered()),this,SLOT(nextFrame())     ),Error);     
+  TRY(connect(actions_["next10"       ],SIGNAL(triggered()),this,SLOT(nextFrame10  ()) ),Error);     
+  TRY(connect(actions_["next100"      ],SIGNAL(triggered()),this,SLOT(nextFrame100 ()) ),Error);     
+  TRY(connect(actions_["next1000"     ],SIGNAL(triggered()),this,SLOT(nextFrame1000()) ),Error);     
+  TRY(connect(actions_["prev"         ],SIGNAL(triggered()),this,SLOT(prevFrame())     ),Error);     
+  TRY(connect(actions_["prev10"       ],SIGNAL(triggered()),this,SLOT(prevFrame10  ()) ),Error);     
+  TRY(connect(actions_["prev100"      ],SIGNAL(triggered()),this,SLOT(prevFrame100 ()) ),Error);     
+  TRY(connect(actions_["prev1000"     ],SIGNAL(triggered()),this,SLOT(prevFrame1000()) ),Error);     
+  TRY(connect(actions_["last"         ],SIGNAL(triggered()),this,SLOT(lastFrame())     ),Error);     
+  TRY(connect(actions_["first"        ],SIGNAL(triggered()),this,SLOT(firstFrame())    ),Error);     
+  TRY(connect(actions_["delete"       ],SIGNAL(triggered()),this,SLOT(deleteSelected())),Error);     
+  TRY(connect(actions_["incIdent"     ],SIGNAL(triggered()),this,SLOT(incIdent())      ),Error);     
+  TRY(connect(actions_["incIdent10"   ],SIGNAL(triggered()),this,SLOT(incIdent10  ())  ),Error);     
+  TRY(connect(actions_["incIdent100"  ],SIGNAL(triggered()),this,SLOT(incIdent100 ())  ),Error);     
+  TRY(connect(actions_["incIdent1000" ],SIGNAL(triggered()),this,SLOT(incIdent1000())  ),Error);  
+  TRY(connect(actions_["decIdent"     ],SIGNAL(triggered()),this,SLOT(decIdent())      ),Error);     
+  TRY(connect(actions_["decIdent10"   ],SIGNAL(triggered()),this,SLOT(decIdent10  ())  ),Error);     
+  TRY(connect(actions_["decIdent100"  ],SIGNAL(triggered()),this,SLOT(decIdent100 ())  ),Error);     
+  TRY(connect(actions_["decIdent1000" ],SIGNAL(triggered()),this,SLOT(decIdent1000())  ),Error);     
 
   foreach(QAction *a,actions_)
   { a->setShortcutContext(Qt::ApplicationShortcut);
@@ -333,10 +460,51 @@ Error:
   DIE;
 }
 
+QList<QAction*> Editor::videoPlayerActions()
+{ static const char* names[] = {
+                                "next",   
+                                "next10", 
+                                "next100",
+                                "next1000",
+                                "prev",   
+                                "prev10", 
+                                "prev100",
+                                "prev1000",
+                                "last",   
+                                "first",
+                                 NULL
+                               };
+  const char **c=names;
+  QList<QAction*> out;
+  while(*c)
+    out.append(actions_[*c++]);
+  return out;
+}
+
+
+QList<QAction*> Editor::editorActions()
+{ static const char* names[] = { "delete",
+                                 "incIdent",
+                                 "incIdent10",
+                                 "incIdent100",
+                                 "incIdent1000",
+                                 "decIdent",
+                                 "decIdent10",
+                                 "decIdent100",
+                                 "decIdent1000",
+                                 NULL
+                               };
+  const char **c=names;
+  QList<QAction*> out;
+  while(*c)
+    out.append(actions_[*c++]);
+  return out;
+}
+
 #define countof(a) (sizeof(a)/sizeof(*a))
-void Display::wheelEvent(QWheelEvent *event)
-{ void (Display::*next)(void);
-  void (Display::*prev)(void);
+void Editor::wheelEvent(QWheelEvent *event)
+{ void (Editor::*next)(void);
+  void (Editor::*prev)(void);
   int nmods = 0;
   Qt::KeyboardModifiers m = event->modifiers();
 
@@ -350,12 +518,12 @@ void Display::wheelEvent(QWheelEvent *event)
   }
 
   switch(nmods)
-  { case 0: next = &Display::nextFrame;     prev = &Display::prevFrame;     break;
-    case 1: next = &Display::nextFrame10;   prev = &Display::prevFrame10;   break; 
-    case 2: next = &Display::nextFrame100;  prev = &Display::prevFrame100;  break; 
+  { case 0: next = &Editor::nextFrame;     prev = &Editor::prevFrame;     break;
+    case 1: next = &Editor::nextFrame10;   prev = &Editor::prevFrame10;   break; 
+    case 2: next = &Editor::nextFrame100;  prev = &Editor::prevFrame100;  break; 
     case 3: 
     case 4:
-            next = &Display::nextFrame1000; prev = &Display::prevFrame1000; break; 
+            next = &Editor::nextFrame1000; prev = &Editor::prevFrame1000; break; 
     default:
       HERE; 
       exit(-1);

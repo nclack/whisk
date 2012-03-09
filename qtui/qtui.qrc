@@ -5,7 +5,7 @@
 <qresource prefix="/icons">
   <file alias="fullscreen">resources/icons/fullscreen.svg</file>
   <file alias="quit">resources/icons/quit.png</file>
-  <file alias="open">resources/icons/open.jpg</file>
+  <file alias="open">resources/icons/open.png</file>
   <file alias="save">resources/icons/save.png</file>
   <file alias="saveas">resources/icons/saveas.png</file>
 </qresource>

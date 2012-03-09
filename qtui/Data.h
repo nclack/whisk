@@ -36,17 +36,29 @@ class Data : public QObject
 
   protected:
     Whisker_Seg   *get_curve_(int iframe,int icurve);    ///< icurve is NOT the "whisker id"
+    Whisker_Seg   *get_curve_by_wid_(int iframe,int wid);///< \returns NULL if not found
     Measurements  *get_meas_(int iframe,int icurve);     ///< icurve is NOT the "whisker id" 
+    Measurements  *get_meas_by_wid_(int iframe,int wid); ///< \returns NULL if not found
   public slots:
     void open(const QString& path);
     void open(const QUrl& path);                         ///< Currently only handle local paths
     void save();
+    void saveAs(const QString &path);                    ///< will try to guess what data to save
+    void saveWhiskersAs(const QString &path);
+    void saveMeasurementsAs(const QString &path);
+
+    void remove(int iframe, int wid);
+    void setIdentity(int iframe, int wid, int ident);
 
   signals:
-    void loaded();
+    void loaded();                                        ///< emited when commit of new data is finished
+    void curvesSaved();
+    void curvesDirtied();
+    void measurementsSaved();
+    void measurementsDirtied();
 
   protected slots:
-    void commit();                                         ///< recieves a finished QFutureWatcher*
+    void commit();                                        ///< called once a load succesfully completes to merge loaded data
                                                          
   public: //pseudo-private
     typedef QMap<int,Whisker_Seg*>           curveIdMap_t;///<        id->Whisker_Seg* 
@@ -67,6 +79,7 @@ class Data : public QObject
     int               maxIdent_;
 
     QFutureWatcher<result_t> *watcher_;
+    QFutureWatcher<void>     *save_watcher_;
     QFuture<void>     saving_;
     QString           lastWhiskerFile_;
     QString           lastMeasurementsFile_;

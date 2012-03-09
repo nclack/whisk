@@ -140,6 +140,16 @@ void Free_Whisker_Seg( Whisker_Seg *w )
 }
 
 SHARED_EXPORT
+void Free_Whisker_Seg_Data( Whisker_Seg *w )
+{ if(w)
+  { if ( w->scores ) free( w->scores );
+    if ( w->thick  ) free( w->thick  );
+    if ( w->y      ) free( w->y      );
+    if ( w->x      ) free( w->x      );
+  }
+}
+
+SHARED_EXPORT
 void Free_Whisker_Seg_Vec ( Whisker_Seg *wv, int n )
 {
   while( n-- )

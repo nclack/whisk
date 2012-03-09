@@ -23,6 +23,7 @@ Curve::Curve(QGraphicsItem* parent)
   setFlags(ItemIsSelectable
           |ItemClipsToShape
           );
+  setCursor(Qt::ArrowCursor);
 
   setPen(QPen(QBrush(default_color),
               1.0,             //width
@@ -39,7 +40,7 @@ void Curve::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
 { QPen   fillpen(QColor(0,0,0,0));
   QBrush nobrush,fillbrush(color());
 
-  if(is_hovered_ || is_selected_)
+  if(is_selected_)
   { QColor c = color();
     c.setAlphaF(highlight_alpha_);
     fillbrush.setColor(c);
@@ -80,8 +81,8 @@ void Curve::setMidline(const QPolygonF& midline)
   is_hovered_=0;
   QPainterPathStroker s;
   s.setWidth(22.0);
-  s.setCapStyle(Qt::RoundCap);
-  s.setJoinStyle(Qt::RoundJoin);
+  s.setCapStyle(Qt::FlatCap);
+  s.setJoinStyle(Qt::BevelJoin);
   QPainterPath p;
   p.addPolygon(midline_);
   collisionBounds_ = s.createStroke(p);
@@ -113,7 +114,7 @@ void Curve::light()
 }
 
 void Curve::dark()
-{ highlight_alpha_=0.5;
+{ highlight_alpha_=0.15; //0.5;
 }
 
 int Curve::wid() const
@@ -145,9 +146,9 @@ void Curve::mousePressEvent(QGraphicsSceneMouseEvent* e)
   { e->ignore();
     return;
   }
-  select();
   update();
-  emit clicked(wid_);
+  emit clicked(wid_); // this has to come before calling select().  
+  select();           // Some clicked() recievers may reset the selection state.
 }
 
 void Curve::hoverEnterEvent(QGraphicsSceneHoverEvent*)
@@ -172,8 +173,10 @@ Error:
   return;
 }
 
-void CurveGroup::beginAdding()
-{cursor_=0;}
+void CurveGroup::beginAdding(int iframe)
+{ cursor_=0;
+  iframe_=iframe;
+}
 
 void CurveGroup::add(QPolygonF shape, int wid, int ident, int nident)
 { 
@@ -190,6 +193,7 @@ void CurveGroup::add(QPolygonF shape, int wid, int ident, int nident)
 
     mapper_.setMapping(pp,pp);
     TRY(connect(pp,SIGNAL(selected()),&mapper_,SLOT(map())));
+    TRY(connect(pp,SIGNAL(clicked(int)),this,SIGNAL(clicked(int))));
   }
   curves_[cursor_]->setColorByIdentity(ident,nident);
   curves_[cursor_]->setWid(wid);
@@ -207,10 +211,25 @@ void CurveGroup::endAdding()
   }
 }
 
+void CurveGroup::selectByWid(int wid)
+{ foreach(Curve* c, curves_)
+    if(c->wid()==wid)
+    { c->select();
+      return;
+    }
+}
+
+void CurveGroup::deselectAll()
+{ foreach(Curve *c,curves_)
+    c->setSelected(0);
+}
+
 void CurveGroup::removeSelected()
 { foreach(Curve *c,curves_)
     if(c->isSelected())
-      c->hide();
+    { c->hide();
+      emit removeRequest(iframe_,c->wid());
+    }
 }
 
 void CurveGroup::selection(QObject *target)

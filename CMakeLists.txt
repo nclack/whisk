@@ -325,7 +325,7 @@ if(QT_FOUND)
 
   qt4_wrap_cpp(MOC_SRCS
     qtui/MainWindow.h
-    qtui/Display.h
+    qtui/Editor.h
     qtui/Data.h
     qtui/Curve.h
   )

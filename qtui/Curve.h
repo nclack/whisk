@@ -64,10 +64,16 @@ class CurveGroup : public QObject
     CurveGroup(QGraphicsScene* scene, QObject *parent=NULL);
 
   public slots:
-    void beginAdding();
+    void beginAdding(int iframe);
     void add(QPolygonF shape,int wid,int ident,int nident);
     void endAdding();
+    void selectByWid(int wid);
+    void deselectAll();
     void removeSelected();
+
+  signals:
+    void removeRequest(int fid, int wid);
+    void clicked(int wid);
 
   protected slots:
     void selection(QObject* target);    ///< ensures only one curve is selected
@@ -77,4 +83,5 @@ class CurveGroup : public QObject
     int             cursor_;
     QGraphicsScene *scene_;
     QList<Curve*>   curves_;
+    int             iframe_;
 };

@@ -51,6 +51,7 @@ struct result_t {
 ////////////////////////////////////////////////////////////////////////////////
 
 KIND         guessKind       (const QString & path);    
+KIND         guessKindForSave(const QString & path);    
 QFileInfo    measurementsFile(const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist.
 QFileInfo    whiskersFile    (const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist.  
 QFileInfo    videoFile       (const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist. 
@@ -78,6 +79,17 @@ KIND guessKind(const QString & path)
     return VIDEO;
 Error:
   return UNKNOWN;
+}
+
+KIND guessKindForSave(const QString & path)
+{ QFileInfo info(path);  
+  QByteArray b = info.absoluteFilePath().toLocal8Bit();
+  const char* fname = b.data();
+  char *fmt=0;
+  if( info.suffix() == "measurements" ) return MEASUREMENTS;
+  if( info.suffix() == "whiskers" )     return WHISKERS;
+  // now the only way to guess is based on contents
+  return guessKind(path);
 }
 
 /** Assume keypath is a valid path as determined by isValidPath()
@@ -184,10 +196,12 @@ result_t maybeLoadAll(const QString &path)
       case WHISKERS:
         out.w =r.w;
         out.wn=r.wn;
+        out.whisker_path=r.whisker_path;
         break;
       case MEASUREMENTS:
         out.m =r.m;
         out.mn=r.mn;
+        out.measurement_path=r.measurement_path;
         break;
       default: // UNKNOWN
         ;
@@ -197,15 +211,12 @@ result_t maybeLoadAll(const QString &path)
 }
 
 void savefunc(const result_t &r)
-{ 
+{ QByteArray wp = r.whisker_path.toLocal8Bit(),
+             mp = r.measurement_path.toLocal8Bit();
   if(r.w)
-    TRY(Save_Whiskers(
-          r.whisker_path.toLocal8Bit().data(),
-          NULL,r.w,r.wn));
+    TRY(Save_Whiskers(wp.data(),NULL,r.w,r.wn));
   if(r.m)
-    TRY(Measurements_Table_To_Filename(
-          r.measurement_path.toLocal8Bit().data(),
-          NULL,r.m,r.mn));
+    TRY(Measurements_Table_To_Filename(mp.data(),NULL,r.m,r.mn));
 Error:
   return;
 }
@@ -226,6 +237,10 @@ Data::Data(QObject *parent)
   , watcher_(0)
 { watcher_ = new QFutureWatcher<result_t>(this);
   TRY(connect(watcher_,SIGNAL(finished()),this,SLOT(commit())));
+
+  save_watcher_ = new QFutureWatcher<void>(this);
+  TRY(connect(save_watcher_,SIGNAL(finished()),this,SIGNAL(measurementsSaved())));
+  TRY(connect(save_watcher_,SIGNAL(finished()),this,SIGNAL(curvesSaved())));
   return;
 Error:
   DIE;
@@ -301,10 +316,112 @@ void Data::commit()
 
 /**
  * Starts an asynchronous call to save current data.
+ *
+ * Use this for autosaves. It's executed in the background,
+ * so the main thread isn't blocked.
  */
 void Data::save()
 { result_t r(this);
   saving_=QtConcurrent::run(savefunc,r);
+  save_watcher_->setFuture(saving_);
+}
+
+/** saves either the whiskers or the measurements file
+ *  based on file extension.
+ *
+ *  If the file extension doesn't match, an attempt will
+ *  be made to see if the file exists and if the file type
+ *  can be guessed.
+ *
+ *  If the filetype is a video, both the whiskers and 
+ *  measurements data will be saved alongside the video.
+ *  If whiskers or measurements, only the corresponding 
+ *  data will be saved.
+ *
+ *  \todo add dirty flags to indicate unsaved data
+ *  \todo add status bar indicators for dirty data
+ * 
+ *  If anything goes wrong, a warning dialog
+ *  will get thrown up to indicate the save failed.
+ */
+void Data::saveAs(const QString &path)
+{ KIND k = guessKindForSave(path);
+  switch(k)
+  { case WHISKERS:     saveWhiskersAs(path);     break;
+    case MEASUREMENTS: saveMeasurementsAs(path); break;
+    case VIDEO:
+                       saveWhiskersAs(whiskersFile(path).absoluteFilePath());
+                       saveMeasurementsAs(measurementsFile(path).absoluteFilePath());
+                       break;
+    default:
+      QMessageBox mb;
+      mb.setText(tr("Could not determine the file type for saving."ENDL
+                    "Data was not saved."ENDL));
+      mb.setIcon(QMessageBox::Warning);
+      mb.exec();
+  }
+}
+
+void Data::saveWhiskersAs(const QString &path)
+{ if(curves_) 
+    TRY(Save_Whiskers(
+          path.toLocal8Bit().data(),
+          NULL,curves_,ncurves_));
+  emit curvesSaved();
+  return;
+Error:
+  QMessageBox mb;
+  mb.setText("Failed to save Whiskers file.");
+  mb.setIcon(QMessageBox::Warning);
+}
+
+void Data::saveMeasurementsAs(const QString &path)
+{
+  if(measurements_)
+    TRY(Measurements_Table_To_Filename(
+          path.toLocal8Bit().data(),
+          NULL,measurements_,nmeasurements_));
+  emit measurementsSaved();
+Error:
+  QMessageBox mb;
+  mb.setText("Failed to save Measurements file.");
+  mb.setIcon(QMessageBox::Warning);
+}
+
+void Data::remove(int iframe, int wid)
+{ Whisker_Seg *w;
+  Measurements *m;
+  TRY(w=get_curve_by_wid_(iframe,wid));  // query for the Whisker_seg first
+  saving_.waitForFinished();             // make sure the saving thread is done before changing anything
+
+  Free_Whisker_Seg_Data(w);              // Do the whiskers first
+  memmove(w,w+1, ((curves_+ncurves_)-(w+1))*sizeof(Whisker_Seg));
+  --ncurves_;
+  buildCurveIndex_();
+  emit curvesDirtied();
+
+  SILENTTRY(m=get_meas_by_wid_(iframe,wid));
+  memmove(m,m+1, ((measurements_+nmeasurements_)-(m+1))*sizeof(Measurements));
+  --nmeasurements_;
+  buildMeasurementsIndex_();
+  emit measurementsDirtied();
+
+Error:
+  return;
+}
+
+void Data::setIdentity(int iframe, int wid, int ident)
+{ Measurements *m;
+  SILENTTRY(m=get_meas_by_wid_(iframe,wid));
+  saving_.waitForFinished();
+  m->state=ident;
+
+  minIdent_ = qMin(minIdent_,ident);
+  maxIdent_ = qMax(maxIdent_,ident);
+
+  emit measurementsDirtied();
+Error:
+  return;
 }
 
 void Data::buildCurveIndex_()
@@ -375,6 +492,15 @@ Error:
   return NULL;
 }
 
+Whisker_Seg* Data::get_curve_by_wid_(int iframe, int wid)
+{ Whisker_Seg *w = 0;
+  QList<Whisker_Seg*> cs = curveIndex_.value(iframe,curveIdMap_t()).values();
+  foreach(Whisker_Seg *c,cs)
+    if(c->id==wid)
+      w=c;
+  return w;
+}
+
 Measurements* Data::get_meas_(int iframe, int icurve)
 { QList<Measurements*> ms;
   ms = measIndex_.value(iframe,measIdMap_t())
@@ -383,6 +509,15 @@ Measurements* Data::get_meas_(int iframe, int icurve)
   return ms.at(icurve);
 Error:
   return NULL;
+}
+
+Measurements* Data::get_meas_by_wid_(int iframe, int wid)
+{ Measurements *mm = 0;
+  QList<Measurements*> ms = measIndex_.value(iframe,measIdMap_t()).values();
+  foreach(Measurements *m,ms)
+    if(m->wid==wid)
+      mm=m;
+  return mm;
 }
 
 QPolygonF Data::curve(int iframe, int icurve)
