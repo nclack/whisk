@@ -328,6 +328,7 @@ if(QT_FOUND)
     qtui/Editor.h
     qtui/Data.h
     qtui/Curve.h
+    qtui/FaceIndicator.h
   )
   qt4_add_resources(RCC_SRCS qtui/qtui.qrc)
   source_group("Source Files\\Qt Generated" FILES

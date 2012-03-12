@@ -1,12 +1,15 @@
 #include <QtGui>
 #include "Data.h"
+namespace whisk {
+#include "measure.h"
+}
 
 
 #define countof(e) (sizeof(e)/sizeof(*(e)))
 
 #define ENDL "\n"
-#define HERE            qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
-#define REPORT(expr)    qDebug("%s(%d):"ENDL "\t%s"ENDL "\tExpression evaluated as false."ENDL,__FILE__,__LINE__,#expr) 
+#define HERE            qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__);
+#define REPORT(expr)    qDebug("%s(%d):"ENDL "\t%s"ENDL "\tExpression evaluated as false."ENDL,__FILE__,__LINE__,#expr)
 #define TRY(expr)       if(!(expr)) {REPORT(expr); goto Error;}
 #define SILENTTRY(expr) if(!(expr)) {              goto Error;}
 #define DIE             qFatal("%s(%d): Fatal error.  Aborting."ENDL,__FILE__,__LINE__)
@@ -15,26 +18,31 @@
 enum KIND       ///< Order is important. See maybeLoadAll()
 { VIDEO = 0,    ///< must be 0
   WHISKERS,
-  MEASUREMENTS, 
+  MEASUREMENTS,
   MAX_KIND,
   UNKNOWN
 };
 
 /** This data structure is kind of stupid?
  */
-struct result_t { 
+struct result_t {
   KIND kind;              ///< indicates the Loader type (when relevant)
-  video_t *v; 
-  Whisker_Seg *w; int wn; 
+  video_t *v;
+  Whisker_Seg *w; int wn;
   Measurements *m; int mn;
   QString whisker_path,
           measurement_path;
+  int face_x,face_y;
+  char orientation;
 
   result_t()
     : kind(UNKNOWN)
     , v(0)
     , w(0), wn(0)
     , m(0), mn(0)
+    , face_x(0)
+    , face_y(0)
+    , orientation('u')
     {}
   result_t(Data *d)
     : kind(UNKNOWN)
@@ -43,25 +51,33 @@ struct result_t {
     , m(d->measurements_), mn(d->nmeasurements_)
     , whisker_path(d->lastWhiskerFile_)
     , measurement_path(d->lastMeasurementsFile_)
-    {}
+    , face_x(0)
+    , face_y(0)
+    , orientation('u')
+    { if(!d->faceDefaultAnchor_.isNull())
+      { face_x = d->faceDefaultAnchor_.x();
+        face_y = d->faceDefaultAnchor_.y();
+        orientation = d->faceDefaultOrient_?'h':'v';
+      }
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 //  PATH MANIPULATION
 ////////////////////////////////////////////////////////////////////////////////
 
-KIND         guessKind       (const QString & path);    
-KIND         guessKindForSave(const QString & path);    
+KIND         guessKind       (const QString & path);
+KIND         guessKindForSave(const QString & path);
 QFileInfo    measurementsFile(const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist.
-QFileInfo    whiskersFile    (const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist.  
-QFileInfo    videoFile       (const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist. 
+QFileInfo    whiskersFile    (const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist.
+QFileInfo    videoFile       (const QString & keypath); ///< The keypath will be used to guess the location.  Doesn't necessarily exist.
 QFileInfo    getInfoForKind  (const QString & keypath, KIND k);
 
 //static const char* fname(const QFileInfo & info)
 //{ return info.absoluteFilePath().toLocal8Bit().data(); }
 
 KIND guessKind(const QString & path)
-{ QFileInfo info(path);  
+{ QFileInfo info(path);
   QByteArray b = info.absoluteFilePath().toLocal8Bit();
   const char* fname = b.data();
   char *fmt=0;
@@ -82,7 +98,7 @@ Error:
 }
 
 KIND guessKindForSave(const QString & path)
-{ QFileInfo info(path);  
+{ QFileInfo info(path);
   QByteArray b = info.absoluteFilePath().toLocal8Bit();
   const char* fname = b.data();
   char *fmt=0;
@@ -97,7 +113,7 @@ KIND guessKindForSave(const QString & path)
  */
 QFileInfo measurementsFile(const QString &keypath)
 { QFileInfo info(keypath);
-  QString newname = info.completeBaseName()+ ".measurements"; 
+  QString newname = info.completeBaseName()+ ".measurements";
   info.setFile(info.absoluteDir(),newname);
   return info;
 }
@@ -107,7 +123,7 @@ QFileInfo measurementsFile(const QString &keypath)
  */
 QFileInfo whiskersFile(const QString &keypath)
 { QFileInfo info(keypath);
-  QString newname = info.completeBaseName()+ ".whiskers"; 
+  QString newname = info.completeBaseName()+ ".whiskers";
   info.setFile(info.absoluteDir(),newname);
   return info;
 }
@@ -121,12 +137,12 @@ QFileInfo videoFile(const QString &keypath)
 { QFileInfo info(keypath), proposed;
   static const char *tries[] = {".tif",".seq",NULL};
   const char **t = tries;
-  do 
+  do
   { proposed.setFile( info.completeBaseName()+t[0] );
     if(proposed.exists())
       return proposed;
   } while (++t);
-  proposed.setFile(info.completeBaseName()+".mp4"); 
+  proposed.setFile(info.completeBaseName()+".mp4");
   return proposed;
 }
 
@@ -215,8 +231,24 @@ void savefunc(const result_t &r)
              mp = r.measurement_path.toLocal8Bit();
   if(r.w)
     TRY(Save_Whiskers(wp.data(),NULL,r.w,r.wn));
-  if(r.m)
+  if(r.m && r.m)
+  { if( (r.face_x!=r.m[0].face_x)           // do we need to recompute measurements?
+      ||(r.face_x!=r.m[0].face_x) 
+      ||((r.orientation?'h':'v')!=r.m[0].face_axis) 
+      )
+    { // order measurements table by whiskers
+      TRY( r.wn==r.mn );
+      Sort_Measurements_Table_Segment_UID(r.m,r.mn);  
+      DIE;  // XXX FIXING HERE
+      Whisker_Segments_Update_Measurements( // make sure measures are up to date ~ O(ncurves)
+          r.m,
+          r.w, r.wn,
+          r.face_x,
+          r.face_y,
+          r.orientation);
+    }
     TRY(Measurements_Table_To_Filename(mp.data(),NULL,r.m,r.mn));
+  }
 Error:
   return;
 }
@@ -234,6 +266,7 @@ Data::Data(QObject *parent)
   , nmeasurements_(0)
   , minIdent_(-1)
   , maxIdent_(-1)
+  , faceDefaultOrient_(UNKNOWN_ORIENTATION)
   , watcher_(0)
 { watcher_ = new QFutureWatcher<result_t>(this);
   TRY(connect(watcher_,SIGNAL(finished()),this,SLOT(commit())));
@@ -298,12 +331,27 @@ void Data::commit()
   if(r.m)
   { measurements_  = r.m;
     nmeasurements_ = r.mn;
-    lastMeasurementsFile_ = r.measurement_path;    
+    lastMeasurementsFile_ = r.measurement_path;
+    faceDefaultAnchor_ = QPointF(r.m[0].face_x,r.m[0].face_y);
+    switch(r.m[0].face_axis)
+    { case 'x':
+      case 'h':
+        faceDefaultOrient_ = HORIZONTAL;
+        break;
+      case 'y':
+      case 'v':
+        faceDefaultOrient_ = VERTICAL;
+        break;
+      default:
+        faceDefaultOrient_ = UNKNOWN_ORIENTATION;
+    }
+    emit facePositionChanged(facePosition(NULL));
+    emit faceOrientationChanged(faceOrientation());
   }
   if(r.w)
   { curves_  = r.w;
     ncurves_ = r.wn;
-    lastWhiskerFile_ = r.whisker_path;    
+    lastWhiskerFile_ = r.whisker_path;
   }
   if(r.v)
   { if(video_) video_close(&video_);
@@ -333,14 +381,14 @@ void Data::save()
  *  be made to see if the file exists and if the file type
  *  can be guessed.
  *
- *  If the filetype is a video, both the whiskers and 
+ *  If the filetype is a video, both the whiskers and
  *  measurements data will be saved alongside the video.
- *  If whiskers or measurements, only the corresponding 
+ *  If whiskers or measurements, only the corresponding
  *  data will be saved.
  *
  *  \todo add dirty flags to indicate unsaved data
  *  \todo add status bar indicators for dirty data
- * 
+ *
  *  If anything goes wrong, a warning dialog
  *  will get thrown up to indicate the save failed.
  */
@@ -363,7 +411,7 @@ void Data::saveAs(const QString &path)
 }
 
 void Data::saveWhiskersAs(const QString &path)
-{ if(curves_) 
+{ if(curves_)
     TRY(Save_Whiskers(
           path.toLocal8Bit().data(),
           NULL,curves_,ncurves_));
@@ -411,10 +459,16 @@ Error:
 }
 
 void Data::setIdentity(int iframe, int wid, int ident)
-{ Measurements *m;
-  SILENTTRY(m=get_meas_by_wid_(iframe,wid));
+{ Measurements *mm;
+  measIdMap_t ms;
+  maybePopulateMeasurements();
+  SILENTTRY(mm=get_meas_by_wid_(iframe,wid));
+  ms = measIndex_.value(iframe);
   saving_.waitForFinished();
-  m->state=ident;
+  foreach(Measurements* m,ms)   // only
+    if(m->state==ident)
+      m->state=-1;
+  mm->state=ident;
 
   minIdent_ = qMin(minIdent_,ident);
   maxIdent_ = qMax(maxIdent_,ident);
@@ -425,7 +479,7 @@ Error:
 }
 
 void Data::buildCurveIndex_()
-{ 
+{
   curveIndex_.clear();
   if(curves_)
     for(Whisker_Seg *c=curves_;c<curves_+ncurves_;++c)
@@ -436,7 +490,7 @@ void Data::buildCurveIndex_()
 }
 
 void Data::buildMeasurementsIndex_()
-{ 
+{
   minIdent_=maxIdent_=-1;
   measIndex_.clear();
   if(measurements_)
@@ -451,6 +505,62 @@ void Data::buildMeasurementsIndex_()
   }
 }
 
+bool Data::isFaceSet()
+{ int is_unknown=1;
+  facePosition(&is_unknown);
+  Orientation o = faceOrientation();
+  if(is_unknown || o==UNKNOWN_ORIENTATION)
+    return false;
+  return true;
+}
+
+bool Data::areFaceDefaultsSet()
+{ int is_unknown=1;
+  if( faceDefaultAnchor_.isNull() ) return false;
+  if( faceDefaultOrient_==UNKNOWN_ORIENTATION) return false;
+  return true;
+}
+QPointF Data::facePosition(int *is_unknown)
+{ if(is_unknown) *is_unknown=1;
+  if(!measurements_)
+    return QPointF();
+  if(is_unknown) *is_unknown=0;
+  return QPointF(measurements_[0].face_x,measurements_[0].face_y);
+}
+
+void Data::setFacePosition(QPointF r)
+{ faceDefaultAnchor_ = r;
+  if(faceDefaultOrient_==UNKNOWN_ORIENTATION)
+    faceDefaultOrient_=VERTICAL;
+  //emit facePositionChanged(r);
+}
+
+Data::Orientation Data::faceOrientation()
+{ if(measurements_)
+    switch(measurements_[0].face_axis)
+    { case 'x':
+      case 'h':
+        return HORIZONTAL;
+      case 'y':
+      case 'v':
+        return VERTICAL;
+      default:
+        ;
+    }
+  return UNKNOWN_ORIENTATION;
+}
+
+void Data::setFaceOrientation(Data::Orientation o)
+{ char s;
+  switch(o)
+  { case HORIZONTAL: s='x'; break;
+    case VERTICAL:   s='y'; break;
+    default:         return;
+  }
+  //emit faceOrientationChanged(o);
+}
+
+
 // DATA    Accessing the data //////////////////////////////////////////////////
 
 const QPixmap Data::frame(int iframe, bool autocorrect)
@@ -462,7 +572,7 @@ const QPixmap Data::frame(int iframe, bool autocorrect)
     for(int i=0;i<256;++i)
       grayscale.append(qRgb(i,i,i));
     qim.setColorTable(grayscale);
-    QPixmap out = QPixmap::fromImage(qim); 
+    QPixmap out = QPixmap::fromImage(qim);
     Free_Image(im);
     return out;
   }
@@ -520,6 +630,58 @@ Measurements* Data::get_meas_by_wid_(int iframe, int wid)
   return mm;
 }
 
+int Data::maybeShowFaceAnchorRequiredDialog()
+{
+  if(!areFaceDefaultsSet())
+  { QMessageBox mb;
+    mb.setText("Could not make curve measurements.");
+    mb.setInformativeText("Need to set the face position and orientation first. "
+                          "Right click on the image and select \"Place face anchor.\"");
+    mb.setIcon(QMessageBox::Information);
+    mb.exec();
+    return 0;
+  }
+  return 1;
+}
+
+int Data::maybePopulateMeasurements()
+{ if(!curves_)      return 0;
+  if(measurements_) return 1;
+  TRY(maybeShowFaceAnchorRequiredDialog());
+  TRY(measurements_=Whisker_Segments_Measure(
+        curves_,ncurves_,
+        faceDefaultAnchor_.x(),
+        faceDefaultAnchor_.y(),
+        faceDefaultOrient_?'x':'y'));
+  nmeasurements_=ncurves_;
+  for(int i=0;i<nmeasurements_;++i)// set initial identities to unknown
+    measurements_[i].state=-1;
+  buildMeasurementsIndex_();
+  lastMeasurementsFile_ = measurementsFile(lastWhiskerFile_).absoluteFilePath();
+  return 1;
+Error:
+  return 0;
+}
+
+/*
+void Data::updateMeasurements()
+{ 
+  TRY(maybeShowFaceAnchorRequiredDialog());
+  if(measurements_)
+  { TRY(nmeasurements_==ncurves_); // double check everything is the right size
+    Whisker_Segments_Update_Measurements(
+        measurements_,
+        curves_, ncurves_,
+        faceDefaultAnchor_.x(),
+        faceDefaultAnchor_.y(),
+        faceDefaultOrient_?'x':'y');
+  } else
+    TRY(maybePopulateMeasurements()); // ensure measurements table exists
+Error:
+  return;
+}
+*/
+
 QPolygonF Data::curve(int iframe, int icurve)
 { QPolygonF c;
   Whisker_Seg *w=0;
@@ -538,7 +700,7 @@ int Data::identity(int iframe, int icurve)
 { Measurements *row;
   Whisker_Seg  *w;
   TRY(  w=get_curve_(iframe,icurve))  // icurve is not necessarily the whisker id, so look up the whisker first
-  TRY(row= measIndex_.value(iframe,measIdMap_t())
+  SILENTTRY(row= measIndex_.value(iframe,measIdMap_t())
                      .value(w->id,NULL));
   return row->state;
 Error:

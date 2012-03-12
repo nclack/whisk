@@ -355,6 +355,27 @@ Measurements *Whisker_Segments_Measure( Whisker_Seg *wv, int wvn, int facex, int
   return table;
 }
 
+SHARED_EXPORT
+Measurements *Whisker_Segments_Update_Measurements(Measurements* table, Whisker_Seg *wv, int wvn, int facex, int facey, char face_axis )
+{ 
+  while(wvn--)
+  { Measurements *row = table + wvn; 
+    row->row   = wvn;
+    row->fid   = wv[wvn].time;
+    row->wid   = wv[wvn].id;
+//  row->state =  0;
+    row->face_x = facex;
+    row->face_y = facey;
+    row->face_axis = face_axis;
+    row->col_follicle_x = 4;
+    row->col_follicle_y = 5;
+//  row->valid_velocity = 0;
+//  row->n = MEASURE__NUM_FIELDS_FROM_MEASURE_SEGMENTS;
+    Whisker_Seg_Measure( wv+wvn, row->data, facex, facey, face_axis );
+  }
+  return table;
+}
+
 static Bar **bar_build_index( Bar *bars, int nbars, int maxfid )
 { Bar *row = bars + nbars,
       **idx = Guarded_Malloc( sizeof(Bar*)*(maxfid+1), "bar_build_index" );

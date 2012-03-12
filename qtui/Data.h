@@ -7,7 +7,7 @@
  * \notes
  * - negative one (-1) is a special curve identity.  It represents an unknown identity.
  * - If the whiskers or measurements arrays get reordered or changed, their
- *   respective indexes need to be rebuilt. 
+ *   respective indexes need to be rebuilt.
  */
 #pragma once
 
@@ -20,6 +20,13 @@ struct result_t;
 class Data : public QObject
 { Q_OBJECT
   public:
+    enum Orientation
+    { HORIZONTAL=0,
+      VERTICAL,
+      UNKNOWN_ORIENTATION
+    };
+
+
     Data(QObject *parent=NULL);
     virtual ~Data();
 
@@ -30,15 +37,23 @@ class Data : public QObject
               int  wid         (int iframe, int icurve);
               int  identity    (int iframe, int icurve); ///< \returns the identity (typ. an int >=0) of the curve or -1 if unknown.
               int  minIdentity ();                       ///< \returns the minimum identity label across the entire data set
-              int  maxIdentity ();                       ///< \returns the minimum identity label across the entire data set 
+              int  maxIdentity ();                       ///< \returns the minimum identity label across the entire data set
+             bool  isFaceSet();
+             bool  areFaceDefaultsSet();
+          QPointF  facePosition(int *is_unknown);
+      Orientation  faceOrientation();
 
     static bool isValidPath(const QString& path);        ///< \returns true if, at first glance, the path seems to point to something relevant.
 
   protected:
     Whisker_Seg   *get_curve_(int iframe,int icurve);    ///< icurve is NOT the "whisker id"
     Whisker_Seg   *get_curve_by_wid_(int iframe,int wid);///< \returns NULL if not found
-    Measurements  *get_meas_(int iframe,int icurve);     ///< icurve is NOT the "whisker id" 
+    Measurements  *get_meas_(int iframe,int icurve);     ///< icurve is NOT the "whisker id"
     Measurements  *get_meas_by_wid_(int iframe,int wid); ///< \returns NULL if not found
+    int            maybePopulateMeasurements();          ///< \returns 1 if measurements table is populated, 0 otherwise
+    int            maybeShowFaceAnchorRequiredDialog();  ///< \returns 0 if face anchor defaults are not set, 0 otherwise
+//  void           updateMeasurements();
+
   public slots:
     void open(const QString& path);
     void open(const QUrl& path);                         ///< Currently only handle local paths
@@ -49,6 +64,8 @@ class Data : public QObject
 
     void remove(int iframe, int wid);
     void setIdentity(int iframe, int wid, int ident);
+    void setFacePosition(QPointF r);
+    void setFaceOrientation(Orientation o);
 
   signals:
     void loaded();                                        ///< emited when commit of new data is finished
@@ -56,27 +73,31 @@ class Data : public QObject
     void curvesDirtied();
     void measurementsSaved();
     void measurementsDirtied();
+    void facePositionChanged(QPointF r);                  ///< only emitted after load
+    void faceOrientationChanged(Data::Orientation o);     ///< only emitted after load
 
   protected slots:
     void commit();                                        ///< called once a load succesfully completes to merge loaded data
-                                                         
+
   public: //pseudo-private
-    typedef QMap<int,Whisker_Seg*>           curveIdMap_t;///<        id->Whisker_Seg* 
+    typedef QMap<int,Whisker_Seg*>           curveIdMap_t;///<        id->Whisker_Seg*
     typedef QMap<int,curveIdMap_t>           curveMap_t;  ///< frame->id->Whisker_Seg*
     typedef QMap<int,Measurements*>          measIdMap_t; ///<        id->Measurements*
-    typedef QMap<int,measIdMap_t>            measMap_t;   ///< frame->id->Measurements* 
+    typedef QMap<int,measIdMap_t>            measMap_t;   ///< frame->id->Measurements*
 
     video_t          *video_;
 
-    Whisker_Seg      *curves_;        
-    int               ncurves_;       
+    Whisker_Seg      *curves_;
+    int               ncurves_;
     curveMap_t        curveIndex_;
 
-    Measurements     *measurements_;  
+    Measurements     *measurements_;
     int               nmeasurements_;
     measMap_t         measIndex_;
     int               minIdent_;
     int               maxIdent_;
+    QPointF           faceDefaultAnchor_;
+    Orientation       faceDefaultOrient_;
 
     QFutureWatcher<result_t> *watcher_;
     QFutureWatcher<void>     *save_watcher_;
