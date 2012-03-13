@@ -32,6 +32,7 @@ class View : public QGraphicsView
     void invalidateForeground();
     void setIdent(int ident);
     void setAdvanceIndicator(bool);
+    void setAutoModeIndicator(bool);
 
   signals:
     void dropped(const QUrl& url);
@@ -50,6 +51,7 @@ class View : public QGraphicsView
     int  iframe_;
     int  ident_;
     bool indicate_advance_;
+    bool indicate_auto_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,8 +64,9 @@ class Editor : public QWidget
     Editor(QWidget *parent=0,Qt::WindowFlags f=0);
 
     Data* data() {return &data_;}
+    QList<QAction*> tracingActions();
     QList<QAction*> videoPlayerActions();
-    QList<QAction*> editorActions();
+    QList<QAction*> identityActions();
 
   public slots:
     void open(const QString& path);
@@ -99,12 +102,15 @@ class Editor : public QWidget
     void updateFromFaceAnchor(); ///< Commit state of FaceIndicator item to Data.
     void setAutocorrect(bool);
     void setAdvanceOnSuccessfulClick(bool);
+    void setAutoMode(bool);
 
   signals:
     void loadStarted();
     void opened(const QString& path);
     void frameId(int iframe);
     void facePositionChanged(QPointF);
+    void propigateTrace(QPointF);
+    void propigateIdentity(int query_frame,int query_wid);
 
   protected:
     void makeActions_();
@@ -113,6 +119,8 @@ class Editor : public QWidget
 
   protected slots:
     void maybeShowLastCurve(QPolygonF);
+    void propigateTraceHandler(QPointF);
+    void propigateIdentityHandler(int query_frame,int query_wid);
 
   protected:
     QMap<QString,QAction*>  actions_;
@@ -129,5 +137,6 @@ class Editor : public QWidget
     QPoint                  last_context_menu_point_;
     bool                    autocorrect_video_;
     bool                    advance_on_successful_left_click_;
+    bool                    is_auto_mode_on_;
     int     iframe_;
 };
