@@ -132,7 +132,7 @@ void MainWindow::saveFileDialog()
 void MainWindow::createActions()
 { QAction *a;
   {
-    a = new QAction(QIcon::fromTheme("view-fullscreen",QIcon(":/icons/fullscreen")),"&Full Screen",this);
+    a = new QAction(QIcon(":/icons/fullscreen"),"&Full Screen",this);
     a->setShortcut(Qt::CTRL + Qt::Key_F);
     a->setStatusTip("Show full screen");
 
@@ -153,7 +153,7 @@ void MainWindow::createActions()
   actions_["fullscreen"] = a;
   
   {
-    a = new QAction(QIcon::fromTheme("application-exit",QIcon(":/icons/quit")),"&Quit",this);
+    a = new QAction(QIcon(":/icons/quit"),"&Quit",this);
     QList<QKeySequence> quitShortcuts;
     quitShortcuts 
       << QKeySequence::Close
@@ -166,7 +166,7 @@ void MainWindow::createActions()
   actions_["quit"] = a;
 
   {
-    a = new QAction(QIcon::fromTheme("document-open",QIcon(":/icons/open")),"&Open",this);
+    a = new QAction(QIcon(":/icons/open"),"&Open",this);
     a->setShortcut(QKeySequence::Open);
     a->setStatusTip("Open a video, whiskers or measurements file.");
     connect(a,SIGNAL(triggered()),this,SLOT(openFileDialog()));
@@ -182,7 +182,7 @@ void MainWindow::createActions()
   actions_["save"] = a;
 
   {
-    a = new QAction(QIcon::fromTheme("document-save-as",QIcon(":/icons/saveas")),"Save &As",this);
+    a = new QAction(QIcon(":/icons/saveas"),"Save &As",this);
     a->setShortcut(QKeySequence::SaveAs);
     a->setStatusTip("Save whiskers and measurements to a new location."); 
     connect(a,SIGNAL(triggered()),this,SLOT(saveFileDialog()));

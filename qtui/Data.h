@@ -33,6 +33,7 @@ class Data : public QObject
     const QPixmap  frame       (int iframe, bool autocorrect=true);
               int  frameCount  ();
         QPolygonF  curve       (int iframe, int icurve); ///< \returns the curve as an ordered set of points
+        QPolygonF  curveByWid  (int iframe, int wid);
               int  curveCount  (int iframe);
               int  wid         (int iframe, int icurve);
               int  identity    (int iframe, int icurve); ///< \returns the identity (typ. an int >=0) of the curve or -1 if unknown.
@@ -77,11 +78,14 @@ class Data : public QObject
     void curvesDirtied();
     void measurementsSaved();
     void measurementsDirtied();
+    void success();                                       ///< emited after a sucessful edit
     void facePositionChanged(QPointF r);                  ///< only emitted after load
     void faceOrientationChanged(Data::Orientation o);     ///< only emitted after load
+    void lastCurve(QPolygonF);                            ///< emits shape of the last edited curve
 
   protected slots:
     void commit();                                        ///< called once a load succesfully completes to merge loaded data
+    void saveDone();                                      ///< called after save.  Save may update data before writing to disk. This commits changes.
 
   public: //pseudo-private
     typedef QMap<int,Whisker_Seg*>           curveIdMap_t;///<        id->Whisker_Seg*

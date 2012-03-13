@@ -11,6 +11,8 @@
 #define SILENTTRY(expr) if(!(expr)) {              goto Error;}
 #define DIE             qFatal("%s(%d): Fatal error.  Aborting."ENDL,__FILE__,__LINE__)
 
+QMutex GlobalDataLock(QMutex::Recursive);
+#define LOCK QMutexLocker locker__(&GlobalDataLock)
 
 enum KIND       ///< Order is important. See maybeLoadAll()
 { VIDEO = 0,    ///< must be 0
@@ -246,7 +248,8 @@ void savefunc(const result_t &r)
       ||(r.face_y!=r.m[0].face_y)
       ||(!isOrientationCharSame(r.orientation,r.m[0].face_axis))
       )
-    { // order measurements table by whiskers
+    { // order measurements table by whiskers      
+      LOCK;
       TRY( r.wn==r.mn );
       locked::Whisker_Seg_Sort_By_Id(r.w,r.wn);
       locked::Sort_Measurements_Table_Segment_UID(r.m,r.mn);
@@ -286,6 +289,7 @@ Data::Data(QObject *parent)
   save_watcher_ = new QFutureWatcher<void>(this);
   TRY(connect(save_watcher_,SIGNAL(finished()),this,SIGNAL(measurementsSaved())));
   TRY(connect(save_watcher_,SIGNAL(finished()),this,SIGNAL(curvesSaved())));
+  TRY(connect(save_watcher_,SIGNAL(finished()),this,SLOT(saveDone())));
   return;
 Error:
   DIE;
@@ -329,56 +333,63 @@ void Data::commit()
   // commit in measurements -> whiskers -> video order
   // to respect dependencies
   saving_.waitForFinished();
-  // Get rid of the old stuff
-  { int dirty_whiskers = ((r.v!=NULL) || (r.w!=NULL)) && (curves_!=NULL);
-    if(dirty_whiskers)
-    { locked::Free_Whisker_Seg_Vec(curves_,ncurves_); // this takes a huge amount of time (in Debug on Win7)
-      curves_=NULL;
-      ncurves_=0;
-      ncurves_capacity_=0;
+  { LOCK;
+    // Get rid of the old stuff
+    { int dirty_whiskers = ((r.v!=NULL) || (r.w!=NULL)) && (curves_!=NULL);
+      if(dirty_whiskers)
+      { locked::Free_Whisker_Seg_Vec(curves_,ncurves_); // this takes a huge amount of time (in Debug on Win7)
+        curves_=NULL;
+        ncurves_=0;
+        ncurves_capacity_=0;
+      }
+      if(measurements_)
+      { locked::Free_Measurements_Table(measurements_);
+        measurements_=NULL;
+        nmeasurements_=0;
+        nmeasurements_capacity_=0;
+      }
     }
-    if(measurements_)
-    { locked::Free_Measurements_Table(measurements_);
-      measurements_=NULL;
-      nmeasurements_=0;
-      nmeasurements_capacity_=0;
+    // Load the new stuff
+    if(r.m)
+    { measurements_  = r.m;
+      nmeasurements_ = r.mn;
+      nmeasurements_capacity_ = nmeasurements_;
+      lastMeasurementsFile_ = r.measurement_path;
+      faceDefaultAnchor_ = QPointF(r.m[0].face_x,r.m[0].face_y);
+      switch(r.m[0].face_axis)
+      { case 'x':
+        case 'h':
+          faceDefaultOrient_ = HORIZONTAL;
+          break;
+        case 'y':
+        case 'v':
+          faceDefaultOrient_ = VERTICAL;
+          break;
+        default:
+          faceDefaultOrient_ = UNKNOWN_ORIENTATION;
+      }
+      emit facePositionChanged(facePosition(NULL));
+      emit faceOrientationChanged(faceOrientation());
     }
-  }
-  // Load the new stuff
-  if(r.m)
-  { measurements_  = r.m;
-    nmeasurements_ = r.mn;
-    nmeasurements_capacity_ = nmeasurements_;
-    lastMeasurementsFile_ = r.measurement_path;
-    faceDefaultAnchor_ = QPointF(r.m[0].face_x,r.m[0].face_y);
-    switch(r.m[0].face_axis)
-    { case 'x':
-      case 'h':
-        faceDefaultOrient_ = HORIZONTAL;
-        break;
-      case 'y':
-      case 'v':
-        faceDefaultOrient_ = VERTICAL;
-        break;
-      default:
-        faceDefaultOrient_ = UNKNOWN_ORIENTATION;
+    if(r.w)
+    { curves_  = r.w;
+      ncurves_ = r.wn;
+      ncurves_capacity_ = ncurves_;
+      lastWhiskerFile_ = r.whisker_path;
     }
-    emit facePositionChanged(facePosition(NULL));
-    emit faceOrientationChanged(faceOrientation());
-  }
-  if(r.w)
-  { curves_  = r.w;
-    ncurves_ = r.wn;
-    ncurves_capacity_ = ncurves_;
-    lastWhiskerFile_ = r.whisker_path;
-  }
-  if(r.v)
-  { if(video_) locked::video_close(&video_);
-    video_ = r.v;
-  }
+    if(r.v)
+    { if(video_) locked::video_close(&video_);
+      video_ = r.v;
+    }
+  } //end lock
   buildMeasurementsIndex_();
   buildCurveIndex_();
   emit loaded();
+}
+
+void Data::saveDone()
+{ buildMeasurementsIndex_();
+  buildCurveIndex_();
 }
 
 /**
@@ -460,19 +471,20 @@ void Data::remove(int iframe, int wid)
   Measurements *m;
   TRY(w=get_curve_by_wid_(iframe,wid));  // query for the Whisker_seg first
   saving_.waitForFinished();             // make sure the saving thread is done before changing anything
+  { LOCK;
+    locked::Free_Whisker_Seg_Data(w);    // Do the whiskers first
+    memmove(w,w+1, ((curves_+ncurves_)-(w+1))*sizeof(Whisker_Seg));
+    --ncurves_;
+    buildCurveIndex_();
+    emit curvesDirtied();
 
-  locked::Free_Whisker_Seg_Data(w);              // Do the whiskers first
-  memmove(w,w+1, ((curves_+ncurves_)-(w+1))*sizeof(Whisker_Seg));
-  --ncurves_;
-  buildCurveIndex_();
-  emit curvesDirtied();
-
-  SILENTTRY(m=get_meas_by_wid_(iframe,wid));
-  memmove(m,m+1, ((measurements_+nmeasurements_)-(m+1))*sizeof(Measurements));
-  --nmeasurements_;
+    SILENTTRY(m=get_meas_by_wid_(iframe,wid));
+    memmove(m,m+1, ((measurements_+nmeasurements_)-(m+1))*sizeof(Measurements));
+    --nmeasurements_;
+  }
   buildMeasurementsIndex_();
   emit measurementsDirtied();
-
+  emit success();
 Error:
   return;
 }
@@ -486,21 +498,25 @@ void Data::setIdentity(int iframe, int wid, int ident)
   SILENTTRY(mm=get_meas_by_wid_(iframe,wid));
   ms = measIndex_.value(iframe);
   saving_.waitForFinished();
-  foreach(Measurements* m,ms)   // only
-    if(m->state==ident)
-      m->state=-1;
-  mm->state=ident;
+  { LOCK;
+    foreach(Measurements* m,ms)
+      if(m->state==ident)
+        m->state=-1;
+    mm->state=ident;
 
-  minIdent_ = qMin(minIdent_,ident);
-  maxIdent_ = qMax(maxIdent_,ident);
+    minIdent_ = qMin(minIdent_,ident);
+    maxIdent_ = qMax(maxIdent_,ident);
+  }
 
   emit measurementsDirtied();
+  emit success();
+  emit lastCurve(curveByWid(iframe,wid));
 Error:
   return;
 }
 
 void Data::buildCurveIndex_()
-{
+{ LOCK;
   curveIndex_.clear();
   if(curves_)
     for(Whisker_Seg *c=curves_;c<curves_+ncurves_;++c)
@@ -511,7 +527,7 @@ void Data::buildCurveIndex_()
 }
 
 void Data::buildMeasurementsIndex_()
-{
+{ LOCK;
   minIdent_=maxIdent_=-1;
   measIndex_.clear();
   if(measurements_)
@@ -569,7 +585,9 @@ void Data::traceAt(int iframe, QPointF r, bool autocorrect)
   Seed *sd=0;
   Whisker_Seg *w=0;
   int offset,wid;
-  Image *im;
+  Image *im=0;
+  
+  LOCK;
   TRY(im=locked::video_get(video_,iframe,autocorrect));
   offset=im->width*(int)r.y() + (int)r.x();
   TRY(sd=locked::compute_seed_from_point(im,offset,8));
@@ -611,6 +629,7 @@ void Data::traceAt(int iframe, QPointF r, bool autocorrect)
             nmeasurements_capacity_));
       was_resized=1;
     }
+    TRY(nmeasurements_<=nmeasurements_capacity_);
     locked::Whisker_Seg_Measure(
         curves_+ncurves_-1,
         measurements_[nmeasurements_-1].data,
@@ -628,16 +647,33 @@ void Data::traceAt(int iframe, QPointF r, bool autocorrect)
     }
     emit measurementsDirtied();
   }
-Error: // FIXME memory may leak on error
+  emit success();
+  emit lastCurve(curveByWid(iframe,wid));
+  return;
+Error:
+  HERE;
+  if(im) locked::Free_Image(im);
+  if(w && curves_==NULL)  locked::Free_Whisker_Seg(w); // curves_ realloc failed
+  else if(w)              free(w);                     // something after curves_ realloc failed
+
   return;
 }
 
 
 void Data::traceAtAndIdentify(int iframe,QPointF target,bool autocorrect_video,int ident)
-{ int oldcount = nmeasurements_;
-  traceAt(iframe,target,autocorrect_video);     //don't return success failure because it's a slot
-  if(oldcount!=nmeasurements_)                    //check to see if something got traced 
-    measurements_[nmeasurements_-1].state = ident;//last traced is last row of measurements table
+{ if(ident!=-1 && !measurements_)    
+    maybePopulateMeasurements();
+  { int oldcount = nmeasurements_;
+    traceAt(iframe,target,autocorrect_video);     //don't return success failure because it's a slot
+    { LOCK;
+      if(oldcount!=nmeasurements_)                    //check to see if something got traced 
+      { measurements_[nmeasurements_-1].state = ident;//last traced is last row of measurements table
+        minIdent_ = qMin(minIdent_,ident);
+        maxIdent_ = qMax(maxIdent_,ident);
+      }
+    }
+  }
+  return;
 }
 
 Data::Orientation Data::faceOrientation()
@@ -664,7 +700,6 @@ void Data::setFaceOrientation(Data::Orientation o)
   }
   //emit faceOrientationChanged(o);
 }
-
 
 // DATA    Accessing the data //////////////////////////////////////////////////
 
@@ -756,14 +791,16 @@ int Data::maybePopulateMeasurements()
 { if(!curves_)      return 0;
   if(measurements_) return 1;
   TRY(maybeShowFaceAnchorRequiredDialog());
-  TRY(measurements_=locked::Whisker_Segments_Measure(
-        curves_,ncurves_,
-        faceDefaultAnchor_.x(),
-        faceDefaultAnchor_.y(),
-        faceDefaultOrient_?'y':'x'));
-  nmeasurements_=ncurves_;
-  for(int i=0;i<nmeasurements_;++i)// set initial identities to unknown
-    measurements_[i].state=-1;
+  { LOCK;
+    TRY(measurements_=locked::Whisker_Segments_Measure(
+          curves_,ncurves_,
+          faceDefaultAnchor_.x(),
+          faceDefaultAnchor_.y(),
+          faceDefaultOrient_?'y':'x'));
+    nmeasurements_=ncurves_;
+    for(int i=0;i<nmeasurements_;++i)// set initial identities to unknown
+      measurements_[i].state=-1;
+  }
   buildMeasurementsIndex_();
   lastMeasurementsFile_ = measurementsFile(lastWhiskerFile_).absoluteFilePath();
   return 1;
@@ -771,29 +808,20 @@ Error:
   return 0;
 }
 
-/*
-void Data::updateMeasurements()
-{
-  TRY(maybeShowFaceAnchorRequiredDialog());
-  if(measurements_)
-  { TRY(nmeasurements_==ncurves_); // double check everything is the right size
-    Whisker_Segments_Update_Measurements(
-        measurements_,
-        curves_, ncurves_,
-        faceDefaultAnchor_.x(),
-        faceDefaultAnchor_.y(),
-        faceDefaultOrient_?'y':'x');
-  } else
-    TRY(maybePopulateMeasurements()); // ensure measurements table exists
-Error:
-  return;
-}
-*/
-
 QPolygonF Data::curve(int iframe, int icurve)
 { QPolygonF c;
   Whisker_Seg *w=0;
   TRY(w=get_curve_(iframe,icurve));
+  for(int i=0;i<w->len;++i)
+    c << QPointF(w->x[i],w->y[i]);
+Error:
+  return c;
+}
+
+QPolygonF Data::curveByWid(int iframe, int wid)
+{ QPolygonF c;
+  Whisker_Seg *w=0;
+  TRY(w=get_curve_by_wid_(iframe,wid));
   for(int i=0;i<w->len;++i)
     c << QPointF(w->x[i],w->y[i]);
 Error:

@@ -15,6 +15,7 @@ Curve::Curve(QGraphicsItem* parent)
   : QGraphicsObject(parent)
   , wid_(-1)
   , is_selected_(0)
+  , is_selectable_(1)
   , is_hovered_(0)
   , highlight_alpha_(0.15)
 {
@@ -108,6 +109,9 @@ void Curve::setColorByIdentity(int ident, int nident)
 void Curve::setSelected(bool select)
 {is_selected_=select;}
 
+void Curve::setSelectable(bool b)
+{is_selectable_=b;}
+
 void Curve::light()
 { highlight_alpha_=0.15;
   update();
@@ -142,7 +146,9 @@ void Curve::select()
 }
 
 void Curve::mousePressEvent(QGraphicsSceneMouseEvent* e)
-{ if(e->button()!=Qt::LeftButton)
+{ if( e->button()!=Qt::LeftButton
+    ||!is_selectable_
+    )
   { e->ignore();
     return;
   }

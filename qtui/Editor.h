@@ -9,6 +9,7 @@ class QGraphicsWidget;
 class QUrl;
 class LoadingGraphicsWidget;
 class CurveGroup;
+class Curve;
 class Frame;
 class FaceIndicator;
 
@@ -30,6 +31,7 @@ class View : public QGraphicsView
     void setFrame(int iframe);
     void invalidateForeground();
     void setIdent(int ident);
+    void setAdvanceIndicator(bool);
 
   signals:
     void dropped(const QUrl& url);
@@ -45,8 +47,9 @@ class View : public QGraphicsView
 
     const QGraphicsItem *lockitem_;                 ///< View transforms the scene to fit to this item
 
-    int iframe_;
-    int ident_;
+    int  iframe_;
+    int  ident_;
+    bool indicate_advance_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +70,7 @@ class Editor : public QWidget
     void open(const QUrl&    path);
     void showFrame(int index);
     void showCurrentFrame();
+    void maybeNextFrame();
     void nextFrame();
     void nextFrame10();
     void nextFrame100();
@@ -93,6 +97,8 @@ class Editor : public QWidget
     void traceAtCursor();
     void setFaceAnchor();        ///< Response from editor action.  Updates FaceIndicator and Data.
     void updateFromFaceAnchor(); ///< Commit state of FaceIndicator item to Data.
+    void setAutocorrect(bool);
+    void setAdvanceOnSuccessfulClick(bool);
 
   signals:
     void loadStarted();
@@ -105,6 +111,10 @@ class Editor : public QWidget
     void wheelEvent(QWheelEvent *event);
     void contextMenuEvent(QContextMenuEvent *event);
 
+  protected slots:
+    void maybeShowLastCurve(QPolygonF);
+
+  protected:
     QMap<QString,QAction*>  actions_;
     View                   *view_;
     QGraphicsScene         *scene_;
@@ -115,7 +125,9 @@ class Editor : public QWidget
     FaceIndicator          *face_;
     Data                    data_;
     CurveGroup             *curves_;
+    Curve                  *lastEdit_;
     QPoint                  last_context_menu_point_;
     bool                    autocorrect_video_;
+    bool                    advance_on_successful_left_click_;
     int     iframe_;
 };
