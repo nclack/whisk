@@ -137,6 +137,30 @@ const QColor Curve::color() const
 bool Curve::isSelected() const
 {return is_selected_;}
 
+QPointF Curve::nearest(QPointF query) const
+{ double  min=DBL_MAX;
+  QPointF argmin;
+  foreach(QPointF r,this->midline_)
+  { QPointF dr = r-query;
+    double d = dr.x()*dr.x() + dr.y()*dr.y();
+    if(d<min)
+    { min = d;
+      argmin = r;
+    }
+  }
+  return argmin;
+}
+
+
+double Curve::distance(QPointF query) const
+{ double  min=DBL_MAX;
+  foreach(QPointF r,this->midline_)
+  { QPointF dr = r-query;
+    min = qMin(min,dr.x()*dr.x() + dr.y()*dr.y());    
+  }
+  return min;
+}
+
 void Curve::select()
 { 
   dark();
@@ -177,6 +201,22 @@ CurveGroup::CurveGroup(QGraphicsScene* scene, QObject *parent/*=NULL*/)
 { TRY(connect(&mapper_,SIGNAL(mapped(QObject*)),this,SLOT(selection(QObject*))));
 Error:
   return;
+}
+
+/* not a great impl
+   Just test for closest to midpoint on midline
+*/
+Curve* CurveGroup::nearest(QPolygonF midline)
+{ QPointF testpoint = midline[midline.size()/2];
+  Curve *argmin = 0;
+  double d,min = DBL_MAX;  
+  foreach(Curve *c,curves_)
+  { if( (d=c->distance(testpoint))<min )
+    { min=d;
+      argmin=c;
+    }
+  }
+  return argmin;    
 }
 
 void CurveGroup::beginAdding(int iframe)

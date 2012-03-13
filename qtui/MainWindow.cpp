@@ -195,7 +195,7 @@ Error:
 
 void MainWindow::createMenus()
 {
-  QMenu* m = menuBar()->addMenu("&File");
+  QMenu *s,*m = menuBar()->addMenu("&File");
   { static const char *names[] = {"open","save","saveas","quit",NULL};
            const char **c      = names;
     while(*c)
@@ -204,13 +204,15 @@ void MainWindow::createMenus()
 
   m = menuBar()->addMenu("&View");
   m->addAction(actions_["fullscreen"]);
-
-  m = menuBar()->addMenu("Vide&o");
+  s = m->addMenu("&Video");
   foreach(QAction* a,view_->videoPlayerActions())
-    m->addAction(a);
+    s->addAction(a);  
 
   m = menuBar()->addMenu("&Edit");
-  foreach(QAction* a,view_->editorActions())
+  foreach(QAction* a,view_->tracingActions())
     m->addAction(a);
+  s = m->addMenu("&Identity");  
+  foreach(QAction* a,view_->identityActions())
+    s->addAction(a);
 
 }

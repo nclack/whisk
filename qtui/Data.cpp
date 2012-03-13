@@ -650,8 +650,7 @@ void Data::traceAt(int iframe, QPointF r, bool autocorrect)
   emit success();
   emit lastCurve(curveByWid(iframe,wid));
   return;
-Error:
-  HERE;
+Error:  
   if(im) locked::Free_Image(im);
   if(w && curves_==NULL)  locked::Free_Whisker_Seg(w); // curves_ realloc failed
   else if(w)              free(w);                     // something after curves_ realloc failed

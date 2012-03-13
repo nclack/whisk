@@ -26,6 +26,9 @@ class Curve : public QGraphicsObject
     const QColor     color() const;
     bool             isSelected() const;
 
+    QPointF nearest(QPointF query) const;
+    double distance(QPointF query) const;
+
   public slots:
     void select();
     void setWid(int wid);
@@ -64,6 +67,8 @@ class CurveGroup : public QObject
 { Q_OBJECT
   public:
     CurveGroup(QGraphicsScene* scene, QObject *parent=NULL);
+
+    Curve* nearest(QPolygonF midline); ///> returns nearest curve
 
   public slots:
     void beginAdding(int iframe);

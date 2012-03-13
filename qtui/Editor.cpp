@@ -40,6 +40,7 @@ View::View(QGraphicsScene *scene, QWidget *parent)
   , iframe_(-1)
   , ident_(-1)
   , indicate_advance_(false)
+  , indicate_auto_(false)
 { setAcceptDrops(true);
   setResizeAnchor(AnchorViewCenter);
   setDragMode(NoDrag);
@@ -106,6 +107,11 @@ void View::drawForeground(QPainter *painter, const QRectF &rect)
       { painter->setPen(Qt::green);
         painter->drawText(2,66,"Advance");
       }
+
+      if(indicate_auto_)
+      { painter->setPen(Qt::yellow);
+        painter->drawText(2,88,"Auto");
+      }
     }
     { QFont font = QFont("Helvetica",10);
       QPointF p  = QPointF(   mapFromGlobal(QCursor::pos())),
@@ -136,6 +142,11 @@ void View::setIdent(int ident)
 
 void View::setAdvanceIndicator(bool b)
 { indicate_advance_=b;
+  invalidateForeground();
+}
+
+void View::setAutoModeIndicator(bool b)
+{ indicate_auto_=b;
   invalidateForeground();
 }
 
@@ -192,6 +203,7 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
   , lastEdit_(NULL)
   , autocorrect_video_(true)
   , advance_on_successful_left_click_(false)
+  , is_auto_mode_on_(false)
   , iframe_(0)
 { 
   //setContextMenuPolicy(Qt::ActionsContextMenu);
@@ -299,6 +311,13 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
 
     // connect to state transitions
     TRY(connect(loaded,SIGNAL(entered()),this,SLOT(showCurrentFrame())),ErrorConnect);
+
+    // connect propigation handlers
+    TRY(connect(this,SIGNAL(propigateTrace(QPointF)),SLOT(propigateTraceHandler(QPointF)),
+                Qt::QueuedConnection),ErrorConnect);
+    TRY(connect(this,SIGNAL(propigateIdentity(int,int)),SLOT(propigateIdentityHandler(int,int)),
+                Qt::QueuedConnection),ErrorConnect);
+
   }
 
   makeActions_();
@@ -340,15 +359,59 @@ void Editor::showFrame(int index)
   return;
 }
 
+/*
+setToCurrentIdentByWid
+traceAtAndIdentify
+
+These are the two functions I have to modify for auto mode.
+Both call a data_ function that ends up emitting success(),
+which will end up incrementing the frame; Data::success() is 
+connected to maybeNextFrame() and "Advance" mode will be on.
+
+This happens synchronously right now.
+
+By the time showFrame is called in the functions below, 
+iframe_ has been incremented.
+
+The functions should then conditionally (based on whether 
+auto mode is on) emit a propigation signal which is 
+connected to a handler through a Qt::QueuedConnection.
+This way, the handler will get executed on the next
+event loop possibly allowing for repainting and the handling
+of other events.
+
+On failure, iframe_ is not incremented, and if
+iframe_ doesn't change there should be no propigation.
+*/
 void Editor::setToCurrentIdentByWid(int wid)
-{ data_.setIdentity(iframe_,wid,view_->ident());
+{ int oframe = iframe_;
+  data_.setIdentity(iframe_,wid,view_->ident());
   showFrame(iframe_);
+  if(iframe_!=oframe && is_auto_mode_on_)
+  { emit propigateIdentity(oframe,wid); 
+    HERE;
+  }
 }
 
 void Editor::traceAtAndIdentify(QPointF target)
-{
+{ int oframe = iframe_;
   data_.traceAtAndIdentify(iframe_,target,autocorrect_video_,view_->ident());
   showFrame(iframe_);
+  if(iframe_!=oframe && is_auto_mode_on_)
+    emit propigateTrace(target);     
+}
+
+void Editor::propigateIdentityHandler(int query_frame,int query_wid)
+{ QPolygonF midline = data_.curveByWid(query_frame,query_wid);
+  Curve *c = curves_->nearest(midline);
+  if(c)
+    setToCurrentIdentByWid(c->wid());
+}
+
+void Editor::propigateTraceHandler(QPointF target)
+{ //find the closest point on the midline of the last traced curve
+  QPointF r = lastEdit_->nearest(target);  
+  traceAtAndIdentify(r);
 }
 
 void Editor::traceAt(QPointF target)
@@ -392,6 +455,14 @@ void Editor::setAutocorrect(bool ison)
 
 void Editor::setAdvanceOnSuccessfulClick(bool b)
 { advance_on_successful_left_click_ = b;
+  if(!b)
+    actions_["automode"]->setChecked(false);
+}
+
+void Editor::setAutoMode(bool b)
+{ is_auto_mode_on_ = b;
+  if(b)
+    actions_["advance"]->setChecked(true);
 }
 
 /**
@@ -517,6 +588,7 @@ void Editor::makeActions_()
   actions_["traceAt"     ]= new QAction(QIcon(":/icons/traceAt"),tr("&Trace a new curve"),this);
   actions_["autocorrect" ] = new QAction(tr("&Stripe correction"),this);
   actions_["advance"     ] = new QAction(tr("&Advance after edit"),this);
+  actions_["automode"    ] = new QAction(tr("&Automatically propigate clicks"),this);
 
   actions_["next"    ]->setShortcut( QKeySequence( Qt::Key_Right));
   actions_["next10"  ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT));
@@ -541,6 +613,7 @@ void Editor::makeActions_()
   actions_["traceAt"         ]->setShortcut( QKeySequence( "t"));
   actions_["autocorrect"     ]->setShortcut( QKeySequence( "s"));
   actions_["advance"         ]->setShortcut( QKeySequence( "a"));
+  actions_["automode"        ]->setShortcut( QKeySequence( "Space"));
 
   TRY(connect(actions_["next"         ],SIGNAL(triggered()),this,SLOT(nextFrame())     ),Error);
   TRY(connect(actions_["next10"       ],SIGNAL(triggered()),this,SLOT(nextFrame10  ()) ),Error);
@@ -570,6 +643,10 @@ void Editor::makeActions_()
   actions_["advance" ]->setChecked(advance_on_successful_left_click_);
   TRY(connect(actions_["advance"],SIGNAL(toggled(bool)),this,SLOT(setAdvanceOnSuccessfulClick(bool))),Error);
   TRY(connect(actions_["advance"],SIGNAL(toggled(bool)),view_,SLOT(setAdvanceIndicator(bool))),Error);
+  actions_["automode" ]->setCheckable(true);
+  actions_["automode" ]->setChecked(is_auto_mode_on_);
+  TRY(connect(actions_["automode"],SIGNAL(toggled(bool)),this,SLOT(setAutoMode(bool))),Error);
+  TRY(connect(actions_["automode"],SIGNAL(toggled(bool)),view_,SLOT(setAutoModeIndicator(bool))),Error);
 
   foreach(QAction *a,actions_)
   { a->setShortcutContext(Qt::ApplicationShortcut);
@@ -580,10 +657,23 @@ Error:
   DIE;
 }
 
-QList<QAction*> Editor::videoPlayerActions()
-{ static const char* names[] = {
+QList<QAction*> Editor::tracingActions()
+{ static const char* names[] = {"delete",                                 
                                 "autocorrect",
                                 "advance",
+                                "automode",
+                                 NULL
+                               };
+  const char **c=names;
+  QList<QAction*> out;
+  while(*c)
+    out.append(actions_[*c++]);
+  return out;
+}
+
+
+QList<QAction*> Editor::videoPlayerActions()
+{ static const char* names[] = {
                                 "next",
                                 "next10",
                                 "next100",
@@ -604,9 +694,8 @@ QList<QAction*> Editor::videoPlayerActions()
 }
 
 
-QList<QAction*> Editor::editorActions()
-{ static const char* names[] = { "delete",
-                                 "incIdent",
+QList<QAction*> Editor::identityActions()
+{ static const char* names[] = { "incIdent",
                                  "incIdent10",
                                  "incIdent100",
                                  "incIdent1000",
