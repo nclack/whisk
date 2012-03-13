@@ -16,6 +16,11 @@ macro(show v)
   message("${v} is ${${v}}")
 endmacro()
 
+#show(CMAKE_C_FLAGS)
+#show(CMAKE_SHARED_LIBRARY_C_FLAGS)
+#show(CMAKE_SHARED_LIBRARY_CXX_FLAGS)
+#show(CMAKE_SHARED_LIBRARY_CXX_FLAGS)
+
 #
 # Setup output directories for visual studio
 #
