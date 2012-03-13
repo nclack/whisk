@@ -50,9 +50,10 @@ class Data : public QObject
     Whisker_Seg   *get_curve_by_wid_(int iframe,int wid);///< \returns NULL if not found
     Measurements  *get_meas_(int iframe,int icurve);     ///< icurve is NOT the "whisker id"
     Measurements  *get_meas_by_wid_(int iframe,int wid); ///< \returns NULL if not found
+    bool           is_ident_same_(int iframe, int wid, int ident);
     int            maybePopulateMeasurements();          ///< \returns 1 if measurements table is populated, 0 otherwise
     int            maybeShowFaceAnchorRequiredDialog();  ///< \returns 0 if face anchor defaults are not set, 0 otherwise
-//  void           updateMeasurements();
+    int            get_next_wid_(int iframe);            ///> \returns a good wid for iframe.  Used for appending new curves.
 
   public slots:
     void open(const QString& path);
@@ -66,6 +67,9 @@ class Data : public QObject
     void setIdentity(int iframe, int wid, int ident);
     void setFacePosition(QPointF r);
     void setFaceOrientation(Orientation o);
+
+    void traceAt(int iframe, QPointF r, bool autocorrect=true);
+    void traceAtAndIdentify(int iframe,QPointF target,bool autocorrect_video,int ident);
 
   signals:
     void loaded();                                        ///< emited when commit of new data is finished
@@ -86,13 +90,16 @@ class Data : public QObject
     typedef QMap<int,measIdMap_t>            measMap_t;   ///< frame->id->Measurements*
 
     video_t          *video_;
+    Image            *lastImage_;
 
     Whisker_Seg      *curves_;
     int               ncurves_;
+    int               ncurves_capacity_;
     curveMap_t        curveIndex_;
 
     Measurements     *measurements_;
     int               nmeasurements_;
+    int               nmeasurements_capacity_;
     measMap_t         measIndex_;
     int               minIdent_;
     int               maxIdent_;
@@ -102,6 +109,7 @@ class Data : public QObject
     QFutureWatcher<result_t> *watcher_;
     QFutureWatcher<void>     *save_watcher_;
     QFuture<void>     saving_;
+    QString           lastVideoFile_;         ///< gets set whether or not video loads
     QString           lastWhiskerFile_;
     QString           lastMeasurementsFile_;
 

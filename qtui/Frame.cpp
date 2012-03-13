@@ -9,9 +9,11 @@ Frame::Frame(Editor *editor, QGraphicsItem *parent/*=0*/)
 }
 
 void Frame::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{ if(event->button()!=Qt::RightButton)
+{ if(event->button()!=Qt::LeftButton)
     return;
 
   if(editor_)
-    editor_->traceAt(event->pos());
+  { editor_->traceAtAndIdentify(event->pos());
+  }
 }
+

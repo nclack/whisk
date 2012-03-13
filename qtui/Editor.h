@@ -88,7 +88,9 @@ class Editor : public QWidget
     void deleteSelected();
     void selectByIdent(int ident);
     void setToCurrentIdentByWid(int wid);
-    void traceAt(QPointF r);
+    void traceAt(QPointF target);
+    void traceAtAndIdentify(QPointF target);
+    void traceAtCursor();
     void setFaceAnchor();        ///< Response from editor action.  Updates FaceIndicator and Data.
     void updateFromFaceAnchor(); ///< Commit state of FaceIndicator item to Data.
 
@@ -114,5 +116,6 @@ class Editor : public QWidget
     Data                    data_;
     CurveGroup             *curves_;
     QPoint                  last_context_menu_point_;
+    bool                    autocorrect_video_;
     int     iframe_;
 };

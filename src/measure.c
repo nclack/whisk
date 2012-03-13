@@ -360,7 +360,7 @@ Measurements *Whisker_Segments_Update_Measurements(Measurements* table, Whisker_
 { 
   while(wvn--)
   { Measurements *row = table + wvn; 
-    row->row   = wvn;
+//  row->row   = wvn;
     row->fid   = wv[wvn].time;
     row->wid   = wv[wvn].id;
 //  row->state =  0;

@@ -43,6 +43,7 @@ typedef struct _Distributions
 } Distributions;
 
 SHARED_EXPORT Measurements  *Alloc_Measurements_Table                          ( int n_rows, int n_measurements );
+SHARED_EXPORT Measurements  *Realloc_Measurements_Table                        ( Measurements *old, int n_rows_old, int n_rows_new );
 SHARED_EXPORT void           Free_Measurements_Table                           ( Measurements *table );
 
 SHARED_EXPORT Distributions *Alloc_Distributions                               ( int n_bins, int n_measures, int n_states );

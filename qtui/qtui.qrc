@@ -10,5 +10,6 @@
   <file alias="save">resources/icons/save.png</file>
   <file alias="saveas">resources/icons/saveas.png</file>
   <file alias="faceindicator">resources/icons/faceindicator.svg</file>
+  <file alias="traceAt">resources/icons/traceAt.svg</file>
 </qresource>
 </RCC>

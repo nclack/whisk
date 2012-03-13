@@ -6,6 +6,7 @@ extern "C" {
 
 
 #include "traj.h"
+void Whisker_Seg_Measure( Whisker_Seg *w, double *dest, int facex, int facey, char face_axis );
 
 /** Fills an existing table with measurements */
 Measurements *Whisker_Segments_Update_Measurements(

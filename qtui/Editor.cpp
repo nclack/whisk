@@ -177,8 +177,9 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
   , loadingGraphics_(0)
   , face_(0)
   , data_(this)
-  , iframe_(0)
   , curves_(NULL)
+  , autocorrect_video_(true)
+  , iframe_(0)
 { makeActions_();
   //setContextMenuPolicy(Qt::ActionsContextMenu);
 
@@ -284,7 +285,7 @@ ErrorConnect:
  * in the movie, if the read was successful.
  */
 void Editor::showFrame(int index)
-{ QPixmap p = data_.frame(index);
+{ QPixmap p = data_.frame(index,autocorrect_video_);
   if(!p.isNull())
   { iframe_=index;  // only updates if read was successful
     emit frameId(iframe_);
@@ -314,17 +315,34 @@ void Editor::setToCurrentIdentByWid(int wid)
   showFrame(iframe_);
 }
 
-void Editor::traceAt(QPointF r)
-{ HERE; //right click interferes with context menu
+void Editor::traceAtAndIdentify(QPointF target)
+{
+  data_.traceAtAndIdentify(iframe_,target,autocorrect_video_,view_->ident());
+  showFrame(iframe_);
+}
+
+void Editor::traceAt(QPointF target)
+{
+  data_.traceAt(iframe_,target,autocorrect_video_);
+  showFrame(iframe_);
+}
+
+void Editor::traceAtCursor()
+{ QPointF target;
+  if(last_context_menu_point_.isNull()) // keyboard accelerator activated.  Use current mouse pos.
+    target = view_->mapToScene(mapFromGlobal(QCursor::pos()));
+  else                                  // use position where context menu was activated
+    target = view_->mapToScene(last_context_menu_point_);
+  data_.traceAt(iframe_,target,autocorrect_video_);
+  showFrame(iframe_);
 }
 
 void Editor::setFaceAnchor()
 { QPointF target;
   if(last_context_menu_point_.isNull()) // keyboard accelerator activated.  Use current mouse pos.
     target = view_->mapToScene(mapFromGlobal(QCursor::pos()));
-  else // use position where context menu was activated
+  else                                  // use position where context menu was activated
     target = view_->mapToScene(last_context_menu_point_);
-  qDebug() << target;
   data_.setFacePosition(target);
   data_.setFaceOrientation(face_->orientation());
   emit facePositionChanged(target);
@@ -354,7 +372,8 @@ void Editor::nextFrame()
 }
 #define NEXTFRAME(X) \
   void Editor::nextFrame##X () \
-  { showFrame(iframe_+X); \
+  { int i = qMin(iframe_+X,data_.frameCount()-1); \
+    showFrame(i); \
   }
 NEXTFRAME(10);
 NEXTFRAME(100);
@@ -365,7 +384,8 @@ void Editor::prevFrame()
 }
 #define PREVFRAME(X) \
   void Editor::prevFrame##X () \
-  { showFrame(iframe_-X); \
+  { int i = qMax(iframe_-X,0); \
+    showFrame(i); \
   }
 PREVFRAME(10);
 PREVFRAME(100);
@@ -449,6 +469,7 @@ void Editor::makeActions_()
   actions_["decIdent100" ]= new QAction(tr("Decrement active identity by 100")   ,this);
   actions_["decIdent1000"]= new QAction(tr("Decrement active identity by 1000")  ,this);
   actions_["setFaceAnchor"] = new QAction(QIcon(":/icons/faceindicator"),tr("Place &face anchor")  ,this);
+  actions_["traceAt"     ]= new QAction(QIcon(":/icons/traceAt"),tr("&Trace a new curve"),this);
 
   actions_["next"    ]->setShortcut( QKeySequence( Qt::Key_Right));
   actions_["next10"  ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT));
@@ -470,6 +491,7 @@ void Editor::makeActions_()
   actions_["decIdent100"     ]->setShortcut( QKeySequence( Qt::Key_Down  + Qt::SHIFT + Qt::CTRL));
   actions_["decIdent1000"    ]->setShortcut( QKeySequence( Qt::Key_Down  + Qt::SHIFT + Qt::CTRL + Qt::ALT));
   actions_["setFaceAnchor"   ]->setShortcut( QKeySequence( "f"));
+  actions_["traceAt"         ]->setShortcut( QKeySequence( "t"));
 
   TRY(connect(actions_["next"         ],SIGNAL(triggered()),this,SLOT(nextFrame())     ),Error);
   TRY(connect(actions_["next10"       ],SIGNAL(triggered()),this,SLOT(nextFrame10  ()) ),Error);
@@ -491,6 +513,7 @@ void Editor::makeActions_()
   TRY(connect(actions_["decIdent100"  ],SIGNAL(triggered()),this,SLOT(decIdent100 ())  ),Error);
   TRY(connect(actions_["decIdent1000" ],SIGNAL(triggered()),this,SLOT(decIdent1000())  ),Error);
   TRY(connect(actions_["setFaceAnchor"],SIGNAL(triggered()),this,SLOT(setFaceAnchor()) ),Error);
+  TRY(connect(actions_["traceAt"      ],SIGNAL(triggered()),this,SLOT(traceAtCursor()) ),Error); 
 
   foreach(QAction *a,actions_)
   { a->setShortcutContext(Qt::ApplicationShortcut);
@@ -578,8 +601,14 @@ void Editor::wheelEvent(QWheelEvent *event)
 
 void Editor::contextMenuEvent(QContextMenuEvent *event)
 { QMenu *m = new QMenu(this);
+  const char* as[] = {"setFaceAnchor"
+                     ,"traceAt"
+                     ,NULL
+  };
+  const char **a = as;
   last_context_menu_point_=event->pos();
-  m->addAction(actions_["setFaceAnchor"]);
+  while(*a)
+    m->addAction(actions_[*a++]);
   m->exec(event->globalPos());
   last_context_menu_point_=QPoint();
 }

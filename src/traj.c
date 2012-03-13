@@ -1,5 +1,5 @@
 /* Author: Nathan Clack <clackn@janelia.hhmi.org>
- * Date  : May 2009 
+ * Date  : May 2009
  *
  * Copyright 2010 Howard Hughes Medical Institute.
  * All rights reserved.
@@ -32,7 +32,7 @@
 //#define  IDENTITY_SOLVER_SHAPE_NBINS      16
 
 // TESTS
-#if 0  
+#if 0
 #undef   TEST_MEASUREMENT_TABLE_IO_1
 #undef   TEST_BUILD_DISTRIBUTIONS
 #undef   TEST_SOLVE_GRAY_AREAS
@@ -41,23 +41,23 @@
 // DEBUG OUTPUT
 
 #if 0
-#define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+#define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
 #define  DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
-#define  DEBUG_EVAL_LIKELIHOOD_LOG2 
+#define  DEBUG_EVAL_LIKELIHOOD_LOG2
 #define  DEBUG_MEASUREMENTS_TABLE_ALLOC
 #define  DEBUG_MEASUREMENTS_TABLE_FROM_FILE
 #define  DEBUG_MEASUREMENTS_TABLE_COMPUTE_VELOCITIES
 #define  DEBUG_FIND_PATH
-#define  DEBUG_TEST_SOLVE_GRAY_AREAS 
+#define  DEBUG_TEST_SOLVE_GRAY_AREAS
 #define  DEBUG_SOLVE_GRAY_AREAS
 #define  DEBUG_DISTRIBUTIONS_ALLOC
-#define  DEBUG_BUILD_DISTRIBUTIONS 
+#define  DEBUG_BUILD_DISTRIBUTIONS
 #endif
 
 SHARED_EXPORT
 Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
 { Measurements *table = Guarded_Malloc( sizeof(Measurements)*n_rows, "allocate measurements table" );
-  double *dataspace   = Guarded_Malloc( 2*sizeof(double)*n_measurements*n_rows, "allocate measurements table" ); 
+  double *dataspace   = Guarded_Malloc( 2*sizeof(double)*n_measurements*n_rows, "allocate measurements table" );
   double *velocityspace  = dataspace + n_measurements*n_rows;
 #ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
   debug("\nMeasurements table alloc: %d rows of data at %p\n",n_rows,dataspace);
@@ -75,6 +75,55 @@ Measurements *Alloc_Measurements_Table( int n_rows, int n_measurements )
     row->face_y = 0;
     row->col_follicle_x = 0;
     row->col_follicle_y = 0;
+  }
+  return table;
+}
+
+#define TRY(expr) \
+  if(!(expr)) error("%s(%d):\n\tExpression evaluated as false.\n\t%s\n",__FILE__,__LINE__,#expr)
+
+SHARED_EXPORT
+Measurements *Realloc_Measurements_Table(Measurements *old, int n_rows_old, int n_rows_new )
+{ Measurements *table;
+  double *dataspace;
+  double *velocityspace;
+  int n_measurements,c;
+  TRY(old); // pointer may not be NULL
+  n_measurements=old->n;
+  TRY(table         = realloc(old, sizeof(Measurements)*n_rows_new));
+  TRY(dataspace     = realloc(table->data-table->n*table->row, 2*sizeof(double)*n_measurements*n_rows_new));
+  velocityspace = dataspace + n_measurements*n_rows_new;
+  memmove(velocityspace,
+          dataspace+n_measurements*n_rows_old,
+          sizeof(double)*n_measurements*n_rows_old);
+
+#ifdef DEBUG_MEASUREMENTS_TABLE_ALLOC
+  debug("\nMeasurements table alloc: %d rows of data at %p\n",n_rows,dataspace);
+#endif
+  if(!dataspace) return NULL;
+  if(!table) return NULL;
+  c = n_rows_old;
+  for(c=0;c<n_rows_old;++c) // fixup pointers/offsets
+  { Measurements *row = table     + c;
+    row->data     = dataspace     + c*n_measurements;
+    row->velocity = velocityspace + c*n_measurements;
+    row->row = c;
+  }
+  for(;c<n_rows_new;++c) // init the rest
+  { Measurements *row = table + c;
+    row->row = c;
+    row->fid = 0;
+    row->wid = 0;
+    row->state = -1;
+    row->face_x = table->face_x;    // copy the first row's attributes
+    row->face_y = table->face_y;
+    row->col_follicle_x = table->col_follicle_x;
+    row->col_follicle_y = table->col_follicle_y;
+    row->valid_velocity = table->valid_velocity;
+    row->n = n_measurements;
+    row->face_axis = table->face_axis;
+    row->data      = dataspace     + c*n_measurements;
+    row->velocity  = velocityspace + c*n_measurements;
   }
   return table;
 }
@@ -163,7 +212,7 @@ void Measurements_Table_Set_Follicle_Position_Indices( Measurements *table, int 
 
 // Use this to copy in from e.g. matlab, python
 // Assumes first three columns are label,fid,wid (all ints) followed by data
-// so Measurements.n = n_cols - 3 
+// so Measurements.n = n_cols - 3
 //
 SHARED_EXPORT
 Measurements *Measurements_Table_From_Doubles( double *raw, int n_rows, int n_cols )
@@ -199,8 +248,8 @@ void Measurements_Table_Data_To_Doubles(Measurements *table, int n_rows, double 
   { double *rawrow = raw + n_cols*n_rows;
     Measurements *row = table + n_rows;
     rawrow[0] = row->state;
-    rawrow[1] = row->fid;  
-    rawrow[2] = row->wid;  
+    rawrow[1] = row->fid;
+    rawrow[2] = row->wid;
     memcpy( rawrow+3, row->data, sizeof(double)*n );
   }
 }
@@ -219,8 +268,8 @@ void Measurements_Table_Velocity_To_Doubles(Measurements *table, int n_rows, dou
   { double *rawrow = raw + n_cols*n_rows;
     Measurements *row = table + n_rows;
     rawrow[0] = row->state;
-    rawrow[1] = row->fid;  
-    rawrow[2] = row->wid;  
+    rawrow[1] = row->fid;
+    rawrow[2] = row->wid;
     if( row->valid_velocity )
       memcpy( rawrow+3, row->velocity, sizeof(double)*n );
     else
@@ -252,8 +301,8 @@ void Measurements_Table_Append_Columns_In_Place( Measurements *table, int n_rows
   assert( n_cols_to_add > 0 );
 
   // 0. Realloc data buffer - invalidates all table[i].data and velocity pointers!
-  buffer = Guarded_Realloc( buffer, 
-      sizeof(double)*(n+n_cols_to_add)*n_rows, 
+  buffer = Guarded_Realloc( buffer,
+      sizeof(double)*(n+n_cols_to_add)*n_rows,
       "Measurements_Table_Append_Columns_In_Place" );
 
   // 1. copy data from back to front through expanded buffer
@@ -297,7 +346,7 @@ void Measurements_Table_Select_Time_And_Mask_By_State( Measurements *table, int 
     { time[j  ] = row->fid;
       mask[j++] = row->valid_velocity;
     }
-  } 
+  }
 }
 
 // Selects rows according to their state and returns velocities
@@ -311,7 +360,7 @@ void Measurements_Table_Select_Velocities_By_State( Measurements *table, int n_r
   { Measurements *row = table + i;
     if( row->state == state )
       memcpy( data + (j++)*n, row->velocity, n*sizeof(double) );
-  } 
+  }
 }
 
 // Selects rows according to their state and returns shape data
@@ -325,7 +374,7 @@ void Measurements_Table_Select_Shape_By_State( Measurements *table, int n_rows, 
   { Measurements *row = table + i;
     if( row->state == state )
       memcpy( data + (j++)*n, row->data, n*sizeof(double) );
-  } 
+  }
 }
 
 int test_Measurements_Table_FileIO( char* filename,  Measurements *table, int n_rows )
@@ -341,7 +390,7 @@ int test_Measurements_Table_FileIO( char* filename,  Measurements *table, int n_
   { warning("Number of rows don't match: %d != %d\n",n_rows,nr2);
     goto Err;
   }
-  
+
   while( n_rows-- )
   { Measurements *a = table + n_rows,
                  *b = t2    + n_rows;
@@ -376,7 +425,7 @@ Err:
 static int cmp_sort_state_time( const void* a, const void* b )
 { Measurements *rowa = (Measurements*)a,
                *rowb = (Measurements*)b;
-  int dstate = (rowa->state) - (rowb->state);  
+  int dstate = (rowa->state) - (rowb->state);
   return (dstate==0) ? (rowa->fid - rowb->fid) : dstate;
 }
 
@@ -385,41 +434,41 @@ static int cmp_sort_time( const void* a, const void* b )
                *rowb = (Measurements*)b;
   return (rowa->fid - rowb->fid);
 }
-    
+
 static int cmp_sort_segment_uid( const void* a, const void* b )
 { Measurements *rowa = (Measurements*)a,
                *rowb = (Measurements*)b;
-  int d = (rowa->fid - rowb->fid); 
+  int d = (rowa->fid - rowb->fid);
   return (d!=0) ? d: (rowa->wid - rowb->wid);
 }
 
 /*
 static inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
-{ int ix = a->col_follicle_x, 
+{ int ix = a->col_follicle_x,
       iy = a->col_follicle_y,
        v = atan2( a->data[iy] - a->face_y,
-                  a->data[ix] - a->face_x ); 
+                  a->data[ix] - a->face_x );
   //error("Don't use...use ccw test instead\n");  //why did I put this here :\
-  return (v<0.0)?-1:((v>0.0)?1:0); 
+  return (v<0.0)?-1:((v>0.0)?1:0);
 }
 */
 
 
 static inline int _cmp_sort_face__ccw_test( Measurements *a, Measurements *b )
-{ int ix = a->col_follicle_x, 
-      iy = a->col_follicle_y;  
+{ int ix = a->col_follicle_x,
+      iy = a->col_follicle_y;
   double ax = a->data[ix] - a->face_x,
          ay = a->data[iy] - a->face_y,
          bx = b->data[ix] - b->face_x,
          by = b->data[iy] - b->face_y,
-         v  = ax*by - ay*bx; 
+         v  = ax*by - ay*bx;
   debug("(%s:%d)\n\tDon't use...ccw test has is fragile when a and b are colinear\n",__FILE__,__LINE__);
-  return (v<0.0)?-1:((v>0.0)?1:0); 
+  return (v<0.0)?-1:((v>0.0)?1:0);
 }
 
 static inline int _cmp_sort_face__angle_wrt_face( Measurements *a, Measurements *b )
-{ int ix = a->col_follicle_x, 
-      iy = a->col_follicle_y;  
+{ int ix = a->col_follicle_x,
+      iy = a->col_follicle_y;
   double ax = a->data[ix] - a->face_x, // translate origin to face pos
          ay = a->data[iy] - a->face_y,
          bx = b->data[ix] - b->face_x,
@@ -451,7 +500,7 @@ static inline int _cmp_sort_face__angle_wrt_face( Measurements *a, Measurements 
 }
 
 static int cmp_sort_face_order( const void* a, const void* b )
-{ 
+{
   return _cmp_sort_face__angle_wrt_face((Measurements*)a,(Measurements*)b);
   //return _cmp_sort_face__ccw_test((Measurements*)a,(Measurements*)b);
 }
@@ -461,7 +510,7 @@ static int cmp_sort_time_face_order( const void* a, const void* b )
                *rowb = (Measurements*)b;
   int dt = rowa->fid - rowb->fid;
   if(dt==0)
-    return (int) cmp_sort_face_order(a,b); 
+    return (int) cmp_sort_face_order(a,b);
   return dt;
 }
 
@@ -472,7 +521,7 @@ static int cmp_sort_time_state_face_order( const void* a, const void *b )
   if(d==0)
   { d = rowa->state - rowb->state;
     if(d==0)
-      return (int) cmp_sort_face_order(a,b); 
+      return (int) cmp_sort_face_order(a,b);
   }
   return d;
 }
@@ -494,7 +543,7 @@ void Sort_Measurements_Table_Time( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time );
 }
 
-SHARED_EXPORT 
+SHARED_EXPORT
 void Sort_Measurements_Table_Segment_UID( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_segment_uid );
 }
@@ -509,7 +558,7 @@ void Sort_Measurements_Table_Time_State_Face( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time_state_face_order );
 }
 
-inline double _diff(double a, double b) 
+inline double _diff(double a, double b)
 { double c = a-b;
   return c*c;
 }
@@ -533,8 +582,8 @@ void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_ro
              *ad = a->data;;
       for( i=0 ; i<n ; i++)  // for each field
         d[i] = _diff( bd[i] , ad[i] ); // compute difference
-      b->valid_velocity = 1; 
-    } else 
+      b->valid_velocity = 1;
+    } else
     { b->valid_velocity = 0;
     }
   }
@@ -550,7 +599,7 @@ void Measurements_Table_Compute_Velocities( Measurements *sorted_table, int n_ro
   if( sorted_table[1].valid_velocity )
   { memcpy( sorted_table[0].velocity, sorted_table[1].velocity, sizeof(double)*n );
     sorted_table[0].valid_velocity = 1;
-  } else 
+  } else
   { sorted_table[0].valid_velocity = 0;
   }
 }
@@ -601,9 +650,9 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
   double *delta;
   int measure_stride = d->n_bins,
       state_stride   = d->n_bins * d->n_measures,
-      dvol           = d->n_bins * d->n_measures * d->n_states; 
+      dvol           = d->n_bins * d->n_measures * d->n_states;
 
-#ifdef DEBUG_BUILD_DISTRIBUTIONS 
+#ifdef DEBUG_BUILD_DISTRIBUTIONS
   debug("\n\n********************** DEBUG_BUILD_DISTRIBUTIONS\n\n");
 #endif
 
@@ -639,7 +688,7 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
     for( j=0; j<n; j++ )
     { int ibin = (int) floor(  (data[j] - mn[j]) / delta[j]  );
       hist[ j*measure_stride + ibin ] ++;
-#ifdef DEBUG_BUILD_DISTRIBUTIONS 
+#ifdef DEBUG_BUILD_DISTRIBUTIONS
       if(  !( ibin >= 0 && ibin < n_bins ) )
       { debug("ibin:  %d\n",ibin);
         debug("nbins: %d\n",n_bins);
@@ -654,7 +703,7 @@ Distributions *Build_Distributions( Measurements *sorted_table, int n_rows, int 
   }
 
   free(mn);
-#ifdef DEBUG_BUILD_DISTRIBUTIONS 
+#ifdef DEBUG_BUILD_DISTRIBUTIONS
   debug("Returning %p\n",d);
   debug("**** Leaving ********* DEBUG_BUILD_DISTRIBUTIONS\n\n");
 #endif
@@ -675,11 +724,11 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
   double *delta;
   int measure_stride = d->n_bins,
       state_stride   = d->n_bins * d->n_measures,
-      dvol           = d->n_bins * d->n_measures * d->n_states; 
+      dvol           = d->n_bins * d->n_measures * d->n_states;
 
-#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS 
+#ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
   debug("\n\n********************** DEBUG_BUILD_VELOCITY_DISTRIBUTIONS\n"
-            "For table at %p with %d rows.  Will use %d bins.\n\n", 
+            "For table at %p with %d rows.  Will use %d bins.\n\n",
             sorted_table, n_rows, n_bins);
 #endif
 
@@ -694,13 +743,13 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
     int nlast, nthis;
     int fid = last->fid;
 
-    while( (this - sorted_table < n_rows) && (this->fid == fid) ) 
+    while( (this - sorted_table < n_rows) && (this->fid == fid) )
       ++this;
     nlast = this-last;
     next = this;
 
     for( j=0; j < n; j++ )
-    { double v = _diff( this->data[j], last->data[j] ); 
+    { double v = _diff( this->data[j], last->data[j] );
       mx[j] = v;
       mn[j] = v;
     }
@@ -708,7 +757,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
     while( this - sorted_table < n_rows )
     {
       fid = this->fid;
-      while( (next - sorted_table < n_rows) && (next->fid == fid) ) 
+      while( (next - sorted_table < n_rows) && (next->fid == fid) )
         next++;
       nthis = next-this;
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
@@ -725,10 +774,10 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
 
       for(i=0; i<nlast; i++)
       { double *ldata = last[i].data;
-        for(j=0; j<nthis; j++)  
+        for(j=0; j<nthis; j++)
         { double *tdata = this[j].data;
           for(k=0; k<n; k++)
-          { double diff = _diff( tdata[k], ldata[k] ); 
+          { double diff = _diff( tdata[k], ldata[k] );
             mx[k] = MAX(mx[k],diff);
             mn[k] = MIN(mn[k],diff);
           }
@@ -737,19 +786,19 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       last = this;
       nlast = nthis;
       this = next;
-    
+
     }
   } // end context - get extents
 
   for( j=0; j < n; j++ )
   { d->bin_min[j] = mn[j];
-    d->bin_delta[j] = (mx[j]*(1.001) - mn[j]) / ((double)n_bins); 
+    d->bin_delta[j] = (mx[j]*(1.001) - mn[j]) / ((double)n_bins);
   }
   delta = d->bin_delta;
 
   // Accumulate
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
-  // Requires some valid velocities 
+  // Requires some valid velocities
   // (see: Measurements_Table_Compute_Velocities to compute)
   debug("Checking to see if there are any valid computed velocities to histogram\n");
   for( i=0; i < n_rows; i++ )
@@ -791,14 +840,14 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
     int fid = last->fid;
     double *hist = d->data; //state == minstate
 
-    while( (this - sorted_table < n_rows) && (this->fid == fid) ) 
+    while( (this - sorted_table < n_rows) && (this->fid == fid) )
       ++this;
     nlast = this-last;
     next = this;
 
     while( this - sorted_table < n_rows )
     { fid = this->fid;
-      while( (next - sorted_table < n_rows) && (next->fid == fid) ) 
+      while( (next - sorted_table < n_rows) && (next->fid == fid) )
         next++;
       nthis = next-this;
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS_VERBOSE
@@ -815,16 +864,16 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
 
       for(i=0; i<nlast; i++)
       { double *ldata = last[i].data;
-        for(j=0; j<nthis; j++)  
+        for(j=0; j<nthis; j++)
         { double *tdata = this[j].data;
           for(k=0; k<n; k++)
-          { double diff = _diff( tdata[k], ldata[k] ); 
+          { double diff = _diff( tdata[k], ldata[k] );
             int ibin = (int) floor(  (diff - mn[k]) / delta[k]  );
             hist[ k*measure_stride + ibin  ] ++;
 #ifdef DEBUG_BUILD_VELOCITY_DISTRIBUTIONS
             if(  !( ibin >= 0 && ibin < n_bins ) )
-            { debug("   ibin:  %d\n",ibin);             
-              debug("   nbins: %d\n",n_bins);           
+            { debug("   ibin:  %d\n",ibin);
+              debug("   nbins: %d\n",n_bins);
               debug("    data[%d]: %f\n", j,  diff    );
               debug("      mn[%d]: %f\n", j,    mn[k] );
               debug("      mx[%d]: %f\n", j,    mx[k] );
@@ -838,7 +887,7 @@ Distributions *Build_Velocity_Distributions( Measurements *sorted_table, int n_r
       last = this;
       nlast = nthis;
       this = next;
-    
+
     }
   } // end context - get extents
 
@@ -849,7 +898,7 @@ void Distributions_Normalize( Distributions *d )
 { int i,j,k;
   int measure_stride = d->n_bins,
       state_stride   = d->n_bins * d->n_measures,
-      dvol           = d->n_bins * d->n_measures * d->n_states; 
+      dvol           = d->n_bins * d->n_measures * d->n_states;
   // Normalize
   for( i=0; i < d->n_states; i++ )
   { double *hists = d->data + i * state_stride;
@@ -858,7 +907,7 @@ void Distributions_Normalize( Distributions *d )
       double norm = 0;
       for( k=0; k < d->n_bins; k++ )  // Add one to each bin (want something like upper bound for probs)
         h[k]++;
-      for( k=0; k < d->n_bins; k++ )  // Accumulate 
+      for( k=0; k < d->n_bins; k++ )  // Accumulate
         norm += h[k];
       for( k=0; k < d->n_bins; k++ )  // Apply norm
         h[k] = h[k] / norm;
@@ -867,7 +916,7 @@ void Distributions_Normalize( Distributions *d )
 }
 
 void Distributions_Apply_Log2( Distributions *d )
-{ double *data = d->data, 
+{ double *data = d->data,
          *e = d->data + d->n_states * d->n_measures * d->n_bins;
   while(e-- > data)
     *e = log2(*e);
@@ -877,7 +926,7 @@ void Distributions_Dilate( Distributions* dist )
 { int stride = dist->n_bins;
   double *a = dist->data + dist->n_bins * dist->n_measures * dist->n_states;
   while( (a-=stride) > dist->data )
-    maxfilt_centered_double_inplace( a, stride, 3 ); 
+    maxfilt_centered_double_inplace( a, stride, 3 );
 }
 
 // vec must be an array of length dist->n_measures
@@ -924,7 +973,7 @@ double Eval_Velocity_Likelihood_Log2( Distributions *dist, double *prev, double 
   vec = (double*) request_storage( vec, &maxn, sizeof(double), i, "eval transitions");
   while(i--)
     vec[i] = _diff( next[i], prev[i] );
-  
+
   return Eval_Likelihood_Log2(dist,vec,istate);
 }
 
@@ -935,7 +984,7 @@ double Eval_Velocity_Likelihood_Log2( Distributions *dist, double *prev, double 
 //
 // Returns a vector of pointers into the table that trace out the best path
 // This vector is statically allocated...which is a bit silly since we know
-// where to put the data...should just pass in a pointer.  doing it this 
+// where to put the data...should just pass in a pointer.  doing it this
 // way requires a copy and additional memory management.
 //
 
@@ -948,9 +997,9 @@ typedef struct _LatticeNode {
 } LatticeNode;
 
 SHARED_EXPORT
-Measurements **Find_Path( Measurements *sorted_table, 
+Measurements **Find_Path( Measurements *sorted_table,
                           int n_rows,
-                         Distributions *shape, 
+                         Distributions *shape,
                          Distributions *velocity,
                          Measurements *start,
                          Measurements *end,
@@ -967,25 +1016,25 @@ Measurements **Find_Path( Measurements *sorted_table,
   static size_t lattice_size = 0;
   static Measurements **result    = NULL;
   static size_t         result_size = 0;
-  
 
-#ifdef DEBUG_FIND_PATH 
+
+#ifdef DEBUG_FIND_PATH
   assert(start->state == end->state );
   assert(pathlength>0);   // end should come after start
   assert(start<end);      // table should be sorted
 #endif
 
   if(npath) *npath = pathlength;
-  
+
   //
   // count number of nodes (includes start and end)
-  // 
+  //
   { Measurements *row = start;
     while( row->fid == start->fid && row < eot) row++; // scroll to first frame after
     first = row;
     while( row->fid != end->fid && row < eot ) row++; // scroll to last item in gray area
     last = row - 1;
-#ifdef DEBUG_FIND_PATH 
+#ifdef DEBUG_FIND_PATH
     assert( last > first );
 #endif
   }
@@ -995,8 +1044,8 @@ Measurements **Find_Path( Measurements *sorted_table,
 
   //
   // init lattice
-  // 
-  { Measurements *row, *next, *nextnext; 
+  //
+  { Measurements *row, *next, *nextnext;
     LatticeNode  *cur = lattice + 1;
 
     memset(lattice, 0, sizeof(lattice)*nnode);
@@ -1007,8 +1056,8 @@ Measurements **Find_Path( Measurements *sorted_table,
     cur = lattice + 1;
     row = first;
     next = row;
-    while( next->fid == row->fid && next < eot) 
-      next++; // scroll to first frame after   
+    while( next->fid == row->fid && next < eot)
+      next++; // scroll to first frame after
 
     lattice[nnode-1].row = end;
     lattice[0].row = start;
@@ -1016,16 +1065,16 @@ Measurements **Find_Path( Measurements *sorted_table,
     lattice[0].nchildren = next - first;
     while(next <= last && next < eot)
     { nextnext = next;
-      while( nextnext->fid == next->fid && nextnext < eot) 
+      while( nextnext->fid == next->fid && nextnext < eot)
         nextnext++; // scroll to second frame after (for child count)
-  
+
       for( ; row < next; row++ )
       { cur->row       = row;
-        cur->children  = lattice + (next-first + 1); 
+        cur->children  = lattice + (next-first + 1);
         cur->nchildren = nextnext - next;
         cur++;
       }
-#ifdef DEBUG_FIND_PATH 
+#ifdef DEBUG_FIND_PATH
       assert( row == next );
 #endif
       next = nextnext;
@@ -1033,11 +1082,11 @@ Measurements **Find_Path( Measurements *sorted_table,
     while(row <= last && row < eot) // last row all point to end
     { for( ; row < next; row++ )
       { cur->row       = row;
-        cur->children  = lattice + nnode - 1; // (next-first + 1); 
+        cur->children  = lattice + nnode - 1; // (next-first + 1);
         cur->nchildren = 1;
         cur++;
       }
-#ifdef DEBUG_FIND_PATH 
+#ifdef DEBUG_FIND_PATH
       assert( next-first+1 == nnode-1 );
       assert( row == next );
 #endif
@@ -1078,11 +1127,11 @@ Measurements **Find_Path( Measurements *sorted_table,
   //
   // trace back
   //
-  result = request_storage( 
-      result, 
-      &result_size, 
-      sizeof(Measurements*), 
-      pathlength, 
+  result = request_storage(
+      result,
+      &result_size,
+      sizeof(Measurements*),
+      pathlength,
       "alloc result in find paths (solve gray areas)" );
   { LatticeNode  *node = lattice + nnode - 1;
     Measurements **cur = result + pathlength;
@@ -1098,7 +1147,7 @@ Measurements **Find_Path( Measurements *sorted_table,
 // in the movie have been labeled.  That is, a subset of the rows have a
 // `state` field that is different than -1.
 //
-// From this labeled subset two sets of histograms are computed conditioned on 
+// From this labeled subset two sets of histograms are computed conditioned on
 // the labelled state (for states different than -1).
 //
 // For unlabelled frames (gray areas), Find_Path will be called to link the labeled
@@ -1112,7 +1161,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
 #ifdef DEBUG_SOLVE_GRAY_AREAS
   debug("*****************************     DEBUG_SOLVE_GRAY_AREAS\n");
 #endif
-  
+
   Sort_Measurements_Table_State_Time( table, n_rows );
   nstates = _count_n_states( table, n_rows, 1, &minstate, &maxstate );
   Measurements_Table_Compute_Velocities( table, n_rows );
@@ -1127,13 +1176,13 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
   nframes = table[n_rows-1].fid + 1;
 
 #ifdef DEBUG_SOLVE_GRAY_AREAS
-  { int x = n_rows; while(--x) assert( (table[x].fid - table[x-1].fid) >= 0 ); } // check sort order 
+  { int x = n_rows; while(--x) assert( (table[x].fid - table[x-1].fid) >= 0 ); } // check sort order
 #endif
 
   { int *gray_areas = Guarded_Malloc(nframes * sizeof(int), "in solve - alloc gray_areas");
     int ngray = 0;
-    
-    // Compute trajectories - 
+
+    // Compute trajectories -
     // Each is an array, nframes long, of pointers into the table
     // FIXME: BUG: What about the edge cases?
     //        For gray areas starting at the beginning or ending at the end of
@@ -1147,7 +1196,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
       // fill in gray areas
       for( i=1; i <  nstates; i++ ) // forget about minstate (trash state)
       { Measurements** t = trajs + i*nframes;                          // get index relative to current state
-  
+
         // Find the gray areas:
         // A frame is in a `gray area` if there's no appt. labelled segment
         //    Step 1: mask frames
@@ -1159,7 +1208,7 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
         //    Step 2: Compute the inclusive boundaries of the gray areas in place
         ngray = 0;
         for(j=1;j<nframes;j++)
-        { int d = gray_areas[j] - gray_areas[j-1]; 
+        { int d = gray_areas[j] - gray_areas[j-1];
           if( d == -1 )     // Opening a gray area
             gray_areas[ ngray ] = j;
           else if( d == 1 ) // Closing a gray area
@@ -1185,14 +1234,14 @@ void Solve( Measurements *table, int n_rows, int n_shape_bins, int n_vel_bins )
               debug("Running find path from frame %5d to %5d\n", start->fid, end->fid);
 #endif
               path = Find_Path( table, n_rows, shape, velocity, start, end, minstate, &npath );
-              memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath); 
+              memcpy( t + gray_areas[j], path, sizeof(Measurements*)*npath);
 #ifdef DEBUG_SOLVE_GRAY_AREAS
               assert( start->fid == path[0]->fid      - 1 );
               assert( end->fid   == path[npath-1]->fid + 1);
-              debug("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n", 
-                  t[gray_areas[j]-1]->state, 
-                  t[gray_areas[j]]->fid, 
-                  t[gray_areas[j]]->wid, 
+              debug("\tCopyied solution for %5d to (%5d,%5d).  Size %d. \n",
+                  t[gray_areas[j]-1]->state,
+                  t[gray_areas[j]]->fid,
+                  t[gray_areas[j]]->wid,
                   npath);
               { int x = npath; while(--x) assert( path[x]->fid == path[x-1]->fid + 1 ); } //check frames increment as expected
 #endif
@@ -1245,7 +1294,7 @@ int main(int argc, char *argv[])
   int n_rows = 0;
   int n_bins = 32;
   int ret = 1;
-  
+
   debug("Test: Load measurements and compute distributions.\n");
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("filename"), NULL, &n_rows);
@@ -1286,7 +1335,7 @@ int main(int argc, char *argv[])
 { Measurements *table;
   int n_rows = 0;
   int err = 0;
-  
+
   debug("Test: Load measurements, run solve, and save result.\n");
   Process_Arguments(argc,argv,Spec,0);
   table = Measurements_Table_From_Filename( Get_String_Arg("source"), NULL, &n_rows);
@@ -1295,7 +1344,7 @@ int main(int argc, char *argv[])
   Solve( table, n_rows, IDENTITY_SOLVER_SHAPE_NBINS, IDENTITY_SOLVER_VELOCITY_NBINS );
   Sort_Measurements_Table_State_Time( table, n_rows );
   Measurements_Table_Compute_Velocities( table, n_rows );
-  
+
   { int minstate, maxstate, istate;
     int nframes = table[n_rows-1].fid + 1;
     _count_n_states( table, n_rows, 1, &minstate, &maxstate );
@@ -1317,4 +1366,4 @@ int main(int argc, char *argv[])
 //  debug("\tTest passed.\n");
   return err;
 }
-#endif // TEST_SOLVE_GRAY_AREAS 
+#endif // TEST_SOLVE_GRAY_AREAS

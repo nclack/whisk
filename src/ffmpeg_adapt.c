@@ -212,14 +212,22 @@ int ffmpeg_video_next( ffmpeg_video *cur, int target )
   int finished = 0;
   do
   { finished=0;
+    av_free_packet( &packet );
     AVTRY(av_read_frame( cur->pFormatCtx, &packet ),NULL);   // !!NOTE: see docs on packet.convergence_duration for proper seeking        
     if( packet.stream_index != cur->videoStream ) /* Is it what we're trying to parse? */
     { av_free_packet( &packet );
       continue;
     }    
     AVTRY(avcodec_decode_video2( cur->pCtx, cur->pRaw, &finished, &packet ),NULL); 
-    //printf("Packet - pts:%5d dts:%5d (%5d) - flag: %1d - finished: %3d - Frame pts:%5d %5d\n",packet.pts,packet.dts,target,packet.flags,finished,cur->pRaw->pts,cur->pRaw->best_effort_timestamp);
-    av_free_packet( &packet );
+    if(cur->pCtx->codec_id==CODEC_ID_RAWVIDEO)
+    { // effect is that NULL frames aways appear as last found frame
+      if(cur->pRaw->pict_type!=AV_PICTURE_TYPE_NONE)
+        finished=1; // this worked? - pRaw is just associated with packet buffer
+    }
+    printf("Packet - pts:%5d dts:%5d (%5d) - flag: %1d - finished: %3d - Frame pts:%5d %5d\n",
+        (int)packet.pts,(int)packet.dts,target,
+        packet.flags,finished,
+        (int)cur->pRaw->pts,(int)cur->pRaw->best_effort_timestamp);
     if(!finished)
       TRY(packet.pts!=AV_NOPTS_VALUE);    
   } while(!finished || cur->pRaw->best_effort_timestamp<target);
@@ -227,10 +235,11 @@ int ffmpeg_video_next( ffmpeg_video *cur, int target )
   sws_scale(cur->Sctx,              // sws context
             cur->pRaw->data,        // src slice
             cur->pRaw->linesize,    // src stride
-            0,                      // src slice y
+            0,                      // src slice origin y
             cur->pCtx->height,      // src slice height
             cur->pDat->data,        // dst
             cur->pDat->linesize );  // dst stride
+  av_free_packet( &packet );
 
   /* copy out raw data */
   { int i;

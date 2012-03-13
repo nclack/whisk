@@ -1,5 +1,5 @@
 /* Author: Nathan Clack <clackn@janelia.hhmi.org>
- * Date  : 2009 
+ * Date  : 2009
  *
  * Copyright 2010 Howard Hughes Medical Institute.
  * All rights reserved.
@@ -41,19 +41,19 @@ typedef struct  _Zone      //
   { int    cutoff;    //
     Image *mask;      //
   } Zone;             //
-                     
+
 typedef struct  _Line_Params      //
   { float  offset;    //
     float  angle;     //
     float  width;     //
     float  score;     //
   } Line_Params;      //
-                     
+
 typedef struct _Interval       //
   { double min;       //
     double max;       //
   } Interval;         //
-                     
+
 typedef struct  _Whisker_Seg_Old      //
   { int    id;        //
     double width;     //
@@ -63,7 +63,7 @@ typedef struct  _Whisker_Seg_Old      //
     float *track;     //
     float *scores;    //
   } Whisker_Seg_Old;  //
-                     
+
 typedef struct _Whisker_Seg       //
 { int id;             //
   int time;           //
@@ -74,27 +74,27 @@ typedef struct _Whisker_Seg       //
   float *scores;      //
 } Whisker_Seg;        //
 
- SHARED_EXPORT  Whisker_Seg  *Make_Whisker_Seg                      ( int n );                                           
- SHARED_EXPORT  void          Free_Whisker_Seg                      ( Whisker_Seg *w );                                  
- SHARED_EXPORT  void          Free_Whisker_Seg_Data                 ( Whisker_Seg *w );                                  
- SHARED_EXPORT  void          Free_Whisker_Seg_Vec                  ( Whisker_Seg *wv, int n );                          
+ SHARED_EXPORT  Whisker_Seg  *Make_Whisker_Seg                      ( int n );
+ SHARED_EXPORT  void          Free_Whisker_Seg                      ( Whisker_Seg *w );
+ SHARED_EXPORT  void          Free_Whisker_Seg_Data                 ( Whisker_Seg *w );
+ SHARED_EXPORT  void          Free_Whisker_Seg_Vec                  ( Whisker_Seg *wv, int n );
  SHARED_EXPORT  void          Whisker_Seg_Sort_By_Id                ( Whisker_Seg *wv, int n );
- SHARED_EXPORT  void          Estimate_Image_Shape_From_Segments    ( Whisker_Seg* wv, int n, int *width, int *height ); 
+ SHARED_EXPORT  void          Estimate_Image_Shape_From_Segments    ( Whisker_Seg* wv, int n, int *width, int *height );
 
  SHARED_EXPORT  Array *get_line_detector_bank   (Range *off, Range *wid, Range *ang);
  SHARED_EXPORT  int    read_line_detector_bank  (char *filename, Array **bank, Range *off, Range *wid, Range *ang );
 
- SHARED_EXPORT  Whisker_Seg  *find_segments                 (int iFrame, Image *image, Image *bg, int *nseg );           
- SHARED_EXPORT  Image        *compute_background            (Stack *movie);                                              
- SHARED_EXPORT  Zone         *compute_zone                  (Stack *movie);                                              
- SHARED_EXPORT  float         eval_line                     (Line_Params *line, Image *image, int p);                    
+ SHARED_EXPORT  Whisker_Seg  *find_segments                 (int iFrame, Image *image, Image *bg, int *nseg );
+ SHARED_EXPORT  Image        *compute_background            (Stack *movie);
+ SHARED_EXPORT  Zone         *compute_zone                  (Stack *movie);
+ SHARED_EXPORT  float         eval_line                     (Line_Params *line, Image *image, int p);
 
- SHARED_EXPORT  int           adjust_line_walk              (Line_Params *line, Image *image, int *pp,                   
-                                                             Interval *roff, Interval *rang, Interval *rwid);            
+ SHARED_EXPORT  int           adjust_line_walk              (Line_Params *line, Image *image, int *pp,
+                                                             Interval *roff, Interval *rang, Interval *rwid);
 
- SHARED_EXPORT  int           adjust_line_start             (Line_Params *line, Image *image, int *pp,                   
-                                                             Interval *roff, Interval *rang, Interval *rwid);            
+ SHARED_EXPORT  int           adjust_line_start             (Line_Params *line, Image *image, int *pp,
+                                                             Interval *roff, Interval *rang, Interval *rwid);
 
- SHARED_EXPORT  Whisker_Seg  *trace_whisker                 (Seed *s, Image *image);                                     
+ SHARED_EXPORT  Whisker_Seg  *trace_whisker                 (Seed *s, Image *image);
 
 #endif

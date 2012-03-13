@@ -1,5 +1,16 @@
 #include <QtCore>
 #include "LockedCalls.h"
+namespace whisk {
+extern "C"{
+#include <parameters/param.h>
+#include "whisker_io.h"
+#include "measurements_io.h"
+#include "measure.h"
+#include "seed.h"
+#include "traj.h"
+  }
+#include "video.h"
+}
 
 namespace locked {
 QMutex GlobalWhiskLock; // = NULL; //& GlobalWhiskLock_;
@@ -48,10 +59,48 @@ void         video_close         (video_t **self)   WRAPNR(video_close(self))
 unsigned int video_frame_count   (video_t  *self)   WRAP(video_frame_count(self))
 int          is_video            (const char *path) WRAP(is_video(path))
 
-void         video_compute_stats (video_t  *self, int at_most_nframes) 
+void         video_compute_stats (video_t  *self, int at_most_nframes)
 WRAPNR(video_compute_stats(self,at_most_nframes))
 
-Image       *video_get           (video_t  *self, unsigned int iframe, int apply_line_bias_correction) 
+Image       *video_get           (video_t  *self, unsigned int iframe, int apply_line_bias_correction)
 WRAP(video_get(self,iframe,apply_line_bias_correction))
+
+void   Free_Image(Image *image)
+WRAPNR(Free_Image(image))
+
+//  TRACE  /////////////////////////////////////////////////////////////////////
+
+Seed* compute_seed_from_point  ( Image *image, int p, int maxr )
+WRAP(compute_seed_from_point(image,p,maxr))
+
+Whisker_Seg* trace_whisker(Seed *s,Image *image)
+WRAP(trace_whisker(s,image))
+
+void Whisker_Seg_Sort_By_Id( Whisker_Seg *wv, int n )
+WRAP(Whisker_Seg_Sort_By_Id(wv,n))
+
+void Free_Whisker_Seg_Data    ( Whisker_Seg *w )
+WRAPNR(Free_Whisker_Seg_Data(w))
+
+// TRAJ  ///////////////////////////////////////////////////////////////////////
+
+void Sort_Measurements_Table_Segment_UID( Measurements *table, int nrows )
+WRAP(Sort_Measurements_Table_Segment_UID(table,nrows))
+
+void Whisker_Seg_Measure(Whisker_Seg *w,double *dest,int facex,int facey,char face_axis )
+WRAPNR(Whisker_Seg_Measure(w,dest,facex,facey,face_axis))
+
+Measurements *Whisker_Segments_Measure( 
+    Whisker_Seg *wv, int wvn, 
+    int facex, int facey, char face_axis )
+WRAP(Whisker_Segments_Measure(wv,wvn,facex,facey,face_axis))
+
+Measurements *Whisker_Segments_Update_Measurements(
+    Measurements* table,Whisker_Seg *wv, int wvn,
+    int facex, int facey, char face_axis )
+WRAP(Whisker_Segments_Update_Measurements(table,wv,wvn,facex,facey,face_axis))
+
+Measurements* Realloc_Measurements_Table( Measurements *old, int n_rows_old, int n_rows_new )
+WRAP(Realloc_Measurements_Table(old,n_rows_old,n_rows_new))
 
 }// end namespace locked
