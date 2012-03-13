@@ -71,7 +71,8 @@ typedef struct _ffmpeg_video
    AVFrame *pRaw;
    AVFrame *pDat;
    uint8_t *buffer,
-           *rawimage;
+           *rawimage,
+           *blank;
    struct SwsContext *Sctx;
    int videoStream, width, height, format;
    int numBytes;
@@ -113,6 +114,7 @@ ffmpeg_video *ffmpeg_video_quit( ffmpeg_video *cur )
 
   if(cur->rawimage) av_free(cur->rawimage);
   if(cur->buffer)   av_free(cur->buffer);
+  if(cur->blank)    av_free(cur->blank);
   free(cur);
 
   return NULL;
@@ -157,6 +159,7 @@ ffmpeg_video *ffmpeg_video_init(const char *fname, int format )
   /* Create data buffer */
   ret->numBytes = avpicture_get_size( ret->format, ret->pCtx->width, ret->pCtx->height );
   TRY(ret->buffer   = (uint8_t*)av_malloc(ret->numBytes));
+  TRY(ret->blank    = (uint8_t*)av_mallocz(avpicture_get_size(ret->pCtx->pix_fmt,ret->width,ret->height)));    
   TRY(ret->rawimage = (uint8_t*)av_malloc(ret->width*ret->height/* 1 Bpp*/));
 
   /* Init buffers */
@@ -219,15 +222,16 @@ int ffmpeg_video_next( ffmpeg_video *cur, int target )
       continue;
     }    
     AVTRY(avcodec_decode_video2( cur->pCtx, cur->pRaw, &finished, &packet ),NULL); 
-    if(cur->pCtx->codec_id==CODEC_ID_RAWVIDEO)
-    { // effect is that NULL frames aways appear as last found frame
-      if(cur->pRaw->pict_type!=AV_PICTURE_TYPE_NONE)
-        finished=1; // this worked? - pRaw is just associated with packet buffer
+    if(cur->pCtx->codec_id==CODEC_ID_RAWVIDEO && !finished)
+    { avpicture_fill( (AVPicture * ) cur->pRaw, cur->blank, cur->pCtx->pix_fmt,cur->width, cur->height ); // set to blank frame 
+      finished=1;
     }
+#if 0 // very useful for debugging
     printf("Packet - pts:%5d dts:%5d (%5d) - flag: %1d - finished: %3d - Frame pts:%5d %5d\n",
         (int)packet.pts,(int)packet.dts,target,
         packet.flags,finished,
         (int)cur->pRaw->pts,(int)cur->pRaw->best_effort_timestamp);
+#endif
     if(!finished)
       TRY(packet.pts!=AV_NOPTS_VALUE);    
   } while(!finished || cur->pRaw->best_effort_timestamp<target);

@@ -480,7 +480,7 @@ Error:
 void Data::setIdentity(int iframe, int wid, int ident)
 { Measurements *mm;
   measIdMap_t ms;
-  if(is_ident_same_(iframe,wid,ident))
+  if(ident==-1 && !measurements_)
     return;
   maybePopulateMeasurements();
   SILENTTRY(mm=get_meas_by_wid_(iframe,wid));
