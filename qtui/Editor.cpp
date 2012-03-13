@@ -39,6 +39,7 @@ View::View(QGraphicsScene *scene, QWidget *parent)
   , lockitem_(0)
   , iframe_(-1)
   , ident_(-1)
+  , indicate_advance_(false)
 { setAcceptDrops(true);
   setResizeAnchor(AnchorViewCenter);
   setDragMode(NoDrag);
@@ -99,7 +100,12 @@ void View::drawForeground(QPainter *painter, const QRectF &rect)
       msg=QString("Frame: %1").arg(iframe_,4);
       painter->drawText(2,22,msg);
       msg=QString("Whisker: %1").arg(ident_);
-      painter->drawText(2,42,msg);
+      painter->drawText(2,44,msg);
+      
+      if(indicate_advance_)
+      { painter->setPen(Qt::green);
+        painter->drawText(2,66,"Advance");
+      }
     }
     { QFont font = QFont("Helvetica",10);
       QPointF p  = QPointF(   mapFromGlobal(QCursor::pos())),
@@ -126,6 +132,11 @@ void View::setIdent(int ident)
 { ident_=ident;
   invalidateForeground();
   emit identChanged(ident);
+}
+
+void View::setAdvanceIndicator(bool b)
+{ indicate_advance_=b;
+  invalidateForeground();
 }
 
 void View::dragEnterEvent(QDragEnterEvent *event)
@@ -165,7 +176,7 @@ void View::wheelEvent(QWheelEvent *event)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// DISPLAY      QWIDGET
+// EDITOR                                                                QWIDGET
 ////////////////////////////////////////////////////////////////////////////////
 Editor::Editor(QWidget *parent,Qt::WindowFlags f)
   : QWidget(parent,f)
@@ -178,14 +189,16 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
   , face_(0)
   , data_(this)
   , curves_(NULL)
+  , lastEdit_(NULL)
   , autocorrect_video_(true)
+  , advance_on_successful_left_click_(false)
   , iframe_(0)
-{ makeActions_();
+{ 
   //setContextMenuPolicy(Qt::ActionsContextMenu);
 
   ///// Setup the initial scene
   scene_ = new QGraphicsScene;
-  curves_ = new CurveGroup(scene_,this);
+  curves_ = new CurveGroup(scene_,this);  
 
   TRY(connect(curves_,SIGNAL(removeRequest(int,int)),&data_,SLOT(remove(int,int))),ErrorConnect);
   TRY(connect(curves_,SIGNAL(clicked(int)),this,SLOT(setToCurrentIdentByWid(int))),ErrorConnect);
@@ -204,13 +217,20 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
     dataItemsRoot_   = new QGraphicsWidget;
     loadingGraphics_ = new LoadingGraphicsWidget;
     face_            = new FaceIndicator;
+    lastEdit_        = new Curve;
     face_->setPos(droptarget_->boundingRect().center());
     scene_->addItem(droptarget_);
     image_->setParentItem(dataItemsRoot_);
     face_->setParentItem(dataItemsRoot_);
+
+    lastEdit_->setParentItem(dataItemsRoot_);    
+    lastEdit_->setPen(QPen(Qt::black));
+    lastEdit_->setSelectable(false);
+
     scene_->addItem(dataItemsRoot_);
     scene_->addItem(loadingGraphics_);
 
+    // face position item - editor - data communication
     // XXX: This is a hacky mess.
     TRY(connect( this ,SIGNAL(facePositionChanged(QPointF)),
                 &data_,SIGNAL(facePositionChanged(QPointF))),ErrorConnect);
@@ -224,6 +244,12 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
     TRY(connect(face_,SIGNAL(xChanged()),this,SLOT(updateFromFaceAnchor())),ErrorConnect);
     TRY(connect(face_,SIGNAL(yChanged()),this,SLOT(updateFromFaceAnchor())),ErrorConnect);
   }
+
+  ///// responses to data signals
+  { TRY(connect(&data_,SIGNAL(success()),this,SLOT(maybeNextFrame())),ErrorConnect);
+    TRY(connect(&data_,SIGNAL(lastCurve(QPolygonF)),this,SLOT(maybeShowLastCurve(QPolygonF))),ErrorConnect);
+  }
+    
 
   ///// Init the graphicsview
   { QVBoxLayout *layout = new QVBoxLayout;
@@ -274,6 +300,8 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
     // connect to state transitions
     TRY(connect(loaded,SIGNAL(entered()),this,SLOT(showCurrentFrame())),ErrorConnect);
   }
+
+  makeActions_();
   return;
 ErrorConnect:
   exit(-1);
@@ -287,13 +315,15 @@ ErrorConnect:
 void Editor::showFrame(int index)
 { QPixmap p = data_.frame(index,autocorrect_video_);
   if(!p.isNull())
-  { iframe_=index;  // only updates if read was successful
+  { if(iframe_!=index)
+      lastEdit_->hide();
+    iframe_=index;  // only updates if read was successful    
     emit frameId(iframe_);
     image_->setPixmap(p);
 
     // add whisker curves
     { int i;
-      int nident = data_.maxIdentity()-data_.minIdentity();
+      int nident = data_.maxIdentity()-data_.minIdentity(); //don't add 1 bc interval always has -1 and we don't count -1.
       curves_->beginAdding(iframe_);
       for(i=0;i<data_.curveCount(iframe_);++i)
       {
@@ -350,10 +380,20 @@ void Editor::setFaceAnchor()
 
 void Editor::updateFromFaceAnchor()
 { QPointF target = face_->pos();
-  qDebug() << target;
+  //qDebug() << target;
   data_.setFacePosition(target);
   data_.setFaceOrientation(face_->orientation());
 }
+
+void Editor::setAutocorrect(bool ison)
+{ autocorrect_video_ = ison;
+  showFrame(iframe_);
+}
+
+void Editor::setAdvanceOnSuccessfulClick(bool b)
+{ advance_on_successful_left_click_ = b;
+}
+
 /**
  * Usually this function is called to referesh the view for a new video.
  * Also calls View::lockTo for the image.
@@ -365,6 +405,11 @@ void Editor::showCurrentFrame()
   else
     showFrame(0);
   view_->lockTo(image_);
+}
+
+void Editor::maybeNextFrame()
+{ if(advance_on_successful_left_click_)
+    showFrame(iframe_+1);
 }
 
 void Editor::nextFrame()
@@ -470,6 +515,8 @@ void Editor::makeActions_()
   actions_["decIdent1000"]= new QAction(tr("Decrement active identity by 1000")  ,this);
   actions_["setFaceAnchor"] = new QAction(QIcon(":/icons/faceindicator"),tr("Place &face anchor")  ,this);
   actions_["traceAt"     ]= new QAction(QIcon(":/icons/traceAt"),tr("&Trace a new curve"),this);
+  actions_["autocorrect" ] = new QAction(tr("&Stripe correction"),this);
+  actions_["advance"     ] = new QAction(tr("&Advance after edit"),this);
 
   actions_["next"    ]->setShortcut( QKeySequence( Qt::Key_Right));
   actions_["next10"  ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT));
@@ -492,6 +539,8 @@ void Editor::makeActions_()
   actions_["decIdent1000"    ]->setShortcut( QKeySequence( Qt::Key_Down  + Qt::SHIFT + Qt::CTRL + Qt::ALT));
   actions_["setFaceAnchor"   ]->setShortcut( QKeySequence( "f"));
   actions_["traceAt"         ]->setShortcut( QKeySequence( "t"));
+  actions_["autocorrect"     ]->setShortcut( QKeySequence( "s"));
+  actions_["advance"         ]->setShortcut( QKeySequence( "a"));
 
   TRY(connect(actions_["next"         ],SIGNAL(triggered()),this,SLOT(nextFrame())     ),Error);
   TRY(connect(actions_["next10"       ],SIGNAL(triggered()),this,SLOT(nextFrame10  ()) ),Error);
@@ -514,6 +563,13 @@ void Editor::makeActions_()
   TRY(connect(actions_["decIdent1000" ],SIGNAL(triggered()),this,SLOT(decIdent1000())  ),Error);
   TRY(connect(actions_["setFaceAnchor"],SIGNAL(triggered()),this,SLOT(setFaceAnchor()) ),Error);
   TRY(connect(actions_["traceAt"      ],SIGNAL(triggered()),this,SLOT(traceAtCursor()) ),Error); 
+  actions_["autocorrect" ]->setCheckable(true);
+  actions_["autocorrect" ]->setChecked(autocorrect_video_);
+  TRY(connect(actions_["autocorrect"],SIGNAL(toggled(bool)),this,SLOT(setAutocorrect(bool))),Error);
+  actions_["advance" ]->setCheckable(true);
+  actions_["advance" ]->setChecked(advance_on_successful_left_click_);
+  TRY(connect(actions_["advance"],SIGNAL(toggled(bool)),this,SLOT(setAdvanceOnSuccessfulClick(bool))),Error);
+  TRY(connect(actions_["advance"],SIGNAL(toggled(bool)),view_,SLOT(setAdvanceIndicator(bool))),Error);
 
   foreach(QAction *a,actions_)
   { a->setShortcutContext(Qt::ApplicationShortcut);
@@ -526,6 +582,8 @@ Error:
 
 QList<QAction*> Editor::videoPlayerActions()
 { static const char* names[] = {
+                                "autocorrect",
+                                "advance",
                                 "next",
                                 "next10",
                                 "next100",
@@ -611,4 +669,12 @@ void Editor::contextMenuEvent(QContextMenuEvent *event)
     m->addAction(actions_[*a++]);
   m->exec(event->globalPos());
   last_context_menu_point_=QPoint();
+}
+
+
+void Editor::maybeShowLastCurve(QPolygonF midline)
+{ if(advance_on_successful_left_click_)
+  { lastEdit_->setMidline(midline);
+    lastEdit_->show();
+  }
 }

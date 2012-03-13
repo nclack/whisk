@@ -33,6 +33,7 @@ class Curve : public QGraphicsObject
     void setPen(const QPen& pen);
     void setColor(const QColor& color);
     void setSelected(bool select=true);
+    void setSelectable(bool);
 
   protected slots:
     void light();
@@ -54,6 +55,7 @@ class Curve : public QGraphicsObject
     QPainterPath collisionBounds_;
     QPen      pen_;
     int       is_selected_;
+    int       is_selectable_;
     int       is_hovered_;
     float     highlight_alpha_;
 };
