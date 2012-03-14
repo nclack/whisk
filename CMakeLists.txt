@@ -454,7 +454,7 @@ if(QT_FOUND)
   endif()
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
-  add_executable(whiski MACOSX_BUNDLE #WIN32 
+  add_executable(whiski MACOSX_BUNDLE WIN32
     ${RC_SRCS}
     ${QTUI_HDRS}
     ${QTUI_SRCS}
@@ -864,20 +864,23 @@ install(PROGRAMS
     COMPONENT python)
 
 
-install(DIRECTORY ui
-    DESTINATION ${DEST_UI}
-    COMPONENT GUI)
+  ## Deprecating ui2.py
+  #install(DIRECTORY ui
+  #    DESTINATION ${DEST_UI}
+  #    COMPONENT GUI)
 install(
     TARGETS
       whisk
+      whiski
     RUNTIME DESTINATION "${DEST_UI}/ui"
     LIBRARY DESTINATION "${DEST_UI}/ui"
     ARCHIVE DESTINATION "${DEST_UI}/ui"
     COMPONENT GUI)
 install(
     FILES
-      python/trace.py
-      python/traj.py
+## Deprecating ui2.py in favor of whiski
+#     python/trace.py
+#     python/traj.py
       ${FFMPEG_SHARED_LIBS}
     DESTINATION "${DEST_UI}/ui"
     COMPONENT GUI)

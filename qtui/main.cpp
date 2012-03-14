@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
   QCoreApplication::setApplicationName("Whisk");
 
   QApplication app(argc,argv);
+  app.setWindowIcon(QIcon(":/icons/faceindicator"));
   Init();
   MainWindow mainwindow;
   mainwindow.show();

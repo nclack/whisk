@@ -102,7 +102,7 @@ void View::drawForeground(QPainter *painter, const QRectF &rect)
       painter->drawText(2,22,msg);
       msg=QString("Whisker: %1").arg(ident_);
       painter->drawText(2,44,msg);
-      
+
       if(indicate_advance_)
       { painter->setPen(Qt::green);
         painter->drawText(2,66,"Advance");
@@ -205,12 +205,12 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
   , advance_on_successful_left_click_(false)
   , is_auto_mode_on_(false)
   , iframe_(0)
-{ 
+{
   //setContextMenuPolicy(Qt::ActionsContextMenu);
 
   ///// Setup the initial scene
   scene_ = new QGraphicsScene;
-  curves_ = new CurveGroup(scene_,this);  
+  curves_ = new CurveGroup(scene_,this);
 
   TRY(connect(curves_,SIGNAL(removeRequest(int,int)),&data_,SLOT(remove(int,int))),ErrorConnect);
   TRY(connect(curves_,SIGNAL(clicked(int)),this,SLOT(setToCurrentIdentByWid(int))),ErrorConnect);
@@ -235,9 +235,10 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
     image_->setParentItem(dataItemsRoot_);
     face_->setParentItem(dataItemsRoot_);
 
-    lastEdit_->setParentItem(dataItemsRoot_);    
+    lastEdit_->setParentItem(dataItemsRoot_);
     lastEdit_->setPen(QPen(Qt::black));
     lastEdit_->setSelectable(false);
+    lastEdit_->setZValue(1); // put it on top of the default layer
 
     scene_->addItem(dataItemsRoot_);
     scene_->addItem(loadingGraphics_);
@@ -261,7 +262,7 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
   { TRY(connect(&data_,SIGNAL(success()),this,SLOT(maybeNextFrame())),ErrorConnect);
     TRY(connect(&data_,SIGNAL(lastCurve(QPolygonF)),this,SLOT(maybeShowLastCurve(QPolygonF))),ErrorConnect);
   }
-    
+
 
   ///// Init the graphicsview
   { QVBoxLayout *layout = new QVBoxLayout;
@@ -336,7 +337,7 @@ void Editor::showFrame(int index)
   if(!p.isNull())
   { if(iframe_!=index)
       lastEdit_->hide();
-    iframe_=index;  // only updates if read was successful    
+    iframe_=index;  // only updates if read was successful
     emit frameId(iframe_);
     image_->setPixmap(p);
 
@@ -365,16 +366,16 @@ traceAtAndIdentify
 
 These are the two functions I have to modify for auto mode.
 Both call a data_ function that ends up emitting success(),
-which will end up incrementing the frame; Data::success() is 
+which will end up incrementing the frame; Data::success() is
 connected to maybeNextFrame() and "Advance" mode will be on.
 
 This happens synchronously right now.
 
-By the time showFrame is called in the functions below, 
+By the time showFrame is called in the functions below,
 iframe_ has been incremented.
 
-The functions should then conditionally (based on whether 
-auto mode is on) emit a propigation signal which is 
+The functions should then conditionally (based on whether
+auto mode is on) emit a propigation signal which is
 connected to a handler through a Qt::QueuedConnection.
 This way, the handler will get executed on the next
 event loop possibly allowing for repainting and the handling
@@ -388,7 +389,7 @@ void Editor::setToCurrentIdentByWid(int wid)
   data_.setIdentity(iframe_,wid,view_->ident());
   showFrame(iframe_);
   if(iframe_!=oframe && is_auto_mode_on_)
-  { emit propigateIdentity(oframe,wid); 
+  { emit propigateIdentity(oframe,wid);
     HERE;
   }
 }
@@ -398,7 +399,7 @@ void Editor::traceAtAndIdentify(QPointF target)
   data_.traceAtAndIdentify(iframe_,target,autocorrect_video_,view_->ident());
   showFrame(iframe_);
   if(iframe_!=oframe && is_auto_mode_on_)
-    emit propigateTrace(target);     
+    emit propigateTrace(target);
 }
 
 void Editor::propigateIdentityHandler(int query_frame,int query_wid)
@@ -410,7 +411,7 @@ void Editor::propigateIdentityHandler(int query_frame,int query_wid)
 
 void Editor::propigateTraceHandler(QPointF target)
 { //find the closest point on the midline of the last traced curve
-  QPointF r = lastEdit_->nearest(target);  
+  QPointF r = lastEdit_->nearest(target);
   traceAtAndIdentify(r);
 }
 
@@ -470,7 +471,7 @@ void Editor::setAutoMode(bool b)
  * Also calls View::lockTo for the image.
  */
 void Editor::showCurrentFrame()
-{ 
+{
   if(iframe_>=0 && iframe_<data_.frameCount())
     showFrame(iframe_);
   else
@@ -635,7 +636,7 @@ void Editor::makeActions_()
   TRY(connect(actions_["decIdent100"  ],SIGNAL(triggered()),this,SLOT(decIdent100 ())  ),Error);
   TRY(connect(actions_["decIdent1000" ],SIGNAL(triggered()),this,SLOT(decIdent1000())  ),Error);
   TRY(connect(actions_["setFaceAnchor"],SIGNAL(triggered()),this,SLOT(setFaceAnchor()) ),Error);
-  TRY(connect(actions_["traceAt"      ],SIGNAL(triggered()),this,SLOT(traceAtCursor()) ),Error); 
+  TRY(connect(actions_["traceAt"      ],SIGNAL(triggered()),this,SLOT(traceAtCursor()) ),Error);
   actions_["autocorrect" ]->setCheckable(true);
   actions_["autocorrect" ]->setChecked(autocorrect_video_);
   TRY(connect(actions_["autocorrect"],SIGNAL(toggled(bool)),this,SLOT(setAutocorrect(bool))),Error);
@@ -658,7 +659,7 @@ Error:
 }
 
 QList<QAction*> Editor::tracingActions()
-{ static const char* names[] = {"delete",                                 
+{ static const char* names[] = {"delete",
                                 "autocorrect",
                                 "advance",
                                 "automode",

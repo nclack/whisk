@@ -1,4 +1,5 @@
 #include "Curve.h"
+#include <float.h>
 
 #define ENDL "\n"
 #define HERE         qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
