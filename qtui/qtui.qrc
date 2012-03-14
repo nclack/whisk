@@ -4,13 +4,13 @@
   <file alias="faceindicator">resources/faceindicator.svg</file>
 </qresource>
 <qresource prefix="/icons">
-  <file alias="fullscreen">resources/icons/fullscreen.svg</file>
+  <file alias="fullscreen">resources/icons/fullscreen.png</file>
   <file alias="quit">resources/icons/quit.png</file>
   <file alias="open">resources/icons/open.png</file>
   <file alias="save">resources/icons/save.png</file>
   <file alias="saveas">resources/icons/saveas.png</file>
-  <file alias="faceindicator">resources/icons/faceindicator.svg</file>
-  <file alias="traceAt">resources/icons/traceAt.svg</file>
+  <file alias="faceindicator">resources/icons/faceindicator.png</file>
+  <file alias="traceAt">resources/icons/traceAt.png</file>
   <file alias="app">resources/icons/whiski.svg</file>
 </qresource>
 </RCC>

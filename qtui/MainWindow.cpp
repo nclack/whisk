@@ -76,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent, Qt::WindowFlags flags)
 
   createActions();
   createMenus();
+  
   TRY(connect(actions_["save"],SIGNAL(triggered()),d->data(),SLOT(save())));
   return;
 Error:

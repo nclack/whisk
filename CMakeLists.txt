@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 2.8)
 project(whisk)
 set(WHISK_VERSION_MAJOR 1)  # increment for total rewrites
 set(WHISK_VERSION_MINOR 1)  # increment for file format or architectural changes to side packages
-set(WHISK_VERSION_PATCH 0)  # increment for everything else
+set(WHISK_VERSION_PATCH 0a) # increment for everything else
 
 macro(show v)
   message("${v} is ${${v}}")
@@ -454,7 +454,7 @@ if(QT_FOUND)
   endif()
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
-  add_executable(whiski MACOSX_BUNDLE WIN32
+  add_executable(whiski MACOSX_BUNDLE #WIN32
     ${RC_SRCS}
     ${QTUI_HDRS}
     ${QTUI_SRCS}
