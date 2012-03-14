@@ -450,8 +450,9 @@ add_dependencies(whiskio_static ParameterParser)
 # see: http://developer.qt.nokia.com/doc/qt-4.8/appicon.html
 if(QT_FOUND)
   if(WIN32)
-    file(GLOB RC_SRCS qtui/*.rc)
+    file(GLOB RC_SRCS qtui/*.rc)    
   endif()
+  show(RC_SRCS)
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
   add_executable(whiski MACOSX_BUNDLE WIN32
