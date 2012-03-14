@@ -60,7 +60,7 @@ void Curve::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
   { QPainterPath p;
     p.addPolygon(midline_);
     painter->drawPath(p);
-  }
+  }  
 #if 0
   painter->setFont(QFont("Times",12,QFont::Bold));
   painter->drawText(midline_.at(midline_.size()/2),

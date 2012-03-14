@@ -78,10 +78,12 @@ class Editor : public QWidget
     void nextFrame10();
     void nextFrame100();
     void nextFrame1000();
+    void nextMissing();
     void prevFrame();
     void prevFrame10();
     void prevFrame100();
     void prevFrame1000();
+    void prevMissing();
     void incIdent();
     void incIdent10();
     void incIdent100();

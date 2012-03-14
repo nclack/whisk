@@ -8,9 +8,9 @@
 ## 
 cmake_minimum_required(VERSION 2.8)
 project(whisk)
-set(WHISK_VERSION_MAJOR 1)
-set(WHISK_VERSION_MINOR 0)
-set(WHISK_VERSION_PATCH 2)
+set(WHISK_VERSION_MAJOR 1)  # increment for total rewrites
+set(WHISK_VERSION_MINOR 1)  # increment for file format or architectural changes to side packages
+set(WHISK_VERSION_PATCH 0)  # increment for everything else
 
 macro(show v)
   message("${v} is ${${v}}")
@@ -452,7 +452,6 @@ if(QT_FOUND)
   if(WIN32)
     file(GLOB RC_SRCS qtui/*.rc)    
   endif()
-  show(RC_SRCS)
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
   add_executable(whiski MACOSX_BUNDLE WIN32
@@ -873,9 +872,9 @@ install(
     TARGETS
       whisk
       whiski
-    RUNTIME DESTINATION "${DEST_UI}/ui"
-    LIBRARY DESTINATION "${DEST_UI}/ui"
-    ARCHIVE DESTINATION "${DEST_UI}/ui"
+    RUNTIME DESTINATION "${DEST_UI}/bin"
+    LIBRARY DESTINATION "${DEST_UI}/bin"
+    ARCHIVE DESTINATION "${DEST_UI}/bin"
     COMPONENT GUI)
 install(
     FILES
@@ -883,11 +882,11 @@ install(
 #     python/trace.py
 #     python/traj.py
       ${FFMPEG_SHARED_LIBS}
-    DESTINATION "${DEST_UI}/ui"
+    DESTINATION "${DEST_UI}/bin"
     COMPONENT GUI)
 install(PROGRAMS
     ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
-    DESTINATION "${DEST_UI}/ui"
+    DESTINATION "${DEST_UI}/bin"
     COMPONENT GUI)
 
 #
@@ -920,7 +919,10 @@ IF(WIN32 AND NOT UNIX)
 ELSE(WIN32 AND NOT UNIX)
 ENDIF(WIN32 AND NOT UNIX)
 
+SET(CPACK_PACKAGE_EXECUTABLES "whiski;Whisker Tracking GUI") # for Start Menu links
 include(CPack)
+
+
 cpack_add_install_type(minimal_install
   DISPLAY_NAME "Minimal"
 )
@@ -996,7 +998,6 @@ cpack_add_component(
 )
 
 
-#SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable") # for Start Menu links
 
 
 

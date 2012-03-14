@@ -700,7 +700,41 @@ void Data::setFaceOrientation(Data::Orientation o)
   //emit faceOrientationChanged(o);
 }
 
-// DATA    Accessing the data //////////////////////////////////////////////////
+int Data::nextMissingFrame(int iframe, int ident)
+{ 
+  if(ident==-1)
+    return iframe;
+  for(int i=iframe+1;i<frameCount();++i)
+  { int any=0;
+    foreach(Measurements *m,measIndex_.value(i).values())
+    { if(m->state==ident)
+      { any=1;
+        break;
+      }
+    }
+    if(!any)
+      return i;
+  }
+  return frameCount()-1;
+}
+
+int Data::prevMissingFrame(int iframe, int ident)
+{ 
+  if(ident==-1)
+    return iframe;
+  for(int i=iframe-1;i>=0;--i)
+  { int any=0;
+    foreach(Measurements *m,measIndex_.value(i).values())
+    { if(m->state==ident)
+      { any=1;
+        break;
+      }
+    }
+    if(!any)
+      return i;
+  }  
+  return 0;
+}
 
 const QPixmap Data::frame(int iframe, bool autocorrect)
 { Image *im;

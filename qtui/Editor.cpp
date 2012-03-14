@@ -360,18 +360,21 @@ void Editor::showFrame(int index)
   return;
 }
 
-/*
-setToCurrentIdentByWid
-traceAtAndIdentify
+/** \section Auto Mode
 
-These are the two functions I have to modify for auto mode.
+
+Auto mode starts in one of these two functions:
+
+ - setToCurrentIdentByWid()
+ - traceAtAndIdentify()
+
 Both call a data_ function that ends up emitting success(),
 which will end up incrementing the frame; Data::success() is
 connected to maybeNextFrame() and "Advance" mode will be on.
 
 This happens synchronously right now.
 
-By the time showFrame is called in the functions below,
+By the time showFrame() is called in the functions below,
 iframe_ has been incremented.
 
 The functions should then conditionally (based on whether
@@ -389,9 +392,7 @@ void Editor::setToCurrentIdentByWid(int wid)
   data_.setIdentity(iframe_,wid,view_->ident());
   showFrame(iframe_);
   if(iframe_!=oframe && is_auto_mode_on_)
-  { emit propigateIdentity(oframe,wid);
-    HERE;
-  }
+    emit propigateIdentity(oframe,wid);
 }
 
 void Editor::traceAtAndIdentify(QPointF target)
@@ -496,6 +497,11 @@ NEXTFRAME(10);
 NEXTFRAME(100);
 NEXTFRAME(1000);
 
+void Editor::nextMissing()
+{ int iframe = data_.nextMissingFrame(iframe_,view_->ident());
+  showFrame(iframe);
+}
+
 void Editor::prevFrame()
 { showFrame(iframe_-1);
 }
@@ -507,6 +513,11 @@ void Editor::prevFrame()
 PREVFRAME(10);
 PREVFRAME(100);
 PREVFRAME(1000);
+
+void Editor::prevMissing()
+{ int iframe = data_.prevMissingFrame(iframe_,view_->ident());
+  showFrame(iframe);
+}
 
 void Editor::firstFrame()
 { showFrame(0);
@@ -575,7 +586,7 @@ void Editor::makeActions_()
   actions_["prev100" ]= new QAction(tr("Jump back 100 frames")   ,this);
   actions_["prev1000"]= new QAction(tr("Jump back 1000 frames")  ,this);
   actions_["last"    ]= new QAction(tr("Jump to last frame")     ,this);
-  actions_["first"   ]= new QAction(tr("Jump to first frame")    ,this);
+  actions_["first"   ]= new QAction(tr("Jump to first frame")    ,this);  
   actions_["delete"  ]= new QAction(tr("Delete selected curve")  ,this);
   actions_["incIdent"    ]= new QAction(tr("Increment active identity")  ,this);
   actions_["incIdent10"  ]= new QAction(tr("Increment active identity by 10")    ,this);
@@ -585,23 +596,39 @@ void Editor::makeActions_()
   actions_["decIdent10"  ]= new QAction(tr("Decrement active identity by 10")    ,this);
   actions_["decIdent100" ]= new QAction(tr("Decrement active identity by 100")   ,this);
   actions_["decIdent1000"]= new QAction(tr("Decrement active identity by 1000")  ,this);
-  actions_["setFaceAnchor"] = new QAction(QIcon(":/icons/faceindicator"),tr("Place &face anchor")  ,this);
+  actions_["setFaceAnchor"]=new QAction(QIcon(":/icons/faceindicator"),tr("Place &face anchor")  ,this);
   actions_["traceAt"     ]= new QAction(QIcon(":/icons/traceAt"),tr("&Trace a new curve"),this);
   actions_["autocorrect" ] = new QAction(tr("&Stripe correction"),this);
   actions_["advance"     ] = new QAction(tr("&Advance after edit"),this);
   actions_["automode"    ] = new QAction(tr("&Automatically propigate clicks"),this);
+  actions_["nextMissing" ]= new QAction(tr("Next Missing") ,this);  
+  actions_["prevMissing" ]= new QAction(tr("Previous Missing"),this);
 
-  actions_["next"    ]->setShortcut( QKeySequence( Qt::Key_Right));
-  actions_["next10"  ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT));
-  actions_["next100" ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT + Qt::CTRL));
-  actions_["next1000"]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT + Qt::CTRL + Qt::ALT));
-  actions_["prev"    ]->setShortcut( QKeySequence( Qt::Key_Left));
-  actions_["prev10"  ]->setShortcut( QKeySequence( Qt::Key_Left  + Qt::SHIFT));
-  actions_["prev100" ]->setShortcut( QKeySequence( Qt::Key_Left  + Qt::SHIFT + Qt::CTRL));
-  actions_["prev1000"]->setShortcut( QKeySequence( Qt::Key_Left  + Qt::SHIFT + Qt::CTRL + Qt::ALT));
-  actions_["last"    ]->setShortcut( QKeySequence( "]"));
-  actions_["first"   ]->setShortcut( QKeySequence( "["));
-  actions_["delete"  ]->setShortcut( QKeySequence( Qt::Key_Backspace));
+  actions_["advance"    ]->setStatusTip(tr("If set, the next frame will be shown after successfully tracing or identifying a curve."));
+  actions_["automode"   ]->setStatusTip(tr("If set, attempts to trace or identify curves are automaticaly repeated."));
+  actions_["nextMissing"]->setStatusTip(tr("Jump forward to a frame lacking a curve with the currently selected identity."));
+  actions_["prevMissing"]->setStatusTip(tr("Jump back to a frame lacking a curve with the currently selected identity."));
+
+  actions_["next"            ]->setShortcut( QKeySequence( Qt::Key_Right));
+  actions_["next10"          ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT));
+  actions_["next100"         ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT + Qt::CTRL));
+  actions_["next1000"        ]->setShortcut( QKeySequence( Qt::Key_Right + Qt::SHIFT + Qt::CTRL + Qt::ALT));
+  actions_["prev"            ]->setShortcut( QKeySequence( Qt::Key_Left));
+  actions_["prev10"          ]->setShortcut( QKeySequence( Qt::Key_Left  + Qt::SHIFT));
+  actions_["prev100"         ]->setShortcut( QKeySequence( Qt::Key_Left  + Qt::SHIFT + Qt::CTRL));
+  actions_["prev1000"        ]->setShortcut( QKeySequence( Qt::Key_Left  + Qt::SHIFT + Qt::CTRL + Qt::ALT));
+  { QList<QKeySequence> s;
+    s.append(QKeySequence("End"));
+    s.append(QKeySequence("}"));    
+    actions_["last"          ]->setShortcuts(s);
+  }
+  { QList<QKeySequence> s;
+    s.append(QKeySequence("Home"));
+    s.append(QKeySequence("{"));    
+    actions_["first"         ]->setShortcuts(s);
+  }
+  actions_["first"           ]->setShortcut( QKeySequence( "{"));
+  actions_["delete"          ]->setShortcut( QKeySequence( Qt::Key_Backspace));
   actions_["incIdent"        ]->setShortcut( QKeySequence( Qt::Key_Up));
   actions_["incIdent10"      ]->setShortcut( QKeySequence( Qt::Key_Up + Qt::SHIFT));
   actions_["incIdent100"     ]->setShortcut( QKeySequence( Qt::Key_Up + Qt::SHIFT + Qt::CTRL));
@@ -615,6 +642,8 @@ void Editor::makeActions_()
   actions_["autocorrect"     ]->setShortcut( QKeySequence( "s"));
   actions_["advance"         ]->setShortcut( QKeySequence( "a"));
   actions_["automode"        ]->setShortcut( QKeySequence( "Space"));
+  actions_["nextMissing"     ]->setShortcut( QKeySequence( "]"));
+  actions_["prevMissing"     ]->setShortcut( QKeySequence( "["));
 
   TRY(connect(actions_["next"         ],SIGNAL(triggered()),this,SLOT(nextFrame())     ),Error);
   TRY(connect(actions_["next10"       ],SIGNAL(triggered()),this,SLOT(nextFrame10  ()) ),Error);
@@ -637,6 +666,8 @@ void Editor::makeActions_()
   TRY(connect(actions_["decIdent1000" ],SIGNAL(triggered()),this,SLOT(decIdent1000())  ),Error);
   TRY(connect(actions_["setFaceAnchor"],SIGNAL(triggered()),this,SLOT(setFaceAnchor()) ),Error);
   TRY(connect(actions_["traceAt"      ],SIGNAL(triggered()),this,SLOT(traceAtCursor()) ),Error);
+  TRY(connect(actions_["nextMissing"  ],SIGNAL(triggered()),this,SLOT(nextMissing()) ),Error);
+  TRY(connect(actions_["prevMissing"  ],SIGNAL(triggered()),this,SLOT(prevMissing()) ),Error);
   actions_["autocorrect" ]->setCheckable(true);
   actions_["autocorrect" ]->setChecked(autocorrect_video_);
   TRY(connect(actions_["autocorrect"],SIGNAL(toggled(bool)),this,SLOT(setAutocorrect(bool))),Error);
@@ -663,6 +694,8 @@ QList<QAction*> Editor::tracingActions()
                                 "autocorrect",
                                 "advance",
                                 "automode",
+                                "nextMissing",
+                                "prevMissing",
                                  NULL
                                };
   const char **c=names;
