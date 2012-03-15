@@ -764,7 +764,6 @@ add_dependencies(test_measurementsio_repeated_read_writes ParameterParser)
 #
 # INSTALL
 #
-
 if(WIN32)
   set(DEST_BIN    "bin")
   set(DEST_LIB    "lib")
@@ -903,23 +902,31 @@ SET(CPACK_PACKAGE_VERSION_MAJOR ${WHISK_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${WHISK_VERSION_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${WHISK_VERSION_PATCH})
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WhiskerTracking")
-#SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/ui/icon.png")
+SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/qtui/resources/icons/whiski.ico")
 IF(WIN32 AND NOT UNIX)
-#SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\ui\\icon.png")
   # There is a bug in NSI that does not handle full unix paths properly. Make
   # sure there is at least one set of four (4) backlasshes.
-  SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\trace.exe")
+  SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\\\qtui\\\\resources\\\\icons\\\\whiski.ico")
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    SET(CPACK_NSIS_INSTALL_ROOT "$ENV{ProgramW6432}")
+  else()
+    SET(CPACK_NSIS_INSTALL_ROOT "$ENV{ProgramFiles}")
+  endif()
+  SET(CPACK_NSIS_INSTALLED_ICON_NAME "qtui\\\\resources\\\\icons\\\\whiski.ico")
+  SET(CPACK_NSIS_MUI_ICON_NAME "qtui\\\\resources\\\\icons\\\\whiski.ico")
+  SET(CPACK_NSIS_MUI_UNIICON_NAME "qtui\\\\resources\\\\icons\\\\whiski.ico")
   SET(CPACK_NSIS_DISPLAY_NAME "${CPACK_PACKAGE_INSTALL_DIRECTORY}")
-  SET(CPACK_NSIS_HELP_LINK "http://wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
-  SET(CPACK_NSIS_URL_INFO_ABOUT "http://wiki.int.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
+  SET(CPACK_NSIS_HELP_LINK "http://whiskertracking.janelia.org//wiki/display/MyersLab/Whisker+Tracking")
+  SET(CPACK_NSIS_URL_INFO_ABOUT "http://whiskertracking.janelia.org/wiki/display/MyersLab/Whisker+Tracking")
   SET(CPACK_NSIS_CONTACT "clackn@janelia.hhmi.org")
   SET(CPACK_NSIS_MODIFY_PATH ON)
+  SET(CPACK_NSIS_MUI_FINISHPAGE_RUN "whiski")
 ELSE(WIN32 AND NOT UNIX)
 ENDIF(WIN32 AND NOT UNIX)
 
 SET(CPACK_PACKAGE_EXECUTABLES "whiski;Whisker Tracking GUI") # for Start Menu links
 include(CPack)
-
+show(CPACK_NSIS_INSTALL_ROOT)
 
 cpack_add_install_type(minimal_install
   DISPLAY_NAME "Minimal"
