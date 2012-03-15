@@ -872,21 +872,19 @@ install(
     TARGETS
       whisk
       whiski
-    RUNTIME DESTINATION "${DEST_UI}/ui"
-    LIBRARY DESTINATION "${DEST_UI}/ui"
-    ARCHIVE DESTINATION "${DEST_UI}/ui"
+    RUNTIME DESTINATION "${DEST_UI}/bin"
+    LIBRARY DESTINATION "${DEST_UI}/bin"
+    ARCHIVE DESTINATION "${DEST_UI}/bin"
+    BUNDLE  DESTINATION "/Applications/"
     COMPONENT GUI)
 install(
     FILES
-## Deprecating ui2.py in favor of whiski
-#     python/trace.py
-#     python/traj.py
       ${FFMPEG_SHARED_LIBS}
-    DESTINATION "${DEST_UI}/ui"
+    DESTINATION "${DEST_UI}/bin"
     COMPONENT GUI)
 install(PROGRAMS
     ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
-    DESTINATION "${DEST_UI}/ui"
+    DESTINATION "${DEST_UI}/bin"
     COMPONENT GUI)
 
 #
