@@ -8,9 +8,9 @@
 ## 
 cmake_minimum_required(VERSION 2.8)
 project(whisk)
-set(WHISK_VERSION_MAJOR 1)
-set(WHISK_VERSION_MINOR 0)
-set(WHISK_VERSION_PATCH 2)
+set(WHISK_VERSION_MAJOR 1)  # increment for total rewrites
+set(WHISK_VERSION_MINOR 1)  # increment for file format or architectural changes to side packages
+set(WHISK_VERSION_PATCH 0a) # increment for everything else
 
 macro(show v)
   message("${v} is ${${v}}")
@@ -450,7 +450,7 @@ add_dependencies(whiskio_static ParameterParser)
 # see: http://developer.qt.nokia.com/doc/qt-4.8/appicon.html
 if(QT_FOUND)
   if(WIN32)
-    file(GLOB RC_SRCS qtui/*.rc)
+    file(GLOB RC_SRCS qtui/*.rc)    
   endif()
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
@@ -917,7 +917,10 @@ IF(WIN32 AND NOT UNIX)
 ELSE(WIN32 AND NOT UNIX)
 ENDIF(WIN32 AND NOT UNIX)
 
+SET(CPACK_PACKAGE_EXECUTABLES "whiski;Whisker Tracking GUI") # for Start Menu links
 include(CPack)
+
+
 cpack_add_install_type(minimal_install
   DISPLAY_NAME "Minimal"
 )
@@ -993,7 +996,6 @@ cpack_add_component(
 )
 
 
-#SET(CPACK_PACKAGE_EXECUTABLES "MyExecutable" "My Executable") # for Start Menu links
 
 
 

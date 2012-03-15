@@ -78,10 +78,12 @@ class Editor : public QWidget
     void nextFrame10();
     void nextFrame100();
     void nextFrame1000();
+    void nextMissing();
     void prevFrame();
     void prevFrame10();
     void prevFrame100();
     void prevFrame1000();
+    void prevMissing();
     void incIdent();
     void incIdent10();
     void incIdent100();
@@ -98,6 +100,7 @@ class Editor : public QWidget
     void traceAt(QPointF target);
     void traceAtAndIdentify(QPointF target);
     void traceAtCursor();
+    void traceFrame();
     void setFaceAnchor();        ///< Response from editor action.  Updates FaceIndicator and Data.
     void updateFromFaceAnchor(); ///< Commit state of FaceIndicator item to Data.
     void setAutocorrect(bool);
@@ -111,6 +114,7 @@ class Editor : public QWidget
     void facePositionChanged(QPointF);
     void propigateTrace(QPointF);
     void propigateIdentity(int query_frame,int query_wid);
+    void propigateTraceFrame();
 
   protected:
     void makeActions_();
@@ -121,6 +125,7 @@ class Editor : public QWidget
     void maybeShowLastCurve(QPolygonF);
     void propigateTraceHandler(QPointF);
     void propigateIdentityHandler(int query_frame,int query_wid);
+    void propigateTraceFrameHandler();
 
   protected:
     QMap<QString,QAction*>  actions_;

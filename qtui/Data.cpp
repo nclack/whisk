@@ -474,16 +474,23 @@ void Data::remove(int iframe, int wid)
   { LOCK;
     locked::Free_Whisker_Seg_Data(w);    // Do the whiskers first
     memmove(w,w+1, ((curves_+ncurves_)-(w+1))*sizeof(Whisker_Seg));
+    memset(curves_+ncurves_-1,0,sizeof(Whisker_Seg)); // setting to zero here is useful for catching bugs 
     --ncurves_;
     buildCurveIndex_();
     emit curvesDirtied();
 
     SILENTTRY(m=get_meas_by_wid_(iframe,wid));
-    memmove(m,m+1, ((measurements_+nmeasurements_)-(m+1))*sizeof(Measurements));
+    { Measurements t = *m;
+      memmove(m,m+1, ((measurements_+nmeasurements_)-(m+1))*sizeof(Measurements));      
+      measurements_[nmeasurements_-1] = t;
+      measurements_[nmeasurements_-1].fid=-1;
+      measurements_[nmeasurements_-1].wid=-1;
+      measurements_[nmeasurements_-1].state=-1;
+    }
     --nmeasurements_;
+    buildMeasurementsIndex_();
+    emit measurementsDirtied();
   }
-  buildMeasurementsIndex_();
-  emit measurementsDirtied();
   emit success();
 Error:
   return;
@@ -658,10 +665,9 @@ Error:
   return;
 }
 
-
 void Data::traceAtAndIdentify(int iframe,QPointF target,bool autocorrect_video,int ident)
 { if(ident!=-1 && !measurements_)    
-    maybePopulateMeasurements();
+    TRY(maybePopulateMeasurements());
   { int oldcount = nmeasurements_;
     traceAt(iframe,target,autocorrect_video);     //don't return success failure because it's a slot
     { LOCK;
@@ -672,6 +678,103 @@ void Data::traceAtAndIdentify(int iframe,QPointF target,bool autocorrect_video,i
       }
     }
   }
+Error:
+  return;
+}
+
+static void ws_vec_free_rest(Whisker_Seg **wv, int nkeep, int ntotal)
+{ if(!wv) return;
+  if(!*wv) return;
+  for(int i=nkeep;i<ntotal;++i)
+    locked::Free_Whisker_Seg_Data(*wv+i);
+  free(*wv);
+  *wv=NULL;
+}
+
+void Data::traceFrame(int iframe, bool autocorrect)
+{ Whisker_Seg *ws=0;
+  Image *im=0;
+  int n,k=0;
+
+  LOCK;
+  TRY(im=locked::video_get(video_,iframe,autocorrect));  
+  TRY(ws=locked::find_segments(iframe,im,NULL,&k));
+  n = locked::Remove_Overlapping_Whiskers_One_Frame( ws, k, 
+                                            im->width, im->height, 
+                                            2.0,    // scale down by this
+                                            2.0,    // distance threshold
+                                            0.5 );  // significant overlap fraction
+  locked::Free_Image(im);
+
+  // append whiskers
+  if(!curves_)
+  { curves_  = ws;
+    ncurves_ = n;
+    ncurves_capacity_ = ncurves_;
+    lastWhiskerFile_=whiskersFile(lastVideoFile_).absoluteFilePath();
+    { curveIdMap_t wmap = curveIndex_.value(iframe);
+      for(int i=0;i<n;++i)
+        wmap.insert(ws[i].id,curves_+i);
+      curveIndex_.insert(iframe,wmap);
+    }
+  } else
+  { int o;
+    //first need to remove curves from current frame
+    QList<int> wids;
+    foreach(Whisker_Seg *wc,curveIndex_.value(iframe).values())  /// \todo FIXME this is retardedly slow - should write something to remove them all at onces
+      wids.append(wc->id);
+    foreach(int wid,wids)
+      remove(iframe,wid);
+    //realloc and insert
+    o = ncurves_;
+    ncurves_+=n;
+    if( ncurves_>ncurves_capacity_) // resize
+    { ncurves_capacity_ = ncurves_*1.2 + 50;
+      TRY(curves_=(Whisker_Seg*)realloc(curves_,sizeof(Whisker_Seg)*ncurves_capacity_));
+      memset(curves_+o,0,sizeof(Whisker_Seg)*(ncurves_capacity_-o));
+    }
+    memcpy(curves_+o,ws,n*sizeof(Whisker_Seg));    
+    ws_vec_free_rest(&ws,n,k);  
+    buildCurveIndex_();
+  }
+  emit curvesDirtied();
+
+  // update measurements
+  if(measurements_)
+  { int was_resized=0;
+    int o = nmeasurements_;
+    nmeasurements_ += n;
+    if(nmeasurements_>nmeasurements_capacity_) // resize
+    { nmeasurements_capacity_ = nmeasurements_*1.2+50;
+      TRY(measurements_=locked::Realloc_Measurements_Table(
+            measurements_,
+            o,
+            nmeasurements_capacity_));
+      was_resized=1;
+    }
+    TRY(nmeasurements_<=nmeasurements_capacity_); // double checking in case of weird stuff
+    for(int i=0;i<n;++i)
+    {
+      locked::Whisker_Seg_Measure(
+          curves_+o+i,
+          measurements_[o+i].data,
+          measurements_->face_x,
+          measurements_->face_y,
+          measurements_->face_axis);
+      measurements_[o+i].fid = curves_[o+i].time;
+      measurements_[o+i].wid = curves_[o+i].id;      
+    }
+    buildMeasurementsIndex_();
+    emit measurementsDirtied();
+  }
+  emit success();
+  //emit lastCurve(curveByWid(iframe,wid));
+
+  return;
+Error: 
+  if(im) locked::Free_Image(im);
+  if(ws && curves_==NULL) locked::Free_Whisker_Seg(ws); // curves_ realloc failed
+  else if(ws)             ws_vec_free_rest(&ws,n,k);    // something after curves_ realloc failed
   return;
 }
 
@@ -700,7 +803,41 @@ void Data::setFaceOrientation(Data::Orientation o)
   //emit faceOrientationChanged(o);
 }
 
-// DATA    Accessing the data //////////////////////////////////////////////////
+int Data::nextMissingFrame(int iframe, int ident)
+{ 
+  if(ident==-1)
+    return iframe;
+  for(int i=iframe+1;i<frameCount();++i)
+  { int any=0;
+    foreach(Measurements *m,measIndex_.value(i).values())
+    { if(m->state==ident)
+      { any=1;
+        break;
+      }
+    }
+    if(!any)
+      return i;
+  }
+  return frameCount()-1;
+}
+
+int Data::prevMissingFrame(int iframe, int ident)
+{ 
+  if(ident==-1)
+    return iframe;
+  for(int i=iframe-1;i>=0;--i)
+  { int any=0;
+    foreach(Measurements *m,measIndex_.value(i).values())
+    { if(m->state==ident)
+      { any=1;
+        break;
+      }
+    }
+    if(!any)
+      return i;
+  }  
+  return 0;
+}
 
 const QPixmap Data::frame(int iframe, bool autocorrect)
 { Image *im;

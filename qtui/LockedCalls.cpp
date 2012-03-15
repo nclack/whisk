@@ -7,6 +7,7 @@ extern "C"{
 #include "measurements_io.h"
 #include "measure.h"
 #include "seed.h"
+#include "merge.h"
 #include "traj.h"
   }
 #include "video.h"
@@ -69,6 +70,8 @@ void   Free_Image(Image *image)
 WRAPNR(Free_Image(image))
 
 //  TRACE  /////////////////////////////////////////////////////////////////////
+Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
+WRAP(find_segments(iFrame,image,bg,pnseg))
 
 Seed* compute_seed_from_point  ( Image *image, int p, int maxr )
 WRAP(compute_seed_from_point(image,p,maxr))
@@ -81,6 +84,15 @@ WRAP(Whisker_Seg_Sort_By_Id(wv,n))
 
 void Free_Whisker_Seg_Data    ( Whisker_Seg *w )
 WRAPNR(Free_Whisker_Seg_Data(w))
+
+int Remove_Overlapping_Whiskers_One_Frame( Whisker_Seg *wv,
+                                           int wv_n,
+                                           int w,
+                                           int h,
+                                           float scale,
+                                           float dist_thresh,
+                                           float overlap_thresh )
+WRAP(Remove_Overlapping_Whiskers_One_Frame(wv,wv_n,w,h,scale,dist_thresh,overlap_thresh))
 
 // TRAJ  ///////////////////////////////////////////////////////////////////////
 

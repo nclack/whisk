@@ -43,6 +43,8 @@ class Data : public QObject
              bool  areFaceDefaultsSet();
           QPointF  facePosition(int *is_unknown);
       Orientation  faceOrientation();
+              int  nextMissingFrame(int iframe, int ident); ///< \returns the next frame number lacking a curve with the given identity
+              int  prevMissingFrame(int iframe, int ident); ///< \returns the prev frame number lacking a curve with the given identity
 
     static bool isValidPath(const QString& path);        ///< \returns true if, at first glance, the path seems to point to something relevant.
 
@@ -71,6 +73,7 @@ class Data : public QObject
 
     void traceAt(int iframe, QPointF r, bool autocorrect=true);
     void traceAtAndIdentify(int iframe,QPointF target,bool autocorrect_video,int ident);
+    void traceFrame(int iframe, bool autocorrect);
 
   signals:
     void loaded();                                        ///< emited when commit of new data is finished

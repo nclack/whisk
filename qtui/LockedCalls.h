@@ -46,6 +46,14 @@ int          is_video            (const char *path);
 void   Free_Image(Image *image);
 //  TRACE  /////////////////////////////////////////////////////////////////////
 
+int Remove_Overlapping_Whiskers_One_Frame( Whisker_Seg *wv, 
+                                           int wv_n, 
+                                           int w, 
+                                           int h, 
+                                           float scale, 
+                                           float dist_thresh, 
+                                           float overlap_thresh );
+Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg );
 Seed*        compute_seed_from_point  ( Image *image, int p, int maxr );
 Whisker_Seg* trace_whisker            ( Seed *s, Image *image);
 void         Whisker_Seg_Sort_By_Id   ( Whisker_Seg *wv, int n );
