@@ -672,7 +672,11 @@ void Data::traceAtAndIdentify(int iframe,QPointF target,bool autocorrect_video,i
     traceAt(iframe,target,autocorrect_video);     //don't return success failure because it's a slot
     { LOCK;
       if(oldcount!=nmeasurements_)                    //check to see if something got traced 
-      { measurements_[nmeasurements_-1].state = ident;//last traced is last row of measurements table
+      { foreach(Measurements* m,measIndex_.value(iframe).values())  // make sure identity is unique in the frame
+          if(m->state==ident)
+            m->state=-1;
+        
+        measurements_[nmeasurements_-1].state = ident;//last traced is last row of measurements table
         minIdent_ = qMin(minIdent_,ident);
         maxIdent_ = qMax(maxIdent_,ident);
       }
