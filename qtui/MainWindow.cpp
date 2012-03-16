@@ -11,7 +11,7 @@
 #define ENDL "\n"
 #define HERE         qDebug("%s(%d): HERE"ENDL,__FILE__,__LINE__); 
 #define REPORT(expr) qDebug("%s(%d):"ENDL "\t%s"ENDL "\tExpression evaluated as false."ENDL,__FILE__,__LINE__,#expr) 
-#define TRY(expr)    if(!(expr)) {REPORT(expr);}
+#define TRY(expr)    if(!(expr)) {REPORT(expr); goto Error;}
 #define DIE          qFatal("%s(%d): Aborting."ENDL,__FILE__,__LINE__); 
 
 const char MainWindow::defaultConfigPathKey[] = "Whisk/Config/DefaultFilename";

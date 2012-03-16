@@ -454,7 +454,7 @@ if(QT_FOUND)
   endif()
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
-  add_executable(whiski MACOSX_BUNDLE WIN32
+  add_executable(whiski MACOSX_BUNDLE #WIN32
     ${RC_SRCS}
     ${QTUI_HDRS}
     ${QTUI_SRCS}
@@ -926,7 +926,6 @@ ENDIF(WIN32 AND NOT UNIX)
 
 SET(CPACK_PACKAGE_EXECUTABLES "whiski;Whisker Tracking GUI") # for Start Menu links
 include(CPack)
-show(CPACK_NSIS_INSTALL_ROOT)
 
 cpack_add_install_type(minimal_install
   DISPLAY_NAME "Minimal"

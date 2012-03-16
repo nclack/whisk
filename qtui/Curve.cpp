@@ -280,8 +280,13 @@ void CurveGroup::removeSelected()
 }
 
 void CurveGroup::selection(QObject *target)
-{ foreach(Curve *c,curves_)
-    if( ((void*)c)!=((void*)target) )
-      c->setSelected(0);
+{ foreach(Curve *c,curves_) 
+  { if( ((void*)c)!=((void*)target) ) 
+    { c->setSelected(0);               // make selection exclusive.  Only one in the group may be selected.
+      c->setZValue(2);                 
+    }
+    else
+      c->setZValue(1);                 // move selected to back
+  }  
 }
 

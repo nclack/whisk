@@ -56,6 +56,7 @@ class Data : public QObject
     bool           is_ident_same_(int iframe, int wid, int ident);
     int            maybePopulateMeasurements();          ///< \returns 1 if measurements table is populated, 0 otherwise
     int            maybeShowFaceAnchorRequiredDialog();  ///< \returns 0 if face anchor defaults are not set, 0 otherwise
+    void           maybeCommitFacePosition_();           ///< fills in the measurements_ table with the current face position and orientation
     int            get_next_wid_(int iframe);            ///> \returns a good wid for iframe.  Used for appending new curves.
 
   public slots:
@@ -112,6 +113,7 @@ class Data : public QObject
     int               maxIdent_;
     QPointF           faceDefaultAnchor_;
     Orientation       faceDefaultOrient_;
+    int               face_param_dirty_;
 
     QFutureWatcher<result_t> *watcher_;
     QFutureWatcher<void>     *save_watcher_;

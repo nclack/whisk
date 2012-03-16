@@ -19,7 +19,7 @@
 #include "poly.h"
 #include "mat.h"
 #include "measurements_io.h"
-
+#include "error.h"
 
 #if 0  // Tests
 #define TEST_MEASURE_1

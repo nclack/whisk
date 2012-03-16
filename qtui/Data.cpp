@@ -282,6 +282,7 @@ Data::Data(QObject *parent)
   , minIdent_(-1)
   , maxIdent_(-1)
   , faceDefaultOrient_(UNKNOWN_ORIENTATION)
+  , face_param_dirty_(0)
   , watcher_(0)
 { watcher_ = new QFutureWatcher<result_t>(this);
   TRY(connect(watcher_,SIGNAL(finished()),this,SLOT(commit())));
@@ -576,7 +577,25 @@ void Data::setFacePosition(QPointF r)
 { faceDefaultAnchor_ = r;
   if(faceDefaultOrient_==UNKNOWN_ORIENTATION)
     faceDefaultOrient_=VERTICAL;
-  //emit facePositionChanged(r);
+  face_param_dirty_=true;
+  //emit facePositionChanged(r);  
+}
+
+void Data::maybeCommitFacePosition_()
+{ if(!measurements_ && face_param_dirty_) return;
+  TRY(areFaceDefaultsSet());
+  { int  x = faceDefaultAnchor_.x(),
+         y = faceDefaultAnchor_.y();
+    char o = (faceDefaultOrient_==HORIZONTAL)?'x':'y';
+    for(int i=0;i<nmeasurements_;++i)
+    { measurements_[i].face_x = x;
+      measurements_[i].face_y = y;
+      measurements_[i].face_axis = o;
+    }    
+  }
+  face_param_dirty_=0;
+Error:
+  return;
 }
 
 int Data::get_next_wid_(int iframe)
@@ -610,7 +629,9 @@ void Data::traceAt(int iframe, QPointF r, bool autocorrect)
     ncurves_capacity_ = ncurves_;
     lastWhiskerFile_=whiskersFile(lastVideoFile_).absoluteFilePath();
   } else
-  { if( (++ncurves_)>ncurves_capacity_) // resize
+  { if(measurements_)
+      TRY(maybeShowFaceAnchorRequiredDialog()); // before we go any further
+    if( (++ncurves_)>ncurves_capacity_) // resize
     { ncurves_capacity_ = ncurves_capacity_*1.2 + 50;
       TRY(curves_=(Whisker_Seg*)realloc(curves_,sizeof(Whisker_Seg)*ncurves_capacity_));
       memset(curves_+ncurves_-1,0,sizeof(Whisker_Seg)*(ncurves_capacity_-ncurves_));
@@ -628,6 +649,7 @@ void Data::traceAt(int iframe, QPointF r, bool autocorrect)
   // maybe append measurement
   if(measurements_)
   { int was_resized=0;
+    maybeCommitFacePosition_();
     if((++nmeasurements_)>nmeasurements_capacity_) // resize
     { nmeasurements_capacity_ = nmeasurements_capacity_*1.2+50;
       TRY(measurements_=locked::Realloc_Measurements_Table(
@@ -802,8 +824,10 @@ void Data::setFaceOrientation(Data::Orientation o)
   switch(o)
   { case HORIZONTAL: s='x'; break;
     case VERTICAL:   s='y'; break;
-    default:         return;
+    default:
+      ;
   }
+  face_param_dirty_=true;
   //emit faceOrientationChanged(o);
 }
 
