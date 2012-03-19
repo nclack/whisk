@@ -545,7 +545,12 @@ Whisker_Seg *find_segments( int iFrame, Image *image, Image *bg, int *pnseg )
             i/stride,
             (int) 100 * cos( tha[i] ),
             (int) 100 * sin( tha[i] ) };
+
           w = trace_whisker( &seed, image );
+          if(!w)
+          { SWAP(seed.xdir,seed.ydir);
+            w = trace_whisker( &seed, image ); // try again at a right angle...sometimes when we're off by one the slope estimate is perpendicular to the whisker.
+          }
           if (w != NULL)
           { wsegs = (Whisker_Seg*) request_storage( wsegs, &max_segs, sizeof(Whisker_Seg), n_segs+1, "find segments" );
             w->time = iFrame;
