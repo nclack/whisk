@@ -871,11 +871,18 @@ const QPixmap Data::frame(int iframe, bool autocorrect)
 { Image *im;
   TRY(video_);
   SILENTTRY(im=locked::video_get(video_,iframe,autocorrect));
-  { QImage qim(im->array,im->width,im->height,QImage::Format_Indexed8);
+  { //QImage qim(im->array,im->width,im->height,im->width,QImage::Format_Indexed8);
+    QImage qim(im->width,im->height,QImage::Format_Indexed8);
     QVector<QRgb> grayscale;
     for(int i=0;i<256;++i)
       grayscale.append(qRgb(i,i,i));
     qim.setColorTable(grayscale);
+
+    // copy in the data
+    qim.fill(0);
+    for(int i=0;i<im->height;++i)
+      memcpy(qim.scanLine(i),im->array+im->width*i,im->width);
+
     QPixmap out = QPixmap::fromImage(qim);
     locked::Free_Image(im);
     return out;
