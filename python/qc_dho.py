@@ -431,3 +431,54 @@ def rates(meta):
     out[anm] = counts
   return out
 
+### Query for largest angle change, etc...
+
+COL_IDENT = 0;
+COL_ANGLE = 5;
+COL_CURVATURE = 6;
+COL_TIME = 1;
+
+def itertrials(meta):
+  for fname in gen_measurements(meta):
+    table = traj.MeasurementsTable(fname)
+    yield fname,table.asarray()
+
+def iteridents(table_array):
+  idents = table_array[:,COL_IDENT].astype(int)
+  for i in xrange(idents.min(),idents.max()+1):
+    if i==-1:
+      continue
+    yield table_array[idents==i,:]
+
+def angles(table_array):
+  wrap = lambda v: v+(v<0)*360.0
+  return wrap(table_array[:,COL_ANGLE])
+def delta_angles(table_array):
+  return abs(diff(angles(table_array)))
+def curvatures(table_array):
+  return table_array[:,COL_CURVATURE]
+def delta_curvatures(table_array):
+  return abs(diff(curvatures(table_array)))
+def times(table_array):
+  return table_array[:,COL_TIME]
+def delta_times(table_array):
+  return diff(times(table_array))
+
+def queries(meta):
+  fns    = {'delta_angle':delta_angles,'delta_curvature':delta_curvatures} 
+  mx     = {'delta_angle':0 ,'delta_curvature':0}
+  argmax = {'delta_angle':'','delta_curvature':''}
+
+  for name,table in itertrials(meta):
+    print name    
+    for trajectory in iteridents(table):
+      ts  = times(trajectory)[1:]
+      dts = delta_times(trajectory)
+      for kind in fns.iterkeys():
+        d = fns[kind](trajectory)/dts
+        if d.size:
+          v = d.max()
+          if mx[kind]<v:
+            argmax[kind] = name
+            mx[kind] = v
+  return argmax,mx
