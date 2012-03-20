@@ -72,7 +72,7 @@ class CurveGroup : public QObject
 
   public slots:
     void beginAdding(int iframe);
-    void add(QPolygonF shape,int wid,int ident,int nident);
+    void add(QPolygonF shape,int wid,int ident,int nident,QGraphicsItem *parentitem=0);
     void endAdding();
     void selectByWid(int wid);
     void deselectAll();

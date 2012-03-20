@@ -225,7 +225,7 @@ void CurveGroup::beginAdding(int iframe)
   iframe_=iframe;
 }
 
-void CurveGroup::add(QPolygonF shape, int wid, int ident, int nident)
+void CurveGroup::add(QPolygonF shape, int wid, int ident, int nident, QGraphicsItem *parentitem/*=0*/)
 { 
   if(cursor_<curves_.size())  // use existing curve items
   { scene_->removeItem(curves_[cursor_]);
@@ -244,6 +244,7 @@ void CurveGroup::add(QPolygonF shape, int wid, int ident, int nident)
   }
   curves_[cursor_]->setColorByIdentity(ident,nident);
   curves_[cursor_]->setWid(wid);
+  curves_[cursor_]->setParentItem(parentitem);
   cursor_++;
   return;
 Error:
@@ -280,7 +281,8 @@ void CurveGroup::removeSelected()
 }
 
 void CurveGroup::selection(QObject *target)
-{ foreach(Curve *c,curves_) 
+{ 
+  foreach(Curve *c,curves_) 
   { if( ((void*)c)!=((void*)target) ) 
     { c->setSelected(0);               // make selection exclusive.  Only one in the group may be selected.
       c->setZValue(2);                 

@@ -13,7 +13,7 @@ FaceIndicator::FaceIndicator(QGraphicsItem *parent)
 { shape_=new QSvgRenderer(QString(":/images/faceindicator"),this);
   setFlags(ItemIsMovable);
   setCursor(Qt::ArrowCursor);
-  setZValue(5); // put it on the top layer so it's always selectable
+  setZValue(100); // put it on the top layer so it's always selectable
 }
 
 void FaceIndicator::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)

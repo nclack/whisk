@@ -232,13 +232,13 @@ Editor::Editor(QWidget *parent,Qt::WindowFlags f)
     lastEdit_        = new Curve;
     face_->setPos(droptarget_->boundingRect().center());
     scene_->addItem(droptarget_);
-    image_->setParentItem(dataItemsRoot_);
+    image_->setParentItem(dataItemsRoot_);    
     face_->setParentItem(dataItemsRoot_);
 
     lastEdit_->setParentItem(dataItemsRoot_);
     lastEdit_->setPen(QPen(Qt::black));
     lastEdit_->setSelectable(false);
-    lastEdit_->setZValue(1); // put it on top of the default layer
+    lastEdit_->setZValue(5); // put it on top of the default layer
 
     scene_->addItem(dataItemsRoot_);
     scene_->addItem(loadingGraphics_);
@@ -352,7 +352,7 @@ void Editor::showFrame(int index)
         QPolygonF shape = data_.curve(iframe_,i);
         int         wid = data_.wid(iframe_,i),
                   ident = data_.identity(iframe_,i);
-        curves_->add(shape,wid,ident,nident);
+        curves_->add(shape,wid,ident,nident,dataItemsRoot_);
       }
       curves_->endAdding();
       if(view_->ident()!=-1)
@@ -817,6 +817,7 @@ void Editor::contextMenuEvent(QContextMenuEvent *event)
 void Editor::maybeShowLastCurve(QPolygonF midline)
 { if(advance_on_successful_left_click_)
   { lastEdit_->setMidline(midline);
+    lastEdit_->setZValue(5);
     lastEdit_->show();
   }
 }
