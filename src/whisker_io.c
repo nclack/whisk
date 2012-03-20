@@ -64,7 +64,7 @@ typedef struct __WhiskerFile
 /***********************************************************************
  * Format registration
  */
-int Whisker_File_Format_Count = 3;
+int Whisker_File_Format_Count = 4;
 
 char *Whisker_File_Formats[] = {
   "whisk1",
