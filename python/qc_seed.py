@@ -3,6 +3,8 @@ from matplotlib import cm,rc
 from matplotlib.pylab import * #imshow,draw,colorbar,clf,clabel,axis,savefig
 from numpy import *
 import roc,trace
+import pdb
+import traceback
 
 rc('image',interpolation='nearest');
 rc('figure.subplot',bottom=0.05,left=0.05,top=0.95,right=0.95);
@@ -20,7 +22,8 @@ def play_seed_angles(video,maxr=9,thresh=0.99,alpha=0.75,bg=63,every=slice(None)
   rc('image',interpolation='nearest');
   rc('figure.subplot',bottom=0.05,left=0.05,top=0.95,right=0.95);
   rc('figure',facecolor='w');
-  for i,im in enumerate(video[every]):
+  fids = range(*every.indices(len(video)))
+  for i,im in map(lambda e:(e,video[e]),fids):
     out,angles = make(im)
     clf();
     imshow(angles,cmap=cm.hsv); 
@@ -33,6 +36,33 @@ def play_seed_angles(video,maxr=9,thresh=0.99,alpha=0.75,bg=63,every=slice(None)
       print 'Writing ',renderto%i
       sys.stdout.flush()
       savefig(renderto%i);
+
+if __name__=='__main__':
+  import sys
+  import argparse
+  parser = argparse.ArgumentParser(description="Render seeding results.")
+  parser.add_argument('vname_',metavar='video',help='Path to the input video name.')
+  parser.add_argument('-minframe',type=int,default=0,help='First frame to render.')
+  parser.add_argument('-maxframe',type=int,default=-1,help='Last frame to render.')
+  parser.add_argument('-bg',type=int,default=63,help="Do not show seeds in regions of the image darker than this threshold.")
+  parser.add_argument('-thresh',type=float,default=0.99,help="Seed threshold.")
+  parser.add_argument('-maxr',type=int,default=9,help="Seed support radius.")
+  parser.add_argument('dest_',nargs='?',metavar='destination',default='render/%05d.png',help="Specify where rendered images should be saved.")
+  parser.add_argument('-fps',type=int,default=1000,help="Frame rate used for labelling images with a timestamp.")
+  def load(vidname):
+    import reader
+    return reader.Reader(vidname,adjuststipple=1)
+  try:
+    N = parser.parse_args()
+    v = load(N.vname_)
+    if N.maxframe<0:
+      N.maxframe=len(v)-1
+    ioff()
+    play_seed_angles(v,N.maxr,N.thresh,alpha=0.75,bg=N.bg,every=slice(N.minframe,N.maxframe+1),renderto=N.dest_.strip())
+  except:
+    traceback.print_exc(file=sys.stdout)
+    sys.stdout.flush()
+    pdb.set_trace();
 
 ### NOTES
 #
