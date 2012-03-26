@@ -622,6 +622,24 @@ add_executable(preprocess
 add_dependencies(preprocess ParameterParser)
 target_link_libraries(preprocess ${FFMPEG_LIBRARIES} ${LIBM})
 
+#totif
+add_executable(totif
+  src/adjust_scan_bias.c                    
+  include/adjust_scan_bias.h
+  ${COMMON}
+  ${MATH}
+  ${MYLIB}
+  ${VIDEO_IO}
+  ${PARAM_MODULE}
+)
+set_target_properties(totif
+  PROPERTIES
+    COMPILE_DEFINITIONS VID_TO_TIF
+)
+add_dependencies(totif ParameterParser)
+target_link_libraries(totif ${FFMPEG_LIBRARIES} ${LIBM})
+  
+
 #seedtest
 source_group("Source Files" FILES src/seedtest.c)
 add_executable(seedtest
@@ -805,7 +823,8 @@ install(
   TARGETS
     report
     whisker_convert
-    measurements_convert
+    measurements_convert 
+    totif
   RUNTIME DESTINATION ${DEST_BIN}
   COMPONENT tools
 )

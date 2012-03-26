@@ -311,3 +311,32 @@ int is_video(const char *path)
     k=FFMPEG;
   return is_valid_[k](path);
 }
+
+/*
+ * VID2TIF
+ */
+#ifdef VID_TO_TIF
+char *Spec[] = {"<infile:Video> <outfile:TIFF>",NULL};
+int main(int argc, char*argv[])
+{ int      ecode=0,
+               i;
+  video_t     *v=0;
+  TIFF        *t=0;
+  Process_Arguments(argc,argv,Spec,0);
+  TRY(v=video_open(Get_String_Arg("infile")));
+  TRY(t=Open_Tiff(Get_String_Arg("outfile"),"w"));
+  for(i=0;i<video_frame_count(v);++i)
+  { Image *im;
+    TRY(im=video_get(v,i,0));
+    Write_Tiff(t,im);
+    Free_Image(im);
+  }
+Finalize:
+  if(t) Close_Tiff(t);
+  if(v) video_close(&v);
+  return ecode;
+Error:  
+  ecode = 1;
+  goto Finalize;
+}
+#endif
