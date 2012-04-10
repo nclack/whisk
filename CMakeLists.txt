@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 2.8)
 project(whisk)
 set(WHISK_VERSION_MAJOR 1)  # increment for total rewrites
 set(WHISK_VERSION_MINOR 1)  # increment for file format or architectural changes to side packages
-set(WHISK_VERSION_PATCH 0a) # increment for everything else
+set(WHISK_VERSION_PATCH 0c) # increment for everything else
 
 macro(show v)
   message("${v} is ${${v}}")
@@ -479,6 +479,16 @@ if(QT_FOUND)
   add_dependencies(whiski ParameterParser)
   set_property(TARGET whiski PROPERTY 
       MACOSX_BUNDLE_ICON_FILE whiski.icns)
+
+  if(APPLE)
+    set(plugin_dest_dir whiski.app/Contents/MacOS)
+    set(qtconf_dest_dir whiski.app/Contents/Resources)
+    set(APPS "\${CMAKE_INSTALL_PREFIX}/whiski.app")
+  endif(APPLE)
+  if(WIN32)
+    set(APPS "\${CMAKE_INSTALL_PREFIX}/bin/whiski.exe")
+  endif(WIN32)
+
 endif()
 
 
@@ -893,8 +903,14 @@ install(
     RUNTIME DESTINATION "${DEST_UI}/bin"
     LIBRARY DESTINATION "${DEST_UI}/bin"
     ARCHIVE DESTINATION "${DEST_UI}/bin"
-    BUNDLE  DESTINATION "/Applications/"
+    BUNDLE  DESTINATION "."
     COMPONENT GUI)
+install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" 
+    DESTINATION ${plugin_dest_dir}/plugins 
+    COMPONENT GUI)
+install(CODE "
+  file(WRITE \"\${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}/${qtconf_dest_dir}/qt.conf\" \"\")
+  " COMPONENT GUI)
 install(
     FILES
       ${FFMPEG_SHARED_LIBS}
@@ -904,11 +920,18 @@ install(PROGRAMS
     ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
     DESTINATION "${DEST_UI}/bin"
     COMPONENT GUI)
-
+#Use bundleutilities to get other dependencies
+set(DIRS ${QT_LIBRARY_DIRS})
+  install(CODE "
+    file(GLOB_RECURSE QTPLUGINS
+    \"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+    include(BundleUtilities)
+    fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
+    verify_app(\"${APPS}\")
+    " COMPONENT GUI)
 #
 # PACKAGING
 #
-
 
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Whisker tracking")
 SET(CPACK_PACKAGE_VENDOR "Howard Hughes Medical Institute")

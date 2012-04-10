@@ -198,7 +198,7 @@ endmacro()
           ${FFMPEG_LIBAVCODEC_LIBRARIES}
           ${FFMPEG_LIBSWSCALE_LIBRARIES}
           ${FFMPEG_LIBAVUTIL_LIBRARIES}
-          ${ZLIB_LIBRARY}
+          ${ZLIB_LIBRARIES}
           ${BZIP2_LIBRARIES}
           ${OGG_LIBRARY}
           ${VORBIS_LIBRARIES}
