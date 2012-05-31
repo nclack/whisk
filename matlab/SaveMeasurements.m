@@ -3,7 +3,7 @@ function SaveMeasurements(filename,measurements)
 %
 %   USAGE:
 %
-%   measurements = WriteMeasurements(filename)
+%   SaveMeasurements(filename,measurements)
 %
 %   <filename>     is the path to the destination .measurements file.
 %   <measurements> is a struct array with the following fields:
@@ -63,8 +63,8 @@ measurements = castfield(measurements,'length'     ,'double');
 measurements = castfield(measurements,'score'      ,'double');
 measurements = castfield(measurements,'angle'      ,'double');
 measurements = castfield(measurements,'curvature'  ,'double');
-measurements = castfield(measurements,'follicle_x','double');
-measurements = castfield(measurements,'follicle_y','double');
+measurements = castfield(measurements,'follicle_x' ,'double');
+measurements = castfield(measurements,'follicle_y' ,'double');
 measurements = castfield(measurements,'tip_x'      ,'double');
 measurements = castfield(measurements,'tip_y'      ,'double');
 mexSaveMeasurements(filename,measurements);
@@ -74,9 +74,9 @@ mexSaveMeasurements(filename,measurements);
 %    on the c side, but this seems easier in terms of error handling
 
   function out = castfield(m,lbl,tstr)
-    b = [m(:).(lbl)];
+    b = cast([m(:).(lbl)],tstr);
     for i = 1:length(b)
-      m(i).(lbl) = cast(b,tstr);
+      m(i).(lbl) = b(i);
     end
     out = m;
   end
