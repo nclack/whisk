@@ -1,16 +1,16 @@
 ## Author: Nathan Clack <clackn@janelia.hhmi.org>
-## Date  : 2010 
+## Date  : 2010
 ##
 ## Copyright 2010 Howard Hughes Medical Institute.
 ## All rights reserved.
 ## Use is subject to Janelia Farm Research Campus Software Copyright 1.1
 ## license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
-## 
+##
 cmake_minimum_required(VERSION 2.8)
 project(whisk)
 set(WHISK_VERSION_MAJOR 1)  # increment for total rewrites
 set(WHISK_VERSION_MINOR 1)  # increment for file format or architectural changes to side packages
-set(WHISK_VERSION_PATCH 0c) # increment for everything else
+set(WHISK_VERSION_PATCH 0d) # increment for everything else
 
 macro(show v)
   message("${v} is ${${v}}")
@@ -66,13 +66,13 @@ set(MYLIB_HDRS
   include/water_shed.h
 )
 set(MYLIB
-  src/tiff_image.c 
-  src/tiff_io.c    
-  src/tiff_adapt.c 
-  src/image_adapt.c                         
-  include/tiff_image.h 
-  include/tiff_io.h    
-  include/image_adapt.h                         
+  src/tiff_image.c
+  src/tiff_io.c
+  src/tiff_adapt.c
+  src/image_adapt.c
+  include/tiff_image.h
+  include/tiff_io.h
+  include/image_adapt.h
   ${MYLIB_HDRS}
   ${MYLIB_SRCS}
   ${PFILES}
@@ -139,7 +139,7 @@ set(COMMON
   )
 source_group("Source Files\\Common" FILES ${COMMON_SRCS})
 source_group("Header Files\\Common" FILES ${COMMON_HDRS})
-source_group("Parameter File Parser" FILES ${BISON_PARAM_OUTPUTS})   
+source_group("Parameter File Parser" FILES ${BISON_PARAM_OUTPUTS})
 
 # Whisker IO
 set(WHISKER_IO_SRCS
@@ -153,7 +153,7 @@ set(WHISKER_IO_HDRS
   include/whisker_io.h
   include/whisker_io_whisker1.h
   include/whisker_io_whiskpoly1.h
-  include/whisker_io_whiskbin1.h           
+  include/whisker_io_whiskbin1.h
   include/whisker_io_whiskold.h
 )
 set(WHISKER_IO
@@ -199,18 +199,18 @@ source_group("Header Files\\IO\\Bar" FILES ${BAR_IO_HDRS})
 
 # Video
 set(VIDEO_IO_SRCS
-  src/tiff_image.c 
-  src/tiff_io.c    
-  src/tiff_adapt.c 
-  src/image_adapt.c                         
+  src/tiff_image.c
+  src/tiff_io.c
+  src/tiff_adapt.c
+  src/image_adapt.c
   src/seq.c
   src/video.c
   src/ffmpeg_adapt.c
 )
 set(VIDEO_IO_HDRS
-  include/tiff_image.h 
-  include/tiff_io.h    
-  include/image_adapt.h                         
+  include/tiff_image.h
+  include/tiff_io.h
+  include/image_adapt.h
   include/seq.h
   include/video.h
   include/ffmpeg_adapt.h
@@ -224,13 +224,13 @@ source_group("Header Files\\IO\\Video" FILES ${VIDEO_IO_HDRS})
 
 # Math
 set(MATH_SRCS
-  src/mat.c                                 
+  src/mat.c
   src/poly.c
   src/svd.c
   src/aip.c
 )
 set(MATH_HDRS
-  include/mat.h                                 
+  include/mat.h
   include/poly.h
   include/svd.h
   include/aip.h
@@ -241,23 +241,23 @@ set(MATH
 )
 source_group("Source Files\\Math" FILES ${MATH_SRCS})
 source_group("Header Files\\Math" FILES ${MATH_HDRS})
-  
+
 
 # Trace
 set(TRACE_SRCS
-  src/adjust_scan_bias.c                    
+  src/adjust_scan_bias.c
   src/bar.c
   src/seed.c
   src/merge.c
-  src/eval.c                                
+  src/eval.c
   src/trace.c
 )
 set(TRACE_HDRS
-  include/adjust_scan_bias.h                    
+  include/adjust_scan_bias.h
   include/bar.h
   include/seed.h
   include/merge.h
-  include/eval.h                                
+  include/eval.h
   include/trace.h
 )
 set(TRACE
@@ -288,15 +288,15 @@ source_group("Header Files\\" FILES ${TRAJ_HDRS})
 # HMM
 set(HMM_SRCS
   src/hmm-reclassify-lrmodel-w-deletions.c
-  src/hmm-reclassify-lrmodel.c            
-  src/hmm-reclassify.c                    
-  src/viterbi.c                           
+  src/hmm-reclassify-lrmodel.c
+  src/hmm-reclassify.c
+  src/viterbi.c
 )
 set(HMM_HDRS
   include/hmm-reclassify-lrmodel-w-deletions.h
-  include/hmm-reclassify-lrmodel.h            
-  include/hmm-reclassify.h                    
-  include/viterbi.h                           
+  include/hmm-reclassify-lrmodel.h
+  include/hmm-reclassify.h
+  include/viterbi.h
 )
 set(HMM
   ${HMM_SRCS}
@@ -400,7 +400,7 @@ set_target_properties(whiskio PROPERTIES
 add_dependencies(whiskio ParameterParser)
 
 add_library(whiskio_static STATIC
-  ${COMMON}  
+  ${COMMON}
   ${PARAM_MODULE}
   ${MYLIB}
   ${WHISKER_IO}
@@ -451,7 +451,7 @@ add_dependencies(whiskio_static ParameterParser)
 # see: http://developer.qt.nokia.com/doc/qt-4.8/appicon.html
 if(QT_FOUND)
   if(WIN32)
-    file(GLOB RC_SRCS qtui/*.rc)    
+    file(GLOB RC_SRCS qtui/*.rc)
   endif()
   set(ICONS qtui/resources/icons/whiski.icns)
   set_property(SOURCE ${ICONS} PROPERTY MACOSX_PACKAGE_LOCATION Resources)
@@ -478,7 +478,7 @@ if(QT_FOUND)
   target_link_libraries(whiski ${QT_LIBRARIES})
   target_link_libraries(whiski ${FFMPEG_LIBRARIES} ${LIBM})
   add_dependencies(whiski ParameterParser)
-  set_property(TARGET whiski PROPERTY 
+  set_property(TARGET whiski PROPERTY
       MACOSX_BUNDLE_ICON_FILE whiski.icns)
 
   if(APPLE)
@@ -509,7 +509,7 @@ add_executable(trace
 )
 target_link_libraries(trace ${FFMPEG_LIBRARIES} ${LIBM})
 add_dependencies(trace ParameterParser)
-  
+
 #measure
 source_group("Source Files" FILES src/measure.c)
 add_executable(measure
@@ -635,7 +635,7 @@ target_link_libraries(preprocess ${FFMPEG_LIBRARIES} ${LIBM})
 
 #totif
 add_executable(totif
-  src/adjust_scan_bias.c                    
+  src/adjust_scan_bias.c
   include/adjust_scan_bias.h
   ${COMMON}
   ${MATH}
@@ -649,10 +649,10 @@ set_target_properties(totif
 )
 add_dependencies(totif ParameterParser)
 target_link_libraries(totif ${FFMPEG_LIBRARIES} ${LIBM})
-  
+
 #vsplit
 add_executable(vsplit
-  src/adjust_scan_bias.c                    
+  src/adjust_scan_bias.c
   include/adjust_scan_bias.h
   ${COMMON}
   ${MATH}
@@ -713,7 +713,7 @@ target_link_libraries(test_whisker_io ${LIBM})
 
 #evaltest
 source_group("Source Files" FILES src/evaltest.c)
-set(EVALTEST_SRCS 
+set(EVALTEST_SRCS
   src/evaltest.c
   ${COMMON}
   ${MATH}
@@ -833,7 +833,7 @@ include(InstallRequiredSystemLibraries)
 # show(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
 
 install(
-  TARGETS 
+  TARGETS
     trace
     measure
     classify
@@ -850,7 +850,7 @@ install(
   TARGETS
     report
     whisker_convert
-    measurements_convert 
+    measurements_convert
     totif
     vsplit
   RUNTIME DESTINATION ${DEST_BIN}
@@ -923,12 +923,10 @@ install(
     ARCHIVE DESTINATION "${DEST_UI}/bin"
     BUNDLE  DESTINATION "."
     COMPONENT GUI)
-install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" 
-    DESTINATION ${plugin_dest_dir}/plugins 
+install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
+    DESTINATION ${plugin_dest_dir}/plugins
     COMPONENT GUI)
-install(CODE "
-  file(WRITE \"\${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}/${qtconf_dest_dir}/qt.conf\" \"\")
-  " COMPONENT GUI)
+
 install(
     FILES
       ${FFMPEG_SHARED_LIBS}
@@ -939,14 +937,19 @@ install(PROGRAMS
     DESTINATION "${DEST_UI}/bin"
     COMPONENT GUI)
 #Use bundleutilities to get other dependencies
-set(DIRS ${QT_LIBRARY_DIRS})
-  install(CODE "
-    file(GLOB_RECURSE QTPLUGINS
-    \"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
-    include(BundleUtilities)
-    fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
-    verify_app(\"${APPS}\")
-    " COMPONENT GUI)
+if(APPLE)
+    install(CODE "
+        file(WRITE \"\${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}/${qtconf_dest_dir}/qt.conf\" \"\")
+        " COMPONENT GUI)
+    set(DIRS ${QT_LIBRARY_DIRS})
+      install(CODE "
+        file(GLOB_RECURSE QTPLUGINS
+        \"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+        include(BundleUtilities)
+        fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
+        verify_app(\"${APPS}\")
+        " COMPONENT GUI)
+endif(APPLE)
 #
 # PACKAGING
 #
@@ -1028,7 +1031,7 @@ cpack_add_component(
 cpack_add_component(
   tools
   DISPLAY_NAME "Tools"
-  DESCRIPTION  "Utilities for manipulating files"  
+  DESCRIPTION  "Utilities for manipulating files"
   DISABLED
   INSTALL_TYPES everything_install
   GROUP Extras
@@ -1076,7 +1079,7 @@ cpack_add_component(
 #
 # TESTED BUT UNUSED
 # -----------------
-# deque.c                               
+# deque.c
 # match.c - Hungarian algorithm
 #
 # EXCLUDE
