@@ -13,6 +13,7 @@
 #include "measurements_io_v0.h"
 #include "measurements_io_v1.h"
 #include "measurements_io_v2.h"
+#include "measurements_io_v3.h"
 
 #include "error.h"
 #include "traj.h"
@@ -52,25 +53,29 @@ char *Measurements_File_Formats[] = {
   "v0",
   "v1",
   "v2",
+  "v3",
   NULL};
 
 char *Measurements_File_Format_Descriptions[] = {
   "Binary format.  Deprecated.  See measurements_io_v0.c for details.",
   "Binary format.  Deprecated.  See measurements_io_v1.c for details.",
-  "Binary format.  Recommended. See measurements_io_v2.c for details.",
+  "Binary format.  Deprecated.  See measurements_io_v2.c for details.",
+  "Binary format.  Recommended. See measurements_io_v3.c for details.",
   NULL
 };
 
 pf_mf_detect Measurements_File_Detectors_Table[] = {
   is_file_measurements_v0,
   is_file_measurements_v1,
-  is_file_measurements_v2
+  is_file_measurements_v2,
+  is_file_measurements_v3,
 };
 
 pf_mf_open Measurements_File_Openers_Table[] = {
   open_measurements_v0,
   open_measurements_v1,
-  open_measurements_v2
+  open_measurements_v2,
+  open_measurements_v3
 };
 
 pf_mf_close Measurements_File_Closers_Table[] = {
@@ -82,13 +87,15 @@ pf_mf_close Measurements_File_Closers_Table[] = {
 pf_mf_write Measurements_File_Write_Table[] = {
   write_measurements_v0,
   write_measurements_v1,
-  write_measurements_v2
+  write_measurements_v2,
+  write_measurements_v3
 };
 
 pf_mf_read Measurements_File_Read_Table[] = {
   read_measurements_v0,
   read_measurements_v1,
-  read_measurements_v2
+  read_measurements_v2,
+  read_measurements_v3
 };
 
 
