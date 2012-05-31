@@ -6,6 +6,9 @@
  * Use is subject to Janelia Farm Research Campus Software Copyright 1.1
  * license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html). 
  */
+
+//#define DEBUG
+
 #ifdef LOAD_MEASUREMENTS
 /**
  * mexFunction for Matlab function LoadMeasurements.
@@ -281,16 +284,16 @@ void assertFieldNames(const mxArray *s)
       mxerror("Could not interpret struct array.\n");
     }
 }
-
+#define countof(e) (sizeof(e)/sizeof(*e))
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 { size_t len;
   char *filename;
   Measurements *table;
   int nrows;
 
-  mxassert(nrhs==2           , "Two inputs required.");
-  mxassert(nlhs==0           , "Too many output arguments.");
-  mxassert(mxIsChar(prhs[0]) , "First input must be a string.");
+  mxassert(nrhs==2             , "Two inputs required.");
+  mxassert(nlhs==0             , "Too many output arguments.");
+  mxassert(mxIsChar(prhs[0])   , "First input must be a string.");
   mxassert(mxIsStruct(prhs[1]) , "Second input must be a struct.");
 
   assertFieldNames(prhs[1]);
@@ -300,7 +303,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       "Could not convert input to string.");
 
   nrows = mxGetM(prhs[1])*mxGetN(prhs[1]);
-#if 0
+#ifdef DEBUG
   mexPrintf("Counted %d rows.\n",nrows);
 #endif
   mxassert(
@@ -327,37 +330,32 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       follicle_y  = mxGetFieldByNumber(prhs[1],i,10); 
       tip_x       = mxGetFieldByNumber(prhs[1],i,11); 
       tip_y       = mxGetFieldByNumber(prhs[1],i,12); 
-#if 0
-      mexPrintf("fid        :%p\n",fid       );
-      mexPrintf("wid        :%p\n",wid       );
-      mexPrintf("label      :%p\n",label     );
-      mexPrintf("face_x     :%p\n",face_x    );
-      mexPrintf("face_y     :%p\n",face_y    );
-      mexPrintf("length     :%p\n",length    );
-      mexPrintf("score      :%p\n",score     );
-      mexPrintf("angle      :%p\n",angle     );
-      mexPrintf("curvature  :%p\n",curvature );
-      mexPrintf("follicle_x :%p\n",follicle_x);
-      mexPrintf("follicle_y :%p\n",follicle_y);
-      mexPrintf("tip_x      :%p\n",tip_x     );
-      mexPrintf("tip_y      :%p\n",tip_y     );
+#ifdef DEBUG
+      mexPrintf("fid        :0x%p\n",fid       );
+      mexPrintf("wid        :0x%p\n",wid       );
+      mexPrintf("label      :0x%p\n",label     );
+      mexPrintf("face_x     :0x%p\n",face_x    );
+      mexPrintf("face_y     :0x%p\n",face_y    );
+      mexPrintf("length     :0x%p\n",length    );
+      mexPrintf("score      :0x%p\n",score     );
+      mexPrintf("angle      :0x%p\n",angle     );
+      mexPrintf("curvature  :0x%p\n",curvature );
+      mexPrintf("follicle_x :0x%p\n",follicle_x);
+      mexPrintf("follicle_y :0x%p\n",follicle_y);
+      mexPrintf("tip_x      :0x%p\n",tip_x     );
+      mexPrintf("tip_y      :0x%p\n",tip_y     );
       mexPrintf("%d of %d\n",i,nrows);
 #endif
 
-      if(!( fid        && 
-            wid        && 
-            label      && 
-            face_x     && 
-            face_y     && 
-            length     && 
-            score      && 
-            angle      && 
-            curvature  && 
-            follicle_x && 
-            follicle_y && 
-            tip_x      && 
-            tip_y))
-        goto GetFieldException;
+      // Check pointer and dimensions
+      { const mxArray *fields[] = {fid,wid,label,face_x,face_y,length,score,angle,curvature,follicle_x,follicle_y,tip_x,tip_y};
+        int j;  
+        for(j=0;j<countof(fields);++j)
+        { if(!fields[j])           goto GetFieldException;
+          if(mxGetM(fields[j])!=1) goto FieldSizeException;
+          if(mxGetN(fields[j])!=1) goto FieldSizeException;
+        }
+      }
        
       pfid         = (   int*) mxGetData(fid       );
       pwid         = (   int*) mxGetData(wid       );
@@ -399,6 +397,10 @@ Measurements_Table_To_Filename(filename,NULL,table,nrows);
 
 Done:
   Free_Measurements_Table(table);
+  return;
+FieldSizeException:  
+  Free_Measurements_Table(table);
+  mexErrMsgTxt("A field had the wrong dimensions. Aborting without saving.");
   return;
 GetFieldException:
   Free_Measurements_Table(table);

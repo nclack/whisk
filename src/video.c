@@ -14,6 +14,7 @@
 #define REPORT(expr)
 #endif
 #define TRY(expr)       if(!(expr)) {REPORT(expr); goto Error;}
+#define FAIL                        {REPORT("Execution should not reach here."); goto Error;}
 #define SILENTTRY(expr) if(!(expr)) {              goto Error;}
 #define HERE debug("%s(%d): HERE"ENDL, __FILE__,__LINE__)
 
@@ -316,7 +317,7 @@ int is_video(const char *path)
  * VID2TIF
  */
 #ifdef VID_TO_TIF
-char *Spec[] = {"<infile:Video> <outfile:TIFF>",NULL};
+char *Spec[] = {"<infile:Video> <outfile:TIFF> [split (h <x:int>|v <y:int>)]",NULL};
 int main(int argc, char*argv[])
 { int      ecode=0,
                i;
@@ -333,6 +334,85 @@ int main(int argc, char*argv[])
   }
 Finalize:
   if(t) Close_Tiff(t);
+  if(v) video_close(&v);
+  return ecode;
+Error:  
+  ecode = 1;
+  goto Finalize;
+}
+#endif
+
+/*
+ * VIDSPLIT
+ */
+//#define VIDSPLIT
+#ifdef VIDSPLIT
+char *Spec[] = {"<infile:Video> <outfile1:TIFF> <outfile2:TIFF> (-x <x:int>|-y <y:int>)",NULL};
+
+int hsplit(Image *in, Image **out1, Image **out2, int x)
+{ unsigned i,j;
+  const unsigned w = in->width,
+                 h = in->height;
+  TRY( 0<x && x<w );
+  TRY(out1[0]=Make_Image(in->kind,x,h));
+  TRY(out2[0]=Make_Image(in->kind,w-x,h));
+  for(j=0;j<in->height;++j)
+  { for(i=0;i<w;++i)
+    { if(i<x)
+        out1[0]->array[j*x+i]=in->array[j*w+i];
+      else
+        out2[0]->array[j*(w-x)+(i-x)]=in->array[j*w+i];
+    }
+  }
+  return 1;
+Error:
+  if(out1[0]) Free_Image(out1[0]);
+  if(out2[0]) Free_Image(out2[0]);
+  return 0;
+}
+
+int vsplit(Image *in, Image **out1, Image **out2, int y)
+{ const unsigned h = in->height,
+                 w = in->width;
+  TRY( 0<y && y<h );
+  TRY(out1[0]=Make_Image(in->kind,w,y));
+  TRY(out2[0]=Make_Image(in->kind,w,h-y));
+  memcpy(out1[0]->array,in->array,w*y);
+  memcpy(out2[0]->array,in->array+y*w,w*(h-y));  
+  return 1;
+Error:
+  if(out1[0]) Free_Image(out1[0]);
+  if(out2[0]) Free_Image(out2[0]);
+  return 0;
+}
+int main(int argc, char*argv[])
+{ int      ecode=0,
+               i;
+  video_t     *v=0;
+  TIFF        *t1,*t2=0;
+  Process_Arguments(argc,argv,Spec,0);
+  TRY(v=video_open(Get_String_Arg("infile")));
+  TRY(t1=Open_Tiff(Get_String_Arg("outfile1"),"w"));
+  TRY(t2=Open_Tiff(Get_String_Arg("outfile2"),"w"));
+  for(i=0;i<video_frame_count(v);++i)
+  { Image *im=0,*out1=0,*out2=0;
+    TRY(im=video_get(v,i,0));
+    if(Is_Arg_Matched("x"))
+    { TRY(hsplit(im,&out1,&out2,Get_Int_Arg("x")));
+    } else if(Is_Arg_Matched("y"))
+    { TRY(vsplit(im,&out1,&out2,Get_Int_Arg("y")));
+    } else
+    { FAIL;
+    }
+    Write_Tiff(t1,out1);
+    Write_Tiff(t2,out2);
+    Free_Image(im);
+    Free_Image(out1);
+    Free_Image(out2);
+  }
+Finalize:
+  if(t1) Close_Tiff(t1);
+  if(t2) Close_Tiff(t2);
   if(v) video_close(&v);
   return ecode;
 Error:  

@@ -400,7 +400,8 @@ set_target_properties(whiskio PROPERTIES
 add_dependencies(whiskio ParameterParser)
 
 add_library(whiskio_static STATIC
-  ${COMMON}
+  ${COMMON}  
+  ${PARAM_MODULE}
   ${MYLIB}
   ${WHISKER_IO}
   ${MEASUREMENTS_IO}
@@ -649,6 +650,22 @@ set_target_properties(totif
 add_dependencies(totif ParameterParser)
 target_link_libraries(totif ${FFMPEG_LIBRARIES} ${LIBM})
   
+#vsplit
+add_executable(vsplit
+  src/adjust_scan_bias.c                    
+  include/adjust_scan_bias.h
+  ${COMMON}
+  ${MATH}
+  ${MYLIB}
+  ${VIDEO_IO}
+  ${PARAM_MODULE}
+)
+set_target_properties(vsplit
+  PROPERTIES
+    COMPILE_DEFINITIONS VIDSPLIT
+)
+add_dependencies(vsplit ParameterParser)
+target_link_libraries(vsplit ${FFMPEG_LIBRARIES} ${LIBM})
 
 #seedtest
 source_group("Source Files" FILES src/seedtest.c)
@@ -835,6 +852,7 @@ install(
     whisker_convert
     measurements_convert 
     totif
+    vsplit
   RUNTIME DESTINATION ${DEST_BIN}
   COMPONENT tools
 )
