@@ -21,7 +21,7 @@
 #define MF_CALL(a,name)  (*(((_MeasurementsFile*)a)->name))
 #define MF_DEREF(a,name)   (((_MeasurementsFile*)a)->name)
  
-#define MEASUREMENTS_FILE_DEFAULT_FORMAT 2
+#define MEASUREMENTS_FILE_DEFAULT_FORMAT 3
 
 /* 
  * Typedefs defining abstract interface for whisker file io
@@ -47,7 +47,7 @@ typedef struct __MeasurementsFile
 /***********************************************************************
  * Format registration
  */
-int Measurements_File_Format_Count = 3;
+int Measurements_File_Format_Count = 4;
 
 char *Measurements_File_Formats[] = {
   "v0",
@@ -81,7 +81,8 @@ pf_mf_open Measurements_File_Openers_Table[] = {
 pf_mf_close Measurements_File_Closers_Table[] = {
   close_measurements_v0,
   close_measurements_v1,
-  close_measurements_v2
+  close_measurements_v2,
+  close_measurements_v3
 };
 
 pf_mf_write Measurements_File_Write_Table[] = {
