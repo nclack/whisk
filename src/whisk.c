@@ -45,6 +45,25 @@ void check_usage(void)
   PRINT_USAGE(Stack);
 }
 
+int  invert_uint8( Image *s )
+// Invert intensity so bar is bright
+// returns 1 on failure, 0 otherwise
+{
+  if( s->kind != GREY8 )
+  { error( "Only GREY8 images currently supported.\n" );
+    goto error;
+  }
+  { unsigned int size = (s->width) * (s->height);
+    uint8 *p;
+    for( p = s->array; p < ((s->array)+size); p++ )
+      (*p) = 255 - (*p);
+  }
+  return 0;
+error:
+  Free_Image(s);
+  return 1;
+}
+
 /*
  * load()
  */
@@ -71,7 +90,7 @@ ErrorOpen:
 /*
  * MAIN
  */
-static char *Spec[] = { "<movie:string> <prefix:string>", NULL };
+static char *Spec[] = { "<movie:string> <prefix:string> [--no-bar] [--no-whisk]", NULL };
 int main(int argc, char *argv[])
 { char  *whisker_file_name, *bar_file_name, *prefix;
   size_t prefix_len;
@@ -120,7 +139,7 @@ int main(int argc, char *argv[])
   }
   Free_Image( image );
 
-#if 0
+#if 1
   /*
    * Bar tracking
    */
@@ -151,7 +170,7 @@ int main(int argc, char *argv[])
   /*
    * Trace whisker segments
    */
-  //if( !Is_Arg_Matched("--no-whisk") )
+  if( !Is_Arg_Matched("--no-whisk") )
   { int           nTotalSegs = 0;
     Whisker_Seg   *wv;
     int wv_n; 
