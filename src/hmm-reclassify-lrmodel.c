@@ -254,13 +254,19 @@ static real velocity_likelihood_infer_match(Measurements_Reference *ref, Distrib
   int w = nearest_whisker(ref,vel_dists,obs,iobs);
   real *pv = &vel;       
   vel = -DBL_MAX; //log        
-  for(k=0;k<ref->nframe;k++)
-    if(k!=w)
-      bu( real, pv,
-          Eval_Velocity_Likelihood_Log2( vel_dists,
-                                          ref->frame[k].data,
+  if(ref->nframe==1) // use nearest if it's the only one 
+    vel=Eval_Velocity_Likelihood_Log2( vel_dists,
+                                          ref->frame[w].data,
                                           obs[iobs].data,
-                                          0 ));
+                                          0);
+  else 
+    for(k=0;k<ref->nframe;k++) // otherwise exclude nearest
+      if(k!=w)
+        bu( real, pv,
+            Eval_Velocity_Likelihood_Log2( vel_dists,
+                                            ref->frame[k].data,
+                                            obs[iobs].data,
+                                            0 ));
   return vel;
 }
 

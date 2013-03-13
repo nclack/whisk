@@ -925,9 +925,9 @@ install(
     ARCHIVE DESTINATION "${DEST_UI}/bin"
     BUNDLE  DESTINATION "."
     COMPONENT GUI)
-install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
-    DESTINATION ${plugin_dest_dir}/plugins
-    COMPONENT GUI)
+  #install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
+  #  DESTINATION ${plugin_dest_dir}/plugins
+  #  COMPONENT GUI)
 
 install(
     FILES
@@ -973,9 +973,9 @@ IF(WIN32 AND NOT UNIX)
   # sure there is at least one set of four (4) backlasshes.
   SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\\\qtui\\\\resources\\\\icons\\\\whiski.ico")
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    SET(CPACK_NSIS_INSTALL_ROOT "$ENV{ProgramW6432}")
+    SET(CPACK_NSIS_INSTALL_ROOT "C:/Program Files")
   else()
-    SET(CPACK_NSIS_INSTALL_ROOT "$ENV{ProgramFiles}")
+    SET(CPACK_NSIS_INSTALL_ROOT "C:/Program Files (x86)")
   endif()
   SET(CPACK_NSIS_INSTALLED_ICON_NAME "qtui\\\\resources\\\\icons\\\\whiski.ico")
   SET(CPACK_NSIS_MUI_ICON_NAME "qtui\\\\resources\\\\icons\\\\whiski.ico")

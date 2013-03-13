@@ -1049,8 +1049,9 @@ int HMM_Reclassify_Fast_Forward(           // returns frame id to jump to
     real *likelihood,                      //
     Measurements_Reference *ref,           // Reference labelling to use for deltas
     int fid)                               // frame to start from/query
-{ real *mark = visited[fid];
+{ real *mark;
   assert(fid!=0); // need some left frame with known
+  mark = visited[fid-1];
   while( fid>0 && fid<nframes && !visited[fid] )
   { Measurements_Reference_Build( ref, index[fid-1].first, index[fid-1].n );
     (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
@@ -1077,9 +1078,10 @@ int HMM_Reclassify_Fast_Backward(          // returns frame id to jump to
     real *likelihood,                      //
     Measurements_Reference *ref,           // Reference labelling to use for deltas
     int fid)                               // frame to start from/query
-{ real *mark = visited[fid];
+{ real *mark=0;
   assert(fid!=nframes-1); // need some right frame with known
-  while( fid>0 && fid<nframes && !visited[fid] )
+  mark = visited[fid+1];
+  while( fid>=0 && fid<(nframes-1) && !visited[fid] )
   { Measurements_Reference_Build( ref, index[fid+1].first, index[fid+1].n );
     (*pf_Compute_Emissions_For_Two_Classes_W_History_Log2)( E,
       nwhisk,
@@ -1121,14 +1123,14 @@ int HMM_Reclassify_Fill_Gap(
 
   if( fid_right == nframes ) // no other edge...fast forward to end and return
   { if( fid_left != 0 )
-    { visited[fid_left] = visited[fid_left-1];
+    { //visited[fid_left] = visited[fid_left-1];
       Measurements_Reference_Build( left, index[fid_left-1].first, index[fid_left-1].n );
       HMM_Reclassify_Fast_Forward( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL, left, fid_left );
     }
     return fid_right;
   } else if( fid_left == 0 ) //right edge ok, left edge not
   { fid_right--; //back up so right side is just inside gap
-    visited[fid_right] = visited[fid_right+1];
+    //visited[fid_right] = visited[fid_right+1];
     Measurements_Reference_Build( right, index[fid_right+1].first, index[fid_right+1].n );
     HMM_Reclassify_Fast_Backward( index, nframes, shp_dists, vel_dists, nwhisk, S,T,E, visited, NULL, right, fid_right );
     return fid_right+1;
@@ -1428,8 +1430,8 @@ int main(int argc, char*argv[])
     { Measurements_Reference *left  = Measurements_Reference_Alloc(nwhisk),
                              *right = Measurements_Reference_Alloc(nwhisk);
       int fid=0,
-          left_ok = 0,  left_jump, left_start,
-          right_ok = 0, right_jump, right_start,
+          left_ok = 0,  left_jump=nframes, left_start=0,
+          right_ok = 0, right_jump=0, right_start=0,
           temp;
       do
       { fid=0;
@@ -1508,6 +1510,7 @@ int main(int argc, char*argv[])
     //
     // Indescriminately fill in the rest
     //
+#if 1
     { int fid=0;
       while( fid < nframes )
       { while( visited[fid] && fid<nframes ) fid++; // find the left side of the next gap
@@ -1519,6 +1522,7 @@ int main(int argc, char*argv[])
 #endif
       }
     }
+#endif
 
 
 #ifdef DEBUG_HMM_RECLASSIFY
@@ -1532,7 +1536,7 @@ int main(int argc, char*argv[])
     free(likelihood);
     free(visited);
     free(S);
-    free(E);
+    //free(E); //FIXME: Heap violation when free'd 
   } // end re-classification
 
   //
