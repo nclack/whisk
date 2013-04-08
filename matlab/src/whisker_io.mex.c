@@ -77,7 +77,10 @@
 #include <string.h>
 
 #include <stdarg.h>
-#define TRY(e) if(!(e)) goto Error;
+#define REPORT(msg1,msg2) mexErrMsgIdAndTxt("WhiskerTracker:internal","%s(%d) - %s()\n\t%s\n\t%s\n",__FILE__,__LINE__,__FUNCTION__,msg1,msg2)
+#define TRY(e) do{ if(!(e)) { REPORT(#e,"Expression evaluated as false."); goto Error;}} while(0)
+#define NEW(T,e,N) TRY((e)=(T*)calloc((N),sizeof(T)))
+
 void mxreport(char *str, va_list argList)
 { char *buf = NULL;
   size_t  n = 0;
@@ -90,6 +93,7 @@ Error:
   mexPrintf("%s(%d): Something went wrong trying to print an error message.\n",__FILE__,__LINE__);
 }
 
+#ifdef LOAD_WHISKERS
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 { size_t buflen; 
   int nwhisk;
@@ -203,3 +207,111 @@ AllocateFormatStringException:
   Free_Whisker_Seg_Vec(ws,nwhisk);
   mexErrMsgTxt("Allocation failed for format string.\n");
 }
+#endif
+
+/*
+ * mexSaveWhiskers
+ * ============
+ *
+ * Usage:
+ *   ecode = mexSaveWhiskers(filename,w)
+ *
+ * 
+ * 
+ */
+#ifdef SAVE_WHISKERS
+
+static char* get_filename(const mxArray *arg)
+{ 
+  if ( mxIsChar(arg) != 1) /* input must be a string */
+  { mexErrMsgTxt("Input must be a string.");
+    return 0;
+  }
+  //buflen = (mxGetM(arg) * mxGetN(arg)) + 1; /* get the length of the input string */
+  return mxArrayToString(arg); /* copy the string data from arg into a C string input_ buf. */
+}
+
+static int get_whiskers(const mxArray *arg, Whisker_Seg **ws_, int *n_)
+{ size_t n,i;
+  Whisker_Seg *ws=0;
+  int ok=0;
+  // validate arg as an appropriate struct
+  TRY(mxIsStruct(arg));
+  TRY((n=mxGetNumberOfElements(arg))>0);
+  NEW(Whisker_Seg,ws,n);
+  for(i=0;i<n;++i)
+  { mxArray *id=0,*time=0,*x=0,*y=0,*thick=0,*score=0;
+    size_t len=0;    
+
+    TRY(id=mxGetField(arg,i,"id"));
+    TRY(time=mxGetField(arg,i,"time"));
+    TRY(x=mxGetField(arg,i,"x"));
+    TRY(y=mxGetField(arg,i,"y"));
+    TRY(thick=mxGetField(arg,i,"thick"));
+    TRY(score=mxGetField(arg,i,"scores"));
+
+    TRY(mxGetClassID(id)  ==mxINT32_CLASS);
+    TRY(mxGetClassID(time)==mxINT32_CLASS);
+    TRY(mxIsSingle(x));
+    TRY(mxIsSingle(y));
+    TRY(mxIsSingle(score));
+    TRY(mxIsSingle(thick));
+
+    TRY(len=mxGetNumberOfElements(x));
+    TRY(mxGetNumberOfElements(y     )==len);
+    TRY(mxGetNumberOfElements(score )==len);
+    TRY(mxGetNumberOfElements(thick )==len);
+    NEW(float,ws[i].x     ,len);
+    NEW(float,ws[i].y     ,len);
+    NEW(float,ws[i].scores,len);
+    NEW(float,ws[i].thick ,len);
+    
+    ws[i].id  =*(int*)mxGetData(id);
+    ws[i].time=*(int*)mxGetData(time);
+    ws[i].len=len;
+    memcpy(ws[i].x     ,mxGetData(x)     ,len*sizeof(float));
+    memcpy(ws[i].y     ,mxGetData(y)     ,len*sizeof(float));
+    memcpy(ws[i].scores,mxGetData(score) ,len*sizeof(float));
+    memcpy(ws[i].thick ,mxGetData(thick) ,len*sizeof(float));
+  }
+  ok=1;
+Finalize:
+  *ws_=ws;
+  *n_ =n;
+  return ok;
+Error:
+  ok=0;
+  goto Finalize;
+}
+
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{ size_t buflen; 
+  int n;
+  char *filename;
+  Whisker_Seg *ws=0;
+  int ecode=0;
+
+  set_reporter(mxreport);
+  
+  /* check for proper number of arguments */
+  if(nrhs!=2) 
+    mexErrMsgTxt("Two inputs required.");
+  else if(nlhs > 1) 
+    mexErrMsgTxt("Too many output arguments.");
+
+  TRY(filename=get_filename(prhs[0]));
+  TRY(get_whiskers(prhs[1],&ws,&n));
+  TRY(Save_Whiskers(filename,NULL,ws,n));
+
+Done:
+  { plhs[0] = mxCreateNumericMatrix(1,1,mxINT32_CLASS,mxREAL);
+    *((int*) mxGetData(plhs[0]))=ecode;
+  }
+  if(ws)
+    Free_Whisker_Seg_Vec(ws,n);
+  return;
+Error:
+  ecode=1;
+  goto Done;
+}
+#endif

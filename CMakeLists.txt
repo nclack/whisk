@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 2.8)
 project(whisk)
 set(WHISK_VERSION_MAJOR 1)  # increment for total rewrites
 set(WHISK_VERSION_MINOR 1)  # increment for file format or architectural changes to side packages
-set(WHISK_VERSION_PATCH 0d) # increment for everything else
+set(WHISK_VERSION_PATCH 0e) # increment for everything else
 
 macro(show v)
   message("${v} is ${${v}}")
@@ -443,6 +443,17 @@ add_dependencies(whiskio_static ParameterParser)
 
     add_mex_file(mexLoadWhiskers matlab/src/whisker_io.mex.c)
     target_link_libraries(mexLoadWhiskers whiskio_static)
+    set_target_properties(mexLoadWhiskers
+        PROPERTIES
+        COMPILE_DEFINITIONS LOAD_WHISKERS
+        )
+
+    add_mex_file(mexSaveWhiskers matlab/src/whisker_io.mex.c)
+    target_link_libraries(mexSaveWhiskers whiskio_static)
+    set_target_properties(mexSaveWhiskers
+        PROPERTIES
+        COMPILE_DEFINITIONS SAVE_WHISKERS
+        )
   endif()
 
 #
@@ -882,6 +893,7 @@ if(MATLAB_FOUND)
         mexLoadMeasurements
         mexSaveMeasurements
         mexLoadWhiskers
+        mexSaveWhiskers
       DESTINATION ${DEST_MATLAB}/matlab
       COMPONENT matlab
       )
@@ -973,9 +985,9 @@ IF(WIN32 AND NOT UNIX)
   # sure there is at least one set of four (4) backlasshes.
   SET(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}\\\\qtui\\\\resources\\\\icons\\\\whiski.ico")
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    SET(CPACK_NSIS_INSTALL_ROOT "C:/Program Files")
+    SET(CPACK_NSIS_INSTALL_ROOT "C:\\\\Program Files")
   else()
-    SET(CPACK_NSIS_INSTALL_ROOT "C:/Program Files (x86)")
+    SET(CPACK_NSIS_INSTALL_ROOT "C:\\\\Program Files (x86)")
   endif()
   SET(CPACK_NSIS_INSTALLED_ICON_NAME "qtui\\\\resources\\\\icons\\\\whiski.ico")
   SET(CPACK_NSIS_MUI_ICON_NAME "qtui\\\\resources\\\\icons\\\\whiski.ico")
