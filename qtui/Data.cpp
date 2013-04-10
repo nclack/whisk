@@ -166,6 +166,8 @@ result_t loadOne(const QString &path)
   const char *fname = b.data();
   switch(r.kind=guessKind(path))
   { case VIDEO:
+      if(r.v)
+        locked::video_close(&r.v);
       TRY(r.v=locked::video_open(fname));
     break;
     case MEASUREMENTS:
