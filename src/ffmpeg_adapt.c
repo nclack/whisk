@@ -63,6 +63,13 @@
     }                                                   \
   }while(0)
 
+static const AVRational ONE  = {1,1};
+static const AVRational FREQ = {1,AV_TIME_BASE}; // same as AV_TIME_BASE_Q, but more MSVC friendly
+#define STREAM(e)   ((e)->pFormatCtx->streams[(e)->videoStream])
+#define CCTX(e)     ((e)->pFormatCtx->streams[(e)->videoStream]->codec)    ///< gets the AVCodecContext for the selected video stream
+#define DURATION(e) (av_rescale_q((e)->pFormatCtx->duration,av_mul_q(FREQ,STREAM(e)->r_frame_rate),ONE)) ///< gets the duration in #frames
+
+
 typedef struct _ffmpeg_video 
 {
    AVFormatContext *pFormatCtx;
@@ -150,7 +157,7 @@ ffmpeg_video *ffmpeg_video_init(const char *fname, int format )
 
   /* Compute the total number of frames in the file */
   /* duration is in microsecs */
-  ret->numFrames = (int)(( ret->pFormatCtx->duration / (double)AV_TIME_BASE ) * ret->pCtx->time_base.den );
+  ret->numFrames = DURATION(ret); //(int)(( ret->pFormatCtx->duration / (double)AV_TIME_BASE ) * ret->pCtx->time_base.den );
 
   /* Get framebuffers */
   TRY(ret->pRaw = avcodec_alloc_frame());
@@ -226,7 +233,7 @@ int ffmpeg_video_next( ffmpeg_video *cur, int target )
     { avpicture_fill( (AVPicture * ) cur->pRaw, cur->blank, cur->pCtx->pix_fmt,cur->width, cur->height ); // set to blank frame 
       finished=1;
     }
-#if 0 // very useful for debugging
+#if 1 // very useful for debugging
     printf("Packet - pts:%5d dts:%5d (%5d) - flag: %1d - finished: %3d - Frame pts:%5d %5d\n",
         (int)packet.pts,(int)packet.dts,target,
         packet.flags,finished,
