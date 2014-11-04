@@ -36,8 +36,8 @@ MAX_DELTA_OFFSET               6.0          // (pixels)   The detector offset is
 HALF_SPACE_ASSYMETRY_THRESH    0.15         // (between 0 and 1)  1 is completely insensitive to asymmetry
 HALF_SPACE_TUNNELING_MAX_MOVES 10           // (pixels)  This should be the largest size of an occluding area to cross
 
-FRAME_DELTA                    1            // [depricated?] used in compute_zone to look for moving objects
-DUPLICATE_THRESHOLD            5.0          // [depricated?]
-MIN_LENGTH                     20           // [depricated?]           If span of object is not 20 pixels will not use as a seed
-MIN_LENSQR                     100          // [depricated?]           (MIN_LENGTH/2)^2
-MIN_LENPRJ                     14           // [depricated?] [unused]  floor(MIN_LENGTH/sqrt(2))
+FRAME_DELTA                    1            // [deprecated?] used in compute_zone to look for moving objects
+DUPLICATE_THRESHOLD            5.0          // [deprecated?]
+MIN_LENGTH                     20           // [deprecated?]           If span of object is not 20 pixels will not use as a seed
+MIN_LENSQR                     100          // [deprecated?]           (MIN_LENGTH/2)^2
+MIN_LENPRJ                     14           // [deprecated?] [unused]  floor(MIN_LENGTH/sqrt(2))
