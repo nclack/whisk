@@ -387,6 +387,7 @@ void Data::commit()
   } //end lock
   buildMeasurementsIndex_();
   buildCurveIndex_();
+  updateIdentity_();
   emit loaded();
 }
 
@@ -550,6 +551,32 @@ void Data::buildMeasurementsIndex_()
       maxIdent_ = qMax(maxIdent_,(int)m->state);
     }
   }
+}
+
+// Bugfix, 05.11.2014, Author: Viktor Bahr (viktor@bccn-berlin.de)
+// Initialize state with id to overcome color display issue with loaded data 
+void Data::updateIdentity_()
+{
+	LOCK;
+	if(measurements_)
+	{
+		TRY(maybeShowFaceAnchorRequiredDialog());
+		for(Measurements *m=measurements_;m<measurements_+nmeasurements_;++m)
+		{
+			setIdentity(m->fid, m->wid, m->wid);
+		}
+	}
+	else if(curves_)
+	{
+		TRY(maybeShowFaceAnchorRequiredDialog());
+		for(Whisker_Seg *c=curves_;c<curves_+ncurves_;++c)
+		{
+			setIdentity(c->time, c->id, c->id);
+		}
+	}
+
+Error:
+	return;
 }
 
 bool Data::isFaceSet()

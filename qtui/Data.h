@@ -124,4 +124,5 @@ class Data : public QObject
 
     void buildCurveIndex_();
     void buildMeasurementsIndex_();
+	void updateIdentity_();
 };
