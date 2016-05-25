@@ -1,17 +1,20 @@
 ## Author: Nathan Clack <clackn@janelia.hhmi.org>
-## Date  : 2010 
+## Date  : 2010
 ##
 ## Copyright 2010 Howard Hughes Medical Institute.
 ## All rights reserved.
 ## Use is subject to Janelia Farm Research Campus Software Copyright 1.1
 ## license terms (http://license.janelia.org/license/jfrc_copyright_1_1.html).
-## 
+##
 
 #
 # Parameter file parser
 #
-cmake_minimum_required(VERSION 2.8)    
+cmake_minimum_required(VERSION 2.8)
 project(WhiskerTrackingParameterParser)
+if(WIN32)
+    set(BISON_EXECUTABLE "${CMAKE_CURRENT_LIST_DIR}/../../3rdParty/bison/bison.exe")
+endif()
 include(FindBISON)
 BISON_TARGET(
   SCHEMA
@@ -68,8 +71,7 @@ add_executable(validate
   ${PARAM_PARSER_SRC}
 	${BISON_PARAM_OUTPUTS}
   )
-add_dependencies(validate 
+add_dependencies(validate
     schema
     ParameterParser
 )
-
