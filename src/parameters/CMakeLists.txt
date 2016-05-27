@@ -18,11 +18,12 @@ include(FindBISON)
 if(NOT BISON_FOUND)
     message("Bison not found.  Using previously generated parameter parser.")
     set(PARAM_MODULE
-        ${CMAKE_CURRENT_LIST_DIR}/../generated/param.h
+        ${CMAKE_CURRENT_LIST_DIR}/../generated/parameters/param.h
         ${CMAKE_CURRENT_LIST_DIR}/../generated/param.tab.c
         ${CMAKE_CURRENT_LIST_DIR}/../generated/param.tab.h
         PARENT_SCOPE
     )
+    include_directories(${CMAKE_CURRENT_LIST_DIR})
     add_custom_target(ParameterParser DEPENDS ${PARAM_MODULE})
     return()
 endif()
