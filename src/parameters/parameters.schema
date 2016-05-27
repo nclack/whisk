@@ -30,7 +30,7 @@ OFFSET_STEP                    FLOAT                                // pixels
 ANGLE_STEP                     FLOAT                                // divisions of pi/4
 WIDTH_STEP                     FLOAT                                // (pixels)
 WIDTH_MIN                      FLOAT                                // (pixels) must be a multiple of WIDTH_STEP
-WIDTH_MAX                      FLOAT                                // (pixels) must be a multiple of WIDTH_STEP 
+WIDTH_MAX                      FLOAT                                // (pixels) must be a multiple of WIDTH_STEP
 MIN_SIGNAL                     FLOAT                                // minimum detector response per detector column.  Typically: (2*TLEN+1)*MIN_SIGNAL is the threshold determining when tracing stops.
 MAX_DELTA_ANGLE                FLOAT                                // (degrees)  The detector is constrained to turns less than this value at each step.
 MAX_DELTA_WIDTH                FLOAT                                // (pixels)   The detector width is constrained to change less than this value at each step.
@@ -38,9 +38,8 @@ MAX_DELTA_OFFSET               FLOAT                                // (pixels) 
 HALF_SPACE_ASSYMETRY_THRESH    FLOAT                                // (between 0 and 1)  1 is completely insensitive to asymmetry
 HALF_SPACE_TUNNELING_MAX_MOVES INT                                  // (pixels)  This should be the largest size of an occluding area to cross
 
-FRAME_DELTA                    INT                                  // [depricated?] used in compute_zone to look for moving objects
-DUPLICATE_THRESHOLD            FLOAT                                // [depricated?]
-MIN_LENGTH                     INT                                  // [depricated?]           If span of object is not 20 pixels will not use as a seed
-MIN_LENSQR                     INT                                  // [depricated?]           (MIN_LENGTH/2)^2
-MIN_LENPRJ                     INT                                  // [depricated?] [unused]  floor(MIN_LENGTH/sqrt(2))
-
+FRAME_DELTA                    INT                                  // [deprecated?] used in compute_zone to look for moving objects
+DUPLICATE_THRESHOLD            FLOAT                                // [deprecated?]
+MIN_LENGTH                     INT                                  // [deprecated?]           If span of object is not 20 pixels will not use as a seed
+MIN_LENSQR                     INT                                  // [deprecated?]           (MIN_LENGTH/2)^2
+MIN_LENPRJ                     INT                                  // [deprecated?] [unused]  floor(MIN_LENGTH/sqrt(2))

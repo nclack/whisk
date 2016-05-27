@@ -1,0 +1,7 @@
+set(tgt param_reader)
+add_library(${tgt}
+    param.h
+    param.tab.c
+    param.tab.h
+)
+target_include_directories(${tgt} PUBLIC ${CMAKE_CURRENT_LIST_DIR})

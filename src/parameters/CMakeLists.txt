@@ -12,14 +12,26 @@
 #
 cmake_minimum_required(VERSION 2.8)
 project(WhiskerTrackingParameterParser)
-if(WIN32)
-    set(BISON_EXECUTABLE "${CMAKE_CURRENT_LIST_DIR}/../../3rdParty/bison/bison.exe")
-endif()
 include(FindBISON)
+
+#set(BISON_FOUND FALSE)
+if(NOT BISON_FOUND)
+    message("Bison not found.  Using previously generated parameter parser.")
+    set(PARAM_MODULE
+        ${CMAKE_CURRENT_LIST_DIR}/../generated/param.h
+        ${CMAKE_CURRENT_LIST_DIR}/../generated/param.tab.c
+        ${CMAKE_CURRENT_LIST_DIR}/../generated/param.tab.h
+        PARENT_SCOPE
+    )
+    add_custom_target(ParameterParser DEPENDS ${PARAM_MODULE})
+    return()
+endif()
+
+
 BISON_TARGET(
   SCHEMA
     schema.y
-    ${CMAKE_CURRENT_BINARY_DIR}/schema.tab.c
+    "${CMAKE_CURRENT_BINARY_DIR}/schema.tab.c"
   VERBOSE
     schema.grammer
   COMPILE_FLAGS "-t")

@@ -55,6 +55,7 @@ file(GLOB PFILES  src/*.p)
 file(GLOB MANAGER src/manager.awk)
 include(MylibPreproc)
 mylib_preprocess(MYLIB_SRCS PFILES MANAGER)
+show(MYLIB_SRCS)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/src")
 set(MYLIB_HDRS
   include/contour_lib.h
