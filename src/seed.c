@@ -352,7 +352,7 @@ Seed_Vector *find_seeds(Contour *trace, Image *image)
 
 // Warning: no bounds checking
 #if 0
-inline void _compute_seed_from_point_helper(
+ void _compute_seed_from_point_helper(
               Image* image, int x, int y, int cx, int cy,
               uint8 *best, int *bp )
 { int tp = x+cx + image->width * (y+cy);
@@ -374,7 +374,7 @@ inline void _compute_seed_from_point_helper(
   }                                                                 \
 }
 
-inline float _compute_seed_from_point_eigennorm( float th )
+ float _compute_seed_from_point_eigennorm( float th )
 { //float th = atanf( slope );
   float cs = fabsf(cos(th)),
         ss = fabsf(sin(th));

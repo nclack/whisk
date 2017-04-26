@@ -191,7 +191,7 @@ typedef struct __Treader
 static _Treader *Free_Treader_List = NULL;
 static int    Treader_Offset, Treader_Inuse;
 
-static inline Treader *new_treader(char *routine)
+static  Treader *new_treader(char *routine)
 { _Treader *object;
 
   if (Free_Treader_List == NULL)
@@ -206,7 +206,7 @@ static inline Treader *new_treader(char *routine)
   return (&(object->treader));
 }
 
-static inline Treader *copy_treader(Treader *treader)
+static  Treader *copy_treader(Treader *treader)
 { Treader *copy = new_treader("Copy_Tiff_Reader");
   *copy = *treader;
   return (copy);
@@ -215,20 +215,20 @@ static inline Treader *copy_treader(Treader *treader)
 Tiff_Reader *Copy_Tiff_Reader(Tiff_Reader *tiff_reader)
 { return ((Tiff_Reader *) copy_treader((Treader *) tiff_reader)); }
 
-static inline void free_treader(Treader *treader)
+static  void free_treader(Treader *treader)
 { _Treader *object  = (_Treader *) (((char *) treader) - Treader_Offset);
   object->next = Free_Treader_List;
   Free_Treader_List = object;
   Treader_Inuse -= 1;
 }
 
-static inline void kill_treader(Treader *treader)
+static  void kill_treader(Treader *treader)
 {
   free(((char *) treader) - Treader_Offset);
   Treader_Inuse -= 1;
 }
 
-static inline void reset_treader()
+static  void reset_treader()
 { _Treader *object;
   while (Free_Treader_List != NULL)
     { object = Free_Treader_List;
@@ -256,7 +256,7 @@ void Kill_Tiff_Reader(Tiff_Reader *tif)
   kill_treader(rtif);
 }
 
-static inline int twriter_asize(Twriter *tif)
+static  int twriter_asize(Twriter *tif)
 { return (tif->ano_count); }
 
 
@@ -269,7 +269,7 @@ typedef struct __Twriter
 static _Twriter *Free_Twriter_List = NULL;
 static int    Twriter_Offset, Twriter_Inuse;
 
-static inline void allocate_twriter_annotation(Twriter *twriter, int asize, char *routine)
+static  void allocate_twriter_annotation(Twriter *twriter, int asize, char *routine)
 { _Twriter *object  = (_Twriter *) (((char *) twriter) - Twriter_Offset);
   if (object->asize < asize)
     { if (object->asize == 0)
@@ -279,7 +279,7 @@ static inline void allocate_twriter_annotation(Twriter *twriter, int asize, char
     }
 }
 
-static inline Twriter *new_twriter(int asize, char *routine)
+static  Twriter *new_twriter(int asize, char *routine)
 { _Twriter *object;
 
   if (Free_Twriter_List == NULL)
@@ -296,7 +296,7 @@ static inline Twriter *new_twriter(int asize, char *routine)
   return (&(object->twriter));
 }
 
-static inline Twriter *copy_twriter(Twriter *twriter)
+static  Twriter *copy_twriter(Twriter *twriter)
 { Twriter *copy = new_twriter(twriter_asize(twriter),"Copy_Tiff_Writer");
   Twriter  temp = *copy;
   *copy = *twriter;
@@ -309,7 +309,7 @@ static inline Twriter *copy_twriter(Twriter *twriter)
 Tiff_Writer *Copy_Tiff_Writer(Tiff_Writer *tiff_writer)
 { return ((Tiff_Writer *) copy_twriter((Twriter *) tiff_writer)); }
 
-static inline void pack_twriter(Twriter *twriter)
+static  void pack_twriter(Twriter *twriter)
 { _Twriter *object  = (_Twriter *) (((char *) twriter) - Twriter_Offset);
   if (object->asize > twriter_asize(twriter))
     { object->asize = twriter_asize(twriter);
@@ -326,7 +326,7 @@ static inline void pack_twriter(Twriter *twriter)
 void Pack_Tiff_Writer(Tiff_Writer *tiff_writer)
 { pack_twriter(((Twriter *) tiff_writer)); }
 
-static inline void free_twriter(Twriter *twriter)
+static  void free_twriter(Twriter *twriter)
 { _Twriter *object  = (_Twriter *) (((char *) twriter) - Twriter_Offset);
   object->next = Free_Twriter_List;
   Free_Twriter_List = object;
@@ -336,7 +336,7 @@ static inline void free_twriter(Twriter *twriter)
 void Free_Tiff_Writer(Tiff_Writer *tiff_writer)
 { free_twriter(((Twriter *) tiff_writer)); }
 
-static inline void kill_twriter(Twriter *twriter)
+static  void kill_twriter(Twriter *twriter)
 { _Twriter *object  = (_Twriter *) (((char *) twriter) - Twriter_Offset);
   if (object->asize != 0)
     free(twriter->annotation);
@@ -347,7 +347,7 @@ static inline void kill_twriter(Twriter *twriter)
 void Kill_Tiff_Writer(Tiff_Writer *tiff_writer)
 { kill_twriter(((Twriter *) tiff_writer)); }
 
-static inline void reset_twriter()
+static  void reset_twriter()
 { _Twriter *object;
   while (Free_Twriter_List != NULL)
     { object = Free_Twriter_List;
@@ -366,7 +366,7 @@ int Tiff_Writer_Usage()
 
 #ifndef _MSC_VER // annotator not windows compatible due to unistd.h dependency
 
-static inline int tannotator_asize(Tannotator *tif)
+static  int tannotator_asize(Tannotator *tif)
 { return (tif->ano_count); }
 
 
@@ -379,7 +379,7 @@ typedef struct __Tannotator
 static _Tannotator *Free_Tannotator_List = NULL;
 static int    Tannotator_Offset, Tannotator_Inuse;
 
-static inline void allocate_tannotator_annotation(Tannotator *tannotator, int asize, char *routine)
+static  void allocate_tannotator_annotation(Tannotator *tannotator, int asize, char *routine)
 { _Tannotator *object  = (_Tannotator *) (((char *) tannotator) - Tannotator_Offset);
   if (object->asize < asize)
     { if (object->asize == 0)
@@ -389,7 +389,7 @@ static inline void allocate_tannotator_annotation(Tannotator *tannotator, int as
     }
 }
 
-static inline Tannotator *new_tannotator(int asize, char *routine)
+static  Tannotator *new_tannotator(int asize, char *routine)
 { _Tannotator *object;
 
   if (Free_Tannotator_List == NULL)
@@ -406,7 +406,7 @@ static inline Tannotator *new_tannotator(int asize, char *routine)
   return (&(object->tannotator));
 }
 
-static inline Tannotator *copy_tannotator(Tannotator *tannotator)
+static  Tannotator *copy_tannotator(Tannotator *tannotator)
 { Tannotator *copy = new_tannotator(tannotator_asize(tannotator),"Copy_Tiff_Annotator");
   Tannotator  temp = *copy;
   *copy = *tannotator;
@@ -419,7 +419,7 @@ static inline Tannotator *copy_tannotator(Tannotator *tannotator)
 Tiff_Annotator *Copy_Tiff_Annotator(Tiff_Annotator *tiff_annotator)
 { return ((Tiff_Annotator *) copy_tannotator((Tannotator *) tiff_annotator)); }
 
-static inline void pack_tannotator(Tannotator *tannotator)
+static  void pack_tannotator(Tannotator *tannotator)
 { _Tannotator *object  = (_Tannotator *) (((char *) tannotator) - Tannotator_Offset);
   if (object->asize > tannotator_asize(tannotator))
     { object->asize = tannotator_asize(tannotator);
@@ -436,14 +436,14 @@ static inline void pack_tannotator(Tannotator *tannotator)
 void Pack_Tiff_Annotator(Tiff_Annotator *tiff_annotator)
 { pack_tannotator(((Tannotator *) tiff_annotator)); }
 
-static inline void free_tannotator(Tannotator *tannotator)
+static  void free_tannotator(Tannotator *tannotator)
 { _Tannotator *object  = (_Tannotator *) (((char *) tannotator) - Tannotator_Offset);
   object->next = Free_Tannotator_List;
   Free_Tannotator_List = object;
   Tannotator_Inuse -= 1;
 }
 
-static inline void kill_tannotator(Tannotator *tannotator)
+static  void kill_tannotator(Tannotator *tannotator)
 { _Tannotator *object  = (_Tannotator *) (((char *) tannotator) - Tannotator_Offset);
   if (object->asize != 0)
     free(tannotator->annotation);
@@ -451,7 +451,7 @@ static inline void kill_tannotator(Tannotator *tannotator)
   Tannotator_Inuse -= 1;
 }
 
-static inline void reset_tannotator()
+static  void reset_tannotator()
 { _Tannotator *object;
   while (Free_Tannotator_List != NULL)
     { object = Free_Tannotator_List;
@@ -513,13 +513,13 @@ static uint8 *get_lsm_decode(int size, char *routine)
   return (LSM_Decode_Block);
 }
 
-static inline int tifd_tsize(TIFD *tifd)
+static  int tifd_tsize(TIFD *tifd)
 { return (sizeof(Tif_Tag)*tifd->maxtags); }
 
-static inline int tifd_dsize(TIFD *tifd)
+static  int tifd_dsize(TIFD *tifd)
 { return (tifd->dsize); }
 
-static inline int tifd_vsize(TIFD *tifd)
+static  int tifd_vsize(TIFD *tifd)
 { return (tifd->vmax); }
 
 
@@ -534,7 +534,7 @@ typedef struct __TIFD
 static _TIFD *Free_TIFD_List = NULL;
 static int    TIFD_Offset, TIFD_Inuse;
 
-static inline void allocate_tifd_tags(TIFD *tifd, int tsize, char *routine)
+static  void allocate_tifd_tags(TIFD *tifd, int tsize, char *routine)
 { _TIFD *object  = (_TIFD *) (((char *) tifd) - TIFD_Offset);
   if (object->tsize < tsize)
     { if (object->tsize == 0)
@@ -544,7 +544,7 @@ static inline void allocate_tifd_tags(TIFD *tifd, int tsize, char *routine)
     }
 }
 
-static inline void allocate_tifd_values(TIFD *tifd, int vsize, char *routine)
+static  void allocate_tifd_values(TIFD *tifd, int vsize, char *routine)
 { _TIFD *object  = (_TIFD *) (((char *) tifd) - TIFD_Offset);
   if (object->vsize < vsize)
     { if (object->vsize == 0)
@@ -554,7 +554,7 @@ static inline void allocate_tifd_values(TIFD *tifd, int vsize, char *routine)
     }
 }
 
-static inline void allocate_tifd_data(TIFD *tifd, int dsize, char *routine)
+static  void allocate_tifd_data(TIFD *tifd, int dsize, char *routine)
 { _TIFD *object  = (_TIFD *) (((char *) tifd) - TIFD_Offset);
   if (object->dsize < dsize)
     { if (object->dsize == 0)
@@ -564,7 +564,7 @@ static inline void allocate_tifd_data(TIFD *tifd, int dsize, char *routine)
     }
 }
 
-static inline TIFD *new_tifd(int tsize, int vsize, int dsize, char *routine)
+static  TIFD *new_tifd(int tsize, int vsize, int dsize, char *routine)
 { _TIFD *object;
 
   if (Free_TIFD_List == NULL)
@@ -585,7 +585,7 @@ static inline TIFD *new_tifd(int tsize, int vsize, int dsize, char *routine)
   return (&(object->tifd));
 }
 
-static inline TIFD *copy_tifd(TIFD *tifd)
+static  TIFD *copy_tifd(TIFD *tifd)
 { TIFD *copy = new_tifd(tifd_tsize(tifd),tifd_vsize(tifd),tifd_dsize(tifd),"Copy_Tiff_IFD");
   TIFD  temp = *copy;
   *copy = *tifd;
@@ -604,7 +604,7 @@ static inline TIFD *copy_tifd(TIFD *tifd)
 Tiff_IFD *Copy_Tiff_IFD(Tiff_IFD *tiff_ifd)
 { return ((Tiff_IFD *) copy_tifd((TIFD *) tiff_ifd)); }
 
-static inline void pack_tifd(TIFD *tifd)
+static  void pack_tifd(TIFD *tifd)
 { _TIFD *object  = (_TIFD *) (((char *) tifd) - TIFD_Offset);
   if (object->tsize > tifd_tsize(tifd))
     { object->tsize = tifd_tsize(tifd);
@@ -641,7 +641,7 @@ static inline void pack_tifd(TIFD *tifd)
 void Pack_Tiff_IFD(Tiff_IFD *tiff_ifd)
 { pack_tifd(((TIFD *) tiff_ifd)); }
 
-static inline void free_tifd(TIFD *tifd)
+static  void free_tifd(TIFD *tifd)
 { _TIFD *object  = (_TIFD *) (((char *) tifd) - TIFD_Offset);
   object->next = Free_TIFD_List;
   Free_TIFD_List = object;
@@ -651,7 +651,7 @@ static inline void free_tifd(TIFD *tifd)
 void Free_Tiff_IFD(Tiff_IFD *tiff_ifd)
 { free_tifd(((TIFD *) tiff_ifd)); }
 
-static inline void kill_tifd(TIFD *tifd)
+static  void kill_tifd(TIFD *tifd)
 { _TIFD *object  = (_TIFD *) (((char *) tifd) - TIFD_Offset);
   if (object->dsize != 0)
     free(tifd->data);
@@ -666,7 +666,7 @@ static inline void kill_tifd(TIFD *tifd)
 void Kill_Tiff_IFD(Tiff_IFD *tiff_ifd)
 { kill_tifd(((TIFD *) tiff_ifd)); }
 
-static inline void reset_tifd()
+static  void reset_tifd()
 { _TIFD *object;
   while (Free_TIFD_List != NULL)
     { object = Free_TIFD_List;

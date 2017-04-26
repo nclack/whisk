@@ -71,7 +71,7 @@ typedef struct _Image
 #define IMAGE_PIXEL_32(img,x,y,c) \
       ((float32 *) ((img)->array + (((y)*(img)->width + (x))*(img)->kind + (c))))
 
-static inline double Get_Image_Pixel(Image *image, int x, int y, int c)
+static  double Get_Image_Pixel(Image *image, int x, int y, int c)
 { if (image->kind == GREY16)
     return (*IMAGE_PIXEL_16(image,x,y,c));
   else if (image->kind == FLOAT32)
@@ -80,7 +80,7 @@ static inline double Get_Image_Pixel(Image *image, int x, int y, int c)
     return (*IMAGE_PIXEL_8(image,x,y,c));
 }
 
-static inline void Set_Image_Pixel(Image *image, int x, int y, int c, double v)
+static  void Set_Image_Pixel(Image *image, int x, int y, int c, double v)
 { if (image->kind == GREY16)
     *IMAGE_PIXEL_16(image,x,y,c) = (uint16)v;
   else if (image->kind == FLOAT32)
@@ -154,7 +154,7 @@ typedef struct _Stack
       ((float32 *) ((img)->array +   \
            ((((z)*(img)->height + (y))*(img)->width + (x))*(img)->kind + (c))))
 
-static inline double Get_Stack_Pixel(Stack *stack, int x, int y, int z, int c)
+static  double Get_Stack_Pixel(Stack *stack, int x, int y, int z, int c)
 { if (stack->kind == GREY16)
     return (*STACK_PIXEL_16(stack,x,y,z,c));
   else if (stack->kind == FLOAT32)
@@ -163,7 +163,7 @@ static inline double Get_Stack_Pixel(Stack *stack, int x, int y, int z, int c)
     return (*STACK_PIXEL_8(stack,x,y,z,c));
 }
 
-static inline void Set_Stack_Pixel(Stack *stack, int x, int y, int z, int c, double v)
+static  void Set_Stack_Pixel(Stack *stack, int x, int y, int z, int c, double v)
 { if (stack->kind == GREY16)
     *STACK_PIXEL_16(stack,x,y,z,c) = (uint16)v;
   else if (stack->kind == FLOAT32)

@@ -125,14 +125,14 @@ int Get_Component_Tree_Connectivity(Component_Tree *atree)
  *                                                                                      *
  ****************************************************************************************/
 
-static inline int size(int cont)
+static  int size(int cont)
 { if (cont > 0)
     return (regtrees[cont].size);
   else
     return (1);
 }
 
-static inline int level(int cont)
+static  int level(int cont)
 { if (cont > 0)
     return (regtrees[cont].level);
   else if (value8 != NULL)
@@ -141,7 +141,7 @@ static inline int level(int cont)
     return (value16[-cont]);
 }
 
-static inline int peak(int cont)
+static  int peak(int cont)
 { if (cont > 0)
     return (regtrees[cont].peak);
   else if (value8 != NULL)
@@ -150,14 +150,14 @@ static inline int peak(int cont)
     return (value16[-cont]);
 }
 
-static inline int start(int cont)
+static  int start(int cont)
 { if (cont > 0)
     return (regtrees[cont].start);
   else
     return (-cont);
 }
 
-inline Level_Set *Level_Set_Child(Level_Set *r)
+ Level_Set *Level_Set_Child(Level_Set *r)
 { regtree *p;
   int      x;
 
@@ -178,7 +178,7 @@ inline Level_Set *Level_Set_Child(Level_Set *r)
   return ((Level_Set *) p);
 }
 
-inline Level_Set *Level_Set_Sibling(Level_Set *r)
+ Level_Set *Level_Set_Sibling(Level_Set *r)
 { regtree *p;
   int      x;
 
@@ -199,25 +199,25 @@ inline Level_Set *Level_Set_Sibling(Level_Set *r)
   return ((Level_Set *) p);
 }
 
-inline int Level_Set_Size(Level_Set *r)
+ int Level_Set_Size(Level_Set *r)
 { return (size(((regtree *) r)->right)); }
 
-inline int Level_Set_Level(Level_Set *r)
+ int Level_Set_Level(Level_Set *r)
 { return (level(((regtree *) r)->right)); }
 
-inline int Level_Set_Peak(Level_Set *r)
+ int Level_Set_Peak(Level_Set *r)
 { return (peak(((regtree *) r)->right)); }
 
-msvcextern inline int Level_Set_Leftmost(Level_Set *r)
+msvcextern  int Level_Set_Leftmost(Level_Set *r)
 { return (start(((regtree *) r)->right)); }
 
-inline int Level_Set_Background(Level_Set *r)
+ int Level_Set_Background(Level_Set *r)
 { return (((regtree *) r)->level); }
 
-inline int Level_Set_Id(Level_Set *r)
+ int Level_Set_Id(Level_Set *r)
 { return (((regtree *) r) - regtrees); }
 
-inline Level_Set *Level_Set_Root()
+ Level_Set *Level_Set_Root()
 { return ((Level_Set *) (regtrees + carea)); }
 
   /* List every pixel in the subtree rooted at p */
@@ -280,7 +280,7 @@ static pixel *get_pixels(int area, char *routine)
 
 //  Awk-generated (manager.awk) Component_Tree space management
 
-static inline int comtree_asize(Comtree *tree)
+static  int comtree_asize(Comtree *tree)
 { if (tree->image_ref != NULL)
     return (tree->image_ref->width * tree->image_ref->height * sizeof(regtree));
   else
@@ -298,7 +298,7 @@ typedef struct __Comtree
 static _Comtree *Free_Comtree_List = NULL;
 static int    Comtree_Offset, Comtree_Inuse;
 
-static inline void allocate_comtree_array(Comtree *comtree, int asize, char *routine)
+static  void allocate_comtree_array(Comtree *comtree, int asize, char *routine)
 { _Comtree *object  = (_Comtree *) (((char *) comtree) - Comtree_Offset);
   if (object->asize < asize)
     { object->comtree.array  = Guarded_Realloc(object->comtree.array,asize,routine);
@@ -306,7 +306,7 @@ static inline void allocate_comtree_array(Comtree *comtree, int asize, char *rou
     }
 }
 
-static inline Comtree *new_comtree(int asize, char *routine)
+static  Comtree *new_comtree(int asize, char *routine)
 { _Comtree *object;
 
   if (Free_Comtree_List == NULL)
@@ -324,7 +324,7 @@ static inline Comtree *new_comtree(int asize, char *routine)
   return (&(object->comtree));
 }
 
-static inline Comtree *copy_comtree(Comtree *comtree)
+static  Comtree *copy_comtree(Comtree *comtree)
 { _Comtree *object  = (_Comtree *) (((char *) comtree) - Comtree_Offset);
   Comtree *copy = new_comtree(comtree_asize(comtree),"Copy_Component_Tree");
   Comtree  temp = *copy;
@@ -338,7 +338,7 @@ static inline Comtree *copy_comtree(Comtree *comtree)
 Component_Tree *Copy_Component_Tree(Component_Tree *component_tree)
 { return ((Component_Tree *) copy_comtree((Comtree *) component_tree)); }
 
-static inline void pack_comtree(Comtree *comtree)
+static  void pack_comtree(Comtree *comtree)
 { _Comtree *object  = (_Comtree *) (((char *) comtree) - Comtree_Offset);
   if (object->asize > comtree_asize(comtree))
     { object->asize = comtree_asize(comtree);
@@ -353,7 +353,7 @@ static inline void pack_comtree(Comtree *comtree)
 void Pack_Component_Tree(Component_Tree *component_tree)
 { pack_comtree(((Comtree *) component_tree)); }
 
-static inline void free_comtree(Comtree *comtree)
+static  void free_comtree(Comtree *comtree)
 { _Comtree *object  = (_Comtree *) (((char *) comtree) - Comtree_Offset);
   object->next = Free_Comtree_List;
   Free_Comtree_List = object;
@@ -363,7 +363,7 @@ static inline void free_comtree(Comtree *comtree)
 void Free_Component_Tree(Component_Tree *component_tree)
 { free_comtree(((Comtree *) component_tree)); }
 
-static inline void kill_comtree(Comtree *comtree)
+static  void kill_comtree(Comtree *comtree)
 { _Comtree *object  = (_Comtree *) (((char *) comtree) - Comtree_Offset);
   if (comtree->array != NULL)
     free(comtree->array);
@@ -374,7 +374,7 @@ static inline void kill_comtree(Comtree *comtree)
 void Kill_Component_Tree(Component_Tree *component_tree)
 { kill_comtree(((Comtree *) component_tree)); }
 
-static inline void reset_comtree()
+static  void reset_comtree()
 { _Comtree *object;
   while (Free_Comtree_List != NULL)
     { object = Free_Comtree_List;
@@ -596,7 +596,7 @@ static int chk_height;
 static int chk_depth;
 static int chk_iscon4;
 
-static inline int *boundary_pixels_2d(int p)
+static  int *boundary_pixels_2d(int p)
 { static int bound[8];
   int x, xn, xp;
   int y, yn, yp;
@@ -628,7 +628,7 @@ static inline int *boundary_pixels_2d(int p)
   return (bound);
 }
 
-static inline int *boundary_pixels_3d(int p)
+static  int *boundary_pixels_3d(int p)
 { static int bound[26];
   int x, xn, xp;
   int y, yn, yp;

@@ -282,13 +282,13 @@ int CollisionTable_Next( CollisionTable *this, CollisionTableCursor *cursor )
  * The returned array is a static result so it's only valid for one call.
  */
 
-inline float _trace_overlap_dist( Whisker_Seg *wa, Whisker_Seg *wb, int ia, int ib )
+ float _trace_overlap_dist( Whisker_Seg *wa, Whisker_Seg *wb, int ia, int ib )
 { float dx = wa->x[ia] - wb->x[ib],
         dy = wa->y[ia] - wb->y[ib];
   return dx*dx + dy*dy;
 }
 
-inline int _trace_overlap_bounds_check( Whisker_Seg *w, int i )
+ int _trace_overlap_bounds_check( Whisker_Seg *w, int i )
 { return i>=0 && i<w->len;
 }
 
@@ -419,11 +419,11 @@ int _cmp_whisker_seg_frame( const void *a, const void *b )
 { return ((Whisker_Seg*)a)->time - ((Whisker_Seg*)b)->time;
 }
 
-inline int _is_whisker_interval_significant( Whisker_Seg *w, int a, int b, float thresh )
+ int _is_whisker_interval_significant( Whisker_Seg *w, int a, int b, float thresh )
 { return (b-a) >= (thresh * w->len);
 }
 
-inline float _whisker_seg_score_sum( Whisker_Seg *w )
+ float _whisker_seg_score_sum( Whisker_Seg *w )
 { float s  = 0,
        *sc = w->scores;
   int n = w->len;

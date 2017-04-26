@@ -33,7 +33,7 @@
 
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
 
-inline void svd_threshold( double thresh, double *w, int n )
+ void svd_threshold( double thresh, double *w, int n )
 { double *e = w+n;
   while(e-- > w)
     if(fabs(*e) < thresh)
@@ -44,7 +44,7 @@ inline void svd_threshold( double thresh, double *w, int n )
 // Solves A x = b using SVD of A ( U W V' = A, W = diag(w) )
 //     That is: x = V U' b / W
 //
-inline void svd_backsub( double *u, double *w, double *v, int nrows, int ncols, double *b, double *x )
+ void svd_backsub( double *u, double *w, double *v, int nrows, int ncols, double *b, double *x )
 { double *utb;
   // U'b
   utb = matmul_left_transpose_static( u, nrows, ncols,

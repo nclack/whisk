@@ -1862,7 +1862,7 @@ static void build_unit_table(Automaton *mach)
 
 // Add a match to the argp'th argument to unit def's list of matches
 
-static inline Candidate *add_match(Unit *def, int argp)
+static  Candidate *add_match(Unit *def, int argp)
 { Candidate *mat = (Candidate  *) Guarded_Malloc(sizeof(Candidate),"Process_Argument");
   mat->next  = def->clist;
   mat->argp  = argp;

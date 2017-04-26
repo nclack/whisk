@@ -23,7 +23,7 @@ static int     Carea;
 static uint8  *Value8;
 static uint16 *Value16;
 
-static inline int contour_tsize(Contour *contour)
+static  int contour_tsize(Contour *contour)
 { return (sizeof(int) * contour->length); }
 
 
@@ -36,7 +36,7 @@ typedef struct __Contour
 static _Contour *Free_Contour_List = NULL;
 static int    Contour_Offset, Contour_Inuse;
 
-static inline void allocate_contour_tour(Contour *contour, int tsize, char *routine)
+static  void allocate_contour_tour(Contour *contour, int tsize, char *routine)
 { _Contour *object  = (_Contour *) (((char *) contour) - Contour_Offset);
   if (object->tsize < tsize)
     { object->contour.tour  = Guarded_Realloc(object->contour.tour,tsize,routine);
@@ -44,7 +44,7 @@ static inline void allocate_contour_tour(Contour *contour, int tsize, char *rout
     }
 }
 
-static inline Contour *new_contour(int tsize, char *routine)
+static  Contour *new_contour(int tsize, char *routine)
 { _Contour *object;
 
   if (Free_Contour_List == NULL)
@@ -62,7 +62,7 @@ static inline Contour *new_contour(int tsize, char *routine)
   return (&(object->contour));
 }
 
-static inline Contour *copy_contour(Contour *contour)
+static  Contour *copy_contour(Contour *contour)
 { _Contour *object  = (_Contour *) (((char *) contour) - Contour_Offset);
   Contour *copy = new_contour(contour_tsize(contour),"Copy_Contour");
   Contour  temp = *copy;
@@ -76,7 +76,7 @@ static inline Contour *copy_contour(Contour *contour)
 Contour *Copy_Contour(Contour *contour)
 { return (copy_contour(contour)); }
 
-static inline void pack_contour(Contour *contour)
+static  void pack_contour(Contour *contour)
 { _Contour *object  = (_Contour *) (((char *) contour) - Contour_Offset);
   if (object->tsize > contour_tsize(contour))
     { object->tsize = contour_tsize(contour);
@@ -91,7 +91,7 @@ static inline void pack_contour(Contour *contour)
 void Pack_Contour(Contour *contour)
 { pack_contour(contour); }
 
-static inline void free_contour(Contour *contour)
+static  void free_contour(Contour *contour)
 { _Contour *object  = (_Contour *) (((char *) contour) - Contour_Offset);
   object->next = Free_Contour_List;
   Free_Contour_List = object;
@@ -101,7 +101,7 @@ static inline void free_contour(Contour *contour)
 void Free_Contour(Contour *contour)
 { free_contour(contour); }
 
-static inline void kill_contour(Contour *contour)
+static  void kill_contour(Contour *contour)
 { _Contour *object  = (_Contour *) (((char *) contour) - Contour_Offset);
   if (contour->tour != NULL)
     free(contour->tour);
@@ -112,7 +112,7 @@ static inline void kill_contour(Contour *contour)
 void Kill_Contour(Contour *contour)
 { kill_contour(contour); }
 
-static inline void reset_contour()
+static  void reset_contour()
 { _Contour *object;
   while (Free_Contour_List != NULL)
     { object = Free_Contour_List;
@@ -135,7 +135,7 @@ void Reset_Contour()
    'cmprsn' the comparator for membership in the region.
 */
 
-static inline int legal_move(int p, int d)
+static  int legal_move(int p, int d)
 { switch (d)
   { case 0:
       return (p+Cwidth < Carea);
@@ -150,26 +150,26 @@ static inline int legal_move(int p, int d)
   }
 }
 
-static inline int boundary_pixel(int p)
+static  int boundary_pixel(int p)
 { int q = p % Cwidth;
   return (p < Cwidth || p+Cwidth >= Carea || q == 0 || q+1 == Cwidth);
 }
 
-static inline int is_le(int p, int level)
+static  int is_le(int p, int level)
 { if (Value8 != NULL)
     return (Value8[p] <= level);
   else
     return (Value16[p] <= level);
 }
 
-static inline int is_ge(int p, int level)
+static  int is_ge(int p, int level)
 { if (Value8 != NULL)
     return (Value8[p] >= level);
   else
     return (Value16[p] >= level);
 }
 
-static inline int is_eq(int p, int level)
+static  int is_eq(int p, int level)
 { if (Value8 != NULL)
     return (Value8[p] == level);
   else

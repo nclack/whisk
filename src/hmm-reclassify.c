@@ -197,7 +197,7 @@ void Measurements_Reference_Free( Measurements_Reference* this )
   }
 }
 
-inline void Measurements_Reference_Reset( Measurements_Reference *this)
+ void Measurements_Reference_Reset( Measurements_Reference *this)
 { Measurements **w = this->whiskers;
   memset( w, 0, this->nwhiskers * sizeof(Measurements*) );
 }
@@ -211,7 +211,7 @@ void Measurements_Reference_Build( Measurements_Reference *this, Measurements *r
       w[row[nseg].state] = row + nseg;
 }
 
-inline int Measurements_Reference_Has_Full_Count( Measurements_Reference *this )
+ int Measurements_Reference_Has_Full_Count( Measurements_Reference *this )
 { int n = this->nwhiskers;
   Measurements **w = this->whiskers;
   while(n--)
@@ -727,7 +727,7 @@ void heap_free( heap *h )
   }
 }
 
-inline void heapify( heap* h, int i )
+ void heapify( heap* h, int i )
 { int left  = heap_left(i),
       right = heap_right(i),
       argmax = i;
@@ -752,13 +752,13 @@ inline void heapify( heap* h, int i )
 }
 
 // Organizes an unorganized heap in O(h->size)
-inline void heap_build( heap *h )
+ void heap_build( heap *h )
 { int i = h->size/2;
   while(i-- > 1)
     heapify(h,i);
 }
 
-inline real *heap_pop_head( heap *h )
+ real *heap_pop_head( heap *h )
 { real *max,
       **data = h->data - 1;
   if( h->size < 1 )
@@ -769,7 +769,7 @@ inline real *heap_pop_head( heap *h )
   return max;
 }
 
-inline real *heap_pop_and_insert( heap *h, real *v )
+ real *heap_pop_and_insert( heap *h, real *v )
 { real *max,
       **data = h->data - 1;
   if( h->size < 1 )
@@ -780,7 +780,7 @@ inline real *heap_pop_and_insert( heap *h, real *v )
   return max;
 }
 
-inline void heap_insert( heap *h, real *v )
+ void heap_insert( heap *h, real *v )
 { real **data = h->data - 1;
   size_t i,parent;
   if( h->size+1 > h->maxsize )

@@ -37,7 +37,7 @@
 #ifdef HAVE_FFMPEG
 
 #ifdef _MSC_VER
-#define inline _inline
+#define  _inline
 #endif
 
 //#include <libavcodec/avcodec.h>

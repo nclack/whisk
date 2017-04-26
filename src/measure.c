@@ -59,7 +59,7 @@ static int _score_cmp( const void *a, const void *b )
 // corresponding to the follicle and return dI/di
 // (I is the index as it proceeds outward from the
 // follicle; dI/di is either 1 or -1).
-static inline float _side_dist_to_face( Whisker_Seg* w, int cx, int cy, int idx )
+static  float _side_dist_to_face( Whisker_Seg* w, int cx, int cy, int idx )
 { float dx = w->x[idx] - cx,
         dy = w->y[idx] - cy;
   return dx*dx + dy*dy;

@@ -150,7 +150,7 @@ void Free_Array( Array *a)
   free(a);
 }
 
-inline void pixel_to_vertex_array(int p, int stride, float *v)
+ void pixel_to_vertex_array(int p, int stride, float *v)
 { float x = p%stride;
   float y = p/stride;
   v[0] = x;      v[1] = y;
@@ -160,7 +160,7 @@ inline void pixel_to_vertex_array(int p, int stride, float *v)
   return;
 }
 
-inline unsigned array_max_f32u ( float *buf, int size, int step, float bound )
+ unsigned array_max_f32u ( float *buf, int size, int step, float bound )
 { float *t = buf + size;
   float r = 0.0;       
   while( (t -= step) >= buf )
@@ -168,7 +168,7 @@ inline unsigned array_max_f32u ( float *buf, int size, int step, float bound )
   return (unsigned) MIN(r,bound);
 }
 
-inline unsigned array_min_f32u ( float *buf, int size, int step, float bound )
+ unsigned array_min_f32u ( float *buf, int size, int step, float bound )
 { float *t = buf + size;
   float r = FLT_MAX;
   while( (t -= step) >= buf )
@@ -351,7 +351,7 @@ void Multiply_Gaussian_Along_Direction( float x0, float y0, float vx, float vy, 
 }
 
 /* Anchor is in the center */
-inline void Simple_Line_Primitive( point *verts, point offset, float length, float thick )
+ void Simple_Line_Primitive( point *verts, point offset, float length, float thick )
 { point v0 = { offset.x - length,  offset.y - thick},
         v1 = { offset.x + length,  offset.y - thick},
         v2 = { offset.x + length,  offset.y + thick},
@@ -616,11 +616,11 @@ void Render_Line_Detector_v0( float offset,
   return;
 }
 
-inline int compute_number_steps( Range *r )
+ int compute_number_steps( Range *r )
 {  return lround( (r->max - r->min) / r->step ) + 1;
 }
 
-inline float *Get_Line_Detector( Array *bank, int ioffset, int iwidth, int iangle  )
+ float *Get_Line_Detector( Array *bank, int ioffset, int iwidth, int iangle  )
 { return ((float*) (bank->data)) + iangle  * bank->strides_px[1] 
                                  + iwidth  * bank->strides_px[2] 
                                  + ioffset * bank->strides_px[3]; 
@@ -792,7 +792,7 @@ void Render_Half_Space_Detector( float offset,
   return;
 }
 
-inline float *Get_Half_Space_Detector( Array *bank, int ioffset, int iwidth, int iangle  )
+ float *Get_Half_Space_Detector( Array *bank, int ioffset, int iwidth, int iangle  )
 { return ((float*) (bank->data)) + iangle  * bank->strides_px[1] 
                                  + iwidth  * bank->strides_px[2] 
                                  + ioffset * bank->strides_px[3]; 

@@ -66,7 +66,7 @@ void hsv2rgb( hsv *im, rgb *r    )
   return;
 }
 
-inline void blend_rgb_ip( rgb *im, rgb *b, float a )
+ void blend_rgb_ip( rgb *im, rgb *b, float a )
 { im->r = (uint8)( (im->r * (1.0-a)) + b->r * a );
   im->g = (uint8)( (im->g * (1.0-a)) + b->g * a );
   im->b = (uint8)( (im->b * (1.0-a)) + b->b * a );
