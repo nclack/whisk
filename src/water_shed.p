@@ -43,7 +43,7 @@ static int *get_chord(int area, char *routine)
   return (Array);
 }
 
-static inline int watershed_2d_ssize(Watershed_2D *part)
+static  int watershed_2d_ssize(Watershed_2D *part)
 { return (sizeof(int)*(part->nbasins+1)); }
 
 MANAGER -r Watershed_2D seeds:ssize labels^Image
@@ -67,7 +67,7 @@ static int chk_width;
 static int chk_height;
 static int chk_iscon4;
 
-static inline int *boundary_pixels_2d(int p)
+static  int *boundary_pixels_2d(int p)
 { static int bound[8];
   int x, xn, xp;
   int y, yn, yp;
@@ -537,7 +537,7 @@ Watershed_2D *Build_2D_Watershed(Image *frame, int iscon4)
  ****************************************************************************************/
 
 
-static inline int watershed_3d_ssize(Watershed_3D *part)
+static  int watershed_3d_ssize(Watershed_3D *part)
 { return (sizeof(int)*(part->nbasins+1)); }
 
 MANAGER -r Watershed_3D seeds:ssize labels^Stack
@@ -552,7 +552,7 @@ static int cvolume;
 static int chk_depth;
 static int chk_iscon6;
 
-static inline int *boundary_pixels_3d(int p)
+static  int *boundary_pixels_3d(int p)
 { static int bound[26];
   int x, xn, xp;
   int y, yn, yp;

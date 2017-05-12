@@ -95,13 +95,13 @@ void          initialize_paramater_ranges  (Line_Params *line, Interval *roff, I
 void breakme(void) {
 }
 
-static inline int outofbounds(int q, int cwidth, int cheight)
+static  int outofbounds(int q, int cwidth, int cheight)
 { int x = q%cwidth;
   int y = q/cwidth;
   return (x < 1 || x >= cwidth-1 ||y < 1 || y >= cheight-1);
 }
 
-inline int is_small_angle( float angle )
+ int is_small_angle( float angle )
   /* true iff angle is in [-pi/4,pi/4) or [3pi/4,5pi/4) */
 { static const float qpi = M_PI/4.0;
   static const float hpi = M_PI/2.0;
@@ -109,7 +109,7 @@ inline int is_small_angle( float angle )
   return  (n % 2) != 0;
 }
 
-inline int is_angle_leftward( float angle )
+ int is_angle_leftward( float angle )
   /* true iff angle is in left half plane */
 { //static const float qpi = M_PI/4.0;
   static const float hpi = M_PI/2.0;

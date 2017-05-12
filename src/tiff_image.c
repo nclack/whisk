@@ -70,7 +70,7 @@ typedef struct __Tiff_Histogram
 static _Tiff_Histogram *Free_Tiff_Histogram_List = NULL;
 static int    Tiff_Histogram_Offset, Tiff_Histogram_Inuse;
 
-static inline Tiff_Histogram *new_tiff_histogram(char *routine)
+static  Tiff_Histogram *new_tiff_histogram(char *routine)
 { _Tiff_Histogram *object;
 
   if (Free_Tiff_Histogram_List == NULL)
@@ -85,7 +85,7 @@ static inline Tiff_Histogram *new_tiff_histogram(char *routine)
   return (&(object->tiff_histogram));
 }
 
-static inline Tiff_Histogram *copy_tiff_histogram(Tiff_Histogram *tiff_histogram)
+static  Tiff_Histogram *copy_tiff_histogram(Tiff_Histogram *tiff_histogram)
 { Tiff_Histogram *copy = new_tiff_histogram("Copy_Tiff_Histogram");
   *copy = *tiff_histogram;
   return (copy);
@@ -94,7 +94,7 @@ static inline Tiff_Histogram *copy_tiff_histogram(Tiff_Histogram *tiff_histogram
 Tiff_Histogram *Copy_Tiff_Histogram(Tiff_Histogram *tiff_histogram)
 { return (copy_tiff_histogram(tiff_histogram)); }
 
-static inline void free_tiff_histogram(Tiff_Histogram *tiff_histogram)
+static  void free_tiff_histogram(Tiff_Histogram *tiff_histogram)
 { _Tiff_Histogram *object  = (_Tiff_Histogram *) (((char *) tiff_histogram) - Tiff_Histogram_Offset);
   object->next = Free_Tiff_Histogram_List;
   Free_Tiff_Histogram_List = object;
@@ -104,7 +104,7 @@ static inline void free_tiff_histogram(Tiff_Histogram *tiff_histogram)
 void Free_Tiff_Histogram(Tiff_Histogram *tiff_histogram)
 { free_tiff_histogram(tiff_histogram); }
 
-static inline void kill_tiff_histogram(Tiff_Histogram *tiff_histogram)
+static  void kill_tiff_histogram(Tiff_Histogram *tiff_histogram)
 {
   free(((char *) tiff_histogram) - Tiff_Histogram_Offset);
   Tiff_Histogram_Inuse -= 1;
@@ -113,7 +113,7 @@ static inline void kill_tiff_histogram(Tiff_Histogram *tiff_histogram)
 void Kill_Tiff_Histogram(Tiff_Histogram *tiff_histogram)
 { kill_tiff_histogram(tiff_histogram); }
 
-static inline void reset_tiff_histogram()
+static  void reset_tiff_histogram()
 { _Tiff_Histogram *object;
   while (Free_Tiff_Histogram_List != NULL)
     { object = Free_Tiff_Histogram_List;
@@ -129,7 +129,7 @@ void Reset_Tiff_Histogram()
 int Tiff_Histogram_Usage()
 { return (Tiff_Histogram_Inuse); }
 
-static inline int tiff_channel_psize(Tiff_Channel *channel)
+static  int tiff_channel_psize(Tiff_Channel *channel)
 { return (channel->bytes_per_pixel*channel->width*channel->height); }
 
 
@@ -142,7 +142,7 @@ typedef struct __Tiff_Channel
 static _Tiff_Channel *Free_Tiff_Channel_List = NULL;
 static int    Tiff_Channel_Offset, Tiff_Channel_Inuse;
 
-static inline void allocate_tiff_channel_plane(Tiff_Channel *tiff_channel, int psize, char *routine)
+static  void allocate_tiff_channel_plane(Tiff_Channel *tiff_channel, int psize, char *routine)
 { _Tiff_Channel *object  = (_Tiff_Channel *) (((char *) tiff_channel) - Tiff_Channel_Offset);
   if (object->psize < psize)
     { if (object->psize == 0)
@@ -152,7 +152,7 @@ static inline void allocate_tiff_channel_plane(Tiff_Channel *tiff_channel, int p
     }
 }
 
-static inline Tiff_Channel *new_tiff_channel(int psize, char *routine)
+static  Tiff_Channel *new_tiff_channel(int psize, char *routine)
 { _Tiff_Channel *object;
 
   if (Free_Tiff_Channel_List == NULL)
@@ -170,7 +170,7 @@ static inline Tiff_Channel *new_tiff_channel(int psize, char *routine)
   return (&(object->tiff_channel));
 }
 
-static inline Tiff_Channel *copy_tiff_channel(Tiff_Channel *tiff_channel)
+static  Tiff_Channel *copy_tiff_channel(Tiff_Channel *tiff_channel)
 { Tiff_Channel *copy = new_tiff_channel(tiff_channel_psize(tiff_channel),"Copy_Tiff_Channel");
   Tiff_Channel  temp = *copy;
   *copy = *tiff_channel;
@@ -185,7 +185,7 @@ static inline Tiff_Channel *copy_tiff_channel(Tiff_Channel *tiff_channel)
 Tiff_Channel *Copy_Tiff_Channel(Tiff_Channel *tiff_channel)
 { return (copy_tiff_channel(tiff_channel)); }
 
-static inline void pack_tiff_channel(Tiff_Channel *tiff_channel)
+static  void pack_tiff_channel(Tiff_Channel *tiff_channel)
 { _Tiff_Channel *object  = (_Tiff_Channel *) (((char *) tiff_channel) - Tiff_Channel_Offset);
   if (object->psize > tiff_channel_psize(tiff_channel))
     { object->psize = tiff_channel_psize(tiff_channel);
@@ -202,7 +202,7 @@ static inline void pack_tiff_channel(Tiff_Channel *tiff_channel)
 void Pack_Tiff_Channel(Tiff_Channel *tiff_channel)
 { pack_tiff_channel(tiff_channel); }
 
-static inline void free_tiff_channel(Tiff_Channel *tiff_channel)
+static  void free_tiff_channel(Tiff_Channel *tiff_channel)
 { _Tiff_Channel *object  = (_Tiff_Channel *) (((char *) tiff_channel) - Tiff_Channel_Offset);
   object->next = Free_Tiff_Channel_List;
   Free_Tiff_Channel_List = object;
@@ -214,7 +214,7 @@ static inline void free_tiff_channel(Tiff_Channel *tiff_channel)
 void Free_Tiff_Channel(Tiff_Channel *tiff_channel)
 { free_tiff_channel(tiff_channel); }
 
-static inline void kill_tiff_channel(Tiff_Channel *tiff_channel)
+static  void kill_tiff_channel(Tiff_Channel *tiff_channel)
 { _Tiff_Channel *object  = (_Tiff_Channel *) (((char *) tiff_channel) - Tiff_Channel_Offset);
   if (tiff_channel->histogram != NULL)
     Kill_Tiff_Histogram(tiff_channel->histogram);
@@ -227,7 +227,7 @@ static inline void kill_tiff_channel(Tiff_Channel *tiff_channel)
 void Kill_Tiff_Channel(Tiff_Channel *tiff_channel)
 { kill_tiff_channel(tiff_channel); }
 
-static inline void reset_tiff_channel()
+static  void reset_tiff_channel()
 { _Tiff_Channel *object;
   while (Free_Tiff_Channel_List != NULL)
     { object = Free_Tiff_Channel_List;
@@ -259,10 +259,10 @@ static unsigned char *get_code_vector(int size, char *routine)
   return (Code_Vector);
 }
 
-static inline int tiff_image_csize(Tiff_Image *image)
+static  int tiff_image_csize(Tiff_Image *image)
 { return (sizeof(Tiff_Channel *)*image->number_channels); }
 
-static inline int tiff_image_msize(Tiff_Image *image)
+static  int tiff_image_msize(Tiff_Image *image)
 { if (image->channels[0]->interpretation == CHAN_MAPPED)
     return (3*sizeof(unsigned short)*(1 << image->channels[0]->scale));
   else
@@ -280,7 +280,7 @@ typedef struct __Tiff_Image
 static _Tiff_Image *Free_Tiff_Image_List = NULL;
 static int    Tiff_Image_Offset, Tiff_Image_Inuse;
 
-static inline void allocate_tiff_image_channels(Tiff_Image *tiff_image, int csize, char *routine)
+static  void allocate_tiff_image_channels(Tiff_Image *tiff_image, int csize, char *routine)
 { _Tiff_Image *object  = (_Tiff_Image *) (((char *) tiff_image) - Tiff_Image_Offset);
   if (object->csize < csize)
     { if (object->csize == 0)
@@ -290,7 +290,7 @@ static inline void allocate_tiff_image_channels(Tiff_Image *tiff_image, int csiz
     }
 }
 
-static inline void allocate_tiff_image_map(Tiff_Image *tiff_image, int msize, char *routine)
+static  void allocate_tiff_image_map(Tiff_Image *tiff_image, int msize, char *routine)
 { _Tiff_Image *object  = (_Tiff_Image *) (((char *) tiff_image) - Tiff_Image_Offset);
   if (object->msize < msize)
     { if (object->msize == 0)
@@ -300,7 +300,7 @@ static inline void allocate_tiff_image_map(Tiff_Image *tiff_image, int msize, ch
     }
 }
 
-static inline Tiff_Image *new_tiff_image(int csize, int msize, char *routine)
+static  Tiff_Image *new_tiff_image(int csize, int msize, char *routine)
 { _Tiff_Image *object;
 
   if (Free_Tiff_Image_List == NULL)
@@ -319,7 +319,7 @@ static inline Tiff_Image *new_tiff_image(int csize, int msize, char *routine)
   return (&(object->tiff_image));
 }
 
-static inline Tiff_Image *copy_tiff_image(Tiff_Image *tiff_image)
+static  Tiff_Image *copy_tiff_image(Tiff_Image *tiff_image)
 { Tiff_Image *copy = new_tiff_image(tiff_image_csize(tiff_image),tiff_image_msize(tiff_image),"Copy_Tiff_Image");
   Tiff_Image  temp = *copy;
   *copy = *tiff_image;
@@ -332,7 +332,7 @@ static inline Tiff_Image *copy_tiff_image(Tiff_Image *tiff_image)
   return (copy);
 }
 
-static inline void pack_tiff_image(Tiff_Image *tiff_image)
+static  void pack_tiff_image(Tiff_Image *tiff_image)
 { _Tiff_Image *object  = (_Tiff_Image *) (((char *) tiff_image) - Tiff_Image_Offset);
   if (object->csize > tiff_image_csize(tiff_image))
     { object->csize = tiff_image_csize(tiff_image);
@@ -356,14 +356,14 @@ static inline void pack_tiff_image(Tiff_Image *tiff_image)
     }
 }
 
-static inline void free_tiff_image(Tiff_Image *tiff_image)
+static  void free_tiff_image(Tiff_Image *tiff_image)
 { _Tiff_Image *object  = (_Tiff_Image *) (((char *) tiff_image) - Tiff_Image_Offset);
   object->next = Free_Tiff_Image_List;
   Free_Tiff_Image_List = object;
   Tiff_Image_Inuse -= 1;
 }
 
-static inline void kill_tiff_image(Tiff_Image *tiff_image)
+static  void kill_tiff_image(Tiff_Image *tiff_image)
 { _Tiff_Image *object  = (_Tiff_Image *) (((char *) tiff_image) - Tiff_Image_Offset);
   if (object->msize != 0)
     free(tiff_image->map);
@@ -373,7 +373,7 @@ static inline void kill_tiff_image(Tiff_Image *tiff_image)
   Tiff_Image_Inuse -= 1;
 }
 
-static inline void reset_tiff_image()
+static  void reset_tiff_image()
 { _Tiff_Image *object;
   while (Free_Tiff_Image_List != NULL)
     { object = Free_Tiff_Image_List;
@@ -804,7 +804,7 @@ static void flip_columns(Tiff_Channel *channel, int width, int height)
     }
 }
 
-static inline unsigned int get_integer_tag(Tiff_IFD *ifd, int label, int *error)
+static  unsigned int get_integer_tag(Tiff_IFD *ifd, int label, int *error)
 { void     *p;
   int       count;
   Tiff_Type type;
@@ -836,7 +836,7 @@ static inline unsigned int get_integer_tag(Tiff_IFD *ifd, int label, int *error)
 
 static char Error_String[1000];
 
-static inline void *error(char *text)
+static  void *error(char *text)
 { strcpy(Error_String,text);
   return (NULL);
 }

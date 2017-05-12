@@ -8,9 +8,9 @@
  */
 #ifndef H_SVD
 
-inline void svd_threshold ( double thresh, double *w, int n );
+ void svd_threshold ( double thresh, double *w, int n );
 
-inline void svd_backsub   ( double *u, double *w, double *v, 
+ void svd_backsub   ( double *u, double *w, double *v, 
                             int nrows, int ncols, 
                             double *b, double *x );
 

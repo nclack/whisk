@@ -93,7 +93,7 @@ void Helper_Get_Follicle_Const_Axis( char* directive, int maxx, int maxy, int* c
   }
 }
 
-inline void Measurements_Table_Label_By_RadialThreshold( Measurements *table, int n_rows, double thresh, int ox, int oy, int colx, int coly)
+ void Measurements_Table_Label_By_RadialThreshold( Measurements *table, int n_rows, double thresh, int ox, int oy, int colx, int coly)
 {
   double t2 = thresh*thresh;
   Measurements *row = table + n_rows;
@@ -110,7 +110,7 @@ inline void Measurements_Table_Label_By_RadialThreshold( Measurements *table, in
   }
 } 
 
-inline void Measurements_Table_Label_By_Threshold( Measurements *table, int n_rows, int col, double threshold, int is_gt )
+ void Measurements_Table_Label_By_Threshold( Measurements *table, int n_rows, int col, double threshold, int is_gt )
 { Measurements *row = table + n_rows;
   if(is_gt)
   { while(row-- > table)
@@ -121,7 +121,7 @@ inline void Measurements_Table_Label_By_Threshold( Measurements *table, int n_ro
   }
 }
 
-inline void Measurements_Table_Label_By_Threshold_Or( Measurements *table, int n_rows, int col, double threshold, int is_gt )
+ void Measurements_Table_Label_By_Threshold_Or( Measurements *table, int n_rows, int col, double threshold, int is_gt )
 { Measurements *row = table + n_rows;
   if(is_gt)
   { while(row-- > table)
@@ -132,7 +132,7 @@ inline void Measurements_Table_Label_By_Threshold_Or( Measurements *table, int n
   }
 }
 
-inline void Measurements_Table_Label_By_Threshold_And( Measurements *table, int n_rows, int col, double threshold, int is_gt )
+ void Measurements_Table_Label_By_Threshold_And( Measurements *table, int n_rows, int col, double threshold, int is_gt )
 { Measurements *row = table + n_rows;
   if(is_gt)
   { while(row-- > table)
@@ -683,7 +683,7 @@ int main(int argc, char* argv[])
   // Follicle location threshold
   if( Is_Arg_Matched("--follicle") && Get_Int_Arg("--follicle")>0 )
     follicle_thresh = Get_Int_Arg("--follicle");
-    //inline void Measurements_Table_Label_By_RadialThreshold( Measurements *table, int n_rows, double thresh, int ox, int oy, int colx, int coly)
+    // void Measurements_Table_Label_By_RadialThreshold( Measurements *table, int n_rows, double thresh, int ox, int oy, int colx, int coly)
   Measurements_Table_Label_By_RadialThreshold( table,
                                                n_rows,
                                                follicle_thresh,

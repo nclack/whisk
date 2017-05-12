@@ -44,7 +44,7 @@ void Render_Line_Detector( float offset,
                            point anchor,
                            float *image, int *strides  );
 
-inline float *Get_Line_Detector( Array *bank, int iangle, int iwidth, int ioffset );
+ float *Get_Line_Detector( Array *bank, int iangle, int iwidth, int ioffset );
 Array *Build_Line_Detectors( Range off, Range ang, Range wid, float length, int supportsize );
 Array *Build_Curved_Line_Detectors( Range off, 
                                     Range wid, 
@@ -59,6 +59,6 @@ Array *Build_Harmonic_Line_Detectors( Range off,
                                       float length, 
                                       int supportsize );
 
-inline float *Get_Half_Space_Detector( Array *bank, int iangle, int iwidth, int ioffset );
+ float *Get_Half_Space_Detector( Array *bank, int iangle, int iwidth, int ioffset );
 Array *Build_Half_Space_Detectors( Range off, Range ang, Range wid, float length, int supportsize );
 #endif // H_EVAL

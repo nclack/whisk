@@ -25,7 +25,7 @@ typedef struct _Bar
   float y;
 } Bar;
 
-inline Bar *Bar_Static_Cast( int time, float x, float y)
+ Bar *Bar_Static_Cast( int time, float x, float y)
 { static Bar b;
   b.time = time;
   b.x = x;

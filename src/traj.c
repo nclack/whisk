@@ -443,7 +443,7 @@ static int cmp_sort_segment_uid( const void* a, const void* b )
 }
 
 /*
-static inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
+static  double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
 { int ix = a->col_follicle_x,
       iy = a->col_follicle_y,
        v = atan2( a->data[iy] - a->face_y,
@@ -454,7 +454,7 @@ static inline double _cmp_sort_face_order__angle_wrt_face( Measurements *a )
 */
 
 
-static inline int _cmp_sort_face__ccw_test( Measurements *a, Measurements *b )
+static  int _cmp_sort_face__ccw_test( Measurements *a, Measurements *b )
 { int ix = a->col_follicle_x,
       iy = a->col_follicle_y;
   double ax = a->data[ix] - a->face_x,
@@ -466,7 +466,7 @@ static inline int _cmp_sort_face__ccw_test( Measurements *a, Measurements *b )
   return (v<0.0)?-1:((v>0.0)?1:0);
 }
 
-static inline int _cmp_sort_face__angle_wrt_face( Measurements *a, Measurements *b )
+static  int _cmp_sort_face__angle_wrt_face( Measurements *a, Measurements *b )
 { int ix = a->col_follicle_x,
       iy = a->col_follicle_y;
   double ax = a->data[ix] - a->face_x, // translate origin to face pos
@@ -558,7 +558,7 @@ void Sort_Measurements_Table_Time_State_Face( Measurements *table, int nrows )
 { qsort( table, nrows, sizeof(Measurements), cmp_sort_time_state_face_order );
 }
 
-inline double _diff(double a, double b)
+ double _diff(double a, double b)
 { double c = a-b;
   return c*c;
 }

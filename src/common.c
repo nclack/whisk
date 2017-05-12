@@ -55,7 +55,7 @@ void *request_storage_zeroed( void *buffer, size_t *maxlen, size_t nbytes, size_
   return buffer;
 }
 
-inline size_t _next_pow2_uint32(uint32_t v)
+ size_t _next_pow2_uint32(uint32_t v)
 { v--;
   v |= v >> 1;
   v |= v >> 2;
@@ -66,7 +66,7 @@ inline size_t _next_pow2_uint32(uint32_t v)
   return v;
 }
 
-inline size_t _next_pow2_uint64(uint64_t v)
+ size_t _next_pow2_uint64(uint64_t v)
 { v--;
   v |= v >> 1;
   v |= v >> 2;

@@ -29,16 +29,16 @@ typedef struct _Deque
   size_t size_bytes;
 } Deque;
 
-SHARED_EXPORT inline  Deque *Deque_Alloc      ( int size_hint );
-SHARED_EXPORT inline  void   Deque_Free       ( Deque *self );
-SHARED_EXPORT inline  void   Deque_Reset      ( Deque *self );
-SHARED_EXPORT inline  void   Deque_Squeeze    ( Deque *self );
-SHARED_EXPORT inline  void  *Deque_Front      ( Deque *self);
-SHARED_EXPORT inline  int    Deque_Is_Empty   ( Deque *self);
-SHARED_EXPORT inline  void  *Deque_Back       ( Deque *self);
-SHARED_EXPORT inline  Deque *Deque_Push_Front ( Deque *self, void *item );
-SHARED_EXPORT inline  void  *Deque_Pop_Front  ( Deque *self );
-SHARED_EXPORT inline  Deque *Deque_Push_Back  ( Deque *self, void *item );
-SHARED_EXPORT inline  void  *Deque_Pop_Back   ( Deque *self );
+SHARED_EXPORT   Deque *Deque_Alloc      ( int size_hint );
+SHARED_EXPORT   void   Deque_Free       ( Deque *self );
+SHARED_EXPORT   void   Deque_Reset      ( Deque *self );
+SHARED_EXPORT   void   Deque_Squeeze    ( Deque *self );
+SHARED_EXPORT   void  *Deque_Front      ( Deque *self);
+SHARED_EXPORT   int    Deque_Is_Empty   ( Deque *self);
+SHARED_EXPORT   void  *Deque_Back       ( Deque *self);
+SHARED_EXPORT   Deque *Deque_Push_Front ( Deque *self, void *item );
+SHARED_EXPORT   void  *Deque_Pop_Front  ( Deque *self );
+SHARED_EXPORT   Deque *Deque_Push_Back  ( Deque *self, void *item );
+SHARED_EXPORT   void  *Deque_Pop_Back   ( Deque *self );
 
 #endif

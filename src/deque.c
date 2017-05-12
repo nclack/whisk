@@ -54,7 +54,7 @@ void Deque_Free(Deque *self)
 }
 
 SHARED_EXPORT 
-inline void Deque_Reset ( Deque *self )
+ void Deque_Reset ( Deque *self )
 { int n = self->size_bytes/sizeof(void*)/2;
   memset( self->store, 0, self->size_bytes );
   self->front = n-1;
@@ -74,28 +74,28 @@ void Deque_Squeeze(Deque *self)
 }
 
 SHARED_EXPORT
-inline void *Deque_Front(Deque *self)
+ void *Deque_Front(Deque *self)
 { return self->store[self->front];
 }
 
 SHARED_EXPORT
-inline void *Deque_Back(Deque *self)
+ void *Deque_Back(Deque *self)
 { return self->store[self->back];
 }
 
 SHARED_EXPORT
-inline int  Deque_Is_Empty(Deque *self)
+ int  Deque_Is_Empty(Deque *self)
 { return (self->front == self->back - 1);
 }
 
 SHARED_EXPORT
-inline Deque *_Deque_Push_Front_Unsafe( Deque* self, void *item )
+ Deque *_Deque_Push_Front_Unsafe( Deque* self, void *item )
 { self->store[++self->front] = item;
   return self;
 }
 
 SHARED_EXPORT
-inline Deque *Deque_Push_Front( Deque* self, void *item )
+ Deque *Deque_Push_Front( Deque* self, void *item )
 { size_t s = self->size_bytes/sizeof(void*);
   if( self->front >= s - 2 )
     self->store = request_storage( self->store, &self->size_bytes, sizeof(void*), s+1, "Deque: realloc on push front" );
@@ -103,12 +103,12 @@ inline Deque *Deque_Push_Front( Deque* self, void *item )
 }
 
 SHARED_EXPORT
-inline void *_Deque_Pop_Front_Unsafe( Deque* self)
+ void *_Deque_Pop_Front_Unsafe( Deque* self)
 { return self->store[self->front--];
 }
 
 SHARED_EXPORT
-inline void *Deque_Pop_Front( Deque *self )
+ void *Deque_Pop_Front( Deque *self )
 { if( self->front >= self->back )
     return _Deque_Pop_Front_Unsafe(self);
 #ifdef WARNING_POP_FROM_EMPTY
@@ -119,13 +119,13 @@ inline void *Deque_Pop_Front( Deque *self )
 }
 
 SHARED_EXPORT
-inline Deque *_Deque_Push_Back_Unsafe( Deque* self, void *item )
+ Deque *_Deque_Push_Back_Unsafe( Deque* self, void *item )
 { self->store[--self->back] = item;
   return self;
 }
 
 SHARED_EXPORT
-inline Deque *Deque_Push_Back( Deque *self, void *item )
+ Deque *Deque_Push_Back( Deque *self, void *item )
 { if( self->back <= 1 )  // then, need to move things
   { size_t f = self->front,
            b = self->back,
@@ -147,12 +147,12 @@ inline Deque *Deque_Push_Back( Deque *self, void *item )
 }
 
 SHARED_EXPORT
-inline void *_Deque_Pop_Back_Unsafe( Deque* self)
+ void *_Deque_Pop_Back_Unsafe( Deque* self)
 { return self->store[self->back++];
 }
 
 SHARED_EXPORT
-inline void *Deque_Pop_Back( Deque *self )
+ void *Deque_Pop_Back( Deque *self )
 { if( self->front >= self->back )
     return _Deque_Pop_Back_Unsafe(self);
 #ifdef WARNING_POP_FROM_EMPTY

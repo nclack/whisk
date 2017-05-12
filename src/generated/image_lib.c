@@ -76,10 +76,10 @@ static uint32 *get_raster(int npixels, char *routine)
 
 // Awk-generated (manager.awk) Image memory management
 
-static inline int image_asize(Image *image)
+static  int image_asize(Image *image)
 { return (image->height*image->width*image->kind); }
 
-static inline int image_tsize(Image *image)
+static  int image_tsize(Image *image)
 { return (strlen(image->text)+1); }
 
 
@@ -93,7 +93,7 @@ typedef struct __Image
 static _Image *Free_Image_List = NULL;
 static int    Image_Offset, Image_Inuse;
 
-static inline void allocate_image_array(Image *image, int asize, char *routine)
+static  void allocate_image_array(Image *image, int asize, char *routine)
 { _Image *object  = (_Image *) (((char *) image) - Image_Offset);
   if (object->asize < asize)
     { object->image.array  = Guarded_Realloc(object->image.array,asize,routine);
@@ -101,7 +101,7 @@ static inline void allocate_image_array(Image *image, int asize, char *routine)
     }
 }
 
-static inline void allocate_image_text(Image *image, int tsize, char *routine)
+static  void allocate_image_text(Image *image, int tsize, char *routine)
 { _Image *object  = (_Image *) (((char *) image) - Image_Offset);
   if (object->tsize < tsize)
     { object->image.text  = Guarded_Realloc(object->image.text,tsize,routine);
@@ -109,7 +109,7 @@ static inline void allocate_image_text(Image *image, int tsize, char *routine)
     }
 }
 
-static inline Image *new_image(int asize, int tsize, char *routine)
+static  Image *new_image(int asize, int tsize, char *routine)
 { _Image *object;
 
   if (Free_Image_List == NULL)
@@ -130,7 +130,7 @@ static inline Image *new_image(int asize, int tsize, char *routine)
   return (&(object->image));
 }
 
-static inline Image *copy_image(Image *image)
+static  Image *copy_image(Image *image)
 { _Image *object  = (_Image *) (((char *) image) - Image_Offset);
   Image *copy = new_image(image_asize(image),image_tsize(image),"Copy_Image");
   Image  temp = *copy;
@@ -147,7 +147,7 @@ static inline Image *copy_image(Image *image)
 Image *Copy_Image(Image *image)
 { return (copy_image(image)); }
 
-static inline void pack_image(Image *image)
+static  void pack_image(Image *image)
 { _Image *object  = (_Image *) (((char *) image) - Image_Offset);
   if (object->asize > image_asize(image))
     { object->asize = image_asize(image);
@@ -170,7 +170,7 @@ static inline void pack_image(Image *image)
 void Pack_Image(Image *image)
 { pack_image(image); }
 
-static inline void free_image(Image *image)
+static  void free_image(Image *image)
 { _Image *object  = (_Image *) (((char *) image) - Image_Offset);
   object->next = Free_Image_List;
   Free_Image_List = object;
@@ -180,7 +180,7 @@ static inline void free_image(Image *image)
 void Free_Image(Image *image)
 { free_image(image); }
 
-static inline void kill_image(Image *image)
+static  void kill_image(Image *image)
 { _Image *object  = (_Image *) (((char *) image) - Image_Offset);
   if (image->text != NULL)
     free(image->text);
@@ -193,7 +193,7 @@ static inline void kill_image(Image *image)
 void Kill_Image(Image *image)
 { kill_image(image); }
 
-static inline void reset_image()
+static  void reset_image()
 { _Image *object;
   while (Free_Image_List != NULL)
     { object = Free_Image_List;
@@ -213,10 +213,10 @@ void Reset_Image()
 
 // Awk-generated (manager.awk) Stack memory management
 
-static inline int stack_vsize(Stack *stack)
+static  int stack_vsize(Stack *stack)
 { return (stack->depth*stack->height*stack->width*stack->kind); }
 
-static inline int stack_tsize(Stack *stack)
+static  int stack_tsize(Stack *stack)
 { return (strlen(stack->text)+1); }
 
 
@@ -230,7 +230,7 @@ typedef struct __Stack
 static _Stack *Free_Stack_List = NULL;
 static int    Stack_Offset, Stack_Inuse;
 
-static inline void allocate_stack_array(Stack *stack, int vsize, char *routine)
+static  void allocate_stack_array(Stack *stack, int vsize, char *routine)
 { _Stack *object  = (_Stack *) (((char *) stack) - Stack_Offset);
   if (object->vsize < vsize)
     { object->stack.array  = Guarded_Realloc(object->stack.array,vsize,routine);
@@ -238,7 +238,7 @@ static inline void allocate_stack_array(Stack *stack, int vsize, char *routine)
     }
 }
 
-static inline void allocate_stack_text(Stack *stack, int tsize, char *routine)
+static  void allocate_stack_text(Stack *stack, int tsize, char *routine)
 { _Stack *object  = (_Stack *) (((char *) stack) - Stack_Offset);
   if (object->tsize < tsize)
     { object->stack.text  = Guarded_Realloc(object->stack.text,tsize,routine);
@@ -246,7 +246,7 @@ static inline void allocate_stack_text(Stack *stack, int tsize, char *routine)
     }
 }
 
-static inline Stack *new_stack(int vsize, int tsize, char *routine)
+static  Stack *new_stack(int vsize, int tsize, char *routine)
 { _Stack *object;
 
   if (Free_Stack_List == NULL)
@@ -267,7 +267,7 @@ static inline Stack *new_stack(int vsize, int tsize, char *routine)
   return (&(object->stack));
 }
 
-static inline Stack *copy_stack(Stack *stack)
+static  Stack *copy_stack(Stack *stack)
 { _Stack *object  = (_Stack *) (((char *) stack) - Stack_Offset);
   Stack *copy = new_stack(stack_vsize(stack),stack_tsize(stack),"Copy_Stack");
   Stack  temp = *copy;
@@ -284,7 +284,7 @@ static inline Stack *copy_stack(Stack *stack)
 Stack *Copy_Stack(Stack *stack)
 { return (copy_stack(stack)); }
 
-static inline void pack_stack(Stack *stack)
+static  void pack_stack(Stack *stack)
 { _Stack *object  = (_Stack *) (((char *) stack) - Stack_Offset);
   if (object->vsize > stack_vsize(stack))
     { object->vsize = stack_vsize(stack);
@@ -307,7 +307,7 @@ static inline void pack_stack(Stack *stack)
 void Pack_Stack(Stack *stack)
 { pack_stack(stack); }
 
-static inline void free_stack(Stack *stack)
+static  void free_stack(Stack *stack)
 { _Stack *object  = (_Stack *) (((char *) stack) - Stack_Offset);
   object->next = Free_Stack_List;
   Free_Stack_List = object;
@@ -317,7 +317,7 @@ static inline void free_stack(Stack *stack)
 void Free_Stack(Stack *stack)
 { free_stack(stack); }
 
-static inline void kill_stack(Stack *stack)
+static  void kill_stack(Stack *stack)
 { _Stack *object  = (_Stack *) (((char *) stack) - Stack_Offset);
   if (stack->text != NULL)
     free(stack->text);
@@ -330,7 +330,7 @@ static inline void kill_stack(Stack *stack)
 void Kill_Stack(Stack *stack)
 { kill_stack(stack); }
 
-static inline void reset_stack()
+static  void reset_stack()
 { _Stack *object;
   while (Free_Stack_List != NULL)
     { object = Free_Stack_List;

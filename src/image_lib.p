@@ -76,10 +76,10 @@ static uint32 *get_raster(int npixels, char *routine)
 
 // Awk-generated (manager.awk) Image memory management
 
-static inline int image_asize(Image *image)
+static  int image_asize(Image *image)
 { return (image->height*image->width*image->kind); }
 
-static inline int image_tsize(Image *image)
+static  int image_tsize(Image *image)
 { return (strlen(image->text)+1); }
 
 MANAGER -r Image array:asize text:tsize
@@ -91,10 +91,10 @@ void Reset_Image()
 
 // Awk-generated (manager.awk) Stack memory management
 
-static inline int stack_vsize(Stack *stack)
+static  int stack_vsize(Stack *stack)
 { return (stack->depth*stack->height*stack->width*stack->kind); }
 
-static inline int stack_tsize(Stack *stack)
+static  int stack_tsize(Stack *stack)
 { return (strlen(stack->text)+1); }
 
 MANAGER -r Stack array:vsize text:tsize

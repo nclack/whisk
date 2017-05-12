@@ -40,11 +40,11 @@
 #include "aip.h"
 #include <stdlib.h>
 
-inline void bdr(real * X, real y)
+ void bdr(real * X, real y)
 { *X = *X<y ? *X:y;
 }
 
-inline void bur(real * X, real y)
+ void bur(real * X, real y)
 { *X = *X>y ? *X:y;
 }
 
@@ -95,20 +95,20 @@ double fit(box *B, point * x, int cx, vertex * ix, int fudge)
   return sclx*scly;
 }
 
-inline hp area(ipoint a, ipoint p, ipoint q)
+ hp area(ipoint a, ipoint p, ipoint q)
 /* Compute the area of the triangle (apq) */
 { return (hp)p.x*q.y - (hp)p.y*q.x +
     (hp)a.x*(p.y - q.y) + (hp)a.y*(q.x - p.x);
 }
 
-inline void cntrib(hp *s, ipoint f, ipoint t, short w)
+ void cntrib(hp *s, ipoint f, ipoint t, short w)
 /* Integrand for the line integral.  Google `Green's theorem polygon area` for
  * functional form.
  */
 { *s += (hp)w*(t.x-f.x)*(t.y+f.y)/2;
 }
 
-inline int ovl(rng p, rng q)
+ int ovl(rng p, rng q)
 /* True if intervals intersect */
 { return p.mn < q.mx && q.mn < p.mx;
 }

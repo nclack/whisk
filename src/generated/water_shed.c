@@ -43,7 +43,7 @@ static int *get_chord(int area, char *routine)
   return (Array);
 }
 
-static inline int watershed_2d_ssize(Watershed_2D *part)
+static  int watershed_2d_ssize(Watershed_2D *part)
 { return (sizeof(int)*(part->nbasins+1)); }
 
 
@@ -56,7 +56,7 @@ typedef struct __Watershed_2D
 static _Watershed_2D *Free_Watershed_2D_List = NULL;
 static int    Watershed_2D_Offset, Watershed_2D_Inuse;
 
-static inline void allocate_watershed_2d_seeds(Watershed_2D *watershed_2d, int ssize, char *routine)
+static  void allocate_watershed_2d_seeds(Watershed_2D *watershed_2d, int ssize, char *routine)
 { _Watershed_2D *object  = (_Watershed_2D *) (((char *) watershed_2d) - Watershed_2D_Offset);
   if (object->ssize < ssize)
     { object->watershed_2d.seeds  = Guarded_Realloc(object->watershed_2d.seeds,ssize,routine);
@@ -64,7 +64,7 @@ static inline void allocate_watershed_2d_seeds(Watershed_2D *watershed_2d, int s
     }
 }
 
-static inline Watershed_2D *new_watershed_2d(int ssize, char *routine)
+static  Watershed_2D *new_watershed_2d(int ssize, char *routine)
 { _Watershed_2D *object;
 
   if (Free_Watershed_2D_List == NULL)
@@ -84,7 +84,7 @@ static inline Watershed_2D *new_watershed_2d(int ssize, char *routine)
   return (&(object->watershed_2d));
 }
 
-static inline Watershed_2D *copy_watershed_2d(Watershed_2D *watershed_2d)
+static  Watershed_2D *copy_watershed_2d(Watershed_2D *watershed_2d)
 { _Watershed_2D *object  = (_Watershed_2D *) (((char *) watershed_2d) - Watershed_2D_Offset);
   Watershed_2D *copy = new_watershed_2d(watershed_2d_ssize(watershed_2d),"Copy_Watershed_2D");
   Watershed_2D  temp = *copy;
@@ -100,7 +100,7 @@ static inline Watershed_2D *copy_watershed_2d(Watershed_2D *watershed_2d)
 Watershed_2D *Copy_Watershed_2D(Watershed_2D *watershed_2d)
 { return (copy_watershed_2d(watershed_2d)); }
 
-static inline void pack_watershed_2d(Watershed_2D *watershed_2d)
+static  void pack_watershed_2d(Watershed_2D *watershed_2d)
 { _Watershed_2D *object  = (_Watershed_2D *) (((char *) watershed_2d) - Watershed_2D_Offset);
   if (object->ssize > watershed_2d_ssize(watershed_2d))
     { object->ssize = watershed_2d_ssize(watershed_2d);
@@ -117,7 +117,7 @@ static inline void pack_watershed_2d(Watershed_2D *watershed_2d)
 void Pack_Watershed_2D(Watershed_2D *watershed_2d)
 { pack_watershed_2d(watershed_2d); }
 
-static inline void free_watershed_2d(Watershed_2D *watershed_2d)
+static  void free_watershed_2d(Watershed_2D *watershed_2d)
 { _Watershed_2D *object  = (_Watershed_2D *) (((char *) watershed_2d) - Watershed_2D_Offset);
   object->next = Free_Watershed_2D_List;
   Free_Watershed_2D_List = object;
@@ -129,7 +129,7 @@ static inline void free_watershed_2d(Watershed_2D *watershed_2d)
 void Free_Watershed_2D(Watershed_2D *watershed_2d)
 { free_watershed_2d(watershed_2d); }
 
-static inline void kill_watershed_2d(Watershed_2D *watershed_2d)
+static  void kill_watershed_2d(Watershed_2D *watershed_2d)
 { _Watershed_2D *object  = (_Watershed_2D *) (((char *) watershed_2d) - Watershed_2D_Offset);
   if (watershed_2d->labels != NULL)
     Kill_Image(watershed_2d->labels);
@@ -142,7 +142,7 @@ static inline void kill_watershed_2d(Watershed_2D *watershed_2d)
 void Kill_Watershed_2D(Watershed_2D *watershed_2d)
 { kill_watershed_2d(watershed_2d); }
 
-static inline void reset_watershed_2d()
+static  void reset_watershed_2d()
 { _Watershed_2D *object;
   while (Free_Watershed_2D_List != NULL)
     { object = Free_Watershed_2D_List;
@@ -174,7 +174,7 @@ static int chk_width;
 static int chk_height;
 static int chk_iscon4;
 
-static inline int *boundary_pixels_2d(int p)
+static  int *boundary_pixels_2d(int p)
 { static int bound[8];
   int x, xn, xp;
   int y, yn, yp;
@@ -644,7 +644,7 @@ Watershed_2D *Build_2D_Watershed(Image *frame, int iscon4)
  ****************************************************************************************/
 
 
-static inline int watershed_3d_ssize(Watershed_3D *part)
+static  int watershed_3d_ssize(Watershed_3D *part)
 { return (sizeof(int)*(part->nbasins+1)); }
 
 
@@ -657,7 +657,7 @@ typedef struct __Watershed_3D
 static _Watershed_3D *Free_Watershed_3D_List = NULL;
 static int    Watershed_3D_Offset, Watershed_3D_Inuse;
 
-static inline void allocate_watershed_3d_seeds(Watershed_3D *watershed_3d, int ssize, char *routine)
+static  void allocate_watershed_3d_seeds(Watershed_3D *watershed_3d, int ssize, char *routine)
 { _Watershed_3D *object  = (_Watershed_3D *) (((char *) watershed_3d) - Watershed_3D_Offset);
   if (object->ssize < ssize)
     { object->watershed_3d.seeds  = Guarded_Realloc(object->watershed_3d.seeds,ssize,routine);
@@ -665,7 +665,7 @@ static inline void allocate_watershed_3d_seeds(Watershed_3D *watershed_3d, int s
     }
 }
 
-static inline Watershed_3D *new_watershed_3d(int ssize, char *routine)
+static  Watershed_3D *new_watershed_3d(int ssize, char *routine)
 { _Watershed_3D *object;
 
   if (Free_Watershed_3D_List == NULL)
@@ -685,7 +685,7 @@ static inline Watershed_3D *new_watershed_3d(int ssize, char *routine)
   return (&(object->watershed_3d));
 }
 
-static inline Watershed_3D *copy_watershed_3d(Watershed_3D *watershed_3d)
+static  Watershed_3D *copy_watershed_3d(Watershed_3D *watershed_3d)
 { _Watershed_3D *object  = (_Watershed_3D *) (((char *) watershed_3d) - Watershed_3D_Offset);
   Watershed_3D *copy = new_watershed_3d(watershed_3d_ssize(watershed_3d),"Copy_Watershed_3D");
   Watershed_3D  temp = *copy;
@@ -701,7 +701,7 @@ static inline Watershed_3D *copy_watershed_3d(Watershed_3D *watershed_3d)
 Watershed_3D *Copy_Watershed_3D(Watershed_3D *watershed_3d)
 { return (copy_watershed_3d(watershed_3d)); }
 
-static inline void pack_watershed_3d(Watershed_3D *watershed_3d)
+static  void pack_watershed_3d(Watershed_3D *watershed_3d)
 { _Watershed_3D *object  = (_Watershed_3D *) (((char *) watershed_3d) - Watershed_3D_Offset);
   if (object->ssize > watershed_3d_ssize(watershed_3d))
     { object->ssize = watershed_3d_ssize(watershed_3d);
@@ -718,7 +718,7 @@ static inline void pack_watershed_3d(Watershed_3D *watershed_3d)
 void Pack_Watershed_3D(Watershed_3D *watershed_3d)
 { pack_watershed_3d(watershed_3d); }
 
-static inline void free_watershed_3d(Watershed_3D *watershed_3d)
+static  void free_watershed_3d(Watershed_3D *watershed_3d)
 { _Watershed_3D *object  = (_Watershed_3D *) (((char *) watershed_3d) - Watershed_3D_Offset);
   object->next = Free_Watershed_3D_List;
   Free_Watershed_3D_List = object;
@@ -730,7 +730,7 @@ static inline void free_watershed_3d(Watershed_3D *watershed_3d)
 void Free_Watershed_3D(Watershed_3D *watershed_3d)
 { free_watershed_3d(watershed_3d); }
 
-static inline void kill_watershed_3d(Watershed_3D *watershed_3d)
+static  void kill_watershed_3d(Watershed_3D *watershed_3d)
 { _Watershed_3D *object  = (_Watershed_3D *) (((char *) watershed_3d) - Watershed_3D_Offset);
   if (watershed_3d->labels != NULL)
     Kill_Stack(watershed_3d->labels);
@@ -743,7 +743,7 @@ static inline void kill_watershed_3d(Watershed_3D *watershed_3d)
 void Kill_Watershed_3D(Watershed_3D *watershed_3d)
 { kill_watershed_3d(watershed_3d); }
 
-static inline void reset_watershed_3d()
+static  void reset_watershed_3d()
 { _Watershed_3D *object;
   while (Free_Watershed_3D_List != NULL)
     { object = Free_Watershed_3D_List;
@@ -766,7 +766,7 @@ static int cvolume;
 static int chk_depth;
 static int chk_iscon6;
 
-static inline int *boundary_pixels_3d(int p)
+static  int *boundary_pixels_3d(int p)
 { static int bound[26];
   int x, xn, xp;
   int y, yn, yp;

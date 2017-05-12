@@ -24,7 +24,7 @@
 #define DEBUG_POLYFIT_REUSE
 #endif
 
-inline double polyval(double *p, int degree, double x)
+ double polyval(double *p, int degree, double x)
 { double acc  = 0.0,
          xton = 1.0,
          *end = p + degree + 1; // #coeffs = degree + 1
@@ -36,7 +36,7 @@ inline double polyval(double *p, int degree, double x)
   return acc;
 }
 
-inline int polymul_nelem_dest(int na, int nb)
+ int polymul_nelem_dest(int na, int nb)
 { return na + nb - 1;
 }
 
@@ -44,7 +44,7 @@ inline int polymul_nelem_dest(int na, int nb)
 // Multiplies polynomials by convolution.  Expects destination to be
 // pre-allocated with na+nb+1 # of elements (see: polymul_nelem_dest).
 //
-inline void polymul(double *a, int na, double *b, int nb, double* dest )
+ void polymul(double *a, int na, double *b, int nb, double* dest )
 { int j,k;
   double *aend = a + na;
   nb -= 1; // shift this to index of last element for convenience
@@ -65,7 +65,7 @@ inline void polymul(double *a, int na, double *b, int nb, double* dest )
 // In place addition of two polynomials.
 // Requires na > nb.
 //
-inline void polyadd_ip_left(double *a, int na, double *b, int nb )
+ void polyadd_ip_left(double *a, int na, double *b, int nb )
 { 
 #ifdef DEBUG_POLYADD_IP
   assert(na>nb);
@@ -74,7 +74,7 @@ inline void polyadd_ip_left(double *a, int na, double *b, int nb )
     a[nb] += b[nb];
 }
 
-inline void polysub_ip_left(double *a, int na, double *b, int nb )
+ void polysub_ip_left(double *a, int na, double *b, int nb )
 { 
 #ifdef DEBUG_POLYADD_IP
   assert(na>nb);
@@ -83,7 +83,7 @@ inline void polysub_ip_left(double *a, int na, double *b, int nb )
     a[nb] -= b[nb];
 }
 
-inline void polyadd ( double *a, int na, double *b, int nb, double *dest )
+ void polyadd ( double *a, int na, double *b, int nb, double *dest )
 { 
   while( na > nb )
     dest[--na] = a[na];
@@ -94,7 +94,7 @@ inline void polyadd ( double *a, int na, double *b, int nb, double *dest )
     dest[na] = a[na] + b[na];
 }
 
-inline void polysub ( double *a, int na, double *b, int nb, double *dest )
+ void polysub ( double *a, int na, double *b, int nb, double *dest )
 { 
   while( na > nb )
     dest[--na] = a[na];
@@ -107,7 +107,7 @@ inline void polysub ( double *a, int na, double *b, int nb, double *dest )
 //
 // Derivative of polynomial
 //
-inline void polyder_ip( double *a, int na, int times )
+ void polyder_ip( double *a, int na, int times )
 { int i;
   if(times>0)
   { for(i=1;i<na;i++)
@@ -270,7 +270,7 @@ double Vandermonde_Determinant_Log2( double *x, int n )
 // POLYFIT
 //
 
-inline int polyfit_size_workspace(int n, int degree )
+ int polyfit_size_workspace(int n, int degree )
 { int ncoeffs = degree+1;
   return (n + 1 + ncoeffs)*ncoeffs;
 }
