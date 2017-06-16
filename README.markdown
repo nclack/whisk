@@ -5,6 +5,13 @@ A description of this software as well as detailed instructions and a tutorial
 may be found
 [here](http://openwiki.janelia.org/wiki/display/MyersLab/Whisker+Tracking).
 
+Community
+=========
+
+[Chat](https://discord.gg/Y7QJerr)
+
+[Issue Tracker](https://github.com/nclack/whisk/issues)
+
 Downloading
 ===========
 
@@ -12,7 +19,7 @@ Pre-built binaries are available for [download][].
 
 [download]: http://openwiki.janelia.org/wiki/display/MyersLab/Whisker+Tracking+Downloads
 
-Source code is available on here.  See the instructions for building below.
+See the instructions for building below.
 
 Tip: Git on Windows
 -------------------
