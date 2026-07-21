@@ -6,7 +6,7 @@ def roc(score,predicate):
 
   map = list( reversed(s.argsort()) )#ascending
   T   = s[map]
-  P   = p[map]+0.0; #implict conversion to double, avoids having to import numpy
+  P   = p[map]+0.0; #implicit conversion to double, avoids having to import numpy
 
   TP  = P.cumsum()     # count positives at each threshold
   FP  = (1-P).cumsum() # count negatives at each threshold
